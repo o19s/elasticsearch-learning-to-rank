@@ -1,0 +1,133 @@
+package com.o19s.es.ltr;
+
+import ciir.umass.edu.learning.RANKER_TYPE;
+import ciir.umass.edu.learning.RankList;
+import ciir.umass.edu.learning.Ranker;
+import ciir.umass.edu.learning.RankerTrainer;
+import ciir.umass.edu.learning.tree.LambdaMART;
+import ciir.umass.edu.metric.NDCGScorer;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.RandomIndexWriter;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.Field.Store;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by doug on 12/24/16.
+ */
+public class LtrQueryTest extends LuceneTestCase {
+
+    Field newField(String name, String value, Store stored) {
+        FieldType tagsFieldType = new FieldType();
+        tagsFieldType.setStored(stored == Store.YES);
+        IndexOptions idxOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS;
+        tagsFieldType.setIndexOptions(idxOptions);
+        return new Field(name, value, tagsFieldType);
+    }
+
+    IndexSearcher searcherUnderTest;
+    RandomIndexWriter indexWriterUnderTest;
+    IndexReader indexReaderUnderTest;
+    Directory dirUnderTest;
+    Ranker ltrModel;
+
+    // docs with doc ids array index
+    String[] docs = new String[] { "how now brown cow",
+                                   "brown is the color of cows",
+                                   "brown cow",
+                                   "banana cows are yummy"};
+
+    @Before
+    public void setupIndex() throws IOException {
+        dirUnderTest = newDirectory();
+
+        indexWriterUnderTest = new RandomIndexWriter(random(), dirUnderTest);
+        for (int i = 0; i < docs.length; i++) {
+            Document doc = new Document();
+            doc.add(newStringField("id", "" + i, Field.Store.YES));
+            doc.add(newField("field", docs[i], Store.YES));
+            indexWriterUnderTest.addDocument(doc);
+        }
+        indexWriterUnderTest.commit();
+
+        indexReaderUnderTest = indexWriterUnderTest.getReader();
+        searcherUnderTest = newSearcher(indexReaderUnderTest);
+    }
+
+    public ArrayList<ArrayList<Double>> getFeatures(String userQuery) throws IOException {
+        Query[] features = new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                                        new PhraseQuery("field", userQuery.split(" "))};
+
+        ArrayList<ArrayList<Double>> featuresPerDoc = new ArrayList<ArrayList<Double>>(docs.length);
+        // initialize feature outputs
+        for (int i = 0; i < docs.length; i++) {
+            featuresPerDoc.add(i, new ArrayList<Double>(features.length));
+            for (int ftrIdx = 0; ftrIdx < features.length; ftrIdx++ ) {
+                featuresPerDoc.get(i).add(ftrIdx, 0.0);
+            }
+        }
+
+
+        int ftrIdx = 0;
+        for (Query feature: features) {
+            TopDocs topDocs = searcherUnderTest.search(feature, 10);
+            ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+            for (ScoreDoc scoreDoc: scoreDocs) {
+                Document d = searcherUnderTest.doc(scoreDoc.doc);
+                String idVal = d.get("id");
+                int docId = Integer.decode(idVal);
+
+                featuresPerDoc.get(docId).set(ftrIdx, (double) scoreDoc.score);
+            }
+            ftrIdx++;
+        }
+        return featuresPerDoc;
+
+    }
+
+
+    @Test
+    public void trainModel() throws IOException {
+        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
+
+        // Each RankList needed for training corresponds to one query,
+        // or that apperas how RankLib wants the data
+        List<RankList> samples = new ArrayList<RankList>();
+
+
+        ArrayList<ArrayList<Double>> featuresPerDoc = getFeatures("brown cow");
+        int numFeatures = featuresPerDoc.get(0).size();
+
+        // each RankList appears to correspond to a
+        // query
+        RankerTrainer trainer = new RankerTrainer();
+//        Ranker ranker = trainer.train(RANKER_TYPE.LAMBDAMART
+//                                      /*samples are the training set*/
+//                                      /*features: which features to use*/
+//                                      /*how to score ranking*/, new NDCGScorer());
+    }
+
+
+    @After
+    public void closeStuff() throws IOException {
+        indexReaderUnderTest.close();
+        indexWriterUnderTest.close();
+        dirUnderTest.close();
+    }
+
+
+
+}

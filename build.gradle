@@ -1,0 +1,51 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    jcenter()
+    mavenLocal()
+  }
+
+  dependencies {
+    classpath "org.elasticsearch.gradle:build-tools:5.1.1"
+  }
+}
+
+group = 'org.elasticsearch.plugin.ingest'
+version = '0.0.1-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'idea'
+
+esplugin {
+  name 'ltr-query'
+  description 'Ingest processor that is doing something awesome'
+  classname 'org.elasticsearch.plugin.ingest.awesome.IngestAwesomePlugin'
+}
+
+// In this section you declare the dependencies for your production and test code
+// Note, the two dependencies are not really needed as the buildscript dependency gets them in already
+// they are just here as an example
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+dependencies {
+  compile 'org.elasticsearch:elasticsearch:5.1.1'
+  compile 'edu.umass.ciir:RankLib:2.6'
+  testCompile 'org.elasticsearch.test:framework:5.1.1'
+}
+
+// Set to false to not use elasticsearch checkstyle rules
+checkstyleMain.enabled = true
+checkstyleTest.enabled = true
+
+// FIXME dependency license check needs to be enabled
+dependencyLicenses.enabled = false
+
+// FIXME thirdparty audit needs to be enabled
+thirdPartyAudit.enabled = false
+
+// Uncomment this to skip license header checks
+// licenseHeaders.enabled = false
+
