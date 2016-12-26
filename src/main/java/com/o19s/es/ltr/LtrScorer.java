@@ -37,14 +37,17 @@ public class LtrScorer extends Scorer {
             if (scorer.docID() < docID()) {
                 scorer.iterator().advance(docID());
             }
-            float featureVal = 0;
+            float featureVal = 0.0f;
             if (scorer.docID() == docID()) {
                 featureVal = scorer.score();
             }
+            System.out.printf("Doc %d, feature %d, val %f\n", docID(), featureIdx, featureVal);
             allScores.setFeatureValue(featureIdx, featureVal);
             featureIdx++;
         }
-        return (float)_rankModel.eval(allScores);
+        float score = (float)_rankModel.eval(allScores);
+        System.out.printf("Doc %d, score %f\n", docID(), score);
+        return score;
     }
 
     @Override
