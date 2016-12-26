@@ -31,22 +31,19 @@ public class LtrScorer extends Scorer {
 
     @Override
     public float score() throws IOException {
-        DataPoint allScores = new DenseDataPoint("");
-        int featureIdx = 0;
+        DataPoint allScores = new DenseProgramaticDataPoint(_subScorers.size());
+        int featureIdx = 1; // RankLib is 1-based
         for (Scorer scorer : _subScorers) {
-            allScores.setFeatureValue(0, scorer.score());
+            if (scorer.docID() < docID()) {
+                scorer.iterator().advance(docID());
+            }
+            float featureVal = 0;
+            if (scorer.docID() == docID()) {
+                featureVal = scorer.score();
+            }
+            allScores.setFeatureValue(featureIdx, featureVal);
+            featureIdx++;
         }
-
-//        for (DisiWrapper w = topList; w != null; w = w.next) {
-//            // Ugh, need to remap back to the original because here they're out of order
-//            final float subScore = w.scorer.score();
-//            scoreSum += subScore;
-//            if (subScore > scoreMax) {
-//                scoreMax = subScore;
-//            }
-//        }
-//        return scoreMax + (scoreSum - scoreMax);
-//        allScores.set
         return (float)_rankModel.eval(allScores);
     }
 

@@ -1,7 +1,6 @@
 package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.*;
-import ciir.umass.edu.learning.tree.LambdaMART;
 import ciir.umass.edu.metric.NDCGScorer;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
@@ -20,6 +19,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -64,9 +64,14 @@ public class LtrQueryTest extends LuceneTestCase {
         searcherUnderTest = newSearcher(indexReaderUnderTest);
     }
 
-    public List<List<Float>> getFeatures(String userQuery) throws IOException {
+    public Query[] getFeatures(String userQuery) {
         Query[] features = new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])),
-                                        new PhraseQuery("field", userQuery.split(" "))};
+                new PhraseQuery("field", userQuery.split(" "))};
+        return features;
+    }
+
+    public List<List<Float>> getFeatureScores(String userQuery) throws IOException {
+        Query[] features = getFeatures(userQuery);
 
         ArrayList<List<Float>> featuresPerDoc = new ArrayList<List<Float>>(docs.length);
         // initialize feature outputs
@@ -131,7 +136,7 @@ public class LtrQueryTest extends LuceneTestCase {
         List<RankList> samples = new ArrayList<RankList>();
 
 
-        List<List<Float>> featuresPerDoc = getFeatures("brown cow");
+        List<List<Float>> featuresPerDoc = getFeatureScores("brown cow");
         int numFeatures = featuresPerDoc.get(0).size();
 
         RankList rl = new RankList(makeQueryJudgements(0, featuresPerDoc,
@@ -146,6 +151,24 @@ public class LtrQueryTest extends LuceneTestCase {
                                       /*which features to use*/new int[] {1,2}
                                       /*how to score ranking*/, new NDCGScorer());
         System.out.println("Model Trained");
+        float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
+                                      (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
+
+        // Ok now lets rerun that as a Lucene Query
+        List<Query> features = Arrays.asList(getFeatures("brown cow"));
+        LtrQuery ltrQuery = new LtrQuery(features, ranker);
+        TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
+        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+        assert(scoreDocs.length == docs.length);
+        for (ScoreDoc scoreDoc: scoreDocs) {
+            Document d = searcherUnderTest.doc(scoreDoc.doc);
+            String idVal = d.get("id");
+            int docId = Integer.decode(idVal);
+            float modelScore = scores[docId];
+            float queryScore = scoreDoc.score;
+            assertEquals(modelScore, queryScore, 0.01);
+        }
+
     }
 
 
