@@ -27,7 +27,7 @@ import java.io.IOException;
 
 public class AwesomeRestIT extends ESClientYamlSuiteTestCase {
 
-    public AwesomeRestIT(@Name("yaml") ClientYamlTestCandidate t    estCandidate) {
+    public AwesomeRestIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

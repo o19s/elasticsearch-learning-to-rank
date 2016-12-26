@@ -1,9 +1,6 @@
 package com.o19s.es.ltr;
 
-import ciir.umass.edu.learning.RANKER_TYPE;
-import ciir.umass.edu.learning.RankList;
-import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerTrainer;
+import ciir.umass.edu.learning.*;
 import ciir.umass.edu.learning.tree.LambdaMART;
 import ciir.umass.edu.metric.NDCGScorer;
 import org.apache.lucene.index.IndexOptions;
@@ -67,16 +64,16 @@ public class LtrQueryTest extends LuceneTestCase {
         searcherUnderTest = newSearcher(indexReaderUnderTest);
     }
 
-    public ArrayList<ArrayList<Double>> getFeatures(String userQuery) throws IOException {
+    public List<List<Float>> getFeatures(String userQuery) throws IOException {
         Query[] features = new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                                         new PhraseQuery("field", userQuery.split(" "))};
 
-        ArrayList<ArrayList<Double>> featuresPerDoc = new ArrayList<ArrayList<Double>>(docs.length);
+        ArrayList<List<Float>> featuresPerDoc = new ArrayList<List<Float>>(docs.length);
         // initialize feature outputs
         for (int i = 0; i < docs.length; i++) {
-            featuresPerDoc.add(i, new ArrayList<Double>(features.length));
+            featuresPerDoc.add(i, new ArrayList<Float>(features.length));
             for (int ftrIdx = 0; ftrIdx < features.length; ftrIdx++ ) {
-                featuresPerDoc.get(i).add(ftrIdx, 0.0);
+                featuresPerDoc.get(i).add(ftrIdx, 0.0f);
             }
         }
 
@@ -90,7 +87,7 @@ public class LtrQueryTest extends LuceneTestCase {
                 String idVal = d.get("id");
                 int docId = Integer.decode(idVal);
 
-                featuresPerDoc.get(docId).set(ftrIdx, (double) scoreDoc.score);
+                featuresPerDoc.get(docId).set(ftrIdx, scoreDoc.score);
             }
             ftrIdx++;
         }
@@ -98,9 +95,35 @@ public class LtrQueryTest extends LuceneTestCase {
 
     }
 
+    public List<DataPoint> makeQueryJudgements(int qid,
+                                               List<List<Float>> featuresPerDoc,
+                                               Float[] relevanceGradesPerDoc) {
+        assert(featuresPerDoc.size() == docs.length);
+        assert(relevanceGradesPerDoc.length == docs.length);
+
+        List<DataPoint> rVal = new ArrayList<DataPoint>();
+
+        for (int i = 0; i < docs.length; i++) {
+            List<Float> featuresForDoc = featuresPerDoc.get(i);
+
+            DataPoint dp = new DenseProgramaticDataPoint(featuresForDoc.size());
+            dp.setID(Integer.toString(qid)); /*query ID*/
+            dp.setLabel(relevanceGradesPerDoc[i]); /*labeled relevance judgement*/
+
+            // set each feature
+
+            for (int ftrIdx = 0; ftrIdx < featuresForDoc.size(); ftrIdx++) {
+                /*RankLib features are 1 based*/
+                dp.setFeatureValue(ftrIdx + 1, featuresForDoc.get(ftrIdx));
+            }
+            rVal.add(i, dp);
+        }
+        return rVal;
+    }
+
 
     @Test
-    public void trainModel() throws IOException {
+    public void testTrainModel() throws IOException {
         //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
 
         // Each RankList needed for training corresponds to one query,
@@ -108,16 +131,21 @@ public class LtrQueryTest extends LuceneTestCase {
         List<RankList> samples = new ArrayList<RankList>();
 
 
-        ArrayList<ArrayList<Double>> featuresPerDoc = getFeatures("brown cow");
+        List<List<Float>> featuresPerDoc = getFeatures("brown cow");
         int numFeatures = featuresPerDoc.get(0).size();
+
+        RankList rl = new RankList(makeQueryJudgements(0, featuresPerDoc,
+                                                        new Float[] {3.0f, 2.0f, 4.0f, 0.0f}));
+        samples.add(rl);
 
         // each RankList appears to correspond to a
         // query
         RankerTrainer trainer = new RankerTrainer();
-//        Ranker ranker = trainer.train(RANKER_TYPE.LAMBDAMART
-//                                      /*samples are the training set*/
-//                                      /*features: which features to use*/
-//                                      /*how to score ranking*/, new NDCGScorer());
+        Ranker ranker = trainer.train(/*what type of model ot train*/RANKER_TYPE.LAMBDAMART,
+                                      /*The training data*/ samples,
+                                      /*which features to use*/new int[] {1,2}
+                                      /*how to score ranking*/, new NDCGScorer());
+        System.out.println("Model Trained");
     }
 
 
