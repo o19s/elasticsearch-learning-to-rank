@@ -4,6 +4,7 @@ import ciir.umass.edu.learning.Ranker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.similarities.Similarity;
 
 import java.io.IOException;
 import java.util.*;
@@ -71,14 +72,16 @@ public class LtrQuery extends Query  {
     protected class LtrWeight extends Weight {
 
         protected final ArrayList<Weight> weights = new ArrayList<>();  // The Weight's for our subqueries, in 1-1 correspondence with disjuncts
-        private final boolean needsScores;
+        private final boolean _needsScores;
+        private Similarity _similarity;
 
         protected LtrWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
             super(LtrQuery.this);
             for (Query feature : _features) {
                 weights.add(searcher.createWeight(feature, needsScores));
             }
-            this.needsScores = needsScores;
+            this._needsScores = needsScores;
+            this._similarity = searcher.getSimilarity(needsScores);
         }
 
         @Override
@@ -96,11 +99,23 @@ public class LtrQuery extends Query  {
 
         @Override
         public float getValueForNormalization() throws IOException {
-            return 0;
+            // run indexsearcher's normalization procedure directly on each
+            // subweight
+            for (Weight weight: weights) {
+                float valueToNormalize = weight.getValueForNormalization();
+                float norm = _similarity.queryNorm(valueToNormalize);
+                if (Float.isInfinite(norm) || Float.isNaN(norm)) {
+                    norm = 1.0f;
+                }
+                weight.normalize(norm, 1.0f);
+
+            }
+            return 0.0f;
         }
 
         @Override
         public void normalize(float norm, float boost) {
+
         }
 
         @Override
@@ -117,7 +132,7 @@ public class LtrQuery extends Query  {
                 // no sub-scorers had any documents
                 return null;
             } else {
-                return new LtrScorer(this, scorers, needsScores, context, _rankModel);
+                return new LtrScorer(this, scorers, _needsScores, context, _rankModel);
             }
         }
     }

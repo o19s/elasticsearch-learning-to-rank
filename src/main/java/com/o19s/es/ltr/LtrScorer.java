@@ -1,13 +1,12 @@
 package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.DataPoint;
-import ciir.umass.edu.learning.DenseDataPoint;
 import ciir.umass.edu.learning.Ranker;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DisiWrapper;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.similarities.Similarity;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,7 +20,8 @@ public class LtrScorer extends Scorer {
     List<Scorer> _subScorers;
     DocIdSetIterator _allDocsIter;
 
-    protected LtrScorer(Weight weight, List<Scorer> subScorers, boolean needsScores, LeafReaderContext context, Ranker rankModel) {
+    protected LtrScorer(Weight weight, List<Scorer> subScorers, boolean needsScores,
+                        LeafReaderContext context, Ranker rankModel) {
         super(weight);
         this._rankModel = rankModel;
         _subScorers = subScorers;
@@ -41,12 +41,12 @@ public class LtrScorer extends Scorer {
             if (scorer.docID() == docID()) {
                 featureVal = scorer.score();
             }
-            System.out.printf("Doc %d, feature %d, val %f\n", docID(), featureIdx, featureVal);
+            //System.out.printf("Doc %d, feature %d, val %f\n", docID(), featureIdx, featureVal);
             allScores.setFeatureValue(featureIdx, featureVal);
             featureIdx++;
         }
         float score = (float)_rankModel.eval(allScores);
-        System.out.printf("Doc %d, score %f\n", docID(), score);
+        //System.out.printf("Doc %d, score %f\n", docID(), score);
         return score;
     }
 

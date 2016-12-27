@@ -2,17 +2,21 @@ package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.*;
 import ciir.umass.edu.metric.NDCGScorer;
+import ciir.umass.edu.utilities.MyThreadPool;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.util.TestRuleLimitSysouts;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +29,7 @@ import java.util.List;
 /**
  * Created by doug on 12/24/16.
  */
+@LuceneTestCase.SuppressSysoutChecks(bugUrl = "RankURL does this when training models... ")
 public class LtrQueryTest extends LuceneTestCase {
 
     Field newField(String name, String value, Store stored) {
@@ -65,6 +70,8 @@ public class LtrQueryTest extends LuceneTestCase {
 
         indexReaderUnderTest = indexWriterUnderTest.getReader();
         searcherUnderTest = newSearcher(indexReaderUnderTest);
+        //hardcode the similarity, we expect consisten scoring
+        searcherUnderTest.setSimilarity(new ClassicSimilarity());
     }
 
     public Query[] getFeatures(String userQuery) {
@@ -138,6 +145,8 @@ public class LtrQueryTest extends LuceneTestCase {
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<RankList>();
 
+        System.out.println("-----------------------");
+        System.out.println("TRAINING");
 
         List<List<Float>> featuresPerDoc = getFeatureScores("brown cow");
         int numFeatures = featuresPerDoc.get(0).size();
@@ -161,6 +170,8 @@ public class LtrQueryTest extends LuceneTestCase {
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
 
         // Ok now lets rerun that as a Lucene Query
+        System.out.println("-----------------------");
+        System.out.println("QUERYING");
         List<Query> features = Arrays.asList(getFeatures("brown cow"));
         LtrQuery ltrQuery = new LtrQuery(features, ranker);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
@@ -174,7 +185,7 @@ public class LtrQueryTest extends LuceneTestCase {
             float queryScore = scoreDoc.score;
             System.out.printf("Doc Id %d f1 %f f2 %f\n", docId, featuresPerDoc.get(docId).get(0),  featuresPerDoc.get(docId).get(1));
             System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
-            //assertEquals(modelScore, queryScore, 0.01);
+            assertEquals(modelScore, queryScore, 0.01);
         }
         System.out.println("DONE");
 
@@ -186,6 +197,8 @@ public class LtrQueryTest extends LuceneTestCase {
         indexReaderUnderTest.close();
         indexWriterUnderTest.close();
         dirUnderTest.close();
+        // Ranklib's singleton instance
+        MyThreadPool.getInstance().shutdown();
     }
 
 
