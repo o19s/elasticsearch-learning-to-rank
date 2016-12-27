@@ -166,8 +166,7 @@ public class LtrQueryTest extends LuceneTestCase {
         float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
 
-        float[] scoresAgain = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
-                (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
+
 
         // Ok now lets rerun that as a Lucene Query
         System.out.println("-----------------------");
@@ -187,7 +186,32 @@ public class LtrQueryTest extends LuceneTestCase {
             System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
             assertEquals(modelScore, queryScore, 0.01);
         }
-        System.out.println("DONE");
+
+        // Try again with a model serialized
+
+        String modelAsStr = ranker.model();
+        RankerFactory rankerFactory = new RankerFactory();
+        Ranker rankerAgain = rankerFactory.loadRankerFromString(modelAsStr);
+        float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
+                (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
+
+        System.out.println("-----------------------");
+        System.out.println("QUERYING");
+        features = Arrays.asList(getFeatures("brown cow"));
+        ltrQuery = new LtrQuery(features, rankerAgain);
+        topDocs = searcherUnderTest.search(ltrQuery, 10);
+        scoreDocs = topDocs.scoreDocs;
+        assert(scoreDocs.length == docs.length);
+        for (ScoreDoc scoreDoc: scoreDocs) {
+            Document d = searcherUnderTest.doc(scoreDoc.doc);
+            String idVal = d.get("id");
+            int docId = Integer.decode(idVal);
+            float modelScore = scoresAgain[docId];
+            float queryScore = scoreDoc.score;
+            System.out.printf("Doc Id %d f1 %f f2 %f\n", docId, featuresPerDoc.get(docId).get(0),  featuresPerDoc.get(docId).get(1));
+            System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
+            assertEquals(modelScore, queryScore, 0.01);
+        }
 
     }
 
