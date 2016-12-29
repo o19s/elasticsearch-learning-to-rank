@@ -31,7 +31,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 import java.io.IOException;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
-    public static final String NAME = "dummy";
+    public static final String NAME = "ltr";
 
     public LtrQueryBuilder() {
     }

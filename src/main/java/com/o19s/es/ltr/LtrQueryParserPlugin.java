@@ -23,47 +23,31 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Weight;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.SearchPlugin;
 
+
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin {
+    @Override
+    public List<QuerySpec<?>> getQueries() {
+        QueryParser<LtrQueryBuilder> qp = new QueryParser<LtrQueryBuilder>() {
+            @Override
+            public Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
+                Optional<LtrQueryBuilder> opt;
+                return Optional.of(LtrQueryBuilder.fromXContent(parseContext));
 
-//    @Override
-//    public List<QuerySpec<?>> getQueries() {
-//        return singletonList(new QuerySpec<>(DummyQueryBuilder.NAME, DummyQueryBuilder::new, DummyQueryBuilder::fromXContent));
-//    }
-//
-//    public static class DummyQuery extends Query {
-//        public final boolean isFilter;
-//        private final Query matchAllDocsQuery = new MatchAllDocsQuery();
-//
-//        public DummyQuery(boolean isFilter) {
-//            this.isFilter = isFilter;
-//        }
-//
-//        @Override
-//        public String toString(String field) {
-//            return getClass().getSimpleName();
-//        }
-//
-//        @Override
-//        public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-//            return matchAllDocsQuery.createWeight(searcher, needsScores);
-//        }
-//
-//        @Override
-//        public boolean equals(Object obj) {
-//            return sameClassAs(obj);
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return classHash();
-//        }
-//    }
+            }
+        };
+        return singletonList(new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, qp));
+    }
+
 }
