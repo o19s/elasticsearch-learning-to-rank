@@ -16,6 +16,13 @@ import java.util.Map;
 
 /**
  * Created by doug on 12/30/16.
+ * The ranklib models are treated like scripts in that they
+ * can be run inline, cached, or stored in files
+ * However, we don't use the script query because we need to execute
+ * many underlying queries.
+ *
+ * So this code acts as a hook for deserializing Ranklib models from ranklib XML
+ * and as a convenient means for caching those deserialized model
  */
 public class RankLibScriptEngine extends AbstractComponent implements ScriptEngineService {
 
@@ -26,7 +33,7 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     public RankLibScriptEngine(Settings settings) {
         super(settings);
-        rankerFactory = new CachingRankerFactory();
+        rankerFactory = new RankerFactory();
     }
 
 
