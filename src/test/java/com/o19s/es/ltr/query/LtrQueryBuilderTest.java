@@ -6,6 +6,7 @@ import com.o19s.es.ltr.query.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
@@ -82,6 +83,15 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
                                 "   } " +
                                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+    }
+    @Override
+    protected boolean builderGeneratesCacheableQueries() {
+        return false;
+    }
+
+    @Override
+    protected boolean isCachable(LtrQueryBuilder queryBuilder) {
+        return false;
     }
 
     @Override
