@@ -15,7 +15,7 @@
  *
  */
 
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;

@@ -1,4 +1,4 @@
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.Ranker;
 import org.apache.lucene.index.LeafReaderContext;

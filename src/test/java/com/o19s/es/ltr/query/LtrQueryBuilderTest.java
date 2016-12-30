@@ -1,13 +1,13 @@
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.query.LtrQuery;
+import com.o19s.es.ltr.query.LtrQueryBuilder;
+import com.o19s.es.ltr.query.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -26,11 +26,13 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
         return Collections.singletonList(LtrQueryParserPlugin.class);
     }
 
+    static String rankLibModel = "foo";
+
     @Test
     public void testQueryParsing() throws IOException {
         String ltrQuery =       "{  " +
                                 "   \"ltr\": {" +
-                                "      \"model\": \"\",        " +
+                                "      \"model\": \"apple\",        " +
                                 "      \"features\": [        " +
                                 "         {\"match\": {         " +
                                 "            \"foo\": \"bar\"     " +
@@ -41,7 +43,7 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
                                 "      ]                      " +
                                 "   } " +
                                 "}";
-        parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+        LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
     }
 
 

@@ -1,14 +1,15 @@
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.*;
 import ciir.umass.edu.metric.NDCGScorer;
 import ciir.umass.edu.utilities.MyThreadPool;
+import com.o19s.es.ltr.query.DenseProgramaticDataPoint;
+import com.o19s.es.ltr.query.LtrQuery;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
@@ -16,7 +17,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.util.TestRuleLimitSysouts;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.utilities.RankLibError;

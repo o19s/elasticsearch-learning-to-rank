@@ -1,4 +1,4 @@
-package com.o19s.es.ltr;
+package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.Ranker;
@@ -6,7 +6,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.similarities.Similarity;
 
 import java.io.IOException;
 import java.util.List;
