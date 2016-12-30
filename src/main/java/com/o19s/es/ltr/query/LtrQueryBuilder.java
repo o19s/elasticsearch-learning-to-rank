@@ -21,6 +21,7 @@ package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -43,21 +44,26 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     Ranker _rankLibModel;
     List<QueryBuilder> _features;
-
-    public LtrQueryBuilder(Ranker rankLibModel) {
-        _rankLibModel = rankLibModel;
-    }
+    String initialModel = null;
 
     public LtrQueryBuilder() {
     }
 
     public LtrQueryBuilder(StreamInput in) throws IOException {
         super(in);
+        RankerFactory rf = new RankerFactory();
+
+        _features = new ArrayList<QueryBuilder>();
+        _features.addAll(readQueries(in));
+        _rankLibModel = rf.loadRankerFromString(in.readString());
+
     }
 
     @Override
     protected void doWriteTo(StreamOutput out) throws IOException {
         // only the superclass has state
+        writeQueries(out, _features);
+        out.writeString(_rankLibModel.model());
     }
 
     @Override
@@ -65,7 +71,8 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         builder.startObject(NAME).endObject();
     }
 
-    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext, Map<String, Ranker> rankers) throws IOException {
+
+    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext, RankerFactory rankerFactory) throws IOException {
         XContentParser parser = parseContext.parser();
 
         Ranker ranker = null;
@@ -78,11 +85,13 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         String currentFieldName = null;
         XContentParser.Token token = parseContext.parser().nextToken();
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            if (token == XContentParser.Token.VALUE_STRING) {
+                if (parser.currentName() == "model") {
+                    ranker = rankerFactory.loadRankerFromString(parser.text());
+                }
+            }
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
-            }
-            else if (currentFieldName == "model") {
-                ranker = rankers.get(parser.text());
             }
             else if (token == XContentParser.Token.START_ARRAY) {
                 while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
@@ -107,8 +116,14 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        //return new LtrQuery();
-        return null;
+        if (_features == null || _rankLibModel == null) {
+            return new MatchAllDocsQuery();
+        }
+        List<Query> asLQueries = new ArrayList<Query>();
+        for (QueryBuilder query : _features) {
+            asLQueries.add(query.toQuery(context));
+        }
+        return new LtrQuery(asLQueries, _rankLibModel);
     }
 
     @Override
@@ -139,5 +154,6 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         _features = features;
         return this;
     }
+
 
 }

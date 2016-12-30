@@ -212,7 +212,6 @@ public class LtrQueryTest extends LuceneTestCase {
             System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
             assertEquals(modelScore, queryScore, 0.01);
         }
-
     }
 
 

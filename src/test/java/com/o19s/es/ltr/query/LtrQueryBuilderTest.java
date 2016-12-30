@@ -26,13 +26,48 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
         return Collections.singletonList(LtrQueryParserPlugin.class);
     }
 
-    static String rankLibModel = "foo";
+    static String simpleModel = "## LambdaMART\\n" +
+            "## name:foo\\n" +
+            "## No. of trees = 1\\n" +
+            "## No. of leaves = 10\\n" +
+            "## No. of threshold candidates = 256\\n" +
+            "## Learning rate = 0.1\\n" +
+            "## Stop early = 100\\n" +
+            "\\n" +
+            "<ensemble>\\n" +
+            " <tree id=\\\"1\\\" weight=\\\"0.1\\\">\\n" +
+            "  <split>\\n" +
+            "   <feature> 1 </feature>\\n" +
+            "   <threshold> 0.45867884 </threshold>\\n" +
+            "   <split pos=\\\"left\\\">\\n" +
+            "    <feature> 1 </feature>\\n" +
+            "    <threshold> 0.0 </threshold>\\n" +
+            "    <split pos=\\\"left\\\">\\n" +
+            "     <output> -2.0 </output>\\n" +
+            "    </split>\\n" +
+            "    <split pos=\\\"right\\\">\\n" +
+            "     <output> -1.3413081169128418 </output>\\n" +
+            "    </split>\\n" +
+            "   </split>\\n" +
+            "   <split pos=\\\"right\\\">\\n" +
+            "    <feature> 1 </feature>\\n" +
+            "    <threshold> 0.6115718 </threshold>\\n" +
+            "    <split pos=\\\"left\\\">\\n" +
+            "     <output> 0.3089442849159241 </output>\\n" +
+            "    </split>\\n" +
+            "    <split pos=\\\"right\\\">\\n" +
+            "     <output> 2.0 </output>\\n" +
+            "    </split>\\n" +
+            "   </split>\\n" +
+            "  </split>\\n" +
+            " </tree>\\n" +
+            "</ensemble>";
 
     @Test
-    public void testQueryParsing() throws IOException {
+    public void testCachedQueryParsing() throws IOException {
         String ltrQuery =       "{  " +
                                 "   \"ltr\": {" +
-                                "      \"model\": \"apple\",        " +
+                                "      \"model\": \"" + simpleModel + "\",        " +
                                 "      \"features\": [        " +
                                 "         {\"match\": {         " +
                                 "            \"foo\": \"bar\"     " +
@@ -44,12 +79,52 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
                                 "   } " +
                                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+        assert(queryBuilder.ranker() != null);
+        assert(queryBuilder.ranker().name() == "LambdaMART");
+
+        String cacheModel =  "## LambdaMART\\n" +
+                             "## name:foo\\n";
+        ltrQuery =       "{  " +
+                "   \"ltr\": {" +
+                "      \"model\": \"" + cacheModel + "\",        " +
+                "      \"features\": [        " +
+                "         {\"match\": {         " +
+                "            \"foo\": \"bar\"     " +
+                "         }},                   " +
+                "         {\"match\": {         " +
+                "            \"baz\": \"sham\"     " +
+                "         }}                   " +
+                "      ]                      " +
+                "   } " +
+                "}";
+        queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+        assert(queryBuilder.ranker() != null);
+        assert(queryBuilder.ranker().name() == "LambdaMART");
     }
 
 
     @Override
     protected LtrQueryBuilder doCreateTestQueryBuilder() {
-        return new LtrQueryBuilder();
+        String ltrQuery =       "{  " +
+                "   \"ltr\": {" +
+                "      \"model\": \"" + simpleModel + "\",        " +
+                "      \"features\": [        " +
+                "         {\"match\": {         " +
+                "            \"foo\": \"bar\"     " +
+                "         }},                   " +
+                "         {\"match\": {         " +
+                "            \"baz\": \"sham\"     " +
+                "         }}                   " +
+                "      ]                      " +
+                "   } " +
+                "}";
+        LtrQueryBuilder queryBuilder = null;
+        try {
+            queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return queryBuilder;
     }
 
     @Override
