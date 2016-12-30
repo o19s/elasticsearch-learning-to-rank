@@ -72,9 +72,24 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject(NAME).endObject();
+        builder.startObject(NAME);
+        printBoostAndQueryName(builder);
+        doXArrayContent("features", this._features, builder, params);
+        builder.field("model", _rankLibScript);
+        builder.endObject();
     }
 
+    private static void doXArrayContent(String field, List<QueryBuilder> clauses, XContentBuilder builder, Params params)
+            throws IOException {
+        if (clauses.isEmpty()) {
+            return;
+        }
+        builder.startArray(field);
+        for (QueryBuilder clause : clauses) {
+            clause.toXContent(builder, params);
+        }
+        builder.endArray();
+    }
 
     public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
         XContentParser parser = parseContext.parser();
@@ -93,10 +108,17 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             if (token == XContentParser.Token.VALUE_STRING) {
                 if (parser.currentName() == "model") {
                     rankLibScript = Script.parse(parser, parseContext.getParseFieldMatcher(), "ranklib");
+                } else if (parser.currentName() == "_name") {
+                    queryName = parser.text();
                 }
             }
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
+                if (currentFieldName != "model" && currentFieldName != "features" && currentFieldName != "_name"
+                        && currentFieldName != "boost") {
+                    throw new ParsingException(parser.getTokenLocation(),
+                            "[ltr] does not regocnize parameter: " + currentFieldName);
+                }
             }
             else if (token == XContentParser.Token.START_ARRAY) {
                 while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
