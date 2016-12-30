@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
@@ -144,7 +145,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         }
         assert token == XContentParser.Token.END_OBJECT;
         LtrQueryBuilder rVal = new LtrQueryBuilder();
-        rVal.queryName(queryName).features(features).rankerScript(rankLibScript);
+        rVal.queryName(queryName).features(features).rankerScript(rankLibScript).boost(boost);
         return rVal;
     }
 
@@ -166,12 +167,13 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     @Override
     protected int doHashCode() {
-        return 0;
+        return Objects.hash(_rankLibScript, _features);
     }
 
     @Override
     protected boolean doEquals(LtrQueryBuilder other) {
-        return true;
+        return Objects.equals(_rankLibScript, other._rankLibScript) &&
+                Objects.equals(_features, other._features);
     }
 
     @Override
