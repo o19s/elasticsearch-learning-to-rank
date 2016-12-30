@@ -33,6 +33,9 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +45,7 @@ import java.util.Map;
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
 
-    Ranker _rankLibModel;
+    Script _rankLibScript;
     List<QueryBuilder> _features;
     String initialModel = null;
 
@@ -55,7 +58,8 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
         _features = new ArrayList<QueryBuilder>();
         _features.addAll(readQueries(in));
-        _rankLibModel = rf.loadRankerFromString(in.readString());
+        _rankLibScript = new Script(in);
+
 
     }
 
@@ -63,7 +67,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     protected void doWriteTo(StreamOutput out) throws IOException {
         // only the superclass has state
         writeQueries(out, _features);
-        out.writeString(_rankLibModel.model());
+        _rankLibScript.writeTo(out);
     }
 
     @Override
@@ -72,10 +76,11 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     }
 
 
-    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext, RankerFactory rankerFactory) throws IOException {
+    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
         XContentParser parser = parseContext.parser();
 
-        Ranker ranker = null;
+        Script rankLibScript = null;
+
         final List<QueryBuilder> features = new ArrayList<>();
 
         String queryName = null;
@@ -87,7 +92,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.VALUE_STRING) {
                 if (parser.currentName() == "model") {
-                    ranker = rankerFactory.loadRankerFromString(parser.text());
+                    rankLibScript = Script.parse(parser, parseContext.getParseFieldMatcher(), "ranklib");
                 }
             }
             if (token == XContentParser.Token.FIELD_NAME) {
@@ -104,26 +109,30 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             }
         }
 
-        if (ranker == null) {
+        if (rankLibScript == null) {
             throw new ParsingException(parser.getTokenLocation(),
                     "[ltr] query requires a model, none specified");
         }
         assert token == XContentParser.Token.END_OBJECT;
         LtrQueryBuilder rVal = new LtrQueryBuilder();
-        rVal.queryName(queryName).features(features).ranker(ranker);
+        rVal.queryName(queryName).features(features).rankerScript(rankLibScript);
         return rVal;
     }
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        if (_features == null || _rankLibModel == null) {
+        if (_features == null || _rankLibScript == null) {
             return new MatchAllDocsQuery();
         }
         List<Query> asLQueries = new ArrayList<Query>();
         for (QueryBuilder query : _features) {
             asLQueries.add(query.toQuery(context));
         }
-        return new LtrQuery(asLQueries, _rankLibModel);
+        // pull model out of script
+        RankLibScriptEngine.RankLibExecutableScript rankerScript =
+                (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
+
+        return new LtrQuery(asLQueries, (Ranker)rankerScript.run());
     }
 
     @Override
@@ -141,11 +150,11 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         return NAME;
     }
 
-    public final Ranker ranker() {
-        return _rankLibModel;
+    public final Script rankerScript() {
+        return _rankLibScript;
     }
-    public final LtrQueryBuilder ranker(Ranker rankLibModel) {
-         _rankLibModel = rankLibModel;
+    public final LtrQueryBuilder rankerScript(Script rankLibModel) {
+         _rankLibScript = rankLibModel;
          return this;
     }
 

@@ -5,6 +5,7 @@ import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
@@ -65,6 +66,8 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
 
     @Test
     public void testCachedQueryParsing() throws IOException {
+        String scriptSpec = "{\"script\" : {\"inline\": \"simpleModel\"}}";
+
         String ltrQuery =       "{  " +
                                 "   \"ltr\": {" +
                                 "      \"model\": \"" + simpleModel + "\",        " +
@@ -79,32 +82,12 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
                                 "   } " +
                                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
-        assert(queryBuilder.ranker() != null);
-        assert(queryBuilder.ranker().name() == "LambdaMART");
-
-        String cacheModel =  "## LambdaMART\\n" +
-                             "## name:foo\\n";
-        ltrQuery =       "{  " +
-                "   \"ltr\": {" +
-                "      \"model\": \"" + cacheModel + "\",        " +
-                "      \"features\": [        " +
-                "         {\"match\": {         " +
-                "            \"foo\": \"bar\"     " +
-                "         }},                   " +
-                "         {\"match\": {         " +
-                "            \"baz\": \"sham\"     " +
-                "         }}                   " +
-                "      ]                      " +
-                "   } " +
-                "}";
-        queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
-        assert(queryBuilder.ranker() != null);
-        assert(queryBuilder.ranker().name() == "LambdaMART");
     }
-
 
     @Override
     protected LtrQueryBuilder doCreateTestQueryBuilder() {
+        String scriptSpec = "{\"script\" : {\"inline\": \"simpleModel\"}}";
+
         String ltrQuery =       "{  " +
                 "   \"ltr\": {" +
                 "      \"model\": \"" + simpleModel + "\",        " +
@@ -126,6 +109,8 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
         }
         return queryBuilder;
     }
+
+
 
     @Override
     protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {

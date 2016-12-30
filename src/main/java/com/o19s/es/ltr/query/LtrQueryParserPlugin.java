@@ -26,7 +26,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
+import org.elasticsearch.script.ScriptEngineService;
 
 
 import java.io.IOException;
@@ -34,12 +36,10 @@ import java.util.*;
 
 import static java.util.Collections.singletonList;
 
-public class LtrQueryParserPlugin extends Plugin implements SearchPlugin {
-
-    CachingRankerFactory rankerFactory;
+public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin {
 
     public LtrQueryParserPlugin() {
-        rankerFactory = new CachingRankerFactory();
+
     }
 
     @Override
@@ -48,11 +48,19 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin {
             @Override
             public Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
                 Optional<LtrQueryBuilder> opt;
-                return Optional.of(LtrQueryBuilder.fromXContent(parseContext, rankerFactory));
+                return Optional.of(LtrQueryBuilder.fromXContent(parseContext));
 
             }
         };
         return singletonList(new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, qp));
+    }
+
+    @Override
+    /**
+     * Returns a {@link ScriptEngineService} instance or <code>null</code> if this plugin doesn't add a new script engine
+     */
+    public ScriptEngineService getScriptEngineService(Settings settings) {
+        return new RankLibScriptEngine(settings);
     }
 
 }
