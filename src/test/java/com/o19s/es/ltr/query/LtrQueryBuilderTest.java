@@ -66,11 +66,11 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
 
     @Test
     public void testCachedQueryParsing() throws IOException {
-        String scriptSpec = "{\"script\" : {\"inline\": \"simpleModel\"}}";
+        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
 
         String ltrQuery =       "{  " +
                                 "   \"ltr\": {" +
-                                "      \"model\": \"" + simpleModel + "\",        " +
+                                "      \"model\": " + scriptSpec + ",        " +
                                 "      \"features\": [        " +
                                 "         {\"match\": {         " +
                                 "            \"foo\": \"bar\"     " +
@@ -86,11 +86,11 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
 
     @Override
     protected LtrQueryBuilder doCreateTestQueryBuilder() {
-        String scriptSpec = "{\"script\" : {\"inline\": \"simpleModel\"}}";
+        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
 
         String ltrQuery =       "{  " +
                 "   \"ltr\": {" +
-                "      \"model\": \"" + simpleModel + "\",        " +
+                "      \"model\": " + scriptSpec + "," +
                 "      \"features\": [        " +
                 "         {\"match\": {         " +
                 "            \"foo\": \"bar\"     " +

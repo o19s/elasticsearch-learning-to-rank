@@ -23,6 +23,7 @@ import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -99,25 +100,23 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         final List<QueryBuilder> features = new ArrayList<>();
 
         String queryName = null;
-
-
         float boost = AbstractQueryBuilder.DEFAULT_BOOST;
+
+
         String currentFieldName = null;
-        XContentParser.Token token = parseContext.parser().nextToken();
+        XContentParser.Token token = null;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.VALUE_STRING) {
-                if (parser.currentName() == "model") {
-                    rankLibScript = Script.parse(parser, parseContext.getParseFieldMatcher(), "ranklib");
-                } else if (parser.currentName() == "_name") {
-                    queryName = parser.text();
-                }
-            }
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
-                if (currentFieldName != "model" && currentFieldName != "features" && currentFieldName != "_name"
-                        && currentFieldName != "boost") {
+                if (!currentFieldName.equals("model") && !currentFieldName.equals("features") && !currentFieldName.equals("_name")
+                        && !currentFieldName.equals("boost")) {
                     throw new ParsingException(parser.getTokenLocation(),
                             "[ltr] does not regocnize parameter: " + currentFieldName);
+                }
+            }
+            else if (token == XContentParser.Token.START_OBJECT) {
+                if (currentFieldName.equals("model")) {
+                    rankLibScript = Script.parse(parser, parseContext.getParseFieldMatcher(), "ranklib");
                 }
             }
             else if (token == XContentParser.Token.START_ARRAY) {
@@ -127,6 +126,14 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
                             features.add(parseContext.parseInnerQueryBuilder().get());
                         }
                     }
+                }
+            } else if (token.isValue()) {
+                if (parseContext.getParseFieldMatcher().match(currentFieldName, AbstractQueryBuilder.NAME_FIELD)) {
+                    queryName = parser.text();
+                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, AbstractQueryBuilder.BOOST_FIELD)) {
+                    boost = parser.floatValue();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "[ltr] query does not support [" + currentFieldName + "]");
                 }
             }
         }
