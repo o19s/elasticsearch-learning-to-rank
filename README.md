@@ -33,7 +33,7 @@ Here's an example data set taken from Ranklib's documentation:
 1 qid:3 1:0 2:1 3:1 4:0.5 5:0 # 3D
 ```
 
-The details of how you arive at judgments for a given document/query pair are very application dependent and are left to you. [Quepid](http://quepid.com) can be used to manually gather judgments from experts. Others gather judgments from analytics data such as clicks or conversions. There's a lot of art/scince that goes into evaluating user behavior and gathering surveys.
+The details of how you arive at judgments for a given document/query pair are very application dependent and are left to you. [Quepid](http://quepid.com) can be used to manually gather judgments from experts. Others gather judgments from analytics data such as clicks or conversions. There's a lot of art/science that goes into evaluating user behavior and gathering surveys.
 
 
 ## Learning to Rank with Elasticsearch
@@ -207,7 +207,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 
 ## Acknowledgements
 - Bloomberg's [Learning to Rank work for Solr](https://issues.apache.org/jira/browse/SOLR-8542)
-- Developed by the [Search Relevance](http://opensourceconnections/services/relevancy) team at [OpenSource Connections](http://opensourceconnections.com)
+- Developed by the [Search Relevance](http://opensourceconnections.com/services/relevancy) team at [OpenSource Connections](http://opensourceconnections.com)
 - Also check out our other thingies: book [Relevant Search](http://manning.com/books/relevant-search), projects [Elyzer](http://github.com/o19s/elyzer), [Splainer](http://splainer.io), and [Quepid](http://quepid.com)
 
 
