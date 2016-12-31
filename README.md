@@ -1,8 +1,8 @@
 # Elasticsearch Learning to Rank Query Plugin
 
-**Active Development! Probably not ready for prime time unless you expect to fix bugs -- [Get in touch to help](mailto:dturnbull@opensourceconnections.com)**
+**Active Development! Not quite ready for prime time -- [Get in touch to help](mailto:dturnbull@opensourceconnections.com)**
 
-A query for performing learning to rank in Elasticsearch using [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/) models. 
+This plugin marries the power of the Elasticsearch Query DSL with Ranklib, a popular learning to rank framework. It includes a scripting service for ranklib models & query for learning to rank in Elasticsearch using [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). 
 
 ## Installation
 
@@ -12,7 +12,9 @@ Currently, this alpha release supports Elasticsearch 5.1. To install:
 
 # Building a Learning to Rank System with Elasticsearch
 
-Ranklib models trained offline using Query DSL queries as features. Generated models are sent to ES as a special 'ranklib' script. The script is refered to in the LTR query. LTR queries are expected to be used in a rescore context for anything but the smallest collections.
+This section discusses how this plugin fits into build a learning to rank search system on Elasticsearch.
+
+Learning to Rank uses machine learning models to get better search relevance. One prominent library for doing learning to rank is [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/)
 
 ## Background
 
@@ -39,7 +41,7 @@ Here's an example data set taken from Ranklib's documentation:
 1 qid:3 1:0 2:1 3:1 4:0.5 5:0 # 3D
 ```
 
-The details of how you arive at judgments for a given document/query pair are very application dependent and are left to you. [Quepid](http://quepid.com) can be used to manually gather judgments from experts. Others gather judgments from analytics data such as clicks or conversions. There's a lot of art/science that goes into evaluating user behavior and gathering surveys.
+The details of how you arive at judgments for a given document/query pair are very application dependent and are left to you. [Quepid](http://quepid.com) can be used to manually gather judgments from experts. Others gather judgments from analytics data such as clicks or conversions. There's a lot of art/science that goes into evaluating user behavior and gathering surveys. (Honestly this step will either make or break your learning to rank solution -- [see here](http://opensourceconnections.com/blog/2014/10/08/when-click-scoring-can-hurt-search-relevance-a-roadmap-to-better-signals-processing-in-search/))
 
 
 ## Learning to Rank with Elasticsearch
@@ -74,7 +76,7 @@ Or another promising feature might be a title phrase match, perhaps ignoring the
 }
 ```
 
-Along with gathering judgments, you can log the relevance scores of these query-dependent features. Perhaps by issuing bulk queries using the `_msearch` endpoint, filtering down to the documents you have judgements for. Taking these scores, you perhaps arrive at:
+Along with gathering judgments, you can log the relevance scores of these query-dependent features. Perhaps by issuing bulk queries using the `_msearch` endpoint, filtering down to the documents you have judgements for. Taking these  relevance scores, you perhaps arrive at:
 
 
 ```
@@ -83,7 +85,9 @@ Along with gathering judgments, you can log the relevance scores of these query-
 ...
 ```
 
-Currently, you're in charge of gathering these feature values, logging them (maybe in ES itself), and training Ranklib models externally. Future iterations of this may automatically log query scores to an Elasticsearch index -- but you must provide the judgements.
+where each feature is a relevance score for a Query DSL query.
+
+Currently, you're in charge of gathering these feature values, logging them (maybe in ES itself), and training Ranklib models externally. Future iterations of this may automatically log query scores to an Elasticsearch index -- but you would still need to provide the judgements.
 
 
 ## Training the Model
