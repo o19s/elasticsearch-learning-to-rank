@@ -206,7 +206,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 - Test test test!
 
 ## Acknowledgements
-- Bloomberg's Learning to Rank work
+- Bloomberg's [Learning to Rank work for Solr](https://issues.apache.org/jira/browse/SOLR-8542)
 - Developed by the [Search Relevance](http://opensourceconnections/services/relevancy) team at [OpenSource Connections](http://opensourceconnections.com)
 - Also check out our other thingies: book [Relevant Search](http://manning.com/books/relevant-search), projects [Elyzer](http://github.com/o19s/elyzer), [Splainer](http://splainer.io), and [Quepid](http://quepid.com)
 
