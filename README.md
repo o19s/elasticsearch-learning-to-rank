@@ -1,4 +1,4 @@
-# Elasticsearch Learning to Rank Query Plugin
+# Elasticsearch Learning to Rank Plugin
 
 **Active Development! Not quite ready for prime time -- [Get in touch to help](mailto:dturnbull@opensourceconnections.com)**
 
