@@ -40,7 +40,7 @@ The details of how you arive at judgments for a given document/query pair are ve
 
 How can we integrate what Ranklib does with Elasticsearch?
 
-Bloomberg's Solr l2r plugin uses Solr's Query DSL as query-dependent features (what [Relevant Search](http://manning.com/books/relevant-search) calls signals). Elasticsearch's Query DSL can serve a similar function. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title score:
+Bloomberg's [Solr learning to rank](https://issues.apache.org/jira/browse/SOLR-8542) plugin uses Solr's Query DSL as query-dependent features (what [Relevant Search](http://manning.com/books/relevant-search) calls signals). Elasticsearch's Query DSL can serve a similar function. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title score:
 
 ```json
 {
