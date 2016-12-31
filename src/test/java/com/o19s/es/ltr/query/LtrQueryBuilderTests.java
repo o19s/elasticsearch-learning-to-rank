@@ -1,3 +1,19 @@
+/*
+ * Copyright [2016] Doug Turnbull
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.query.LtrQuery;
@@ -22,7 +38,7 @@ import java.util.Collections;
 /**
  * Created by doug on 12/27/16.
  */
-public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> {
+public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder> {
 
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Collections.singletonList(LtrQueryParserPlugin.class);
@@ -65,7 +81,6 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
             " </tree>\\n" +
             "</ensemble>";
 
-    @Test
     public void testCachedQueryParsing() throws IOException {
         String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
 
@@ -115,7 +130,7 @@ public class LtrQueryBuilderTest extends AbstractQueryTestCase<LtrQueryBuilder> 
         try {
             queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
         return queryBuilder;
     }

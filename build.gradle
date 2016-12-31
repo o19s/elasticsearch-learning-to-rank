@@ -1,3 +1,4 @@
+
 buildscript {
   repositories {
     mavenCentral()
@@ -19,8 +20,8 @@ apply plugin: 'idea'
 
 esplugin {
   name 'ltr-query'
-  description 'Ingest processor that is doing something awesome'
-  classname 'org.elasticsearch.plugin.ingest.awesome.IngestAwesomePlugin'
+  description 'Learing to Rank Query w/ Ranklib Scripting'
+  classname 'com.o19s.es.ltr.query.LtrQueryParserPlugin'
 }
 
 // In this section you declare the dependencies for your production and test code

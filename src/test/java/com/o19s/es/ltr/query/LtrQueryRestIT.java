@@ -1,5 +1,5 @@
 /*
- * Copyright [2016] [YOUR REAL NAME]
+ * Copyright [2016] Doug Turnbull
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 package com.o19s.es.ltr.query;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
@@ -25,9 +24,12 @@ import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
 
 import java.io.IOException;
 
-public class AwesomeRestIT extends ESClientYamlSuiteTestCase {
+/**
+ * Created by doug on 12/30/16.
+ */
+public class LtrQueryRestIT extends ESClientYamlSuiteTestCase {
 
-    public AwesomeRestIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    public LtrQueryRestIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

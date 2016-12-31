@@ -1,6 +1,27 @@
+/*
+ * Copyright [2016] Doug Turnbull
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.*;
+import ciir.umass.edu.learning.DataPoint;
+import ciir.umass.edu.learning.RANKER_TYPE;
+import ciir.umass.edu.learning.RankList;
+import ciir.umass.edu.learning.Ranker;
+import ciir.umass.edu.learning.RankerFactory;
+import ciir.umass.edu.learning.RankerTrainer;
 import ciir.umass.edu.metric.NDCGScorer;
 import ciir.umass.edu.utilities.MyThreadPool;
 import com.o19s.es.ltr.query.DenseProgramaticDataPoint;
@@ -9,7 +30,12 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
@@ -30,7 +56,7 @@ import java.util.List;
  * Created by doug on 12/24/16.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "RankURL does this when training models... ")
-public class LtrQueryTest extends LuceneTestCase {
+public class LtrQueryTests extends LuceneTestCase {
 
     Field newField(String name, String value, Store stored) {
         FieldType tagsFieldType = new FieldType();
@@ -137,7 +163,6 @@ public class LtrQueryTest extends LuceneTestCase {
     }
 
 
-    @Test
     public void testTrainModel() throws IOException {
         //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
 
@@ -145,8 +170,6 @@ public class LtrQueryTest extends LuceneTestCase {
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<RankList>();
 
-        System.out.println("-----------------------");
-        System.out.println("TRAINING");
 
         List<List<Float>> featuresPerDoc = getFeatureScores("brown cow");
         int numFeatures = featuresPerDoc.get(0).size();
@@ -162,15 +185,13 @@ public class LtrQueryTest extends LuceneTestCase {
                                       /*The training data*/ samples,
                                       /*which features to use*/new int[] {1,2}
                                       /*how to score ranking*/, new NDCGScorer());
-        System.out.println("Model Trained");
         float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
 
 
 
         // Ok now lets rerun that as a Lucene Query
-        System.out.println("-----------------------");
-        System.out.println("QUERYING");
+
         List<Query> features = Arrays.asList(getFeatures("brown cow"));
         LtrQuery ltrQuery = new LtrQuery(features, ranker);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
@@ -182,8 +203,7 @@ public class LtrQueryTest extends LuceneTestCase {
             int docId = Integer.decode(idVal);
             float modelScore = scores[docId];
             float queryScore = scoreDoc.score;
-            System.out.printf("Doc Id %d f1 %f f2 %f\n", docId, featuresPerDoc.get(docId).get(0),  featuresPerDoc.get(docId).get(1));
-            System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
+
             assertEquals(modelScore, queryScore, 0.01);
         }
 
@@ -195,8 +215,6 @@ public class LtrQueryTest extends LuceneTestCase {
         float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
                 (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
 
-        System.out.println("-----------------------");
-        System.out.println("QUERYING");
         features = Arrays.asList(getFeatures("brown cow"));
         ltrQuery = new LtrQuery(features, rankerAgain);
         topDocs = searcherUnderTest.search(ltrQuery, 10);
@@ -208,8 +226,6 @@ public class LtrQueryTest extends LuceneTestCase {
             int docId = Integer.decode(idVal);
             float modelScore = scoresAgain[docId];
             float queryScore = scoreDoc.score;
-            System.out.printf("Doc Id %d f1 %f f2 %f\n", docId, featuresPerDoc.get(docId).get(0),  featuresPerDoc.get(docId).get(1));
-            System.out.printf("Doc Id %d: Model Score %f Query Score %f\n", docId, modelScore, queryScore);
             assertEquals(modelScore, queryScore, 0.01);
         }
     }

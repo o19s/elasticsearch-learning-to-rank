@@ -1,4 +1,4 @@
-"ingest-awesome plugin installed":
+"ltr-query plugin installed":
     - do:
         cluster.state: {}
 
@@ -7,5 +7,4 @@
     - do:
         nodes.info: {}
 
-    - match:  { nodes.$master.plugins.0.name: ingest-awesome }
-    - match:  { nodes.$master.ingest.processors.0.type: awesome }
+    - match:  { nodes.$master.plugins.0.name: ltr-query }
