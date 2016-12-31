@@ -4,7 +4,13 @@
 
 A query for performing learning to rank in Elasticsearch using [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/) models. 
 
-## How to use
+## Installation
+
+Currently, this alpha release supports Elasticsearch 5.1. To install:
+
+`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.1-alpha.zip`
+
+# Building a Learning to Rank System with Elasticsearch
 
 Ranklib models trained offline using Query DSL queries as features. Generated models are sent to ES as a special 'ranklib' script. The script is refered to in the LTR query. LTR queries are expected to be used in a rescore context for anything but the smallest collections.
 
