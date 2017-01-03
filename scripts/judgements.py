@@ -1,14 +1,23 @@
 import re
 
-def maybeParseQuery(line):
-    stripped = line[1:].strip()
-    if stripped.startswith('qid:'):
-        qid, keyword = stripped[4:].split(':')
-        return (int(qid), keyword.strip())
-    return (-1, "")
+class Judgment:
+    def __init__(self, grade, qid, keywords, docId):
+        self.grade = grade
+        self.qid = qid
+        self.keywords = keywords
+        self.docId = docId
+
+    def __str__(self):
+        return "grade:%s qid:%s (%s) docid:%s" % (self.grade, self.qid, self.keywords, self.docId)
 
 
-def queriesFromHeader(lines):
+def _queriesFromHeader(lines):
+    """ Parses out mapping between, query id and user keywords
+        from header comments, ie:
+        # qid:523: First Blood
+        returns dict mapping all query ids to search keywords"""
+    # Regex can be debugged here:
+    # http://www.regexpal.com/?fam=96564
     regex = re.compile('#\sqid:(\d+?):\s+?(.*)')
     rVal = {}
     for line in lines:
@@ -20,7 +29,12 @@ def queriesFromHeader(lines):
 
     return rVal
 
-def judgmentsFromBody(lines):
+def _judgmentsFromBody(lines):
+    """ Parses out judgment/grade, query id, and docId in line such as:
+         4  qid:523   # a01  Grade for Rambo for query Foo
+        <judgment> qid:<queryid> # docId <rest of comment ignored...)"""
+    # Regex can be debugged here:
+    # http://www.regexpal.com/?fam=96565
     regex = re.compile('^(\d)\s+qid:(\d+)\s+#\s+(\w+).*')
     for line in lines:
         print(line)
@@ -30,13 +44,15 @@ def judgmentsFromBody(lines):
             yield int(m.group(1)), int(m.group(2)), m.group(3)
 
 
+def judgmentsFromFile(filename):
+    with open(filename) as f:
+        qidToKeywords = _queriesFromHeader(f)
+        for grade, qid, docId in _judgmentsFromBody(f):
+            yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId)
 
 if __name__ == "__main__":
     from sys import argv
-    import pdb; pdb.set_trace()
-    with open(argv[1]) as f:
-        queriesFromHeader(f)
-        for judgment, qid, docId in judgmentsFromBody(f):
-            print(judgment)
+    for judgment in judgmentsFromFile(argv[1]):
+        print(judgment)
 
 
