@@ -46,6 +46,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.Field.Store;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +73,6 @@ public class LtrQueryTests extends LuceneTestCase {
     RandomIndexWriter indexWriterUnderTest;
     IndexReader indexReaderUnderTest;
     Directory dirUnderTest;
-    Ranker ltrModel;
 
     // docs with doc ids array index
     String[] docs = new String[] { "how now brown cow",
@@ -252,6 +252,11 @@ public class LtrQueryTests extends LuceneTestCase {
         indexWriterUnderTest.close();
         dirUnderTest.close();
         // Ranklib's singleton instance
+
+    }
+
+    @AfterClass
+    public static void closeOtherStuff() {
         MyThreadPool.getInstance().shutdown();
     }
 
