@@ -106,7 +106,8 @@ public class LtrQuery extends Query {
         protected LtrWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
             super(LtrQuery.this);
             for (Query feature : _features) {
-                weights.add(searcher.createWeight(feature, needsScores));
+                Query rewritten = feature.rewrite(searcher.getIndexReader());
+                weights.add(searcher.createWeight(rewritten, needsScores));
             }
             this._needsScores = needsScores;
             this._similarity = searcher.getSimilarity(needsScores);
