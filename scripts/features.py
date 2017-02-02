@@ -30,11 +30,20 @@ def kwDocFeatures(es, index, searchType, judgements):
             bulkSearchReq.append(json.dumps(query))
 
         res = es.msearch(body="\n".join(bulkSearchReq))
+        ftrId = 1
         for featureResp in res['responses']:
             featuresByDoc = {}
             for docScored in featureResp['hits']['hits']:
                 print("%s => %s" % (docScored['_id'], docScored['_score']))
                 featuresByDoc[docScored['_id']] = docScored['_score']
+
+            for judgement in judgements:
+                try:
+                    judgement.features.append(featuresByDoc[judgement.docId])
+                except KeyError:
+                    judgement.features.append(0.0)
+
+            ftrId += 1
 
 
 
@@ -45,16 +54,16 @@ def featureQueries(keywords, docIds):
     thisBase = deepcopy(baseQuery)
     thisBase['query']['bool']['filter']['ids']['values'] = docIds
     try:
-        i = 1
+        ftrId = 1
         while True:
-            template = Template(open("%s.json.jinja" % i).read())
+            template = Template(open("%s.json.jinja" % ftrId).read())
             jsonStr = template.render(keywords=keywords)
             parsedJson = json.loads(jsonStr)
             if not 'query' in parsedJson:
-                raise ValueError("%s.json.jinja should be an ES query with root of {\"query..."%i)
+                raise ValueError("%s.json.jinja should be an ES query with root of {\"query..." % ftrId)
             thisBase['query']['bool']['should'] = parsedJson['query']
             yield thisBase
-            i+=1
+            ftrId+=1
     except IOError:
         pass
 
@@ -69,4 +78,7 @@ if __name__ == "__main__":
     es = Elasticsearch()
     judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
+    for qid, judgmentList in judgements.items():
+        for judgment in judgmentList:
+            print("%s,%s,%s" % (judgment.keywords, judgment.docId, judgment.features))
 
