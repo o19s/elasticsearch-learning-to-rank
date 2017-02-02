@@ -21,7 +21,7 @@ def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tm
     es.indices.create(index, body=settings)
 
     def bulkDocs(movieDict):
-        for id, movie in movieDict.iteritems():
+        for id, movie in movieDict.items():
             if 'release_date' in movie and movie['release_date'] == "":
                 del movie['release_date']
             enrich(movie)
