@@ -11,6 +11,11 @@ class Judgment:
     def __str__(self):
         return "grade:%s qid:%s (%s) docid:%s" % (self.grade, self.qid, self.keywords, self.docId)
 
+    def toRanklibFormat(self):
+        featuresAsStrs = ["%s:%s" % (idx+1, feature) for idx, feature in enumerate(self.features)]
+        comment = "# %s\t%s" % (self.docId, self.keywords)
+        return "%s\tqid:%s\t%s %s" % (self.grade, self.qid, "\t".join(featuresAsStrs), comment)
+
 
 def _queriesFromHeader(lines):
     """ Parses out mapping between, query id and user keywords

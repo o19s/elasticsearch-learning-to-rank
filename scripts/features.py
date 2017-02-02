@@ -80,5 +80,5 @@ if __name__ == "__main__":
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
     for qid, judgmentList in judgements.items():
         for judgment in judgmentList:
-            print("%s,%s,%s" % (judgment.keywords, judgment.docId, judgment.features))
+            print(judgment.toRanklibFormat())
 
