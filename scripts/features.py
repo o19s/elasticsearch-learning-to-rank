@@ -68,6 +68,12 @@ def featureQueries(keywords, docIds):
         pass
 
 
+def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
+    with open(filename, 'w') as judgmentFile:
+        for qid, judgmentList in judgmentsWithFeatures.items():
+            for judgment in judgmentList:
+                judgmentFile.write(judgment.toRanklibFormat() + "\n")
+
 
 
 
