@@ -46,19 +46,21 @@ def kwDocFeatures(es, index, searchType, judgements):
             ftrId += 1
 
 
+def formatFeature(ftrId, keywords):
+    from jinja2 import Template
+    template = Template(open("%s.json.jinja" % ftrId).read())
+    jsonStr = template.render(keywords=keywords)
+    return json.loads(jsonStr)
 
 
 def featureQueries(keywords, docIds):
-    from jinja2 import Template
     from copy import deepcopy
     thisBase = deepcopy(baseQuery)
     thisBase['query']['bool']['filter']['ids']['values'] = docIds
     try:
         ftrId = 1
         while True:
-            template = Template(open("%s.json.jinja" % ftrId).read())
-            jsonStr = template.render(keywords=keywords)
-            parsedJson = json.loads(jsonStr)
+            parsedJson = formatFeature(ftrId, keywords)
             if not 'query' in parsedJson:
                 raise ValueError("%s.json.jinja should be an ES query with root of {\"query..." % ftrId)
             thisBase['query']['bool']['should'] = parsedJson['query']
