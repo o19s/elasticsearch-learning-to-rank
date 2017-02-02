@@ -6,6 +6,7 @@ class Judgment:
         self.qid = qid
         self.keywords = keywords
         self.docId = docId
+        self.features = []
 
     def __str__(self):
         return "grade:%s qid:%s (%s) docid:%s" % (self.grade, self.qid, self.keywords, self.docId)
@@ -49,6 +50,17 @@ def judgmentsFromFile(filename):
         qidToKeywords = _queriesFromHeader(f)
         for grade, qid, docId in _judgmentsFromBody(f):
             yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId)
+
+def judgmentsByQid(judgments):
+    rVal = {}
+    for judgment in judgments:
+        try:
+            rVal[judgment.qid].append(judgment)
+        except KeyError:
+            rVal[judgment.qid] = [judgment]
+    return rVal
+
+
 
 if __name__ == "__main__":
     from sys import argv
