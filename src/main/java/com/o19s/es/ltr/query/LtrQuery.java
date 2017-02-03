@@ -155,6 +155,8 @@ public class LtrQuery extends Query {
                 Scorer subScorer = w.scorer(context);
                 if (subScorer != null) {
                     scorers.add(subScorer);
+                } else {
+                    scorers.add(new NoopScorer(w, context.reader().maxDoc()));
                 }
             }
             if (scorers.isEmpty()) {
