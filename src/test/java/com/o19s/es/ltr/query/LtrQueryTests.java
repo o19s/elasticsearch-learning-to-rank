@@ -246,6 +246,17 @@ public class LtrQueryTests extends LuceneTestCase {
     }
 
 
+    public void testNoMatchQueries() throws IOException {
+        String userQuery = "brown cow";
+
+        Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
+
+        Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
+        List<Query> features = Arrays.asList(new Query[] {new TermQuery(new Term("field",  "missingterm")), blended});
+
+        checkModelWithFeatures(features);
+    }
+
     @After
     public void closeStuff() throws IOException {
         indexReaderUnderTest.close();
