@@ -33,7 +33,7 @@ repositories {
 }
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.1.1'
-  compile 'edu.umass.ciir:RankLib:2.6'
+  compile 'edu.umass.ciir:RankLib:2.10'
   testCompile 'org.elasticsearch.test:framework:5.1.1'
 }
 
