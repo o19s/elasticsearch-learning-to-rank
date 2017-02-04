@@ -47,6 +47,8 @@ dependencyLicenses.enabled = false
 // FIXME thirdparty audit needs to be enabled
 thirdPartyAudit.enabled = false
 
+forbiddenPatterns.exclude("**/*.txt")
+
 // Uncomment this to skip license header checks
 // licenseHeaders.enabled = false
 

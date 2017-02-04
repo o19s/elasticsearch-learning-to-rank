@@ -1,3 +1,19 @@
+/*
+ * Copyright [2016] Doug Turnbull
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.o19s.es.ltr.query;
 
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
@@ -5,6 +21,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -22,13 +39,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static jdk.nashorn.internal.runtime.regexp.joni.Syntax.Java;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 
 /**
@@ -46,7 +66,11 @@ public class LtrRanklibStoredScriptIT extends ESIntegTestCase {
     }
 
     protected String readLargeScript() throws IOException {
-        return new String(Files.readAllBytes(Paths.get("build/resources/test/model.txt")));
+        //Path path = PathUtils.get("build/resources/test/model.txt");
+        Path path = FileSystems.getDefault().getPath("build/resources/test/model.txt");
+        //Path path = PathUtils.getDefaultFileSystem().getPath("build/resources/test/model.txt");
+        System.out.println(path.toAbsolutePath());
+        return new String(Files.readAllBytes(path), "UTF-8");
     }
 
 
