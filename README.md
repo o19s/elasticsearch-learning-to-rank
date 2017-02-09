@@ -157,7 +157,7 @@ Ideally you should use this query in a rescore context, because ltr models can b
 
 ```
 {
-    "query": {...}
+    "query": {/*your base query goes here*/},
     "rescore": {
         "query": {
             "ltr": {
