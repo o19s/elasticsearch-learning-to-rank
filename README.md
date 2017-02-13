@@ -160,7 +160,8 @@ Ideally you should use this query in a rescore context, because ltr models can b
     "query": {/*your base query goes here*/},
     "rescore": {
         "query": {
-            "ltr": {
+           "rescore_query": {
+             "ltr": {
                 "model": {
                     "stored": "dummy"
                 },
@@ -178,6 +179,7 @@ Ideally you should use this query in a rescore context, because ltr models can b
                     }
                 }]
             }
+           }
         }
     }
 }
