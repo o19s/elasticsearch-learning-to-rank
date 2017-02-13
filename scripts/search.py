@@ -2,13 +2,22 @@ from features import formatFeature
 
 baseQuery = {
   "query": {
-    "ltr": {
-            "model": {
-                    "stored": "test" # Model name
-            },
-            "features": []# features]
-    }
-  }
+      "match": {
+          "_all": "test"
+       }
+   },
+  "rescore": {
+      "query": {
+        "rescore_query": {
+            "ltr": {
+                    "model": {
+                        "stored": "test" # Model name
+                    },
+                    "features": []# features]
+            }
+         }
+      }
+   }
 }
 
 def featureQueries(keywords):
@@ -16,11 +25,13 @@ def featureQueries(keywords):
         ftrId = 1
         while True:
             parsedJson = formatFeature(ftrId, keywords)
-            baseQuery['query']['ltr']['features'].append(parsedJson['query'])
+            baseQuery['rescore']['query']['rescore_query']['ltr']['features'].append(parsedJson['query'])
             ftrId += 1
     except IOError:
         pass
-    print("%s" % baseQuery)
+    import json
+    baseQuery['query']['match']['_all'] = keywords
+    print("%s" % json.dumps(baseQuery))
     return baseQuery
 
 
@@ -32,5 +43,5 @@ if __name__ == "__main__":
     search = featureQueries(argv[1])
     results = es.search(index='tmdb', doc_type='movie', body=search)
     for result in results['hits']['hits']:
-             print(result)
+             print(result['_source']['title'])
 
