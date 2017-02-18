@@ -4,9 +4,15 @@ This plugin marries the power of the Elasticsearch Query DSL with Ranklib, a pop
 
 ## Installation
 
-Currently, this alpha release supports Elasticsearch 5.1. To install:
+Install the correct version for your ES version
 
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.5.zip`
+## Elasticsearch 5.1. To install:
+
+`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.5-es5.1.0.zip`
+
+## Elasticsearch 5.2 To install:
+
+`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.5-es5.2.0.zip`
 
 # Building a Learning to Rank System with Elasticsearch
 
