@@ -10,7 +10,7 @@ Install the correct version for your Elasticsearch version, replacing \<ES VER\>
 
 ### Increase Max Script Size
 
-Ranklib models are stored using an Elasticsearch script plugin. Ranklib models can be large. So we recommend increasing this setting, ie:
+Ranklib models are stored using an Elasticsearch script plugin. Ranklib models can be large. So we recommend increasing this setting. Don't worry, just because Ranklib models are verbose, doesn't nescesarilly imply they'll be slow.
 
 `script.max_size_in_bytes: 10000000`
 
