@@ -127,9 +127,9 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
                     }
                 }
             } else if (token.isValue()) {
-                if (parseContext.getParseFieldMatcher().match(currentFieldName, AbstractQueryBuilder.NAME_FIELD)) {
+                if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName)) {
                     queryName = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, AbstractQueryBuilder.BOOST_FIELD)) {
+                } else if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName)) {
                     boost = parser.floatValue();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "[ltr] query does not support [" + currentFieldName + "]");
