@@ -209,13 +209,6 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ```
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.0.1-SNAPSHOT.zip
 ```
-
-## TODO
-- LTR Query Needs Explain that list score of each feature during evaluation.
-- Scripts to simplify offline feature logging 
-- Create a full example
-- Test test test!
-
 ## Acknowledgements
 - Bloomberg's [Learning to Rank work for Solr](https://issues.apache.org/jira/browse/SOLR-8542)
 - Developed by the [Search Relevance](http://opensourceconnections.com/services/relevancy) team at [OpenSource Connections](http://opensourceconnections.com)
