@@ -8,6 +8,13 @@ Install the correct version for your Elasticsearch version, replacing \<ES VER\>
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.5-es<ES VER>.zip`
 
+### Increase Max Script Size
+
+Ranklib models are stored using an Elasticsearch script plugin. Ranklib models can be large. So we recommend increasing this setting, ie:
+
+`script.max_size_in_bytes: 10000000`
+
+
 # Building a Learning to Rank System with Elasticsearch
 
 This section discusses how this plugin fits into build a learning to rank search system on Elasticsearch.
