@@ -191,11 +191,11 @@ Viola! Periodically you'll want to retrain your model. Features may change or ju
 
 # Development
 
-### 1. Install [RanklibPlus.jar](https://github.com/o19s/ranklibplus) in your local maven repo manually:
-Download the RankLibPlus jar from the link above and use the following command to install it in your local Maven repo (the quotes around the command arguments will help Maven run without a pom file in the current directory.)
+### 1. Install [RankyMcRankFace.jar](https://github.com/o19s/rankymcrankface) in your local maven repo manually:
+Download the RankyMcRankFace jar from the link above and use the following command to install it in your local Maven repo (the quotes around the command arguments will help Maven run without a pom file in the current directory.)
 
 ```
-mvn install:install-file "-DgroupId=com.o19s" "-DartifactId=RankLibPlus" "-Dversion=0.1" "-Dpackaging=jar" "-Dfile=./RankLibPlus-0.1.0.jar"
+mvn install:install-file "-DgroupId=com.o19s" "-DartifactId=RankyMcRankFace" "-Dversion=0.1" "-Dpackaging=jar" "-Dfile=./RankLibPlus-0.1.0.jar"
 ```
 
 ### 2. Build with Gradle 2.13
@@ -211,12 +211,6 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ```
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.0.1-SNAPSHOT.zip
 ```
-
-## TODO
-- LTR Query Needs Explain that list score of each feature during evaluation.
-- Scripts to simplify offline feature logging 
-- Create a full example
-- Test test test!
 
 ## Acknowledgements
 - Bloomberg's [Learning to Rank work for Solr](https://issues.apache.org/jira/browse/SOLR-8542)

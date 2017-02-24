@@ -33,7 +33,7 @@ repositories {
 }
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.2.1'
-  compile 'com.o19s:RankLibPlus:0.1'
+  compile 'com.o19s:RankyMcRankFace:0.1'
   testCompile 'org.elasticsearch.test:framework:5.2.1'
 }
 

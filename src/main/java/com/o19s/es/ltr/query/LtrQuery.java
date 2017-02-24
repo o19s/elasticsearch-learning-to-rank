@@ -16,6 +16,7 @@
  */
 package com.o19s.es.ltr.query;
 
+import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.learning.Ranker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -61,11 +62,6 @@ public class LtrQuery extends Query {
         return Collections.unmodifiableList(Arrays.asList(_features));
     }
 
-
-    @Override
-    public String toString(String field) {
-        return null;
-    }
 
     @Override
     public boolean equals(Object other) {
@@ -123,7 +119,26 @@ public class LtrQuery extends Query {
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             // TODO
-            return null;
+            List<Explanation> subs = new ArrayList<>();
+
+            DataPoint d = new DenseProgramaticDataPoint(weights.size());
+            int featureIdx = 1;
+            for (Weight weight: weights) {
+                Explanation explain = weight.explain(context, doc);
+                String featureString = "Feature " + Integer.toString(featureIdx) + ":";
+                float featureVal = 0.0f;
+                if (!explain.isMatch()) {
+                    subs.add(Explanation.noMatch(featureString + "(no match, default value 0.0 used)"));
+                }
+                else {
+                    subs.add(Explanation.match(explain.getValue(), featureString, explain));
+                    featureVal = explain.getValue();
+                }
+                d.setFeatureValue(featureIdx, featureVal);
+                featureIdx++;
+            }
+            float modelScore = (float) _rankModel.eval(d);
+            return Explanation.match(modelScore, " Model: " + _rankModel.name() + " using features:", subs);
         }
 
         @Override
@@ -168,34 +183,14 @@ public class LtrQuery extends Query {
         }
     }
 
+    public String toString(String field) {
+        String rVal = "LTR model: " + _rankModel.name() + "(";
+        for (Query query: _features) {
+            rVal += _features.toString();
+        }
+        return rVal + ")";
+    };
 
-
-        /** Prettyprint us.
-         * @param field the field to which we are applied
-         * @return a string that shows what we do, of the form "(disjunct1 | disjunct2 | ... | disjunctn)^boost"
-         */
-    // TODO
-//    @Override
-//    public String toString(String field) {
-//        StringBuilder buffer = new StringBuilder();
-//        buffer.append("(");
-//        for (int i = 0 ; i < disjuncts.length; i++) {
-//            Query subquery = disjuncts[i];
-//            if (subquery instanceof BooleanQuery) {   // wrap sub-bools in parens
-//                buffer.append("(");
-//                buffer.append(subquery.toString(field));
-//                buffer.append(")");
-//            }
-//            else buffer.append(subquery.toString(field));
-//            if (i != disjuncts.length-1) buffer.append(" | ");
-//        }
-//        buffer.append(")");
-//        if (tieBreakerMultiplier != 0.0f) {
-//            buffer.append("~");
-//            buffer.append(tieBreakerMultiplier);
-//        }
-//        return buffer.toString();
-//    }
 
 
 }
