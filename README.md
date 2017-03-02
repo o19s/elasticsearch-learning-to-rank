@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank.svg?style=svg)](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank)
+
 # Elasticsearch Learning to Rank Plugin
 
 This plugin marries the power of the Elasticsearch Query DSL with Ranklib, a popular learning to rank framework. It includes a scripting service for ranklib models & query for learning to rank in Elasticsearch using [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/).
