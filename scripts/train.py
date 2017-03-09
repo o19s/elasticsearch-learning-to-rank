@@ -31,7 +31,7 @@ if __name__ == "__main__":
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
     buildFeaturesJudgmentsFile(judgements, filename='sample_judgements_wfeatures.txt')
     # Train each ranklib model type
-    for modelType in [0,1,2,3,4,6,7,8]:
+    for modelType in [0,1,2,3,4,6,7,8,9]:
         # 0, MART
         # 1, RankNet
         # 2, RankBoost
@@ -40,6 +40,7 @@ if __name__ == "__main__":
         # 6, LambdaMART
         # 7, ListNET
         # 8, Random Forests
+        # 9, Linear Regression
         print("*** Training %s " % modelType)
         trainModel(judgmentsWithFeaturesFile='sample_judgements_wfeatures.txt', modelOutput='model.txt', whichModel=modelType)
         saveModel(es, scriptName="test_%s" % modelType, modelFname='model.txt')
