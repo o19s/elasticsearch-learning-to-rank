@@ -11,7 +11,7 @@ baseQuery = {
         "rescore_query": {
             "ltr": {
                     "model": {
-                        "stored": "test" # Model name
+                        "stored": "" # Model name
                     },
                     "features": []# features]
             }
@@ -41,6 +41,10 @@ if __name__ == "__main__":
     esUrl="http://localhost:9200"
     es = Elasticsearch(timeout=1000)
     search = featureQueries(argv[1])
+    model = "test"
+    if len(argv) > 2:
+        model = argv[2]
+    baseQuery['rescore']['query']['rescore_query']['ltr']['model']['stored'] = model
     results = es.search(index='tmdb', doc_type='movie', body=search)
     for result in results['hits']['hits']:
              print(result['_source']['title'])
