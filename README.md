@@ -133,9 +133,8 @@ Now we need to transform our judgment list:
 
 Into a training set, where feature 1 is teh relevance score for the first Elasticsearch query above; feature 2 the second, and so on. Perhaps this turns into something like:
 
-Now when we transform our judgment list into a training set, we generate training data where feature 1 corresponds to the 
-
 ```
+# Query id 1, "rambo"
 4 qid:1 1:24.42 2:52.0 # Rambo
 0 qid:1 1:12.12 2:12.5 # Turner and  Hootch
 ...
