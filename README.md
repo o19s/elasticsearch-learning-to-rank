@@ -23,7 +23,7 @@ Models are stored using an Elasticsearch script plugin. Tree-based models can be
 
 # Building a Learning to Rank System with Elasticsearch
 
-This section discusses how this plugin fits into build a learning to rank search system on Elasticsearch at a very high level. Many quite challenging, domain-specific details are ignored for the sake of illustration.
+This section discusses how this plugin fits in to build a learning to rank search system on Elasticsearch at a very high level. Many quite challenging, domain-specific details are ignored for the sake of illustration.
 
 Learning to Rank uses machine learning models to get better search relevance. One library for doing learning to rank is [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/), which we'll use to demonstrate the plugin.
 
@@ -44,7 +44,7 @@ We basically just decided on these judgments. Generating judgements from clicks 
 
 ### Judgment lists -> training set
 
-Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query keyword is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occurs in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
+Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query keyword is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occur in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
 
 A common file format for this sort of training set is the following:
 
@@ -86,7 +86,7 @@ The goal of *training* is to generate a function (which we also loosely call a *
 > java -jar bin/RankLib.jar -train train.txt -ranker 6 -save mymodel.txt
 ```
 
-This line trains against training data `train.txt` to generate a LambdaMART model (ranker 6), outputing a text representation of the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used at test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
+This line trains against training data `train.txt` to generate a LambdaMART model (ranker 6), outputing a text representation of the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used as test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
 
 Ok, once you have a good model, it can be used as a ranking function to generate relevance scores. Yay!
 
@@ -131,7 +131,7 @@ Now we need to transform our judgment list:
 0,rambo,doc_5678 # "Turner and Hooch" not at all relevant (grade 0) for search "rambo"
 ```
 
-Into a training set, where feature 1 is teh relevance score for the first Elasticsearch query above; feature 2 the second, and so on. Perhaps this turns into something like:
+Into a training set, where feature 1 is the relevance score for the first Elasticsearch query above; feature 2 the second, and so on. Perhaps this turns into something like:
 
 ```
 # Query id 1, "rambo"
