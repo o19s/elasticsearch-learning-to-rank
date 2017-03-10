@@ -27,7 +27,10 @@ if __name__ == "__main__":
     from judgments import judgmentsFromFile, judgmentsByQid
     esUrl="http://localhost:9200"
     es = Elasticsearch(timeout=1000)
+    # Parse a judgments
     judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
+    # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
+    # output as "sample_judgements_wfeatures.txt"
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
     buildFeaturesJudgmentsFile(judgements, filename='sample_judgements_wfeatures.txt')
     # Train each ranklib model type
