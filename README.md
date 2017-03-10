@@ -1,6 +1,4 @@
-# Elasticsearch Learning to Rank Plugin
-
-This plugin marries the power of the Elasticsearch Query DSL with Ranklib, a popular learning to rank framework. It includes a scripting service for ranklib models & query for learning to rank in Elasticsearch using [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/).
+Rank results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). This plugin expect a model in a specific text format which it treats as a custom scripting languge (the "ranklib" language). Models are then applied by using this plugin's `ltr` query, preferably during Elasticsearch rescoring phase. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](scripts/)
 
 ## Installation
 
@@ -18,50 +16,87 @@ Install the correct version for your Elasticsearch version, replacing \<ES VER\>
 
 ### Increase Max Script Size
 
-Ranklib models are stored using an Elasticsearch script plugin. Ranklib models can be large. So we recommend increasing this setting. Don't worry, just because Ranklib models are verbose, doesn't nescesarilly imply they'll be slow.
+Models are stored using an Elasticsearch script plugin. Tree-based models can be large. So we recommend increasing the `script.max_size_in_bytes` setting. Don't worry, just because tree-based models are verbose, doesn't nescesarilly imply they'll be slow.
 
 `script.max_size_in_bytes: 10000000`
 
 
 # Building a Learning to Rank System with Elasticsearch
 
-This section discusses how this plugin fits into build a learning to rank search system on Elasticsearch.
+This section discusses how this plugin fits into build a learning to rank search system on Elasticsearch at a very high level. Many quite challenging, domain-specific details are ignored for the sake of illustration.
 
-Learning to Rank uses machine learning models to get better search relevance. One prominent library for doing learning to rank is [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/)
+Learning to Rank uses machine learning models to get better search relevance. One library for doing learning to rank is [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/), which we'll use to demonstrate the plugin.
 
-## Background
+## Background -- Learning to Rank 101
 
-Users train Ranklib models at the commandline using a learning to rank training set. Each line lists, for a given query id, how relevant a document is for that query from 0(not at all relevant)-4(exactly relevant). Alongside each line are a set of scalar, query or user dependent features values that go with that judgment. 
+### Judgement List 101
 
-```
-judgment qid:<queryId> 1:<feature1Val> ... #Comment
-```
+The first thing you'll need is to create what's known in search circles as a *judgment list*. A *judgment list* says for a given query, a given document recieves this relevance *grade*. What do we mean by *grade*? Usually the "grade" is our numerical assesment for how relevant a document is to a keyword query. Traditionally grades come on a 0-4 scale where 0 means not at all relevant and 4 means exactly relevant. 
 
-Here's an example data set taken from Ranklib's documentation:
+Consider a search for "rambo." If "doc\_1234" is the movie Rambo and "doc\_5678" is "Turner and Hooch", then we might safely make the following two judgements:
 
 ```
-3 qid:1 1:1 2:1 3:0 4:0.2 5:0 # 1A
-2 qid:1 1:0 2:0 3:1 4:0.1 5:1 # 1B 
-1 qid:1 1:0 2:1 3:0 4:0.4 5:0 # 1C
-1 qid:1 1:0 2:0 3:1 4:0.3 5:0 # 1D  
-1 qid:2 1:0 2:0 3:1 4:0.2 5:0 # 2A  
-2 qid:2 1:1 2:0 3:1 4:0.4 5:0 # 2B 
-1 qid:2 1:0 2:0 3:1 4:0.1 5:0 # 2C 
-1 qid:2 1:0 2:0 3:1 4:0.2 5:0 # 2D  
-2 qid:3 1:0 2:0 3:1 4:0.1 5:1 # 3A 
-3 qid:3 1:1 2:1 3:0 4:0.3 5:0 # 3B 
-4 qid:3 1:1 2:0 3:0 4:0.4 5:1 # 3C 
-1 qid:3 1:0 2:1 3:1 4:0.5 5:0 # 3D
+4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo" 
+0,rambo,doc_5678 # "Turner and Hooch" not at all relevant (grade 0) for search "rambo"
 ```
 
-The details of how you arive at judgments for a given document/query pair are very application dependent and are left to you. [Quepid](http://quepid.com) can be used to manually gather judgments from experts. Others gather judgments from analytics data such as clicks or conversions. There's a lot of art/science that goes into evaluating user behavior and gathering surveys. (Honestly this step will either make or break your learning to rank solution -- [see here](http://opensourceconnections.com/blog/2014/10/08/when-click-scoring-can-hurt-search-relevance-a-roadmap-to-better-signals-processing-in-search/))
+We basically just decided on these judgments. Generating judgements from clicks & conversions or expert testing is an art unto itself we won't dive into here. 
 
+### Judgment lists -> training set
+
+Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occurs in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
+
+A common file format for this sort of training set is the following:
+
+```
+grade qid:<queryId> 1:<feature1Val> ... #Comment
+```
+
+Let's take an example. When we look at our query "rambo", which we now will be just calling query 1, we note the following feature values
+
+- Feature 1 : Rambo occurs 1 time in the title of movie "Rambo"; 0 times in Turner and Hootch
+- Feature 2 : Rambo occurs 6 times in the overview field of movie "Rambo"; 0 times in Turner and Hootch
+
+The judgment list above, then gets transformed into t
+
+```
+4 qid:1 1:1 2:6
+0 qid:1 1:0 2:0
+```
+
+In other words, a relevant movie for qid:1 has higher feature 1 and 2 values than an irrelevant match. 
+
+A full training set expresses this idea, with many hundreds of graded documents over hundreds or thousands or more queries:
+
+
+```
+4 qid:1 1:1 2:6
+0 qid:1 1:0 2:0
+4 qid:2 1:1 2:6
+3 qid:2 1:1 2:6
+0 qid:2 1:0 2:0
+...
+```
+
+### Training a model
+
+The goal of *training* is to generate a function (which we also loosely call a *model*) that takes as input features 1...n and outputs the relevance grade. With Ranklib downloaded, you can train a file like the one above as follows:
+
+```
+> java -jar bin/RankLib.jar -train train.txt -ranker 6 -save mymodel.txt
+```
+
+This line trains against training data `train.txt` to generate a LambdaMART ranker (6) and outputs the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used at test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
+
+Ok, once you have a good *model*, it can be used as a ranking function to generate relevance scores. Yay!
 
 ## Learning to Rank with Elasticsearch
 
-How can we integrate what Ranklib does with Elasticsearch?
+How can we integrate this workflow with Elasticsearch?
 
-Bloomberg's [Solr learning to rank](https://issues.apache.org/jira/browse/SOLR-8542) plugin uses Solr's Query DSL as query-dependent features (what [Relevant Search](http://manning.com/books/relevant-search) calls signals). Elasticsearch's Query DSL can serve a similar function. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title score:
+Elasticsearch has all the pieces needed, we just need to fit them together! 
+
+Elasticsearch queries are great primitives we might hypothesize predict relevance. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title TF*IDF relevance score:
 
 ```
 {
@@ -73,7 +108,7 @@ Bloomberg's [Solr learning to rank](https://issues.apache.org/jira/browse/SOLR-8
 }
 ```
 
-Or another promising feature might be a title phrase match, perhaps ignoring the TF*IDF score and sticking with a `constant_score`.
+Or another promising feature might be an overview phrase match, perhaps ignoring the TF*IDF score and sticking with a `constant_score`.
 
 ```
 {
@@ -81,7 +116,7 @@ Or another promising feature might be a title phrase match, perhaps ignoring the
         "constant_score": {
             "query": {
                 "match_phrase": {
-                    "title": userSearchString
+                    "overview": userSearchString
                 }
             }
         }
@@ -89,41 +124,39 @@ Or another promising feature might be a title phrase match, perhaps ignoring the
 }
 ```
 
-Along with gathering judgments, you can log the relevance scores of these query-dependent features. Perhaps by issuing bulk queries using the `_msearch` endpoint, filtering down to the documents you have judgements for. Taking these  relevance scores, you perhaps arrive at:
-
+Now we need to transform our judgment list:
 
 ```
-3 qid:1 1:24.42 2:52.0 # 1A
-2 qid:1 1:12.12 2:12.5 # 1B 
+4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo" 
+0,rambo,doc_5678 # "Turner and Hooch" not at all relevant (grade 0) for search "rambo"
+```
+
+Into a training set, where feature 1 is teh relevance score for the first Elasticsearch query above; feature 2 the second, and so on. Perhaps this turns into something like:
+
+Now when we transform our judgment list into a training set, we generate training data where feature 1 corresponds to the 
+
+```
+4 qid:1 1:24.42 2:52.0 # Rambo
+0 qid:1 1:12.12 2:12.5 # Turner and  Hootch
 ...
-```
 
-where each feature is a relevance score for a Query DSL query.
+How can one use a proposed set of features to bulk-gather relevance scores? Our [demo] shows how to do this using `_msearch` while filtering down to the graded documents. There's many problems you need to solve for a real-life production system. You need to occasionally log features for a graded document. Ideally you'd log using your production search index or the closest approximation. Many details left to the reader here, as this starts getting into questions like (1) how well known are your grades (instant based on clicks, or graded by humans weeks later?) (2) how easy is it to bulk evaluate queries on your production system? How often can you do taht?
 
-Currently, you're in charge of gathering these feature values, logging them (maybe in ES itself), and training Ranklib models externally. Future iterations of this may automatically log query scores to an Elasticsearch index -- but you would still need to provide the judgements.
-
-
-## Training the Model
-
-Training the model with a file like above, is as simple as using [Ranklib at the command line](https://sourceforge.net/p/lemur/wiki/RankLib%20How%20to%20use/). 
-
-```
-> java -jar bin/RankLib.jar -train MQ2008/Fold1/train.txtt -ranker 6 -metric2t NDCG@10 -metric2T ERR@10 -save mymodel.txt
-```
-
-mymodel.txt has your ranklib model that Ranklib can use to score documents.
+With a sufficiently fleshed out training set, you then repeat the process above.
 
 ## Store the model in Elasticsearch
+
+Ok, we haven't even gotten to the plugin yet! Everything above is vanilla Elasticsearch or Ranklib.
 
 Here's where this plugin comes in. This plugin lets you
 
 1. Use/Store ranklib models as 'ranklib' scripts
-2. Given a model and a list of features, evaluate the model as an Elasticsearch query
+2. Evaluate a model given a list of ES queries (aka the "features").
 
 
 ### Store your model
 
-Models can get quite large, so you may wish to store them as files. Nevertheless, we can score them over the API:
+We currently just support the ranklib format, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#). The big tree models are stored using an XML format. Below we store model "dummy".
 
 ```
 POST _scripts/ranklib/dummy
@@ -132,13 +165,7 @@ POST _scripts/ranklib/dummy
 }
 ```
 
-You can fetch this model again:
-
-```
-GET _scripts/ranklib/dummy
-```
-
-Finally, you use the `ltr` query to score using this model
+Finally, you use the `ltr` query to score using this model. Below "dummy" is the model we just scored. Each "feature" mirrors the queries used at training time.
 
 ```
 GET /foo/_search
@@ -156,7 +183,7 @@ GET /foo/_search
                 "constant_score": {
                     "query": {
                         "match_phrase": {
-                            "title": "userSearchString"
+                            "overview": "userSearchString"
                         }
                     }
                 }
@@ -166,9 +193,9 @@ GET /foo/_search
 }
 ```
 
-It's expected that the 0th feature in this array corresponds to first feature (feature 1) in the ranklib model. Ranklib does not have a 0th feature, so beware of off-by-one errors.
+It's expected that the 0th feature in this array corresponds to first feature (feature 1) in the ranklib model/script. 
 
-Ideally you should use this query in a rescore context, because ltr models can be quite expensive to evaluate.
+Ideally you should use this query in a rescore context, because ltr models can be quite expensive to evaluate. So a more realistic implementation of ltr would look like:
 
 ```
 {
@@ -188,7 +215,7 @@ Ideally you should use this query in a rescore context, because ltr models can b
                     "constant_score": {
                         "query": {
                             "match_phrase": {
-                                "title": "userSearchString"
+                                "overview": "userSearchString"
                             }
                         }
                     }
@@ -203,6 +230,8 @@ Ideally you should use this query in a rescore context, because ltr models can b
 Viola! Periodically you'll want to retrain your model. Features may change or judgements may get out of date. Go back to the earlier steps and start again!
 
 # Development
+
+Notes if you want to dig into the code.
 
 ### 1. Install [RankyMcRankFace.jar](https://github.com/o19s/rankymcrankface) in your local maven repo manually:
 Download the RankyMcRankFace jar from the link above and use the following command to install it in your local Maven repo (the quotes around the command arguments will help Maven run without a pom file in the current directory.)
