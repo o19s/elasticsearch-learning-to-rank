@@ -1,4 +1,4 @@
-Rank results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). This plugin expect a model in a specific text format which it treats as a custom scripting languge (the "ranklib" language). Models are then applied by using this plugin's `ltr` query, preferably during Elasticsearch rescoring phase. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](demo/)
+Rank results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). This plugin expect a model in a specific text format which it treats as a custom scripting languge (the "ranklib" language, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#)). Models are then applied by using this plugin's `ltr` query, preferably run during Elasticsearch's rescoring phase. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](demo/)
 
 # Installation
 
@@ -44,15 +44,15 @@ We basically just decided on these judgments. Generating judgements from clicks 
 
 ### Judgment lists -> training set
 
-Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occurs in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
+Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query keyword is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occurs in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
 
 A common file format for this sort of training set is the following:
 
 ```
-grade qid:<queryId> 1:<feature1Val> ... #Comment
+grade qid:<queryId> 1:<feature1Val> 2:<feature2Val>... #Comment
 ```
 
-Let's take an example. When we look at our query "rambo", which we now will be just calling query 1, we note the following feature values
+Let's take an example. When we look at our query "rambo", which we'll call query Id 1, we note the following feature values:
 
 - Feature 1 : Rambo occurs 1 time in the title of movie "Rambo"; 0 times in Turner and Hootch
 - Feature 2 : Rambo occurs 6 times in the overview field of movie "Rambo"; 0 times in Turner and Hootch
@@ -86,17 +86,15 @@ The goal of *training* is to generate a function (which we also loosely call a *
 > java -jar bin/RankLib.jar -train train.txt -ranker 6 -save mymodel.txt
 ```
 
-This line trains against training data `train.txt` to generate a LambdaMART ranker (6) and outputs the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used at test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
+This line trains against training data `train.txt` to generate a LambdaMART model (ranker 6), outputing a text representation of the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used at test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
 
-Ok, once you have a good *model*, it can be used as a ranking function to generate relevance scores. Yay!
+Ok, once you have a good model, it can be used as a ranking function to generate relevance scores. Yay!
 
 ## Learning to Rank with Elasticsearch
 
 How can we integrate this workflow with Elasticsearch?
 
-Elasticsearch has all the pieces needed, we just need to fit them together! 
-
-Elasticsearch queries are great primitives we might hypothesize predict relevance. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title TF*IDF relevance score:
+There relevance scores of Elasticsearch queries make tremendous features. So for example, you may suspect that one feature that correlates with relevance might be if your user's search keywords have a strong title TF\*IDF relevance score:
 
 ```
 {
@@ -108,7 +106,7 @@ Elasticsearch queries are great primitives we might hypothesize predict relevanc
 }
 ```
 
-Or another promising feature might be an overview phrase match, perhaps ignoring the TF*IDF score and sticking with a `constant_score`.
+Or another promising feature might be an overview phrase match, perhaps ignoring the TF\*IDF score and sticking with a `constant_score`.
 
 ```
 {
@@ -123,6 +121,8 @@ Or another promising feature might be an overview phrase match, perhaps ignoring
     }
 }
 ```
+
+As you can imagine, much of the art is guessing which features (aka Elasticsearch Queries) will do the best job at predicting relevance.
 
 Now we need to transform our judgment list:
 
