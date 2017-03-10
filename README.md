@@ -139,8 +139,9 @@ Now when we transform our judgment list into a training set, we generate trainin
 4 qid:1 1:24.42 2:52.0 # Rambo
 0 qid:1 1:12.12 2:12.5 # Turner and  Hootch
 ...
+```
 
-How can one use a proposed set of features to bulk-gather relevance scores? Our [demo] shows how to do this using `_msearch` while filtering down to the graded documents. There's many problems you need to solve for a real-life production system. You need to occasionally log features for a graded document. Ideally you'd log using your production search index or the closest approximation. Many details left to the reader here, as this starts getting into questions like (1) how well known are your grades (instant based on clicks, or graded by humans weeks later?) (2) how easy is it to bulk evaluate queries on your production system? How often can you do taht?
+How can one use a proposed set of features to bulk-gather relevance scores? Our [demo](/demo) shows how to do this using `_msearch` while filtering down to the graded documents (see [/demo/features.py](/demo/features.py). There's many problems you need to solve for a real-life production system. You need to log features (relevance scores) for your graded documents. Ideally you'd log using your production search index or the closest approximation. Many details left to the reader here, as this starts getting into questions like (1) how well known are your grades (instant based on clicks, or graded by humans weeks later?) (2) how easy is it to bulk evaluate queries on your production system? How often can you do that?
 
 With a sufficiently fleshed out training set, you then repeat the process above.
 
@@ -150,13 +151,12 @@ Ok, we haven't even gotten to the plugin yet! Everything above is vanilla Elasti
 
 Here's where this plugin comes in. This plugin lets you
 
-1. Use/Store ranklib models as 'ranklib' scripts
+1. Use/Store ranklib models as you do any other Elasticsearch script (as a special 'ranklib' scripting language)
 2. Evaluate a model given a list of ES queries (aka the "features").
-
 
 ### Store your model
 
-We currently just support the ranklib format, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#). The big tree models are stored using an XML format. Below we store model "dummy".
+We currently just support the ranklib format, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#). The big tree models are stored using an XML format. Below we store an ensemble of a single regression tree as the model "dummy".
 
 ```
 POST _scripts/ranklib/dummy
@@ -193,7 +193,7 @@ GET /foo/_search
 }
 ```
 
-It's expected that the 0th feature in this array corresponds to first feature (feature 1) in the ranklib model/script. 
+It's expected that the 0th feature in this array corresponds to first feature (feature 1) that you used when training the model. 
 
 Ideally you should use this query in a rescore context, because ltr models can be quite expensive to evaluate. So a more realistic implementation of ltr would look like:
 
