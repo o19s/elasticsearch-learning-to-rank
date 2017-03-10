@@ -1,6 +1,6 @@
-Rank results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). This plugin expect a model in a specific text format which it treats as a custom scripting languge (the "ranklib" language). Models are then applied by using this plugin's `ltr` query, preferably during Elasticsearch rescoring phase. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](scripts/)
+Rank results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). This plugin expect a model in a specific text format which it treats as a custom scripting languge (the "ranklib" language). Models are then applied by using this plugin's `ltr` query, preferably during Elasticsearch rescoring phase. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](demo/)
 
-## Installation
+# Installation
 
 Generally new features follow the latest ES version, but you can get older versions on older ES versions.
 
