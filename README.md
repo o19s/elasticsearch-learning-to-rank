@@ -1,10 +1,10 @@
 Rank Elasticsearch results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). You then POST your model to a to Elasticsearch in a specific text format (the custom "ranklib" language, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#)). You apply a model using this plugin's `ltr` query. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](demo/) ([training](https://github.com/o19s/elasticsearch-learning-to-rank/blob/master/demo/train.py#L25) and [searching](https://github.com/o19s/elasticsearch-learning-to-rank/blob/master/demo/search.py)).
 
-# Installation
+# Installing
 
 Generally new features follow the latest ES version, but you can get older versions on older ES versions.
 
-### Elasticsearch 5.2.1,5.2.2
+### Elasticsearch 5.2.1,5.2.2,5.3.0
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.0-es<ES VER>.zip`
 
@@ -17,6 +17,10 @@ Generally new features follow the latest ES version, but you can get older versi
 Models are stored using an Elasticsearch script plugin. Tree-based models can be large. So we recommend increasing the `script.max_size_in_bytes` setting. Don't worry, just because tree-based models are verbose, doesn't nescesarilly imply they'll be slow.
 
 `script.max_size_in_bytes: 10000000`
+
+# Running the Demo
+
+The section below gives more context you'll need to use this plugin, but if you want to jump in, just follow the directions in the [demo README](demo/README.md).
 
 
 # Building a Learning to Rank System with Elasticsearch
