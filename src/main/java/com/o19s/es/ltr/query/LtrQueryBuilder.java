@@ -21,7 +21,6 @@ import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -115,7 +114,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             }
             else if (token == XContentParser.Token.START_OBJECT) {
                 if (currentFieldName.equals("model")) {
-                    rankLibScript = Script.parse(parser, parseContext.getParseFieldMatcher(), "ranklib");
+                    rankLibScript = Script.parse(parser, "ranklib");
                 }
             }
             else if (token == XContentParser.Token.START_ARRAY) {

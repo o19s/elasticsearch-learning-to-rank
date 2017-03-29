@@ -20,7 +20,6 @@ import com.o19s.es.ltr.query.LtrQuery;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
@@ -97,7 +96,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                                 "      ]                      " +
                                 "   } " +
                                 "}";
-        LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+        LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
     }
     @Override
     protected boolean builderGeneratesCacheableQueries() {
@@ -128,7 +127,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "}";
         LtrQueryBuilder queryBuilder = null;
         try {
-            queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery, ParseFieldMatcher.EMPTY);
+            queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         } catch (IOException e) {
 
         }
