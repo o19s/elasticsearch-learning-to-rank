@@ -41,7 +41,7 @@ if __name__ == "__main__":
     esUrl="http://localhost:9200"
     es = Elasticsearch(timeout=1000)
     search = featureQueries(argv[1])
-    model = "test"
+    model = "test_6"
     if len(argv) > 2:
         model = argv[2]
     baseQuery['rescore']['query']['rescore_query']['ltr']['model']['stored'] = model

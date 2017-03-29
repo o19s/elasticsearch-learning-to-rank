@@ -17,7 +17,7 @@ def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tm
     if mappingSettings:
         settings['mappings'] = mappingSettings #C
 
-    es.indices.delete(index, ignore=['400', '404'])
+    es.indices.delete(index, ignore=[400, 404])
     es.indices.create(index, body=settings)
 
     def bulkDocs(movieDict):

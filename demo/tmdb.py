@@ -43,12 +43,12 @@ def getCastAndCrew(movieId, movie):
         movie['cast'] = credits['cast'] #E
         movie['directors'] = directors
     except KeyError as e:
-        print e
-        print credits
+        print(e)
+        print(credits)
 
 def extract(movieIds=[]):
     movieDict = {}
-    for idx, (mlensId, tmdbId) in enumerate(movieIds.iteritems()):
+    for idx, (mlensId, tmdbId) in enumerate(movieIds.items()):
         try:
             print("On %s / %s movies" % (idx, len(movieIds)))
             httpResp = tmdb_api.get("https://api.themoviedb.org/3/movie/%s"
@@ -61,7 +61,7 @@ def extract(movieIds=[]):
             getCastAndCrew(tmdbId, movie)
             movieDict[tmdbId] = movie
         except ConnectionError as e:
-            print e
+            print(e)
     return movieDict
 
 
