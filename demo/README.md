@@ -79,5 +79,5 @@ python train.py
 See what sort of search results you get! There's a Query running the `ltr` query in a rescore phase in the python script.
 
 ```
-python search.py <keyword>
+python search.py rambo
 ```
