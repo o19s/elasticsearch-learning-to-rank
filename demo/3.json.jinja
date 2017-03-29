@@ -1,0 +1,13 @@
+{
+    "query": {
+        "function_score": {
+        
+            "functions": [
+                {"field_value_factor": {
+                    "field": "vote_average",
+                    "missing": -1   
+                }}
+            ]
+        }
+    }
+}

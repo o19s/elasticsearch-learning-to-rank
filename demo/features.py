@@ -84,7 +84,7 @@ if __name__ == "__main__":
     from judgments import judgmentsFromFile, judgmentsByQid
     esUrl="http://localhost:9200"
     es = Elasticsearch()
-    judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
+    judgements = judgmentsByQid(judgmentsFromFile(filename='rocky.txt'))
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
     for qid, judgmentList in judgements.items():
         for judgment in judgmentList:

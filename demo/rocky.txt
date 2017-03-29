@@ -1,0 +1,44 @@
+#
+# qid:1: rocky
+#
+2 qid:1 # 7555 Rambo
+2 qid:1 # 1370 Rambo III
+2 qid:1 # 1369 Rambo: First Blood Part II
+2 qid:1 # 1368 First Blood
+2 qid:1 # 64807 Grudge Match
+3 qid:1 # 1246 Rocky Balboa
+2 qid:1 # 47059 Boxing Gym
+4 qid:1 # 1366 Rocky
+3 qid:1 # 81830 The Rocky Saga: Going the Distance
+2 qid:1 # 23916 Paradise Alley
+1 qid:1 # 38925 The Lords of Flatbush
+1 qid:1 # 288183 A Hole in the Soul
+2 qid:1 # 70808 Klitschko
+0 qid:1 # 55146 Hearts and Minds
+0 qid:1 # 5203 Wild Orchid
+0 qid:1 # 18215 Boxing Helena
+1 qid:1 # 351862 Blue Blood
+3 qid:1 # 1367 Rocky II
+0 qid:1 # 21610 Nighthawks
+1 qid:1 # 9876 Stop! Or My Mom Will Shoot
+3 qid:1 # 1374 Rocky IV
+1 qid:1 # 1825 Over the Top
+0 qid:1 # 10805 Staying Alive
+3 qid:1 # 1375 Rocky V
+3 qid:1 # 1371 Rocky III
+0 qid:1 # 61410 Spud
+2 qid:1 # 154019 Belarmino
+1 qid:1 # 16219 Gladiator
+0 qid:1 # 318040 Bizarre
+2 qid:1 # 253295 Manny
+2 qid:1 # 22913 24 7: Twenty Four Seven
+0 qid:1 # 901 City Lights
+0 qid:1 # 11228 Daylight
+0 qid:1 # 27578 The Expendables
+0 qid:1 # 159002 Cutie and the Boxer
+1 qid:1 # 59584 Mr. Moto's Gamble
+1 qid:1 # 19143 Diggstown
+2 qid:1 # 13258 Son of Rambow
+0 qid:1 # 98136 Hit Lady
+1 qid:1 # 31362 In the Line of Duty: The F.B.I. Murders
+

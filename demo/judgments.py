@@ -1,19 +1,20 @@
 import re
 
 class Judgment:
-    def __init__(self, grade, qid, keywords, docId):
+    def __init__(self, grade, qid, keywords, docId, comment):
         self.grade = grade
         self.qid = qid
         self.keywords = keywords
         self.docId = docId
+        self.comment = comment
         self.features = []
 
     def __str__(self):
         return "grade:%s qid:%s (%s) docid:%s" % (self.grade, self.qid, self.keywords, self.docId)
 
     def toRanklibFormat(self):
-        featuresAsStrs = ["%s:%s" % (idx+1, feature) for idx, feature in enumerate(self.features)]
-        comment = "# %s\t%s" % (self.docId, self.keywords)
+        featuresAsStrs = ["%s:%.2f" % (idx+1, feature) for idx, feature in enumerate(self.features)]
+        comment = "# %s\t%s@%s" % (self.docId, self.keywords, self.comment.lstrip())
         return "%s\tqid:%s\t%s %s" % (self.grade, self.qid, "\t".join(featuresAsStrs), comment)
 
 
@@ -41,20 +42,20 @@ def _judgmentsFromBody(lines):
         <judgment> qid:<queryid> # docId <rest of comment ignored...)"""
     # Regex can be debugged here:
     # http://www.regexpal.com/?fam=96565
-    regex = re.compile('^(\d)\s+qid:(\d+)\s+#\s+(\w+).*')
+    regex = re.compile('^(\d)\s+qid:(\d+)\s+#\s+(\w+)(.*)')
     for line in lines:
         print(line)
         m = re.match(regex, line)
         if m:
-            print("%s,%s,%s" % (m.group(1), m.group(2), m.group(3)))
-            yield int(m.group(1)), int(m.group(2)), m.group(3)
+            print("%s,%s,%s,%s" % (m.group(1), m.group(2), m.group(3),m.group(4)))
+            yield int(m.group(1)), int(m.group(2)), m.group(3), m.group(4)
 
 
 def judgmentsFromFile(filename):
     with open(filename) as f:
         qidToKeywords = _queriesFromHeader(f)
-        for grade, qid, docId in _judgmentsFromBody(f):
-            yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId)
+        for grade, qid, docId, comment in _judgmentsFromBody(f):
+            yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId, comment=comment)
 
 def judgmentsByQid(judgments):
     rVal = {}

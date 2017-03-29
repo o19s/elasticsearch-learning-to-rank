@@ -41,6 +41,23 @@ if __name__ == "__main__":
     esUrl="http://localhost:9200"
     if len(argv) > 1:
         esUrl = argv[1]
+
+
+    mappingSettings = {
+        "movie": {
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "store": True
+                },
+                "overview": {
+                    "type": "string",
+                    "store": True
+                }
+            }
+        }
+    }
+
     es = Elasticsearch(esUrl, timeout=30)
     movieDict = json.loads(open('tmdb.json').read())
-    reindex(es, movieDict=movieDict, esUrl=esUrl)
+    reindex(es, movieDict=movieDict, mappingSettings=mappingSettings, esUrl=esUrl)
