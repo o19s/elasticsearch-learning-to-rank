@@ -1,4 +1,14 @@
 .envrc
+venv
+sample_judgements_wfeatures.txt
+ml-20m/
+ml-20m.zip
+classes/
+__pycache__/
+RankLib.jar
+tmdb.json
+model.txt
+
 
 .idea/
 .gradle/
