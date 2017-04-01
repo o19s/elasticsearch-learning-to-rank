@@ -24,12 +24,16 @@ esplugin {
   classname 'com.o19s.es.ltr.query.LtrQueryParserPlugin'
 }
 
+
 // In this section you declare the dependencies for your production and test code
 // Note, the two dependencies are not really needed as the buildscript dependency gets them in already
 // they are just here as an example
 repositories {
     mavenCentral()
     mavenLocal()
+    maven {
+         url  "https://dl.bintray.com/epugh/RankyMcRankFace"
+     }
 }
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.3.0'

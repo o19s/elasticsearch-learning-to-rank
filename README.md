@@ -234,14 +234,7 @@ Viola! Periodically you'll want to retrain your model. Features may change or ju
 
 Notes if you want to dig into the code.
 
-### 1. Install [RankyMcRankFace.jar](https://github.com/o19s/rankymcrankface) in your local maven repo manually:
-Download the RankyMcRankFace jar from the link above and use the following command to install it in your local Maven repo (the quotes around the command arguments will help Maven run without a pom file in the current directory.)
-
-```
-mvn install:install-file "-DgroupId=com.o19s" "-DartifactId=RankyMcRankFace" "-Dversion=0.1" "-Dpackaging=jar" "-Dfile=./RankLibPlus-0.1.0.jar"
-```
-
-### 2. Build with Gradle 2.13
+### 1. Build with Gradle 2.13
 
 This plugin requires the very specific 2.13 version of Gradle.  Fortunately running the build with the included Gradle Wrapper will download this version for you!
 
@@ -251,7 +244,7 @@ gradlew clean check
 
 This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file.
 
-### 3. Install with `./bin/elasticsearch-plugin`
+### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.0.1-SNAPSHOT.zip
