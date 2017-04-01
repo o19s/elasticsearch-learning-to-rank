@@ -1,0 +1,10 @@
+machine:
+  java:
+    version: oraclejdk8
+
+dependencies:
+  pre:
+  cache_directories:
+  override:
+#    - sudo apt-get install tesseract-ocr
+#    - mvn package -f api/pom.xml
