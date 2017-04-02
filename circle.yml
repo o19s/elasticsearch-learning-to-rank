@@ -4,4 +4,4 @@ machine:
 
 test:
   override:
-    - ./gradlew test
+    - ./gradlew clean check
