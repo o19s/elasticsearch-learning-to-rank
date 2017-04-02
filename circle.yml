@@ -1,0 +1,7 @@
+machine:
+  java:
+    version: oraclejdk8
+
+test:
+  override:
+    - ./gradlew clean check
