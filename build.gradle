@@ -31,9 +31,7 @@ esplugin {
 repositories {
     mavenCentral()
     mavenLocal()
-    maven {
-         url  "https://dl.bintray.com/epugh/RankyMcRankFace"
-     }
+    jcenter()
 }
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.3.0'
