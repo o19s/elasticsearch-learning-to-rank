@@ -150,7 +150,7 @@ public class LtrQuery extends Query {
                 featureString += ":";
                 float featureVal = 0.0f;
                 if (!explain.isMatch()) {
-                    subs.add(Explanation.noMatch(featureString + "(no match, default value 0.0 used)"));
+                    subs.add(Explanation.noMatch(featureString + " [no match, default value 0.0 used]"));
                 }
                 else {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
