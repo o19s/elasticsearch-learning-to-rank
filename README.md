@@ -1,10 +1,12 @@
+[![CircleCI](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank.svg?style=svg)](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank)
+
 Rank Elasticsearch results using tree based (LambdaMART, Random Forest, MART) and linear models. Models are trained using the scores of Elasicsearch queries as features. You train offline using tooling such as with [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/). You then POST your model to a to Elasticsearch in a specific text format (the custom "ranklib" language, documented [here](https://docs.google.com/document/d/1DL_Z40eGG3r_BVOoVYpBRb3k2qWONRf_w02FfORtiSU/edit#)). You apply a model using this plugin's `ltr` query. See [blog post](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) and the [full demo](demo/) ([training](https://github.com/o19s/elasticsearch-learning-to-rank/blob/master/demo/train.py#L25) and [searching](https://github.com/o19s/elasticsearch-learning-to-rank/blob/master/demo/search.py)).
 
 # Installing
 
 Generally new features follow the latest ES version, but you can get older versions on older ES versions.
 
-### Elasticsearch 5.2.1,5.2.2,5.3.0
+### Elasticsearch 5.2.1, 5.2.2, 5.3.0
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.0-es<ES VER>.zip`
 
@@ -33,16 +35,16 @@ Learning to Rank uses machine learning models to get better search relevance. On
 
 ### Judgement List 101
 
-The first thing you'll need is to create what's known in search circles as a *judgment list*. A *judgment list* says for a given query, a given document recieves this relevance *grade*. What do we mean by *grade*? Usually the "grade" is our numerical assesment for how relevant a document is to a keyword query. Traditionally grades come on a 0-4 scale where 0 means not at all relevant and 4 means exactly relevant. 
+The first thing you'll need is to create what's known in search circles as a *judgment list*. A *judgment list* says for a given query, a given document recieves this relevance *grade*. What do we mean by *grade*? Usually the "grade" is our numerical assesment for how relevant a document is to a keyword query. Traditionally grades come on a 0-4 scale where 0 means not at all relevant and 4 means exactly relevant.
 
 Consider a search for "rambo." If "doc\_1234" is the movie Rambo and "doc\_5678" is "Turner and Hooch", then we might safely make the following two judgements:
 
 ```
-4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo" 
+4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo"
 0,rambo,doc_5678 # "Turner and Hooch" not at all relevant (grade 0) for search "rambo"
 ```
 
-We basically just decided on these judgments. Generating judgements from clicks & conversions or expert testing is an art unto itself we won't dive into here. 
+We basically just decided on these judgments. Generating judgements from clicks & conversions or expert testing is an art unto itself we won't dive into here.
 
 ### Judgment lists -> training set
 
@@ -66,7 +68,7 @@ The judgment list above, then gets transformed into t
 0 qid:1 1:0 2:0
 ```
 
-In other words, a relevant movie for qid:1 has higher feature 1 and 2 values than an irrelevant match. 
+In other words, a relevant movie for qid:1 has higher feature 1 and 2 values than an irrelevant match.
 
 A full training set expresses this idea, with many hundreds of graded documents over hundreds or thousands or more queries:
 
@@ -129,7 +131,7 @@ As you can imagine, much of the art is guessing which features (aka Elasticsearc
 Now we need to transform our judgment list:
 
 ```
-4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo" 
+4,rambo,doc_1234 # "Rambo" an exact match (grade 4) for search "rambo"
 0,rambo,doc_5678 # "Turner and Hooch" not at all relevant (grade 0) for search "rambo"
 ```
 
@@ -194,7 +196,7 @@ GET /foo/_search
 }
 ```
 
-It's expected that the 0th feature in this array corresponds to first feature (feature 1) that you used when training the model. 
+It's expected that the 0th feature in this array corresponds to first feature (feature 1) that you used when training the model.
 
 Ideally you should use this query in a rescore context, because ltr models can be quite expensive to evaluate. So a more realistic implementation of ltr would look like:
 
@@ -234,22 +236,17 @@ Viola! Periodically you'll want to retrain your model. Features may change or ju
 
 Notes if you want to dig into the code.
 
-### 1. Install [RankyMcRankFace.jar](https://github.com/o19s/rankymcrankface) in your local maven repo manually:
-Download the RankyMcRankFace jar from the link above and use the following command to install it in your local Maven repo (the quotes around the command arguments will help Maven run without a pom file in the current directory.)
+### 1. Build with Gradle 2.13
+
+This plugin requires the very specific 2.13 version of Gradle.  Fortunately running the build with the included Gradle Wrapper will download this version for you!
 
 ```
-mvn install:install-file "-DgroupId=com.o19s" "-DartifactId=RankyMcRankFace" "-Dversion=0.1" "-Dpackaging=jar" "-Dfile=./RankLibPlus-0.1.0.jar"
-```
-
-### 2. Build with Gradle 2.13
-
-```
-gradle clean check
+gradlew clean check
 ```
 
 This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file.
 
-### 3. Install with `./bin/elasticsearch-plugin`
+### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.0.1-SNAPSHOT.zip
@@ -259,5 +256,3 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 - Bloomberg's [Learning to Rank work for Solr](https://issues.apache.org/jira/browse/SOLR-8542)
 - Developed by the [Search Relevance](http://opensourceconnections.com/services/relevancy) team at [OpenSource Connections](http://opensourceconnections.com)
 - Also check out our other thingies: book [Relevant Search](http://manning.com/books/relevant-search), projects [Elyzer](http://github.com/o19s/elyzer), [Splainer](http://splainer.io), and [Quepid](http://quepid.com)
-
-
