@@ -32,6 +32,7 @@ import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.queries.BlendedTermQuery;
+import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
@@ -158,10 +159,36 @@ public class LtrQueryTests extends LuceneTestCase {
         return rVal;
     }
 
-    public void checkModelWithFeatures(List<Query> features) throws IOException {
+    public void checkFeatureNames(Explanation expl, List<String> featureNames) {
+        Explanation[] expls = expl.getDetails();
+        int ftrIdx = 1;
+        for (Explanation ftrExpl: expls) {
+            String ftrName = featureNames.get(ftrIdx - 1);
+            String expectedFtrName = "";
+            if (ftrName == null) {
+                expectedFtrName = "Feature " + ftrIdx + ":";
+            } else {
+                expectedFtrName = "Feature " + ftrIdx + "(" + ftrName + "):";
+            }
+
+            String ftrExplainStart = ftrExpl.getDescription().substring(0,expectedFtrName.length());
+            assertEquals(expectedFtrName, ftrExplainStart);
+
+            ftrIdx++;
+        }
+    }
+
+    public void checkModelWithFeatures(List<Query> features, List<String> featureNames) throws IOException {
         // Each RankList needed for training corresponds to one query,
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<RankList>();
+
+        if (featureNames == null) {
+            featureNames = new ArrayList<String>();
+            for (int i = 0; i < features.size(); i++) {
+                featureNames.add(null);
+            }
+        }
 
         List<List<Float>> featuresPerDoc = getFeatureScores(features);
         int numFeatures = featuresPerDoc.get(0).size();
@@ -184,7 +211,7 @@ public class LtrQueryTests extends LuceneTestCase {
 
         // Ok now lets rerun that as a Lucene Query
 
-        LtrQuery ltrQuery = new LtrQuery(features, ranker);
+        LtrQuery ltrQuery = new LtrQuery(features, ranker, featureNames);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -196,6 +223,10 @@ public class LtrQueryTests extends LuceneTestCase {
             float queryScore = scoreDoc.score;
 
             assertEquals(modelScore, queryScore, 0.01);
+
+            Explanation expl = searcherUnderTest.explain(ltrQuery, docId);
+            assertEquals(expl.getValue(), queryScore, 0.01);
+            checkFeatureNames(expl, featureNames);
         }
 
         // Try again with a model serialized
@@ -206,7 +237,7 @@ public class LtrQueryTests extends LuceneTestCase {
         float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
                 (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
 
-        ltrQuery = new LtrQuery(features, rankerAgain);
+        ltrQuery = new LtrQuery(features, rankerAgain, featureNames);
         topDocs = searcherUnderTest.search(ltrQuery, 10);
         scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -217,6 +248,10 @@ public class LtrQueryTests extends LuceneTestCase {
             float modelScore = scoresAgain[docId];
             float queryScore = scoreDoc.score;
             assertEquals(modelScore, queryScore, 0.01);
+
+            Explanation expl = searcherUnderTest.explain(ltrQuery, docId);
+            assertEquals(expl.getValue(), queryScore, 0.01);
+            checkFeatureNames(expl, featureNames);
         }
     }
 
@@ -229,7 +264,21 @@ public class LtrQueryTests extends LuceneTestCase {
         String userQuery = "brown cow";
         List<Query> features = Arrays.asList(new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                                                           new PhraseQuery("field", userQuery.split(" "))});
-        checkModelWithFeatures(features);
+        checkModelWithFeatures(features, null);
+
+
+    }
+
+    public void testExplainWithNames() throws IOException {
+        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
+
+
+
+        String userQuery = "brown cow";
+        List<Query> features = Arrays.asList(new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                new PhraseQuery("field", userQuery.split(" "))});
+        List<String> featureNames = Arrays.asList(new String[] {"funky_term_q", "funky_phrase_q"});
+        checkModelWithFeatures(features, featureNames);
 
 
     }
@@ -242,7 +291,7 @@ public class LtrQueryTests extends LuceneTestCase {
         Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
         List<Query> features = Arrays.asList(new Query[] {new TermQuery(new Term("field",  userQuery.split(" ")[0])), blended});
 
-        checkModelWithFeatures(features);
+        checkModelWithFeatures(features, null);
     }
 
 
@@ -254,7 +303,7 @@ public class LtrQueryTests extends LuceneTestCase {
         Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
         List<Query> features = Arrays.asList(new Query[] {new TermQuery(new Term("field",  "missingterm")), blended});
 
-        checkModelWithFeatures(features);
+        checkModelWithFeatures(features, null);
     }
 
     @After
