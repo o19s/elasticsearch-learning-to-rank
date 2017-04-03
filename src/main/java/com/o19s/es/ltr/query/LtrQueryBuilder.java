@@ -143,6 +143,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         assert token == XContentParser.Token.END_OBJECT;
         LtrQueryBuilder rVal = new LtrQueryBuilder();
         rVal.queryName(queryName).features(features).rankerScript(rankLibScript).boost(boost);
+
         return rVal;
     }
 
@@ -151,15 +152,17 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         if (_features == null || _rankLibScript == null) {
             return new MatchAllDocsQuery();
         }
+        List<String> featureNames = new ArrayList<String>();
         List<Query> asLQueries = new ArrayList<Query>();
         for (QueryBuilder query : _features) {
             asLQueries.add(query.toQuery(context));
+            featureNames.add(query.queryName());
         }
         // pull model out of script
         RankLibScriptEngine.RankLibExecutableScript rankerScript =
                 (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
 
-        return new LtrQuery(asLQueries, (Ranker)rankerScript.run());
+        return new LtrQuery(asLQueries, (Ranker)rankerScript.run(), featureNames);
     }
 
     @Override

@@ -162,6 +162,7 @@ public class LtrQueryTests extends LuceneTestCase {
         // Each RankList needed for training corresponds to one query,
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<RankList>();
+        List<String> featureNames = Arrays.asList(new String[] {"foo", "bar"});
 
         List<List<Float>> featuresPerDoc = getFeatureScores(features);
         int numFeatures = featuresPerDoc.get(0).size();
@@ -184,7 +185,7 @@ public class LtrQueryTests extends LuceneTestCase {
 
         // Ok now lets rerun that as a Lucene Query
 
-        LtrQuery ltrQuery = new LtrQuery(features, ranker);
+        LtrQuery ltrQuery = new LtrQuery(features, ranker, featureNames);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -206,7 +207,7 @@ public class LtrQueryTests extends LuceneTestCase {
         float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
                 (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
 
-        ltrQuery = new LtrQuery(features, rankerAgain);
+        ltrQuery = new LtrQuery(features, rankerAgain, featureNames);
         topDocs = searcherUnderTest.search(ltrQuery, 10);
         scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);

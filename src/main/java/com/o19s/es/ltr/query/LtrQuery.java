@@ -46,12 +46,18 @@ public class LtrQuery extends Query {
     /* The subqueries */
     private final Query[] _features;
     private final Ranker _rankModel;
+    private final String[] _featureNames;
 
-    public LtrQuery(Collection<Query> features, Ranker rankModel) {
+    public LtrQuery(Collection<Query> features, Ranker rankModel, Collection<String> featureNames) {
         this._rankModel = rankModel;
         Objects.requireNonNull(features, "Collection of Querys must not be null");
 
+        if (featureNames.size() != features.size()) {
+            throw new IllegalArgumentException("Was provided more featureNames than features (or vice-versa!)");
+        }
+
         this._features = features.toArray(new Query[features.size()]);
+        this._featureNames = featureNames.toArray(new String[featureNames.size()]);
     }
 
 
@@ -60,6 +66,10 @@ public class LtrQuery extends Query {
      */
     public List<Query> getFeatures() {
         return Collections.unmodifiableList(Arrays.asList(_features));
+    }
+
+    public List<String> getFeatureNames()  {
+        return Collections.unmodifiableList(Arrays.asList(_featureNames));
     }
 
 
@@ -86,7 +96,7 @@ public class LtrQuery extends Query {
     /** Create the Weight used to score us */
     @Override
     public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        return new LtrQuery.LtrWeight(searcher, needsScores);
+        return new LtrQuery.LtrWeight(searcher, needsScores, _featureNames);
     }
 
 
@@ -98,13 +108,15 @@ public class LtrQuery extends Query {
 
         private final boolean _needsScores;
         private Similarity _similarity;
+        private String[] _names;
 
-        protected LtrWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        protected LtrWeight(IndexSearcher searcher, boolean needsScores, String[] names) throws IOException {
             super(LtrQuery.this);
             for (Query feature : _features) {
                 Query rewritten = feature.rewrite(searcher.getIndexReader());
                 weights.add(searcher.createWeight(rewritten, needsScores));
             }
+            this._names = names;
             this._needsScores = needsScores;
             this._similarity = searcher.getSimilarity(needsScores);
         }
@@ -116,6 +128,12 @@ public class LtrQuery extends Query {
             }
         }
 
+        public String getName(int featureIdx) {
+            int idx = featureIdx - 1;
+            assert(idx >= 0);
+            return this._names[idx];
+        }
+
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             // TODO
@@ -125,7 +143,7 @@ public class LtrQuery extends Query {
             int featureIdx = 1;
             for (Weight weight: weights) {
                 Explanation explain = weight.explain(context, doc);
-                String featureString = "Feature " + Integer.toString(featureIdx) + ":";
+                String featureString = "Feature " + Integer.toString(featureIdx) + "(" + getName(featureIdx) + "):";
                 float featureVal = 0.0f;
                 if (!explain.isMatch()) {
                     subs.add(Explanation.noMatch(featureString + "(no match, default value 0.0 used)"));

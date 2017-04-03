@@ -20,7 +20,9 @@ import com.o19s.es.ltr.query.LtrQuery;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
@@ -33,6 +35,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by doug on 12/27/16.
@@ -98,6 +101,65 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
     }
+
+    public void testNamedFeatures() throws IOException {
+        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
+
+        String ltrQuery =       "{  " +
+                "   \"ltr\": {" +
+                "      \"model\": " + scriptSpec + ",        " +
+                "      \"features\": [        " +
+                "         {\"match\": {         " +
+                "            \"foo\": {     " +
+                "              \"query\": \"bar\", " +
+                "              \"_name\": \"bar_query\" " +
+                "         }}},                   " +
+                "         {\"match\": {         " +
+                "            \"baz\": {" +
+                "            \"query\": \"sham\"," +
+                "            \"_name\": \"sham_query\" " +
+                "         }}}                   " +
+                "      ]                      " +
+                "   } " +
+                "}";
+        LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
+        QueryShardContext context = createShardContext();
+        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
+        List<String> featureNames = query.getFeatureNames();
+        assertEquals(featureNames.get(0), "bar_query");
+        assertEquals(featureNames.get(1), "sham_query");
+
+    }
+
+    public void testUnnamedFeatures() throws IOException {
+        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
+
+        String ltrQuery =       "{  " +
+                "   \"ltr\": {" +
+                "      \"model\": " + scriptSpec + ",        " +
+                "      \"features\": [        " +
+                "         {\"match\": {         " +
+                "            \"foo\": {     " +
+                "              \"query\": \"bar\" " +
+                "         }}},                   " +
+                "         {\"match\": {         " +
+                "            \"baz\": {" +
+                "            \"query\": \"sham\"," +
+                "            \"_name\": \"\" " +
+                "         }}}                   " +
+                "      ]                      " +
+                "   } " +
+                "}";
+        LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
+        QueryShardContext context = createShardContext();
+        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
+        List<String> featureNames = query.getFeatureNames();
+        assertNull(featureNames.get(0));
+        assertEquals(featureNames.get(1), "");
+
+    }
+
+
     @Override
     protected boolean builderGeneratesCacheableQueries() {
         return false;
