@@ -143,7 +143,11 @@ public class LtrQuery extends Query {
             int featureIdx = 1;
             for (Weight weight: weights) {
                 Explanation explain = weight.explain(context, doc);
-                String featureString = "Feature " + Integer.toString(featureIdx) + "(" + getName(featureIdx) + "):";
+                String featureString = "Feature " + Integer.toString(featureIdx);
+                if (getName(featureIdx) != null) {
+                    featureString += "(" + getName(featureIdx) + ")";
+                }
+                featureString += ":";
                 float featureVal = 0.0f;
                 if (!explain.isMatch()) {
                     subs.add(Explanation.noMatch(featureString + "(no match, default value 0.0 used)"));
