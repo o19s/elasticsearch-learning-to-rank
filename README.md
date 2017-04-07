@@ -8,7 +8,7 @@ Generally new features follow the latest ES version, but you can get older versi
 
 ### Elasticsearch 5.3.0
 
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.1.es<ES VER>.zip`
+`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.1-es<ES VER>.zip`
 
 ### Elasticsearch 5.2.1, 5.2.2
 
