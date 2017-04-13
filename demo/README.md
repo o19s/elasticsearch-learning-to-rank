@@ -4,7 +4,7 @@ This demo uses data from [TheMovieDB](http://themoviedb.org) (TMDB) to demonstra
 
 ## Install Dependencies
 
-This demo is a set of Python 3 scripts that use the elasticsearch client library, requests for HTTP requests, and jinja2 templates to help format Elasticsearch queries given a keyword. 
+This demo is a set of Python 3 scripts that use the Elasticsearch client library, requests for HTTP requests, and jinja2 templates to help format Elasticsearch queries given a keyword.
 
 The demo uses Ranklib, a java library bundled as a jar file. Be sure you have Java 8 installed.
 
@@ -31,7 +31,7 @@ wget -O RankLib.jar http://es-learn-to-rank.labs.o19s.com/RankLib-2.8.jar
 
 ## Download TMDB Data
 
-The steps below create a `tmdb.json` file full of movie data we can then use with Elasticserach
+The steps below create a `tmdb.json` file full of movie data we can then use with Elasticsearch
 
 #### 1. Get a TMDB Key
 
@@ -66,7 +66,7 @@ python indexMlTmdb.py
 
 ## Train and upload the model
 
-This script will run through all the steps of training using the downloaded Ranklib.jar. First it parses `sample_judgements.txt`. Using the keywords in the header comment, and the ES queries in `1.json.jinja...N.json.jinja` it batches up queries to Elasticsearch via `_msearch` to gather feature values 1..N for each keyword/doc pair. It creates a second file consumable by Ranklib called `sample_judgments_wfeatures.txt` where each feature value is listed next to each judgment `grade qid:N 1:<val> 2:<val> ...` etc. It then asks Ranklib to train all the supported models (linear, lambdamart, random forest, etc) outputing a model to a text file. It loads these models into Elasticsearch as ranklib scripts
+This script will run through all the steps of training using the downloaded Ranklib.jar. First it parses `sample_judgements.txt`. Using the keywords in the header comment, and the ES queries in `1.json.jinja...N.json.jinja` it batches up queries to Elasticsearch via `_msearch` to gather feature values 1..N for each keyword/doc pair. It creates a second file consumable by Ranklib called `sample_judgments_wfeatures.txt` where each feature value is listed next to each judgment `grade qid:N 1:<val> 2:<val> ...` etc. It then asks Ranklib to train all the supported models (linear, lambdamart, random forest, etc) outputting a model to a text file. It loads these models into Elasticsearch as ranklib scripts
 
 Run this script with:
 

@@ -39,7 +39,7 @@ Learning to Rank uses machine learning models to get better search relevance. On
 
 ### Judgement List 101
 
-The first thing you'll need is to create what's known in search circles as a *judgment list*. A *judgment list* says for a given query, a given document recieves this relevance *grade*. What do we mean by *grade*? Usually the "grade" is our numerical assesment for how relevant a document is to a keyword query. Traditionally grades come on a 0-4 scale where 0 means not at all relevant and 4 means exactly relevant.
+The first thing you'll need is to create what's known in search circles as a *judgment list*. A *judgment list* says for a given query, a given document receives this relevance *grade*. What do we mean by *grade*? Usually the "grade" is our numerical assessment for how relevant a document is to a keyword query. Traditionally grades come on a 0-4 scale where 0 means not at all relevant and 4 means exactly relevant.
 
 Consider a search for "rambo." If "doc\_1234" is the movie Rambo and "doc\_5678" is "Turner and Hooch", then we might safely make the following two judgements:
 
@@ -52,7 +52,7 @@ We basically just decided on these judgments. Generating judgements from clicks 
 
 ### Judgment lists -> training set
 
-Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query keyword is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarilly decide, for example, that feature 1 is the number of times the query keywords occur in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
+Libraries like Ranklib and xgboost don't directly use the three-tuples listed above for training. Ranklib when training doesn't really care what the document identifier is. Nor does it care what the actual query keyword is. Ranklib instead expects you to do some legwork to examine the query and document and generate a set of quantitative *features* you hypothesize might predict the relevance grade. A *feature* here is a numerical value that measures something in the query, the document, or a relationship between the query and document. You might arbitrarily decide, for example, that feature 1 is the number of times the query keywords occur in the movie title. And feature 2 might correspond to how many times the keywords occur in the movies overview field.
 
 A common file format for this sort of training set is the following:
 
@@ -65,7 +65,7 @@ Let's take an example. When we look at our query "rambo", which we'll call query
 - Feature 1 : Rambo occurs 1 time in the title of movie "Rambo"; 0 times in Turner and Hootch
 - Feature 2 : Rambo occurs 6 times in the overview field of movie "Rambo"; 0 times in Turner and Hootch
 
-The judgment list above, then gets transformed into t
+The judgment list above, then gets transformed into
 
 ```
 4 qid:1 1:1 2:6
@@ -94,7 +94,7 @@ The goal of *training* is to generate a function (which we also loosely call a *
 > java -jar bin/RankLib.jar -train train.txt -ranker 6 -save mymodel.txt
 ```
 
-This line trains against training data `train.txt` to generate a LambdaMART model (ranker 6), outputing a text representation of the model to `mymodel.txt.` Now training, like generating judgments and hypothisizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used as test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
+This line trains against training data `train.txt` to generate a LambdaMART model (ranker 6), outputting a text representation of the model to `mymodel.txt.` Now training, like generating judgments and hypothesizing features is it's own art & science. Facilities exist in libraries like ranklib to leave out some of the training data to be used as test data to evaluate your model for accuracy. Be sure to research all the options available to you to evaluate your model offline.
 
 Ok, once you have a good model, it can be used as a ranking function to generate relevance scores. Yay!
 
