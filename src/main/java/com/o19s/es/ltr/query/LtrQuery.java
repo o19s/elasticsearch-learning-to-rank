@@ -104,7 +104,7 @@ public class LtrQuery extends Query {
     // Weight: Modeled on
     protected class LtrWeight extends Weight {
         // The Weight's for our subqueries, in 1-1 correspondence with disjuncts
-        protected final ArrayList<Weight> weights = new ArrayList<>();
+        protected final ArrayList<Weight> weights = new ArrayList<>(_features.length);
 
         private final boolean _needsScores;
         private Similarity _similarity;
@@ -137,7 +137,7 @@ public class LtrQuery extends Query {
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             // TODO
-            List<Explanation> subs = new ArrayList<>();
+            List<Explanation> subs = new ArrayList<>(weights.size());
 
             DataPoint d = new DenseProgramaticDataPoint(weights.size());
             int featureIdx = 1;
@@ -186,7 +186,7 @@ public class LtrQuery extends Query {
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            List<Scorer> scorers = new ArrayList<>();
+            List<Scorer> scorers = new ArrayList<>(weights.size());
             for (Weight w : weights) {
                 // we will advance() subscorers
                 Scorer subScorer = w.scorer(context);
