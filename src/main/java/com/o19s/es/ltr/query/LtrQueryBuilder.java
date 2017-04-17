@@ -18,48 +18,53 @@
 package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
-import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
+    private static final ObjectParser<LtrQueryBuilder, QueryParseContext> PARSER;
 
     Script _rankLibScript;
     List<QueryBuilder> _features;
-    String initialModel = null;
+
+    static {
+        PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
+        declareStandardFields(PARSER);
+        PARSER.declareObjectArray(
+                (ltr, features) -> ltr.features(features),
+                (parser, context) -> context.parseInnerQueryBuilder().get(),
+                new ParseField("features"));
+        PARSER.declareField(
+                (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, "ranklib")),
+                new ParseField("model"), ObjectParser.ValueType.OBJECT_OR_STRING);
+    }
+
 
     public LtrQueryBuilder() {
     }
 
     public LtrQueryBuilder(StreamInput in) throws IOException {
         super(in);
-        RankerFactory rf = new RankerFactory();
-
-        _features = new ArrayList<QueryBuilder>();
-        _features.addAll(readQueries(in));
+        _features = readQueries(in);
         _rankLibScript = new Script(in);
-
-
     }
 
     @Override
@@ -91,60 +96,17 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     }
 
     public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
-        XContentParser parser = parseContext.parser();
-
-        Script rankLibScript = null;
-
-        final List<QueryBuilder> features = new ArrayList<>();
-
-        String queryName = null;
-        float boost = AbstractQueryBuilder.DEFAULT_BOOST;
-
-
-        String currentFieldName = null;
-        XContentParser.Token token = null;
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
-                if (!currentFieldName.equals("model") && !currentFieldName.equals("features") && !currentFieldName.equals("_name")
-                        && !currentFieldName.equals("boost")) {
-                    throw new ParsingException(parser.getTokenLocation(),
-                            "[ltr] does not regocnize parameter: " + currentFieldName);
-                }
-            }
-            else if (token == XContentParser.Token.START_OBJECT) {
-                if (currentFieldName.equals("model")) {
-                    rankLibScript = Script.parse(parser, "ranklib");
-                }
-            }
-            else if (token == XContentParser.Token.START_ARRAY) {
-                while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
-                    switch (currentFieldName) {
-                        case "features": {
-                            features.add(parseContext.parseInnerQueryBuilder().get());
-                        }
-                    }
-                }
-            } else if (token.isValue()) {
-                if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName)) {
-                    queryName = parser.text();
-                } else if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName)) {
-                    boost = parser.floatValue();
-                } else {
-                    throw new ParsingException(parser.getTokenLocation(), "[ltr] query does not support [" + currentFieldName + "]");
-                }
-            }
+        final LtrQueryBuilder builder;
+        try {
+            builder = PARSER.apply(parseContext.parser(), parseContext);
+        } catch (IllegalArgumentException e) {
+            throw new ParsingException(parseContext.parser().getTokenLocation(), e.getMessage(), e);
         }
-
-        if (rankLibScript == null) {
-            throw new ParsingException(parser.getTokenLocation(),
+        if (builder._rankLibScript == null) {
+            throw new ParsingException(parseContext.parser().getTokenLocation(),
                     "[ltr] query requires a model, none specified");
         }
-        assert token == XContentParser.Token.END_OBJECT;
-        LtrQueryBuilder rVal = new LtrQueryBuilder();
-        rVal.queryName(queryName).features(features).rankerScript(rankLibScript).boost(boost);
-
-        return rVal;
+        return builder;
     }
 
     @Override
@@ -152,8 +114,8 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         if (_features == null || _rankLibScript == null) {
             return new MatchAllDocsQuery();
         }
-        List<String> featureNames = new ArrayList<String>();
-        List<Query> asLQueries = new ArrayList<Query>();
+        List<String> featureNames = new ArrayList<String>(_features.size());
+        List<Query> asLQueries = new ArrayList<Query>(_features.size());
         for (QueryBuilder query : _features) {
             asLQueries.add(query.toQuery(context));
             featureNames.add(query.queryName());
