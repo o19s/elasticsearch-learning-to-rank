@@ -31,7 +31,7 @@ public class NoopScorer extends Scorer {
      *
      * @param weight The scorers <code>Weight</code>.
      */
-    protected NoopScorer(Weight weight, int maxDocs) {
+    public NoopScorer(Weight weight, int maxDocs) {
         super(weight);
         _noopIter = DocIdSetIterator.all(maxDocs);
 

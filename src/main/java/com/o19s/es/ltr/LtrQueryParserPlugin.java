@@ -14,11 +14,10 @@
  * limitations under the License.
  *
  */
-package com.o19s.es.ltr.query;
+package com.o19s.es.ltr;
 
-import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerFactory;
-import org.elasticsearch.common.settings.Setting;
+import com.o19s.es.ltr.query.LtrQueryBuilder;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParser;

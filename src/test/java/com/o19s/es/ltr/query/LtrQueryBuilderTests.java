@@ -16,26 +16,18 @@
  */
 package com.o19s.es.ltr.query;
 
-import com.o19s.es.ltr.query.LtrQuery;
-import com.o19s.es.ltr.query.LtrQueryBuilder;
-import com.o19s.es.ltr.query.LtrQueryParserPlugin;
+import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.index.Index;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
 
 /**
  * Created by doug on 12/27/16.
@@ -124,10 +116,9 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
-        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
-        List<String> featureNames = query.getFeatureNames();
-        assertEquals(featureNames.get(0), "bar_query");
-        assertEquals(featureNames.get(1), "sham_query");
+        RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
+        assertEquals(query.getFeature(0).getName(), "bar_query");
+        assertEquals(query.getFeature(1).getName(), "sham_query");
 
     }
 
@@ -152,10 +143,9 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
-        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
-        List<String> featureNames = query.getFeatureNames();
-        assertNull(featureNames.get(0));
-        assertEquals(featureNames.get(1), "");
+        RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
+        assertNull(query.getFeature(0).getName());
+        assertEquals(query.getFeature(1).getName(), "");
 
     }
 
@@ -200,6 +190,6 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
 
     @Override
     protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
-        assertThat(query, instanceOf(LtrQuery.class));
+        assertThat(query, instanceOf(RankerQuery.class));
     }
 }

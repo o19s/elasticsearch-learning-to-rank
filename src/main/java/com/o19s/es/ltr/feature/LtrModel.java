@@ -1,5 +1,5 @@
 /*
- * Copyright [2016] Doug Turnbull
+ * Copyright [2017] Wikimedia Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.Ranker;
-import org.apache.lucene.queries.CustomScoreQuery;
-import org.apache.lucene.search.Query;
+package com.o19s.es.ltr.feature;
+
+import com.o19s.es.ltr.ranker.LtrRanker;
 
 /**
- * Created by doug on 12/23/16.
+ * Represents a self contained LTR model
  */
-public class RankLibQuery extends CustomScoreQuery {
+public interface LtrModel {
+    /**
+     * Name of the model
+     * @return the name
+     */
+    String name();
 
-    private Ranker rankLibRanker =  null;
+    /**
+     * Return the {@link LtrRanker} implementation used by this model
+     * @return the ranker
+     */
+    LtrRanker ranker();
 
-    public RankLibQuery(Query subQuery) {
-        super(subQuery);
-    }
+    /**
+     * The set of features used by this model
+     * @return the set of features
+     */
+    FeatureSet featureSet();
 }

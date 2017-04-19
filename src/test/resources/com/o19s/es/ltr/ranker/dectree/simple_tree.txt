@@ -1,0 +1,22 @@
+# first line after split is right
+# data point: feature1:2, feature2:2, feature3:1
+- tree:3.4
+  - split:feature1:2.3
+    - output:3.2
+# win
+    - split:feature2:2.2
+      - split:feature3:3.2
+        - output:3.1
+        - output:4.1
+# win => output 1.2*3.4
+      - output:1.2
+- tree:2.8
+  - split:feature2:2.1
+    - output:3.2
+# win
+    - split:feature2:2.2
+      - split:feature3:3.2
+        - output:3.1
+        - output:4.1
+# win => output 3.2*2.8
+      - output:3.2

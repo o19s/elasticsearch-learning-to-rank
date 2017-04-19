@@ -14,16 +14,17 @@
  * limitations under the License.
  *
  */
-package com.o19s.es.ltr.query;
+package com.o19s.es.ltr.ranker.ranklib;
 
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.utilities.RankLibError;
+import com.o19s.es.ltr.ranker.LtrRanker;
 
 /**
  * Implements DataPoint but without needing to pass in a stirng
  * to be parsed
  */
-public class DenseProgramaticDataPoint extends DataPoint {
+public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.DataPoint {
 
     public DenseProgramaticDataPoint(int numFeatures) {
         super();
@@ -52,5 +53,15 @@ public class DenseProgramaticDataPoint extends DataPoint {
 
     public float[] getFeatureVector() {
         return this.fVals;
+    }
+
+    @Override
+    public void setFeatureScore(int featureIdx, float score) {
+        this.setFeatureValue(featureIdx+1, score);
+    }
+
+    @Override
+    public float getFeatureScore(int featureIdx) {
+        return this.getFeatureValue(featureIdx+1);
     }
 }

@@ -18,6 +18,11 @@
 package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.Ranker;
+import com.o19s.es.ltr.feature.PrebuiltFeature;
+import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
+import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -34,7 +39,7 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -114,17 +119,19 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         if (_features == null || _rankLibScript == null) {
             return new MatchAllDocsQuery();
         }
-        List<String> featureNames = new ArrayList<String>(_features.size());
-        List<Query> asLQueries = new ArrayList<Query>(_features.size());
-        for (QueryBuilder query : _features) {
-            asLQueries.add(query.toQuery(context));
-            featureNames.add(query.queryName());
+        PrebuiltFeature[] features = new PrebuiltFeature[_features.size()];
+        for(int i = 0; i < _features.size(); i++) {
+            QueryBuilder builder = _features.get(i);
+            final Query q = builder.toQuery(context);
+            final String name = builder.queryName();
+            features[i] = new PrebuiltFeature(name, q);
         }
         // pull model out of script
         RankLibScriptEngine.RankLibExecutableScript rankerScript =
                 (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
-
-        return new LtrQuery(asLQueries, (Ranker)rankerScript.run(), featureNames);
+        RanklibRanker ranker = new RanklibRanker((Ranker)rankerScript.run());
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, new PrebuiltFeatureSet(queryName(), features));
+        return RankerQuery.build(model, context, Collections.emptyMap());
     }
 
     @Override

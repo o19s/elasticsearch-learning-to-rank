@@ -16,7 +16,7 @@
  */
 package com.o19s.es.ltr.query;
 
-import org.elasticsearch.common.settings.Settings;
+import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
 

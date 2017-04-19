@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.o19s.es.ltr.query;
+package com.o19s.es.ltr.ranker.ranklib;
 
 import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
