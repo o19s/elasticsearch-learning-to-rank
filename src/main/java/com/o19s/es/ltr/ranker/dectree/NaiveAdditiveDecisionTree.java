@@ -23,7 +23,7 @@ import java.util.Objects;
 
 /**
  * Naive implementation of additive decision tree.
- * May be slow when the number of trees and tree complexity if high comparatively to the number fo features.
+ * May be slow when the number of trees and tree complexity if high comparatively to the number of features.
  */
 public class NaiveAdditiveDecisionTree implements LtrRanker {
     private final Node[] trees;
@@ -98,15 +98,17 @@ public class NaiveAdditiveDecisionTree implements LtrRanker {
         @Override
         public float eval(float[] scores) {
             Node n = this;
-            while(!n.isLeaf()) {
+            while (!n.isLeaf()) {
+                assert n instanceof Split;
                 Split s = (Split) n;
-                if ( s.threshold >= scores[feature] ) {
+                if (s.threshold >= scores[feature]) {
                     n = s.left;
                 } else {
                     n = s.right;
                 }
             }
-            return ((Leaf)n).output;
+            assert n instanceof Leaf;
+            return n.eval(scores);
         }
     }
 

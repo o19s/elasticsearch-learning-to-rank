@@ -18,6 +18,8 @@ package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
 
+import java.util.Objects;
+
 /**
  * Prebuilt model
  */
@@ -27,9 +29,9 @@ public class PrebuiltLtrModel implements LtrModel {
     private final PrebuiltFeatureSet featureSet;
 
     public PrebuiltLtrModel(String name, LtrRanker ranker, PrebuiltFeatureSet featureSet) {
-        this.name = name;
-        this.ranker = ranker;
-        this.featureSet = featureSet;
+        this.name = Objects.requireNonNull(name);
+        this.ranker = Objects.requireNonNull(ranker);
+        this.featureSet = Objects.requireNonNull(featureSet);
     }
 
     @Override

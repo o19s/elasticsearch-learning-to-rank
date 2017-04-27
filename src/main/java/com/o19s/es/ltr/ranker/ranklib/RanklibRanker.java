@@ -19,8 +19,6 @@ package com.o19s.es.ltr.ranker.ranklib;
 import ciir.umass.edu.learning.Ranker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 
-import java.util.Objects;
-
 public class RanklibRanker implements LtrRanker {
     private final Ranker ranker;
 
@@ -72,19 +70,5 @@ public class RanklibRanker implements LtrRanker {
     @Override
     public int size() {
         return ranker.getFeatures().length;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(ranker);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof RanklibRanker)) {
-            return false;
-        }
-
-        return Objects.equals(ranker, ((RanklibRanker)o).ranker);
     }
 }

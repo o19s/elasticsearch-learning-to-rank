@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.feature;
 
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.Map;
@@ -30,13 +31,13 @@ public class PrebuiltFeature implements Feature {
     private final String name;
     private final Query query;
 
-    public PrebuiltFeature(String name, Query query) {
+    public PrebuiltFeature(@Nullable String name, Query query) {
         this.name = name;
         this.query = Objects.requireNonNull(query);
     }
 
-    @Override
-    public String getName() {
+    @Override @Nullable
+    public String name() {
         return name;
     }
 

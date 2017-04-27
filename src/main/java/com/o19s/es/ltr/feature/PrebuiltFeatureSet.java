@@ -16,17 +16,19 @@
 
 package com.o19s.es.ltr.feature;
 
-import java.util.Arrays;
+import org.elasticsearch.common.Nullable;
+
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class PrebuiltFeatureSet implements FeatureSet {
-    private final PrebuiltFeature[] features;
+    private final List<PrebuiltFeature> features;
     private final String name;
 
-    public PrebuiltFeatureSet(String name, PrebuiltFeature[] features) {
+    public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
         this.name = name;
-        this.features = features;
+        this.features = Objects.requireNonNull(features);
     }
 
     @Override
@@ -35,34 +37,46 @@ public class PrebuiltFeatureSet implements FeatureSet {
     }
 
     @Override
-    public List<Feature> features() {
-        return Arrays.asList(features);
+    public PrebuiltFeature[] asArray() {
+        return features.toArray(new PrebuiltFeature[features.size()]);
     }
 
     @Override
     public int featureOrdinal(String featureName) {
-        // slow, not meant for prod usage
-        for (int i = 0; i < features.length; i++) {
-            if(Objects.equals(features[i].getName(), featureName)) {
-                return i;
-            }
+        int ord = findFeatureIndexByName(featureName);
+        if (ord < 0) {
+            throw new IllegalArgumentException("Unknown feature [" + featureName + "]");
         }
-        return -1;
+        return ord;
+    }
+
+    @Override
+    public Feature feature(int ord) {
+        return features.get(ord);
     }
 
     @Override
     public PrebuiltFeature feature(String name) {
-        return features[featureOrdinal(name)];
+        return features.get(featureOrdinal(name));
     }
 
-    /**
-     * Check if this set supports this feature
-     *
-     * @param name the name of the feature
-     * @return true if suported false otherwise
-     */
     @Override
     public boolean hasFeature(String name) {
-        return feature(name) != null;
+        return findFeatureIndexByName(name) >= 0;
+    }
+
+    @Override
+    public int size() {
+        return features.size();
+    }
+
+    private int findFeatureIndexByName(String featureName) {
+        // slow, not meant for runtime usage, mostly needed for tests
+        // would make sense to implement a Map to do this once
+        // feature names are mandatory and unique.
+        return IntStream.range(0, features.size())
+                .filter(i -> Objects.equals(features.get(i).name(), featureName))
+                .findFirst()
+                .orElse(-1);
     }
 }

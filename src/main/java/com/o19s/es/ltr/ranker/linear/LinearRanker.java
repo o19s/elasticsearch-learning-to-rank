@@ -19,6 +19,8 @@ package com.o19s.es.ltr.ranker.linear;
 import com.o19s.es.ltr.ranker.ArrayDataPoint;
 import com.o19s.es.ltr.ranker.LtrRanker;
 
+import java.util.Objects;
+
 /**
  * Simple linear ranker that applies a dot product based
  * on the provided weights array.
@@ -26,8 +28,8 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 public class LinearRanker implements LtrRanker {
     private final float[] weights;
 
-    public LinearRanker(float weight[]) {
-        this.weights = weight;
+    public LinearRanker(float[] weights) {
+        this.weights = Objects.requireNonNull(weights);
     }
 
     @Override

@@ -27,7 +27,6 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.DataPoint {
 
     public DenseProgramaticDataPoint(int numFeatures) {
-        super();
         this.fVals = new float[numFeatures+1]; // add 1 because RankLib features 1 based
     }
 
@@ -57,11 +56,13 @@ public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.Da
 
     @Override
     public void setFeatureScore(int featureIdx, float score) {
+        // add 1 because RankLib features 1 based
         this.setFeatureValue(featureIdx+1, score);
     }
 
     @Override
     public float getFeatureScore(int featureIdx) {
+        // add 1 because RankLib features 1 based
         return this.getFeatureValue(featureIdx+1);
     }
 }

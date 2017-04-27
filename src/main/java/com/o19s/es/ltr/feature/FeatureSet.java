@@ -16,76 +16,51 @@
 
 package com.o19s.es.ltr.feature;
 
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * A set of features.
  * Features can be identified by their name or ordinal.
  * A FeatureSet is dense and ordinals start at 0.
- * Time critical processes will most likely use ordinals so that they can
- * represent the set as a flat Feature[] array.
  */
-public interface FeatureSet extends Iterable<Feature> {
+public interface FeatureSet {
 
     /**
      * Name of the feature set
-     * @return the name
      */
     String name();
 
     /**
-     * List of feature present in this model.
-     * This list must be properly ordered to that {@link #featureOrdinal(String)}
-     * matches features().get(ordinal)
-     * @return the list of features in the set.
+     * array representation
      */
-    List<Feature> features();
+    Feature[] asArray();
 
     /**
      * Retrieve feature ordinal by its name.
      * If the feature does not exist the behavior of this method is
      * undefined.
-     * @param featureName the feature name
-     * @return the feature ordinal
      */
     int featureOrdinal(String featureName);
 
     /**
      * Retrieve feature by its ordinal.
      * May produce unexpected results if called with unknown ordinal
-     * @param ord feature ordinal
-     * @return the feature
      */
-    default Feature feature(int ord) {
-        assert ord < features().size();
-        return features().get(ord);
-    }
+    Feature feature(int ord);
 
     /**
      * Access a feature by its name.
      * May produce unexpected results if called with unknown feature
-     * @param name name of the feature
-     * @return the feature
      */
-    Feature feature(String name);
+    Feature feature(String featureName);
 
     /**
      * Check if this set supports this feature
-     * @param name the name of the feature
-     * @return true if suported false otherwise
+     * @return true if supported false otherwise
      */
-    boolean hasFeature(String name);
+    boolean hasFeature(String featureName);
 
     /**
      *
-     * @return number of features in the set.
+     * Number of features in the set.
      */
-    default int size() {
-        return features().size();
-    }
-
-    default Iterator<Feature> iterator() {
-        return features().iterator();
-    }
+    int size();
 }

@@ -117,8 +117,8 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
         RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
-        assertEquals(query.getFeature(0).getName(), "bar_query");
-        assertEquals(query.getFeature(1).getName(), "sham_query");
+        assertEquals(query.getFeature(0).name(), "bar_query");
+        assertEquals(query.getFeature(1).name(), "sham_query");
 
     }
 
@@ -144,8 +144,8 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
         RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
-        assertNull(query.getFeature(0).getName());
-        assertEquals(query.getFeature(1).getName(), "");
+        assertNull(query.getFeature(0).name());
+        assertEquals(query.getFeature(1).name(), "");
 
     }
 

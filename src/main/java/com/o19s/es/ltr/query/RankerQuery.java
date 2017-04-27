@@ -33,8 +33,6 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +52,9 @@ public class RankerQuery extends Query {
 
     private RankerQuery(Query[] queries, Feature[] features, LtrRanker ranker) {
         assert queries.length == features.length;
-        this.queries = queries;
-        this.features = features;
-        this.ranker = ranker;
+        this.queries = Objects.requireNonNull(queries);
+        this.features = Objects.requireNonNull(features);
+        this.ranker = Objects.requireNonNull(ranker);
     }
 
     /**
@@ -79,7 +77,7 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(LtrModel model, QueryShardContext context, Map<String, Object> params) {
-        Feature[] features = model.featureSet().features().toArray(new Feature[model.featureSet().size()]);
+        Feature[] features = model.featureSet().asArray();
         return build(model.ranker(), features, context, params);
     }
 
@@ -103,29 +101,36 @@ public class RankerQuery extends Query {
         return rewritten ? new RankerQuery(rewrittenQueries, features, ranker) : this;
     }
 
-    public Feature getFeature(int idx) {
-        return features[idx];
-    }
-
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof RankerQuery)) {
+        // This query should never be cached
+        if (this == obj) {
+            return true;
+        }
+        if (!sameClassAs(obj)) {
             return false;
         }
-        RankerQuery other = (RankerQuery) obj;
-        return Arrays.deepEquals(queries, other.queries)
-                && Arrays.deepEquals(features, other.features)
-                && Objects.equals(ranker, other.ranker);
+        RankerQuery that = (RankerQuery) obj;
+        return Objects.deepEquals(queries, that.queries) &&
+                Objects.deepEquals(features, that.features) &&
+                Objects.equals(ranker, that.ranker);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(features, queries, ranker);
+        return 31 * classHash() + Objects.hash(features, queries, ranker);
     }
 
     @Override
     public String toString(String field) {
         return "rankerquery:"+field;
+    }
+
+    /**
+     * Return feature at ordinal
+     */
+    Feature getFeature(int ordinal) {
+        return features[ordinal];
     }
 
     @Override
@@ -140,7 +145,7 @@ public class RankerQuery extends Query {
     public class RankerWeight extends Weight {
         private final Weight[] weights;
 
-        protected RankerWeight(Weight[] weights) {
+        RankerWeight(Weight[] weights) {
             super(RankerQuery.this);
             this.weights = weights;
         }
@@ -161,8 +166,8 @@ public class RankerQuery extends Query {
                 Weight weight = weights[i];
                 Explanation explain = weight.explain(context, doc);
                 String featureString = "Feature " + Integer.toString(i);
-                if (features[i].getName() != null) {
-                    featureString += "(" + features[i].getName() + ")";
+                if (features[i].name() != null) {
+                    featureString += "(" + features[i].name() + ")";
                 }
                 featureString += ":";
                 float featureVal = 0.0f;
@@ -201,30 +206,32 @@ public class RankerQuery extends Query {
 
         @Override
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
-            RankerChildScorer[] scorers = new RankerChildScorer[weights.length];
-            DocIdSetIterator[] subIterators = new DocIdSetIterator[weights.length];
-            for(int i = 0; i < weights.length; i++) {
+            ArrayList<Scorer> scorers = new ArrayList<>(weights.length);
+            List<DocIdSetIterator> subIterators = new ArrayList<>(weights.length);
+            for (int i = 0; i < weights.length; i++) {
                 Scorer scorer = weights[i].scorer(context);
                 if (scorer == null) {
                     scorer = new NoopScorer(this, context.reader().maxDoc());
                 }
-                scorers[i] = new RankerChildScorer(scorer, features[i]);
-                subIterators[i] = scorer.iterator();
+                scorers.add(scorer);
+                subIterators.add(scorer.iterator());
             }
             DocIdSetIterator rankerIterator = new NaiveDisjunctionDISI(DocIdSetIterator.all(context.reader().maxDoc()), subIterators);
             return new RankerScorer(scorers, rankerIterator);
         }
 
         class RankerScorer extends Scorer {
-            private final List<ChildScorer> scorers;
+            /**
+             * NOTE: Switch to ChildScorer and {@link #getChildren()} if it appears
+             * to be useful for logging
+             */
+            private final ArrayList<Scorer> scorers;
             private final DocIdSetIterator iterator;
-            private final float[] scores;
             private final LtrRanker.DataPoint dataPoint;
 
-            RankerScorer(RankerChildScorer[] scorers, DocIdSetIterator iterator) {
+            RankerScorer(ArrayList<Scorer> scorers, DocIdSetIterator iterator) {
                 super(RankerWeight.this);
-                this.scorers = Arrays.asList(scorers);
-                scores = new float[scorers.length];
+                this.scorers = scorers;
                 this.iterator = iterator;
                 dataPoint = ranker.newDataPoint();
             }
@@ -235,14 +242,9 @@ public class RankerQuery extends Query {
             }
 
             @Override
-            public Collection<ChildScorer> getChildren() {
-                return scorers;
-            }
-
-            @Override
             public float score() throws IOException {
                 for (int i = 0; i < scorers.size(); i++) {
-                    Scorer scorer = scorers.get(i).child;
+                    Scorer scorer = scorers.get(i);
                     if (scorer.docID() == docID()) {
                         dataPoint.setFeatureScore(i, scorer.score());
                     } else {
@@ -254,7 +256,7 @@ public class RankerQuery extends Query {
 
             @Override
             public int freq() throws IOException {
-                return scores.length;
+                return scorers.size();
             }
 
             @Override
@@ -264,23 +266,18 @@ public class RankerQuery extends Query {
         }
     }
 
-    static class RankerChildScorer extends Scorer.ChildScorer {
-        private final Feature feature;
-
-        RankerChildScorer(Scorer scorer, Feature feature) {
-            super(scorer, feature.getName());
-            this.feature = feature;
-        }
-    }
-
     /**
      * Driven by a main iterator and tries to maintain a list of sub iterators
+     * Mostly needed to avoid calling {@link Scorer#iterator()} to directly advance
+     * from {@link RankerWeight.RankerScorer#score()} as some Scorer implementations
+     * will instantiate new objects every time iterator() is called.
+     * NOTE: consider using {@link org.apache.lucene.search.DisiPriorityQueue}?
      */
     static class NaiveDisjunctionDISI extends DocIdSetIterator {
         private final DocIdSetIterator main;
-        private final DocIdSetIterator[] subIterators;
+        private final List<DocIdSetIterator> subIterators;
 
-        NaiveDisjunctionDISI(DocIdSetIterator main, DocIdSetIterator[] subIterators) {
+        NaiveDisjunctionDISI(DocIdSetIterator main, List<DocIdSetIterator> subIterators) {
             this.main = main;
             this.subIterators = subIterators;
         }
@@ -308,8 +305,7 @@ public class RankerQuery extends Query {
             if (target == NO_MORE_DOCS) {
                 return;
             }
-            for (int i = 0; i < subIterators.length; i++) {
-                DocIdSetIterator iterator = subIterators[i];
+            for (DocIdSetIterator iterator: subIterators) {
                 if (iterator.docID() < target) {
                     iterator.advance(target);
                 }

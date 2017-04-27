@@ -167,7 +167,7 @@ public class LtrQueryTests extends LuceneTestCase {
         Explanation[] expls = expl.getDetails();
         int ftrIdx = 0;
         for (Explanation ftrExpl: expls) {
-            String ftrName = features.get(ftrIdx).getName();
+            String ftrName = features.get(ftrIdx).name();
             String expectedFtrName = "";
             if (ftrName == null) {
                 expectedFtrName = "Feature " + ftrIdx + ":";
@@ -253,9 +253,8 @@ public class LtrQueryTests extends LuceneTestCase {
     }
 
     private RankerQuery toRankerQuery(List<PrebuiltFeature> features, Ranker ranker) {
-        PrebuiltFeature[] featuresArray = features.toArray(new PrebuiltFeature[features.size()]);
         LtrRanker ltrRanker = new RanklibRanker(ranker);
-        PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, featuresArray));
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, features));
         return RankerQuery.build(model);
     }
 

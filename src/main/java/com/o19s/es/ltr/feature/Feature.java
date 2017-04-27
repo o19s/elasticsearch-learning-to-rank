@@ -27,15 +27,11 @@ import java.util.Map;
 public interface Feature {
     /**
      * The feature name
-     * @return the feature name
      */
-    String getName();
+    String name();
 
     /**
      * Transform this feature into a lucene query
-     * @param context the shard context
-     * @param params parameters provided to build the query
-     * @return the lucene query
      */
     Query doToQuery(QueryShardContext context, Map<String, Object> params);
 }

@@ -73,10 +73,10 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     private NaiveAdditiveDecisionTree parseTreeModel(String textRes) throws IOException {
-        PrebuiltFeature[] features = new PrebuiltFeature[3];
-        features[0] = new PrebuiltFeature("feature1", new MatchAllDocsQuery());
-        features[1] = new PrebuiltFeature("feature2", new MatchAllDocsQuery());
-        features[2] = new PrebuiltFeature("feature3", new MatchAllDocsQuery());
+        List<PrebuiltFeature> features = new ArrayList<>(3);
+        features.add(new PrebuiltFeature("feature1", new MatchAllDocsQuery()));
+        features.add(new PrebuiltFeature("feature2", new MatchAllDocsQuery()));
+        features.add(new PrebuiltFeature("feature3", new MatchAllDocsQuery()));
         FeatureSet set = new PrebuiltFeatureSet("my_set", features);
 
         TreeTextParser parser = new TreeTextParser(this.getClass().getResourceAsStream(textRes), set);
