@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.ranker.linear;
 
-import com.o19s.es.ltr.ranker.ArrayDataPoint;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.util.LuceneTestCase;
 
@@ -26,19 +25,9 @@ public class LinearRankerTests extends LuceneTestCase {
         assertEquals("linear", ranker.name());
     }
 
-    public void testNewDataPoint() {
-        LinearRanker ranker = new LinearRanker(new float[]{1,2});
-        LtrRanker.DataPoint point = ranker.newDataPoint();
-        assertEquals(0, point.getFeatureScore(0), Math.ulp(0));
-        assertEquals(0, point.getFeatureScore(0), Math.ulp(0));
-        assertTrue(point instanceof ArrayDataPoint);
-        float[] points = ((ArrayDataPoint) point).scores;
-        assertEquals(points.length, 2);
-    }
-
     public void testScore() {
         LinearRanker ranker = new LinearRanker(new float[]{1,2,3});
-        LtrRanker.DataPoint point = ranker.newDataPoint();
+        LtrRanker.FeatureVector point = ranker.newFeatureVector(null);
         point.setFeatureScore(0, 2);
         point.setFeatureScore(1, 3);
         point.setFeatureScore(2, 4);

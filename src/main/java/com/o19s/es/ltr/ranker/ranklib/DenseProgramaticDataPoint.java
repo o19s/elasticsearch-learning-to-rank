@@ -20,11 +20,13 @@ import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.utilities.RankLibError;
 import com.o19s.es.ltr.ranker.LtrRanker;
 
+import java.util.Arrays;
+
 /**
- * Implements DataPoint but without needing to pass in a stirng
+ * Implements FeatureVector but without needing to pass in a stirng
  * to be parsed
  */
-public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.DataPoint {
+public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.FeatureVector {
 
     public DenseProgramaticDataPoint(int numFeatures) {
         this.fVals = new float[numFeatures+1]; // add 1 because RankLib features 1 based
@@ -64,5 +66,9 @@ public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.Da
     public float getFeatureScore(int featureIdx) {
         // add 1 because RankLib features 1 based
         return this.getFeatureValue(featureIdx+1);
+    }
+
+    public void reset() {
+        Arrays.fill(fVals, 0F);
     }
 }

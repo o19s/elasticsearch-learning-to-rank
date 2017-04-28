@@ -16,8 +16,8 @@
 
 package com.o19s.es.ltr.ranker.linear;
 
-import com.o19s.es.ltr.ranker.ArrayDataPoint;
-import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.DenseFeatureVector;
+import com.o19s.es.ltr.ranker.DenseLtrRanker;
 
 import java.util.Objects;
 
@@ -25,7 +25,7 @@ import java.util.Objects;
  * Simple linear ranker that applies a dot product based
  * on the provided weights array.
  */
-public class LinearRanker implements LtrRanker {
+public class LinearRanker extends DenseLtrRanker {
     private final float[] weights;
 
     public LinearRanker(float[] weights) {
@@ -38,14 +38,8 @@ public class LinearRanker implements LtrRanker {
     }
 
     @Override
-    public DataPoint newDataPoint() {
-        return new ArrayDataPoint(size());
-    }
-
-    @Override
-    public float score(DataPoint point) {
-        assert point instanceof ArrayDataPoint;
-        float[] scores = ((ArrayDataPoint) point).scores;
+    protected float score(DenseFeatureVector point) {
+        float[] scores = point.scores;
         float score = 0;
         for (int i = 0; i < weights.length; i++) {
             score += weights[i]*scores[i];
@@ -54,7 +48,7 @@ public class LinearRanker implements LtrRanker {
     }
 
     @Override
-    public int size() {
+    protected int size() {
         return weights.length;
     }
 }

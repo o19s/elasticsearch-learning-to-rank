@@ -16,17 +16,19 @@
 
 package com.o19s.es.ltr.ranker;
 
+import java.util.Arrays;
+
 /**
- * Simple array-backed datapoint
+ * Simple array-backed feature vector
  */
-public class ArrayDataPoint implements LtrRanker.DataPoint {
+public class DenseFeatureVector implements LtrRanker.FeatureVector {
     public final float[] scores;
 
     /**
      * New simple array-backed datapoint
      * @param size size of the internal array
      */
-    public ArrayDataPoint(int size) {
+    public DenseFeatureVector(int size) {
         this.scores = new float[size];
     }
 
@@ -38,5 +40,9 @@ public class ArrayDataPoint implements LtrRanker.DataPoint {
     @Override
     public float getFeatureScore(int featureIdx) {
         return scores[featureIdx];
+    }
+
+    public void reset() {
+        Arrays.fill(scores, 0F);
     }
 }

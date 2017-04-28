@@ -45,7 +45,13 @@ public class RanklibRanker implements LtrRanker {
      * @return LtrRanker data point implementation
      */
     @Override
-    public DenseProgramaticDataPoint newDataPoint() {
+    public DenseProgramaticDataPoint newFeatureVector(FeatureVector reuse) {
+        if (reuse != null) {
+            assert reuse instanceof DenseProgramaticDataPoint;
+            DenseProgramaticDataPoint vector = (DenseProgramaticDataPoint) reuse;
+            vector.reset();
+            return vector;
+        }
         // ranklib models are 1-based
         return new DenseProgramaticDataPoint(ranker.getFeatures().length+1);
     }
@@ -59,16 +65,8 @@ public class RanklibRanker implements LtrRanker {
      * @return the score
      */
     @Override
-    public float score(DataPoint point) {
+    public float score(FeatureVector point) {
         assert point instanceof DenseProgramaticDataPoint;
         return (float) ranker.eval((DenseProgramaticDataPoint) point);
-    }
-
-    /**
-     * @return the number of features supported by this ranker
-     */
-    @Override
-    public int size() {
-        return ranker.getFeatures().length;
     }
 }

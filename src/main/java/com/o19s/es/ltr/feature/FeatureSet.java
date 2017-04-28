@@ -31,7 +31,7 @@ public interface FeatureSet {
     /**
      * array representation
      */
-    Feature[] asArray();
+    Feature[] toArray();
 
     /**
      * Retrieve feature ordinal by its name.

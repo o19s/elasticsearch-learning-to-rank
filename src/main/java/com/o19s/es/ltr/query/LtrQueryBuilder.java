@@ -40,8 +40,10 @@ import org.elasticsearch.script.ScriptContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
@@ -100,7 +102,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         builder.endArray();
     }
 
-    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
+    public static Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
         final LtrQueryBuilder builder;
         try {
             builder = PARSER.apply(parseContext.parser(), parseContext);
@@ -111,7 +113,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             throw new ParsingException(parseContext.parser().getTokenLocation(),
                     "[ltr] query requires a model, none specified");
         }
-        return builder;
+        return Optional.of(builder);
     }
 
     @Override
@@ -123,6 +125,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         for(QueryBuilder builder: _features) {
             features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
+        features = Collections.unmodifiableList(features);
         // pull model out of script
         RankLibScriptEngine.RankLibExecutableScript rankerScript =
                 (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);

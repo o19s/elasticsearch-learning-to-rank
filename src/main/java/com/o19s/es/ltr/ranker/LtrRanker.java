@@ -16,6 +16,8 @@
 
 package com.o19s.es.ltr.ranker;
 
+import org.elasticsearch.common.Nullable;
+
 /**
  * A ranker used by {@link com.o19s.es.ltr.query.RankerQuery}
  * to compute a score based on a set of feature scores.
@@ -33,34 +35,30 @@ public interface LtrRanker {
      * A single instance will be created for every Scorer.
      * The implementation does not have to be thread-safe and meant
      * to be reused.
-     * The ranker must always provide a new instance of the data point when this method is called.
+     * The ranker must always provide a new instance of the data point when this method is called with null.
+     * @param reuse allows Ranker to reuse a feature vector instance
      */
-    DataPoint newDataPoint();
+    FeatureVector newFeatureVector(@Nullable FeatureVector reuse);
 
     /**
      * Score the data point.
      * At this point all feature scores are set.
      * features that did not match are set with a score to 0
      */
-    float score(DataPoint point);
+    float score(FeatureVector point);
 
     /**
-     * The number of features supported by this ranker
+     * A FeatureVector used to store individual feature scores
      */
-    int size();
-
-    /**
-     * A DataPoint used to store individual feature scores
-     */
-    interface DataPoint {
+    interface FeatureVector {
         /**
          * Set the feature score.
          */
-        void setFeatureScore(int featureOrdinal, float score);
+        void setFeatureScore(int featureId, float score);
 
         /**
          * Get the feature score
          */
-        float getFeatureScore(int featureOrdinal);
+        float getFeatureScore(int featureId);
     }
 }

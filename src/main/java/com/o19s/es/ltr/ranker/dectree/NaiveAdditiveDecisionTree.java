@@ -16,8 +16,8 @@
 
 package com.o19s.es.ltr.ranker.dectree;
 
-import com.o19s.es.ltr.ranker.ArrayDataPoint;
-import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.DenseFeatureVector;
+import com.o19s.es.ltr.ranker.DenseLtrRanker;
 
 import java.util.Objects;
 
@@ -25,7 +25,7 @@ import java.util.Objects;
  * Naive implementation of additive decision tree.
  * May be slow when the number of trees and tree complexity if high comparatively to the number of features.
  */
-public class NaiveAdditiveDecisionTree implements LtrRanker {
+public class NaiveAdditiveDecisionTree extends DenseLtrRanker {
     private final Node[] trees;
     private final float[] weights;
     private final int modelSize;
@@ -52,15 +52,9 @@ public class NaiveAdditiveDecisionTree implements LtrRanker {
     }
 
     @Override
-    public ArrayDataPoint newDataPoint() {
-        return new ArrayDataPoint(modelSize);
-    }
-
-    @Override
-    public float score(DataPoint point) {
-        assert point instanceof ArrayDataPoint;
+    protected float score(DenseFeatureVector vector) {
         float sum = 0;
-        float[] scores = ((ArrayDataPoint) point).scores;
+        float[] scores = vector.scores;
         for (int i = 0; i < trees.length; i++) {
             sum += weights[i]*trees[i].eval(scores);
         }
@@ -68,7 +62,7 @@ public class NaiveAdditiveDecisionTree implements LtrRanker {
     }
 
     @Override
-    public int size() {
+    protected int size() {
         return modelSize;
     }
 

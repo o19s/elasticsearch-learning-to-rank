@@ -19,7 +19,6 @@ package com.o19s.es.ltr.ranker.dectree;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
-import com.o19s.es.ltr.ranker.ArrayDataPoint;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.util.LuceneTestCase;
@@ -42,26 +41,15 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals("naive_additive_decision_tree", dectree.name());
     }
 
-    public void testBewDataPoint() {
-        NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 2);
-        LtrRanker.DataPoint point = dectree.newDataPoint();
-        assertEquals(0, point.getFeatureScore(0), Math.ulp(0));
-        assertEquals(0, point.getFeatureScore(0), Math.ulp(0));
-        assertTrue(point instanceof ArrayDataPoint);
-        float[] points = ((ArrayDataPoint) point).scores;
-        assertEquals(points.length, 2);
-    }
-
     public void testScore() throws IOException {
         NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt");
-        LtrRanker.DataPoint point = ranker.newDataPoint();
-        point.setFeatureScore(0, 2);
-        point.setFeatureScore(1, 2);
-        point.setFeatureScore(2, 1);
+        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        vector.setFeatureScore(0, 2);
+        vector.setFeatureScore(1, 2);
+        vector.setFeatureScore(2, 1);
 
         float expected = 1.2F*3.4F + 3.2F*2.8F;
-        assertEquals(expected, ranker.score(point), Math.ulp(expected));
+        assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
 

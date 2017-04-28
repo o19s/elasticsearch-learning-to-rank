@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 public class PrebuiltFeatureSet implements FeatureSet {
     private final List<PrebuiltFeature> features;
     private final String name;
+    private PrebuiltFeature[] arrayCache;
 
     public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
         this.name = name;
@@ -37,7 +38,7 @@ public class PrebuiltFeatureSet implements FeatureSet {
     }
 
     @Override
-    public PrebuiltFeature[] asArray() {
+    public PrebuiltFeature[] toArray() {
         return features.toArray(new PrebuiltFeature[features.size()]);
     }
 

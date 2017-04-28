@@ -77,12 +77,11 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(LtrModel model, QueryShardContext context, Map<String, Object> params) {
-        Feature[] features = model.featureSet().asArray();
+        Feature[] features = model.featureSet().toArray();
         return build(model.ranker(), features, context, params);
     }
 
     private static RankerQuery build(LtrRanker ranker, Feature[] features, QueryShardContext context, Map<String, Object> params) {
-        assert features.length >= ranker.size();
         Query[] queries = new Query[features.length];
         for(int i = 0; i < features.length; i++) {
             queries[i] = features[i].doToQuery(context, params);
@@ -161,7 +160,7 @@ public class RankerQuery extends Query {
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             List<Explanation> subs = new ArrayList<>(weights.length);
 
-            LtrRanker.DataPoint d = ranker.newDataPoint();
+            LtrRanker.FeatureVector d = ranker.newFeatureVector(null);
             for (int i = 0; i < weights.length; i++) {
                 Weight weight = weights[i];
                 Explanation explain = weight.explain(context, doc);
@@ -208,8 +207,8 @@ public class RankerQuery extends Query {
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
             ArrayList<Scorer> scorers = new ArrayList<>(weights.length);
             List<DocIdSetIterator> subIterators = new ArrayList<>(weights.length);
-            for (int i = 0; i < weights.length; i++) {
-                Scorer scorer = weights[i].scorer(context);
+            for (Weight weight : weights) {
+                Scorer scorer = weight.scorer(context);
                 if (scorer == null) {
                     scorer = new NoopScorer(this, context.reader().maxDoc());
                 }
@@ -227,13 +226,12 @@ public class RankerQuery extends Query {
              */
             private final ArrayList<Scorer> scorers;
             private final DocIdSetIterator iterator;
-            private final LtrRanker.DataPoint dataPoint;
+            private LtrRanker.FeatureVector featureVector;
 
             RankerScorer(ArrayList<Scorer> scorers, DocIdSetIterator iterator) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
-                dataPoint = ranker.newDataPoint();
             }
 
             @Override
@@ -243,15 +241,16 @@ public class RankerQuery extends Query {
 
             @Override
             public float score() throws IOException {
+                featureVector = ranker.newFeatureVector(featureVector);
                 for (int i = 0; i < scorers.size(); i++) {
                     Scorer scorer = scorers.get(i);
                     if (scorer.docID() == docID()) {
-                        dataPoint.setFeatureScore(i, scorer.score());
-                    } else {
-                        dataPoint.setFeatureScore(i, 0);
+                        // XXX: bold assumption that all models are dense
+                        // do we need a some indirection to infer the featureId?
+                        featureVector.setFeatureScore(i, scorer.score());
                     }
                 }
-                return ranker.score(dataPoint);
+                return ranker.score(featureVector);
             }
 
             @Override
