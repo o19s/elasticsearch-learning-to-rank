@@ -18,24 +18,21 @@ package com.o19s.es.ltr.feature;
 
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.RandomAccess;
 import java.util.stream.IntStream;
 
 public class PrebuiltFeatureSet implements FeatureSet {
-    private final List<PrebuiltFeature> features;
+    private final List<Query> features;
     private final String name;
 
     public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
         this.name = name;
-        features = Objects.requireNonNull(features);
-        if (!(features instanceof RandomAccess)) {
-            features = new ArrayList<>(features);
-        }
-        this.features = features;
+        this.features = new ArrayList<>(Objects.requireNonNull(features));
     }
 
     @Override
@@ -47,7 +44,7 @@ public class PrebuiltFeatureSet implements FeatureSet {
      * Parse and build lucene queries
      */
     @Override
-    public List<? extends Query> toQueries() {
+    public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         return features;
     }
 
@@ -62,12 +59,12 @@ public class PrebuiltFeatureSet implements FeatureSet {
 
     @Override
     public Feature feature(int ord) {
-        return features.get(ord);
+        return (PrebuiltFeature) features.get(ord);
     }
 
     @Override
     public PrebuiltFeature feature(String name) {
-        return features.get(featureOrdinal(name));
+        return (PrebuiltFeature) features.get(featureOrdinal(name));
     }
 
     @Override
@@ -85,7 +82,7 @@ public class PrebuiltFeatureSet implements FeatureSet {
         // would make sense to implement a Map to do this once
         // feature names are mandatory and unique.
         return IntStream.range(0, features.size())
-                .filter(i -> Objects.equals(features.get(i).name(), featureName))
+                .filter(i -> Objects.equals(((PrebuiltFeature)features.get(i)).name(), featureName))
                 .findFirst()
                 .orElse(-1);
     }

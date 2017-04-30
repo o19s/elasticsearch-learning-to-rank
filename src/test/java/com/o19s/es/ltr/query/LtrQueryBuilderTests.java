@@ -20,6 +20,7 @@ import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
@@ -32,6 +33,7 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +49,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         return Collections.singletonList(LtrQueryParserPlugin.class);
     }
 
-    static String simpleModel = "## LambdaMART\\n" +
+    private static final String simpleModel = "## LambdaMART\\n" +
             "## name:foo\\n" +
             "## No. of trees = 1\\n" +
             "## No. of leaves = 10\\n" +
@@ -171,28 +173,17 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
 
     @Override
     protected LtrQueryBuilder doCreateTestQueryBuilder() {
-        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
-
-        String ltrQuery =       "{  " +
-                "   \"ltr\": {" +
-                "      \"model\": " + scriptSpec + "," +
-                "      \"features\": [        " +
-                "         {\"match\": {         " +
-                "            \"foo\": \"bar\"     " +
-                "         }},                   " +
-                "         {\"match\": {         " +
-                "            \"baz\": \"sham\"     " +
-                "         }}                   " +
-                "      ]                      " +
-                "   } " +
-                "}";
-        LtrQueryBuilder queryBuilder = null;
-        try {
-            queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
-        } catch (IOException e) {
-
-        }
-        return queryBuilder;
+        LtrQueryBuilder builder = new LtrQueryBuilder();
+        builder.features(Arrays.asList(
+                new MatchQueryBuilder("foo", "bar"),
+                new MatchQueryBuilder("baz", "sham")
+        ));
+        builder.rankerScript(new Script(ScriptType.INLINE, "ranklib",
+                // Remove escape sequences
+                simpleModel.replace("\\\"", "\"")
+                        .replace("\\n", "\n"),
+                Collections.emptyMap()));
+        return builder;
     }
 
     /**

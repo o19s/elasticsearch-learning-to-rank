@@ -1,5 +1,5 @@
 /*
- * Copyright [2017] Wikimedia Foundation
+ * Copyright [2017] Doug Turnbull, Wikimedia Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.index.IndexReader;
@@ -29,13 +30,17 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Lucene query designed to apply a ranking model provided by {@link LtrRanker}
@@ -44,11 +49,11 @@ import java.util.Set;
  * or within a BooleanQuery and an appropriate filter clause.
  */
 public class RankerQuery extends Query {
-    private final List<? extends Query> queries;
+    private final List<Query> queries;
     private final FeatureSet features;
     private final LtrRanker ranker;
 
-    private RankerQuery(List<? extends Query> queries, FeatureSet features, LtrRanker ranker) {
+    private RankerQuery(List<Query> queries, FeatureSet features, LtrRanker ranker) {
         this.queries = Objects.requireNonNull(queries);
         this.features = Objects.requireNonNull(features);
         this.ranker = Objects.requireNonNull(ranker);
@@ -62,11 +67,23 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(PrebuiltLtrModel model) {
-        return build(model.ranker(), model.featureSet());
+        return build(model.ranker(), model.featureSet(), null, Collections.emptyMap());
     }
 
-    private static RankerQuery build(LtrRanker ranker, FeatureSet features) {
-        List<? extends Query> queries = features.toQueries();
+    /**
+     * Build a RankerQuery.
+     *
+     * @param model The model
+     * @param context the context used to parse features into lucene queries
+     * @param params the query params
+     * @return the lucene query
+     */
+    public static RankerQuery build(LtrModel model, QueryShardContext context, Map<String, Object> params) {
+        return build(model.ranker(), model.featureSet(), context, params);
+    }
+
+    private static RankerQuery build(LtrRanker ranker, FeatureSet features, QueryShardContext context, Map<String, Object> params) {
+        List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, ranker);
     }
 
@@ -95,6 +112,10 @@ public class RankerQuery extends Query {
         return Objects.deepEquals(queries, that.queries) &&
                 Objects.deepEquals(features, that.features) &&
                 Objects.equals(ranker, that.ranker);
+    }
+
+    protected Stream<Query> stream() {
+        return queries.stream();
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.io.IOException;
  * Created by doug on 2/3/17.
  */
 public class NoopScorer extends Scorer {
-    private DocIdSetIterator _noopIter;
+    private final DocIdSetIterator _noopIter;
     /**
      * Constructs a Scorer
      *

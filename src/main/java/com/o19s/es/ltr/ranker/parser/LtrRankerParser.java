@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package com.o19s.es.ltr.feature;
+package com.o19s.es.ltr.ranker.parser;
 
-import org.apache.lucene.search.Query;
-import org.elasticsearch.index.query.QueryShardContext;
-
-import java.util.Map;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.LtrRanker;
 
 /**
- * A feature that can be transformed into a lucene query
+ * A model parser (don't have to be thread-safe)
  */
-public interface Feature {
+public interface LtrRankerParser {
     /**
-     * The feature name
+     * Parse the model with the given FeatureSet
      */
-    String name();
-
-    /**
-     * Transform this feature into a lucene query
-     */
-    Query doToQuery(QueryShardContext context, Map<String, Object> params);
+    LtrRanker parse(FeatureSet set, String model);
 }

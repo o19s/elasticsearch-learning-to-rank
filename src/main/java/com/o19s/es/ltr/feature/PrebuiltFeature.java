@@ -21,8 +21,10 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -44,7 +46,7 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Query doToQuery() {
+    public Query doToQuery(QueryShardContext context, Map<String, Object> params) {
         return query;
     }
 

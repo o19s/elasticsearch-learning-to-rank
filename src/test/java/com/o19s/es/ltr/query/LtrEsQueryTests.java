@@ -23,8 +23,6 @@ import org.elasticsearch.test.ESIntegTestCase;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-
 /**
  * Created by doug on 12/29/16.
  */
