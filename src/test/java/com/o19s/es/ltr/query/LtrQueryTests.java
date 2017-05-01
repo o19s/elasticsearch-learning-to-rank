@@ -38,6 +38,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.misc.SweetSpotSimilarity;
 import org.apache.lucene.queries.BlendedTermQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
@@ -46,7 +47,22 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.AfterEffectB;
+import org.apache.lucene.search.similarities.AxiomaticF3LOG;
 import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.BasicModelBE;
+import org.apache.lucene.search.similarities.BooleanSimilarity;
+import org.apache.lucene.search.similarities.DFISimilarity;
+import org.apache.lucene.search.similarities.DFRSimilarity;
+import org.apache.lucene.search.similarities.DistributionLL;
+import org.apache.lucene.search.similarities.IBSimilarity;
+import org.apache.lucene.search.similarities.IndependenceChiSquared;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.LMJelinekMercerSimilarity;
+import org.apache.lucene.search.similarities.LambdaDF;
+import org.apache.lucene.search.similarities.NormalizationH1;
+import org.apache.lucene.search.similarities.NormalizationH3;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.junit.After;
@@ -77,6 +93,7 @@ public class LtrQueryTests extends LuceneTestCase {
     RandomIndexWriter indexWriterUnderTest;
     IndexReader indexReaderUnderTest;
     Directory dirUnderTest;
+    Similarity similarity;
 
     // docs with doc ids array index
     String[] docs = new String[] { "how now brown cow",
@@ -87,8 +104,21 @@ public class LtrQueryTests extends LuceneTestCase {
     @Before
     public void setupIndex() throws IOException {
         dirUnderTest = newDirectory();
+        List<Similarity> sims = Arrays.asList(
+                // TODO: re-add disabled sims when features are logged from the ltr query itself
+                // new ClassicSimilarity(),
+                new BM25Similarity(),
+                new LMDirichletSimilarity(),
+                new BooleanSimilarity(),
+                new LMJelinekMercerSimilarity(0.2F),
+                new AxiomaticF3LOG(0.5F, 10),
+                new DFISimilarity(new IndependenceChiSquared()),
+                new DFRSimilarity(new BasicModelBE(), new AfterEffectB(), new NormalizationH1()),
+                new IBSimilarity(new DistributionLL(), new LambdaDF(), new NormalizationH3()),
+                new SweetSpotSimilarity());
+        similarity = sims.get(random().nextInt(sims.size()));
 
-        indexWriterUnderTest = new RandomIndexWriter(random(), dirUnderTest, newIndexWriterConfig().setSimilarity(new BM25Similarity()));
+        indexWriterUnderTest = new RandomIndexWriter(random(), dirUnderTest, newIndexWriterConfig().setSimilarity(similarity));
         for (int i = 0; i < docs.length; i++) {
             Document doc = new Document();
             doc.add(newStringField("id", "" + i, Field.Store.YES));
@@ -102,8 +132,7 @@ public class LtrQueryTests extends LuceneTestCase {
 
         indexReaderUnderTest = indexWriterUnderTest.getReader();
         searcherUnderTest = newSearcher(indexReaderUnderTest);
-        //hardcode the similarity, we expect consisten scoring
-        searcherUnderTest.setSimilarity(new BM25Similarity());
+        searcherUnderTest.setSimilarity(similarity);
     }
 
     public List<List<Float>> getFeatureScores(List<PrebuiltFeature> features) throws IOException {

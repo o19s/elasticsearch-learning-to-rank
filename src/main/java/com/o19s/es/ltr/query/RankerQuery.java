@@ -185,21 +185,26 @@ public class RankerQuery extends Query {
 
         @Override
         public float getValueForNormalization() throws IOException {
-            // XXX: may produce inconsistent scores if featured queries
-            // are run individually and a Similarity that implements queryNorm is used.
-            // queryNorm will disappear in lucene 7.
-            // Should we hack something or warn if this query is being used with ClassicSimilarity?
-            float sum = 0.0f;
-            for (Weight w : weights) {
-                sum += w.getValueForNormalization();
-            }
-            return sum ;
+            // disabled in future lucene version, see #normalize(float, float)
+            return 1F;
         }
 
         @Override
         public void normalize(float norm, float boost) {
-            for(Weight w : weights) {
-                w.normalize(norm, boost);
+            // Ignore top-level boost & norm
+            // We must make sure that the scores from the sub scorers
+            // are not affected by parent queries because rankers using thresholds
+            // may produce inconsistent results.
+            // It breaks lucene contract but in general this query is meant
+            // to be used as the top level query of a rescore query where
+            // resulting score can still be controlled with the rescore_weight param.
+            // One possibility would be to store the boost value and apply it
+            // on the resulting score.
+            // Logging feature scores may be impossible when feature queries
+            // are run and logged individually (_msearch approach) and the similatity
+            // used is affected by queryNorm (ClassicSimilarity)
+            for (Weight w : weights) {
+                w.normalize(1F, 1F);
             }
         }
 
