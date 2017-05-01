@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.RandomAccess;
 import java.util.Set;
 
 /**
@@ -46,12 +48,11 @@ import java.util.Set;
  * or within a BooleanQuery and an appropriate filter clause.
  */
 public class RankerQuery extends Query {
-    private final Query[] queries;
-    private final Feature[] features;
+    private final List<? extends Query> queries;
+    private final FeatureSet features;
     private final LtrRanker ranker;
 
-    private RankerQuery(Query[] queries, Feature[] features, LtrRanker ranker) {
-        assert queries.length == features.length;
+    private RankerQuery(List<? extends Query> queries, FeatureSet features, LtrRanker ranker) {
         this.queries = Objects.requireNonNull(queries);
         this.features = Objects.requireNonNull(features);
         this.ranker = Objects.requireNonNull(ranker);
@@ -77,25 +78,22 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(LtrModel model, QueryShardContext context, Map<String, Object> params) {
-        Feature[] features = model.featureSet().toArray();
-        return build(model.ranker(), features, context, params);
+        return build(model.ranker(), model.featureSet(), context, params);
     }
 
-    private static RankerQuery build(LtrRanker ranker, Feature[] features, QueryShardContext context, Map<String, Object> params) {
-        Query[] queries = new Query[features.length];
-        for(int i = 0; i < features.length; i++) {
-            queries[i] = features[i].doToQuery(context, params);
-        }
+    private static RankerQuery build(LtrRanker ranker, FeatureSet features, QueryShardContext context, Map<String, Object> params) {
+        List<? extends Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, ranker);
     }
 
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
-        Query[] rewrittenQueries = new Query[queries.length];
+        List<Query> rewrittenQueries = new ArrayList<>(queries.size());
         boolean rewritten = false;
-        for(int i = 0; i < queries.length; i++) {
-            rewrittenQueries[i] = queries[i].rewrite(reader);
-            rewritten |= rewrittenQueries[i] != queries[i];
+        for (Query query : queries) {
+            Query rewrittenQuery = query.rewrite(reader);
+            rewritten |= rewrittenQuery != query;
+            rewrittenQueries.add(rewrittenQuery);
         }
         return rewritten ? new RankerQuery(rewrittenQueries, features, ranker) : this;
     }
@@ -129,23 +127,24 @@ public class RankerQuery extends Query {
      * Return feature at ordinal
      */
     Feature getFeature(int ordinal) {
-        return features[ordinal];
+        return features.feature(ordinal);
     }
 
     @Override
     public RankerWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        Weight[] weights = new Weight[queries.length];
-        for(int i = 0; i < weights.length; i++) {
-            weights[i] = searcher.createWeight(queries[i], needsScores);
+        List<Weight> weights = new ArrayList<>(queries.size());
+        for (Query q : queries) {
+            weights.add(searcher.createWeight(q, needsScores));
         }
         return new RankerWeight(weights);
     }
 
     public class RankerWeight extends Weight {
-        private final Weight[] weights;
+        private final List<Weight> weights;
 
-        RankerWeight(Weight[] weights) {
+        RankerWeight(List<Weight> weights) {
             super(RankerQuery.this);
+            assert weights instanceof RandomAccess;
             this.weights = weights;
         }
 
@@ -158,15 +157,16 @@ public class RankerQuery extends Query {
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
-            List<Explanation> subs = new ArrayList<>(weights.length);
+            List<Explanation> subs = new ArrayList<>(weights.size());
 
             LtrRanker.FeatureVector d = ranker.newFeatureVector(null);
-            for (int i = 0; i < weights.length; i++) {
-                Weight weight = weights[i];
+            int ordinal = -1;
+            for (Weight weight : weights) {
+                ordinal++;
                 Explanation explain = weight.explain(context, doc);
-                String featureString = "Feature " + Integer.toString(i);
-                if (features[i].name() != null) {
-                    featureString += "(" + features[i].name() + ")";
+                String featureString = "Feature " + Integer.toString(ordinal);
+                if (features.feature(ordinal).name() != null) {
+                    featureString += "(" + features.feature(ordinal).name() + ")";
                 }
                 featureString += ":";
                 float featureVal = 0.0f;
@@ -177,7 +177,7 @@ public class RankerQuery extends Query {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
                     featureVal = explain.getValue();
                 }
-                d.setFeatureScore(i, featureVal);
+                d.setFeatureScore(ordinal, featureVal);
             }
             float modelScore = ranker.score(d);
             return Explanation.match(modelScore, " LtrModel: " + ranker.name() + " using features:", subs);
@@ -205,8 +205,8 @@ public class RankerQuery extends Query {
 
         @Override
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
-            ArrayList<Scorer> scorers = new ArrayList<>(weights.length);
-            List<DocIdSetIterator> subIterators = new ArrayList<>(weights.length);
+            List<Scorer> scorers = new ArrayList<>(weights.size());
+            List<DocIdSetIterator> subIterators = new ArrayList<>(weights.size());
             for (Weight weight : weights) {
                 Scorer scorer = weight.scorer(context);
                 if (scorer == null) {
@@ -215,7 +215,8 @@ public class RankerQuery extends Query {
                 scorers.add(scorer);
                 subIterators.add(scorer.iterator());
             }
-            DocIdSetIterator rankerIterator = new NaiveDisjunctionDISI(DocIdSetIterator.all(context.reader().maxDoc()), subIterators);
+
+            NaiveDisjunctionDISI rankerIterator = new NaiveDisjunctionDISI(DocIdSetIterator.all(context.reader().maxDoc()), subIterators);
             return new RankerScorer(scorers, rankerIterator);
         }
 
@@ -224,11 +225,11 @@ public class RankerQuery extends Query {
              * NOTE: Switch to ChildScorer and {@link #getChildren()} if it appears
              * to be useful for logging
              */
-            private final ArrayList<Scorer> scorers;
-            private final DocIdSetIterator iterator;
+            private final List<Scorer> scorers;
+            private final NaiveDisjunctionDISI iterator;
             private LtrRanker.FeatureVector featureVector;
 
-            RankerScorer(ArrayList<Scorer> scorers, DocIdSetIterator iterator) {
+            RankerScorer(List<Scorer> scorers, NaiveDisjunctionDISI iterator) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
@@ -242,12 +243,16 @@ public class RankerQuery extends Query {
             @Override
             public float score() throws IOException {
                 featureVector = ranker.newFeatureVector(featureVector);
-                for (int i = 0; i < scorers.size(); i++) {
-                    Scorer scorer = scorers.get(i);
+                int ordinal = -1;
+                // a DisiPriorityQueue could help to avoid
+                // looping on all scorers
+                for (Scorer scorer : scorers) {
+                    ordinal++;
+                    // FIXME: Probably inefficient, again we loop over all scorers..
                     if (scorer.docID() == docID()) {
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        featureVector.setFeatureScore(i, scorer.score());
+                        featureVector.setFeatureScore(ordinal, scorer.score());
                     }
                 }
                 return ranker.score(featureVector);
@@ -305,6 +310,7 @@ public class RankerQuery extends Query {
                 return;
             }
             for (DocIdSetIterator iterator: subIterators) {
+                // FIXME: Probably inefficient
                 if (iterator.docID() < target) {
                     iterator.advance(target);
                 }

@@ -16,10 +16,14 @@
 
 package com.o19s.es.ltr.feature;
 
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.index.query.QueryShardContext;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -27,7 +31,7 @@ import java.util.Objects;
  * A prebuilt featured query, needed by query builders
  * that provides the query itself.
  */
-public class PrebuiltFeature implements Feature {
+public class PrebuiltFeature extends Query implements Feature {
     private final String name;
     private final Query query;
 
@@ -63,5 +67,20 @@ public class PrebuiltFeature implements Feature {
         PrebuiltFeature other = (PrebuiltFeature) o;
         return Objects.equals(name, other.name)
                 && Objects.equals(query, other.query);
+    }
+
+    @Override
+    public String toString(String field) {
+        return query.toString(field);
+    }
+
+    @Override
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        return query.createWeight(searcher, needsScores);
+    }
+
+    @Override
+    public Query rewrite(IndexReader reader) throws IOException {
+        return query.rewrite(reader);
     }
 }

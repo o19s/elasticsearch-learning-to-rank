@@ -16,6 +16,12 @@
 
 package com.o19s.es.ltr.feature;
 
+import org.apache.lucene.search.Query;
+import org.elasticsearch.index.query.QueryShardContext;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * A set of features.
  * Features can be identified by their name or ordinal.
@@ -29,9 +35,9 @@ public interface FeatureSet {
     String name();
 
     /**
-     * array representation
+     * Parse and build lucene queries
      */
-    Feature[] toArray();
+    List<? extends Query> toQueries(QueryShardContext context, Map<String, Object> params);
 
     /**
      * Retrieve feature ordinal by its name.
