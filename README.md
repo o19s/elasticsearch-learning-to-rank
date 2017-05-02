@@ -4,19 +4,11 @@ Rank Elasticsearch results using tree based (LambdaMART, Random Forest, MART) an
 
 # Installing
 
-Generally new features follow the latest ES version, but you can get older versions on older ES versions.
-
-### Elasticsearch 5.3.0
+Generally new features follow the latest ES version, but you can get older versions on older ES versions. The format of the filename follows this 
+convention: `ltr-query-<PLUGIN VERSION>-es<ES VERSION>.zip`. The full listing
+can be found [here](http://es-learn-to-rank.labs.o19s.com). For example, to install version 0.1.1 of the plugin on ES 5.3.0, do the following:
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.1-es<ES VER>.zip`
-
-### Elasticsearch 5.2.1, 5.2.2
-
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.0-es<ES VER>.zip`
-
-### Elasticsearch 5.1.x, 5.2.0
-
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.0.5-es<ES VER>.zip`
 
 ### Increase Max Script Size
 
