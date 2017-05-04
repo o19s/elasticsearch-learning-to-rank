@@ -1,5 +1,5 @@
 /*
- * Copyright [2016] Doug Turnbull
+ * Copyright [2017] Wikimedia Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.Ranker;
-import org.apache.lucene.queries.CustomScoreQuery;
+package com.o19s.es.ltr.feature;
+
 import org.apache.lucene.search.Query;
+import org.elasticsearch.index.query.QueryShardContext;
+
+import java.util.Map;
 
 /**
- * Created by doug on 12/23/16.
+ * A feature that can be transformed into a lucene query
  */
-public class RankLibQuery extends CustomScoreQuery {
+public interface Feature {
+    /**
+     * The feature name
+     */
+    String name();
 
-    private Ranker rankLibRanker =  null;
-
-    public RankLibQuery(Query subQuery) {
-        super(subQuery);
-    }
+    /**
+     * Transform this feature into a lucene query
+     */
+    Query doToQuery(QueryShardContext context, Map<String, Object> params);
 }

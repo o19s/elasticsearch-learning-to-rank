@@ -18,6 +18,11 @@
 package com.o19s.es.ltr.query;
 
 import ciir.umass.edu.learning.Ranker;
+import com.o19s.es.ltr.feature.PrebuiltFeature;
+import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
+import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -35,8 +40,10 @@ import org.elasticsearch.script.ScriptContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
@@ -95,7 +102,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         builder.endArray();
     }
 
-    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
+    public static Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
         final LtrQueryBuilder builder;
         try {
             builder = PARSER.apply(parseContext.parser(), parseContext);
@@ -106,7 +113,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             throw new ParsingException(parseContext.parser().getTokenLocation(),
                     "[ltr] query requires a model, none specified");
         }
-        return builder;
+        return Optional.of(builder);
     }
 
     @Override
@@ -114,17 +121,17 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         if (_features == null || _rankLibScript == null) {
             return new MatchAllDocsQuery();
         }
-        List<String> featureNames = new ArrayList<String>(_features.size());
-        List<Query> asLQueries = new ArrayList<Query>(_features.size());
-        for (QueryBuilder query : _features) {
-            asLQueries.add(query.toQuery(context));
-            featureNames.add(query.queryName());
+        List<PrebuiltFeature> features = new ArrayList<PrebuiltFeature>(_features.size());
+        for(QueryBuilder builder: _features) {
+            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
+        features = Collections.unmodifiableList(features);
         // pull model out of script
         RankLibScriptEngine.RankLibExecutableScript rankerScript =
                 (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
-
-        return new LtrQuery(asLQueries, (Ranker)rankerScript.run(), featureNames);
+        RanklibRanker ranker = new RanklibRanker((Ranker)rankerScript.run());
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, new PrebuiltFeatureSet(queryName(), features));
+        return RankerQuery.build(model);
     }
 
     @Override

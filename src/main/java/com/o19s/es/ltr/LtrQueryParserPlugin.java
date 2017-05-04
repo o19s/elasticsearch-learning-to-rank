@@ -14,43 +14,24 @@
  * limitations under the License.
  *
  */
-package com.o19s.es.ltr.query;
+package com.o19s.es.ltr;
 
-import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerFactory;
-import org.elasticsearch.common.settings.Setting;
+import com.o19s.es.ltr.query.LtrQueryBuilder;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.QueryParseContext;
-import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
 import org.elasticsearch.script.ScriptEngineService;
 
-
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin {
-
-    public LtrQueryParserPlugin() {
-
-    }
-
     @Override
     public List<QuerySpec<?>> getQueries() {
-        QueryParser<LtrQueryBuilder> qp = new QueryParser<LtrQueryBuilder>() {
-            @Override
-            public Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
-                Optional<LtrQueryBuilder> opt;
-                return Optional.of(LtrQueryBuilder.fromXContent(parseContext));
-
-            }
-        };
-        return singletonList(new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, qp));
+        return singletonList(new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent));
     }
 
     @Override
