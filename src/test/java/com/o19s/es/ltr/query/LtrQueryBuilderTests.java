@@ -211,7 +211,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         }
         if (randomBoolean()) {
             mustRewrite = true;
-            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "feat").toString()));
+            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "terms query feature").toString()));
         }
         if (randomBoolean()) {
             features.add(new TermQueryBuilder("test", "test"));
@@ -219,17 +219,17 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
 
         LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
         QueryBuilder rewritten = builder.rewrite(createShardContext());
-        if (mustRewrite == false && features.isEmpty()) {
+        if (!mustRewrite && features.isEmpty()) {
             // if it's empty we rewrite to match all
             assertEquals(rewritten, new MatchAllQueryBuilder());
         } else {
             LtrQueryBuilder rewrite = (LtrQueryBuilder) rewritten;
             if (mustRewrite) {
                 assertNotSame(rewrite, builder);
-                if (builder.features().isEmpty() == false) {
+                if (!builder.features().isEmpty()) {
                     assertEquals(builder.features().size(), rewrite.features().size());
                     assertSame(builder.rankerScript(), rewrite.rankerScript());
-                    assertEquals(new TermsQueryBuilder("foo", "1st feat"), rewrite.features().get(idx));
+                    assertEquals(new TermsQueryBuilder("foo", "terms query feature"), rewrite.features().get(idx));
                 }
             } else {
                 assertSame(rewrite, builder);
