@@ -18,9 +18,11 @@ package com.o19s.es.ltr.feature;
 
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.stream.IntStream;
@@ -47,7 +49,7 @@ public class PrebuiltFeatureSet implements FeatureSet {
      * Parse and build lucene queries
      */
     @Override
-    public List<? extends Query> toQueries() {
+    public List<? extends Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         return features;
     }
 
