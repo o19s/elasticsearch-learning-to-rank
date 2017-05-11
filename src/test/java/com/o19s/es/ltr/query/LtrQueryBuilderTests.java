@@ -18,23 +18,14 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.index.query.MatchAllQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.query.TermsQueryBuilder;
-import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -195,47 +186,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         return queryBuilder;
     }
 
-    /**
-     * This test ensures that queries that need to be rewritten have dedicated tests.
-     * These queries must override this method accordingly.
-     */
-    @Override
-    public void testMustRewrite() throws IOException {
-        Script script = new Script(ScriptType.INLINE, "ranklib", simpleModel, Collections.emptyMap());
-        List<QueryBuilder> features = new ArrayList<>();
-        boolean mustRewrite = false;
-        int idx = 0;
-        if (randomBoolean()) {
-            idx++;
-            features.add(new TermQueryBuilder("test", "test"));
-        }
-        if (randomBoolean()) {
-            mustRewrite = true;
-            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "feat").toString()));
-        }
-        if (randomBoolean()) {
-            features.add(new TermQueryBuilder("test", "test"));
-        }
 
-        LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
-        QueryBuilder rewritten = builder.rewrite(createShardContext());
-        if (mustRewrite == false && features.isEmpty()) {
-            // if it's empty we rewrite to match all
-            assertEquals(rewritten, new MatchAllQueryBuilder());
-        } else {
-            LtrQueryBuilder rewrite = (LtrQueryBuilder) rewritten;
-            if (mustRewrite) {
-                assertNotSame(rewrite, builder);
-                if (builder.features().isEmpty() == false) {
-                    assertEquals(builder.features().size(), rewrite.features().size());
-                    assertSame(builder.rankerScript(), rewrite.rankerScript());
-                    assertEquals(new TermsQueryBuilder("foo", "1st feat"), rewrite.features().get(idx));
-                }
-            } else {
-                assertSame(rewrite, builder);
-            }
-        }
-    }
 
     @Override
     protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
