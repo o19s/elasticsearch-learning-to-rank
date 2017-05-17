@@ -16,8 +16,8 @@
  */
 package com.o19s.es.ltr.ranker.ranklib;
 
-import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerFactory;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
@@ -29,6 +29,7 @@ import org.elasticsearch.search.lookup.SearchLookup;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created by doug on 12/30/16.
@@ -42,14 +43,14 @@ import java.util.Map;
  */
 public class RankLibScriptEngine extends AbstractComponent implements ScriptEngineService {
 
-    private RankerFactory rankerFactory;
+    private final LtrRankerParserFactory factory;
 
     public static final String NAME = "ranklib";
     public static final String EXTENSION = "ranklib";
 
-    public RankLibScriptEngine(Settings settings) {
+    public RankLibScriptEngine(Settings settings, LtrRankerParserFactory factory) {
         super(settings);
-        rankerFactory = new RankerFactory();
+        this.factory = Objects.requireNonNull(factory);
     }
 
 
@@ -71,12 +72,13 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     @Override
     public Object compile(String scriptName, String scriptSource, Map<String, String> params) {
-        return (Object) rankerFactory.loadRankerFromString(scriptSource);
+        // XXX: does not support feature set.
+        return factory.getParser(RanklibModelParser.TYPE).parse(null, scriptSource);
     }
 
     @Override
     public ExecutableScript executable(CompiledScript compiledScript, @Nullable Map<String, Object> vars) {
-        return new RankLibExecutableScript((Ranker)compiledScript.compiled());
+        return new RankLibExecutableScript((LtrRanker)compiledScript.compiled());
     }
 
     @Override
@@ -91,15 +93,15 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     public class RankLibExecutableScript implements ExecutableScript {
 
-        Ranker _ranker;
+        LtrRanker _ranker;
 
-        public RankLibExecutableScript(Ranker ranker) {
+        public RankLibExecutableScript(LtrRanker ranker) {
             _ranker = ranker;
         }
 
         @Override
         public void setNextVar(String name, Object value) {
-            _ranker = (Ranker)(value);
+            _ranker = (LtrRanker) (value);
 
         }
 

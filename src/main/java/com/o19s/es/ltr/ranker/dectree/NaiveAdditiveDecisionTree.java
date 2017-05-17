@@ -18,6 +18,8 @@ package com.o19s.es.ltr.ranker.dectree;
 
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.DenseLtrRanker;
+import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Objects;
 
@@ -25,7 +27,9 @@ import java.util.Objects;
  * Naive implementation of additive decision tree.
  * May be slow when the number of trees and tree complexity if high comparatively to the number of features.
  */
-public class NaiveAdditiveDecisionTree extends DenseLtrRanker {
+public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Accountable {
+    private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
+
     private final Node[] trees;
     private final float[] weights;
     private final int modelSize;
@@ -66,12 +70,22 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker {
         return modelSize;
     }
 
-    public interface Node {
+    /**
+     * Return the memory usage of this object in bytes. Negative values are illegal.
+     */
+    @Override
+    public long ramBytesUsed() {
+        return BASE_RAM_USED + RamUsageEstimator.sizeOf(weights)
+                + RamUsageEstimator.sizeOf(trees);
+    }
+
+    public interface Node extends Accountable {
          boolean isLeaf();
          float eval(float[] scores);
     }
 
     public static class Split implements Node {
+        private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
         private final Node left;
         private final Node right;
         private final int feature;
@@ -104,9 +118,19 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker {
             assert n instanceof Leaf;
             return n.eval(scores);
         }
+
+        /**
+         * Return the memory usage of this object in bytes. Negative values are illegal.
+         */
+        @Override
+        public long ramBytesUsed() {
+            return BASE_RAM_USED + left.ramBytesUsed() + right.ramBytesUsed();
+        }
     }
 
     public static class Leaf implements Node {
+        private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
+
         private final float output;
 
         public Leaf(float output) {
@@ -121,6 +145,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker {
         @Override
         public float eval(float[] scores) {
             return output;
+        }
+
+        /**
+         * Return the memory usage of this object in bytes. Negative values are illegal.
+         */
+        @Override
+        public long ramBytesUsed() {
+            return BASE_RAM_USED;
         }
     }
 }

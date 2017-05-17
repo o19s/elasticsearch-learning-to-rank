@@ -17,12 +17,14 @@
 
 package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.Ranker;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -49,19 +51,20 @@ import java.util.Optional;
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
     private static final ObjectParser<LtrQueryBuilder, QueryParseContext> PARSER;
+    private static final String DEFAULT_SCRIPT_LANG = "ranklib";
 
-    Script _rankLibScript;
-    List<QueryBuilder> _features;
+    private Script _rankLibScript;
+    private List<QueryBuilder> _features;
 
     static {
         PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
         declareStandardFields(PARSER);
         PARSER.declareObjectArray(
-                (ltr, features) -> ltr.features(features),
+                LtrQueryBuilder::features,
                 (parser, context) -> context.parseInnerQueryBuilder().get(),
                 new ParseField("features"));
         PARSER.declareField(
-                (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, "ranklib")),
+                (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, DEFAULT_SCRIPT_LANG)),
                 new ParseField("model"), ObjectParser.ValueType.OBJECT_OR_STRING);
     }
 
@@ -129,11 +132,14 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
         features = Collections.unmodifiableList(features);
+        final LtrRankerParser parser;
+        switch (_rankLibScript.getType()) {
+            case FILE:
+        }
         // pull model out of script
-        RankLibScriptEngine.RankLibExecutableScript rankerScript =
-                (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
-        RanklibRanker ranker = new RanklibRanker((Ranker)rankerScript.run());
-        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, new PrebuiltFeatureSet(queryName(), features));
+        LtrRanker ranker = (LtrRanker) context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH).run();
+        PrebuiltFeatureSet featureSet = new PrebuiltFeatureSet(queryName(), features);
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, featureSet);
         return RankerQuery.build(model);
     }
 
@@ -195,6 +201,4 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         _features = features;
         return this;
     }
-
-
 }

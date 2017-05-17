@@ -19,9 +19,14 @@ package com.o19s.es.ltr.ranker.dectree;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.util.TestUtil;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,10 +36,22 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import static org.apache.lucene.util.TestUtil.nextInt;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.core.AllOf.allOf;
+
 public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
+    static final Logger LOG = ESLoggerFactory.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
         NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
                 new float[0], 0);
@@ -52,7 +69,64 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
+    public void testPerfAndRobustness() {
+        SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
+        NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
+                100, 1000,
+                5, 50, counts);
 
+        DenseFeatureVector vector = ranker.newFeatureVector(null);
+        int nPass = TestUtil.nextInt(random(), 10, 8916);
+        LinearRankerTests.fillRandomWeights(vector.scores);
+        ranker.score(vector); // warmup
+
+        long time = -System.currentTimeMillis();
+        for (int i = 0; i < nPass; i++) {
+            vector = ranker.newFeatureVector(vector);
+            LinearRankerTests.fillRandomWeights(vector.scores);
+            ranker.score(vector);
+        }
+        time += System.currentTimeMillis();
+        LOG.info("Scored {} docs with {} trees/{} features within {}ms ({} ms/doc), " +
+                        "{} nodes ({} splits & {} leaves) ",
+                nPass, counts.trees.get(), ranker.size(), time, (float) time / (float) nPass,
+                counts.nodes.get(), counts.splits.get(), counts.leaves.get());
+    }
+
+    public void testRamSize() {
+        SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
+        NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
+                100, 1000,
+                5, 50, counts);
+        long actualSize = ranker.ramBytesUsed();
+        long expectedApprox = counts.splits.get() * (NUM_BYTES_OBJECT_HEADER + Float.BYTES + NUM_BYTES_OBJECT_REF * 2);
+        expectedApprox += counts.leaves.get() * (NUM_BYTES_ARRAY_HEADER + NUM_BYTES_OBJECT_HEADER + Float.BYTES);
+        expectedApprox += ranker.size() * Float.BYTES + NUM_BYTES_ARRAY_HEADER;
+        assertThat(actualSize, allOf(
+                greaterThan((long) (expectedApprox*0.66F)),
+                lessThan((long) (expectedApprox*1.33F))));
+    }
+
+    public static NaiveAdditiveDecisionTree generateRandomDecTree(int minFeatures, int maxFeatures, int minTrees,
+                                                                  int maxTrees, int minDepth, int maxDepth,
+                                                                  RandomTreeGeneratorStatsCollector collector) {
+        int nFeat = nextInt(random(), minFeatures, maxFeatures);
+        int nbTrees = nextInt(random(), minTrees, maxTrees);
+        return generateRandomDecTree(nFeat, nbTrees, minDepth, maxDepth, collector);
+    }
+
+    public static NaiveAdditiveDecisionTree generateRandomDecTree(int nbFeatures, int nbTree, int minDepth,
+                                                                  int maxDepth, RandomTreeGeneratorStatsCollector collector) {
+        NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[nbTree];
+        float[] weights = LinearRankerTests.generateRandomWeights(nbTree);
+        for (int i = 0; i < nbTree; i++) {
+            if (collector != null) {
+                collector.newTree();
+            }
+            trees[i] = new RandomTreeGenerator(nbFeatures, minDepth, maxDepth, collector).genTree();
+        }
+        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures);
+    }
 
     public void testSize() {
         NaiveAdditiveDecisionTree ranker = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
@@ -84,7 +158,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         private TreeTextParser(InputStream is, FeatureSet set) throws IOException {
             List<String> lines = new ArrayList<>();
             try(BufferedReader br = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")))) {
-                String line = null;
+                String line;
                 while ((line = br.readLine()) != null) {
                     lines.add(line);
                 }
@@ -148,5 +222,94 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     private static class TreeAndWeight {
         private NaiveAdditiveDecisionTree.Node tree;
         private float weight;
+    }
+
+    public static class RandomTreeGenerator {
+        private final int maxDepth;
+        private final int minDepth;
+        private final RandomTreeGeneratorStatsCollector statsCollector;
+        private final Supplier<Integer> featureGen;
+        private final Supplier<Float> outputGenerator;
+        private final Function<Integer, Float> thresholdGenerator;
+        private final Supplier<Boolean> leafDecider;
+
+        public RandomTreeGenerator(int maxFeat, int minDepth, int maxDepth, RandomTreeGeneratorStatsCollector collector) {
+            this.minDepth = minDepth;
+            this.maxDepth = maxDepth;
+            this.statsCollector = collector != null ? collector : RandomTreeGeneratorStatsCollector.NULL;
+            featureGen = () -> nextInt(random(), 0, maxFeat-1);
+            outputGenerator = () ->
+                (random().nextBoolean() ? 1F : -1F) *
+                        ((float)nextInt(random(), 0, 1000) / (float)nextInt(random(), 1, 1000));
+            thresholdGenerator = (feat) ->
+                    (random().nextBoolean() ? 1F : -1F) *
+                            ((float)nextInt(random(), 0, 1000) / (float)nextInt(random(), 1, 1000));
+            leafDecider = () -> random().nextBoolean();
+
+        }
+
+        NaiveAdditiveDecisionTree.Node genTree() {
+            return newNode(0);
+        }
+
+        NaiveAdditiveDecisionTree.Node newNode(int depth) {
+            statsCollector.newNode();
+            if (depth>=maxDepth) {
+                return newLeaf(depth);
+            } else if (depth <= minDepth) {
+                return newSplit(depth);
+            } else {
+                return leafDecider.get() ? newLeaf(depth) : newNode(depth);
+            }
+        }
+
+        private NaiveAdditiveDecisionTree.Node newSplit(int depth) {
+            depth++;
+            int feature = featureGen.get();
+            float thresh = thresholdGenerator.apply(feature);
+            statsCollector.newSplit(depth, feature, thresh);
+            return new NaiveAdditiveDecisionTree.Split(newNode(depth), newNode(depth), feature, thresh);
+        }
+
+        private NaiveAdditiveDecisionTree.Node newLeaf(int depth) {
+            float output = outputGenerator.get();
+            statsCollector.newLeaf(depth, output);
+            return new NaiveAdditiveDecisionTree.Leaf(output);
+        }
+    }
+
+    public interface RandomTreeGeneratorStatsCollector {
+        RandomTreeGeneratorStatsCollector NULL = new RandomTreeGeneratorStatsCollector() {};
+        default void newSplit(int depth, int feature, float thresh) {}
+        default void newLeaf(int depth, float output) {}
+        default void newNode() {}
+        default void newTree() {}
+    }
+
+    public static class SimpleCountRandomTreeGeneratorStatsCollector implements RandomTreeGeneratorStatsCollector {
+        private final AtomicInteger splits = new AtomicInteger();
+        private final AtomicInteger leaves = new AtomicInteger();
+        private final AtomicInteger nodes = new AtomicInteger();
+        private final AtomicInteger trees = new AtomicInteger();
+
+        @Override
+        public void newSplit(int depth, int feature, float thresh) {
+            splits.incrementAndGet();
+        }
+
+        @Override
+        public void newLeaf(int depth, float output) {
+            leaves.incrementAndGet();
+        }
+
+        @Override
+        public void newNode() {
+            nodes.incrementAndGet();
+        }
+
+        @Override
+        public void newTree() {
+            trees.incrementAndGet();
+        }
     }
 }

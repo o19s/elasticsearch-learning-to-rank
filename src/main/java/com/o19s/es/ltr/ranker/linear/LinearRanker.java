@@ -18,6 +18,8 @@ package com.o19s.es.ltr.ranker.linear;
 
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.DenseLtrRanker;
+import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Objects;
 
@@ -25,7 +27,7 @@ import java.util.Objects;
  * Simple linear ranker that applies a dot product based
  * on the provided weights array.
  */
-public class LinearRanker extends DenseLtrRanker {
+public class LinearRanker extends DenseLtrRanker implements Accountable {
     private final float[] weights;
 
     public LinearRanker(float[] weights) {
@@ -50,5 +52,13 @@ public class LinearRanker extends DenseLtrRanker {
     @Override
     protected int size() {
         return weights.length;
+    }
+
+    /**
+     * Return the memory usage of this object in bytes. Negative values are illegal.
+     */
+    @Override
+    public long ramBytesUsed() {
+        return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + RamUsageEstimator.sizeOf(weights);
     }
 }
