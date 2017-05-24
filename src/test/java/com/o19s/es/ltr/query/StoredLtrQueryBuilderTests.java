@@ -22,6 +22,7 @@ import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreProvider;
@@ -29,6 +30,8 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
@@ -107,12 +110,34 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assertThat(query, instanceOf(RankerQuery.class));
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
+
         assertTrue(ite.hasNext());
-        Query featureQuery1 = ite.next();
+        Query featureQuery = ite.next();
+        QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
+        QueryShardContext qcontext = createShardContext();
+        Query expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+        assertEquals(expected, featureQuery);
+
         assertTrue(ite.hasNext());
-        Query featureQuery2 = ite.next();
+        featureQuery = ite.next();
+        builder = new MatchQueryBuilder("field2", queryBuilder.params().get("query_string"));
+        qcontext = createShardContext();
+        expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+        assertEquals(expected, featureQuery);
+
         assertTrue(ite.hasNext());
-        Query featureQuery3 = ite.next();
+
+        featureQuery = ite.next();
+        builder = new FunctionScoreQueryBuilder(new FieldValueFactorFunctionBuilder("scorefield2")
+                .factor(1.2F)
+                .modifier(FieldValueFactorFunction.Modifier.LN2P)
+                .missing(0F));
+        qcontext = createShardContext();
+        expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+        assertEquals(expected, featureQuery);
+
+        assertThat(rquery.ranker(), instanceOf(LinearRanker.class));
+        assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
     }
 
     @Override

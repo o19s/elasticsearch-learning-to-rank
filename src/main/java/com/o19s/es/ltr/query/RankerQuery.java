@@ -114,7 +114,7 @@ public class RankerQuery extends Query {
                 Objects.equals(ranker, that.ranker);
     }
 
-    protected Stream<Query> stream() {
+    Stream<Query> stream() {
         return queries.stream();
     }
 
@@ -133,6 +133,13 @@ public class RankerQuery extends Query {
      */
     Feature getFeature(int ordinal) {
         return features.feature(ordinal);
+    }
+
+    /**
+     * The ranker used by this query
+     */
+    LtrRanker ranker() {
+        return ranker;
     }
 
     @Override
