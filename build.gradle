@@ -12,7 +12,7 @@ buildscript {
 }
 
 group = 'com.o19s'
-version = '0.1.1-es5.4.0'
+version = '0.1.2-es5.4.0'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
@@ -35,7 +35,7 @@ repositories {
 }
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.4.0'
-  compile 'com.o19s:RankyMcRankFace:0.1.0'
+  compile 'com.o19s:RankyMcRankFace:0.1.1'
   testCompile 'org.elasticsearch.test:framework:5.4.0'
 }
 
