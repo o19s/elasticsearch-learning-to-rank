@@ -19,6 +19,8 @@ package com.o19s.es.ltr.ranker.parser;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 
+import java.io.IOException;
+
 /**
  * A model parser (don't have to be thread-safe)
  */
