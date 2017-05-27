@@ -7,12 +7,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:5.3.0"
+    classpath "org.elasticsearch.gradle:build-tools:5.3.2"
   }
 }
 
 group = 'com.o19s'
-version = '0.1.2-es5.3.0'
+version = '0.1.2-es5.3.2'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
@@ -34,9 +34,9 @@ repositories {
     jcenter()
 }
 dependencies {
-  compile 'org.elasticsearch:elasticsearch:5.3.0'
+  compile 'org.elasticsearch:elasticsearch:5.3.2'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
-  testCompile 'org.elasticsearch.test:framework:5.3.0'
+  testCompile 'org.elasticsearch.test:framework:5.3.2'
 }
 
 // Set to false to not use elasticsearch checkstyle rules
