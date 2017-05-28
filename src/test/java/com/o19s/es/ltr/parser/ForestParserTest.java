@@ -8,7 +8,11 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContentParser;
 import org.junit.Test;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -17,7 +21,6 @@ import static junit.framework.TestCase.assertEquals;
  */
 public class ForestParserTest extends JsonModelParsingTest {
 
-    @Test
     public void testParsingForest() throws IOException {
         String split1 = "{" +
                 " \"feature\": \"foo\"," +
@@ -66,6 +69,12 @@ public class ForestParserTest extends JsonModelParsingTest {
         assertEquals(parsedForest.ensembles().size(), 2);
 
 
+    }
+
+    public void readBigModel() throws IOException {
+        String contents = new String(Files.readAllBytes(Paths.get("/home/doug/ws/es-ltr/big-model.json")));
+        ParsedForest parsedForest = ParsedForest.parse(makeXContent(contents));
+        assertEquals(parsedForest.ensembles().size(), 10);
     }
 
 }
