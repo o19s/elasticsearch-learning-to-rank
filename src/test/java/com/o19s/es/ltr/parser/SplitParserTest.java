@@ -16,14 +16,7 @@ import static junit.framework.TestCase.assertEquals;
 /**
  * Created by doug on 5/26/17.
  */
-public class SplitParserTest {
-
-    JsonFactory jsonFactory = new JsonFactory();
-
-    XContentParser makeXContent(String jsonStr) throws IOException {
-        JsonParser jsonParser = jsonFactory.createParser(jsonStr);
-        return new JsonXContentParser(NamedXContentRegistry.EMPTY, jsonParser);
-    }
+public class SplitParserTest extends JsonModelParsingTest {
 
     @Test
     public void testBasicSplit() throws IOException {

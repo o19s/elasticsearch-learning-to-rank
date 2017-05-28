@@ -2,7 +2,7 @@ package com.o19s.es.ltr.parser;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
-import com.o19s.es.ltr.ranker.parser.tree.ParsedEnsemble;
+import com.o19s.es.ltr.ranker.parser.tree.ParsedForest;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContentParser;
@@ -10,13 +10,15 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static junit.framework.TestCase.assertEquals;
+
 /**
- * Created by doug on 5/26/17.
+ * Created by doug on 5/28/17.
  */
-public class EnsembleParserTest extends JsonModelParsingTest {
+public class ForestParserTest extends JsonModelParsingTest {
 
     @Test
-    public void testEnsembleParsing() throws IOException {
+    public void testParsingForest() throws IOException {
         String split1 = "{" +
                 " \"feature\": \"foo\"," +
                 " \"threshold\": 0.5,  " +
@@ -48,13 +50,22 @@ public class EnsembleParserTest extends JsonModelParsingTest {
                 "}";
 
 
-        String ensemble = "{" +
+        String ensemble1 = "{" +
                 " \"ensemble\": [" +
-                         split1 + "," +
-                         split2 + "]}";
+                split1 + "," +
+                split2 + "]}";
 
-        ParsedEnsemble ens = ParsedEnsemble.parseEnsemble(makeXContent(ensemble));
-        assert(ens.splits().get(0).getThreshold() == 0.5);
+        String ensemble2 = "{" +
+                " \"ensemble\": [" +
+                split2 + "," +
+                split1 + "]}";
+
+        String forest = "{\"forest\": [ " + ensemble1 +"," + ensemble2 + "]}";
+
+        ParsedForest parsedForest = ParsedForest.parse(makeXContent(forest));
+        assertEquals(parsedForest.ensembles().size(), 2);
+
+
     }
 
 }
