@@ -24,9 +24,13 @@ public class ParsedSplit {
         PARSER.declareDouble((split, thresholdValue) -> split.setThreshould(thresholdValue),
                 new ParseField("threshold"));
 
-        PARSER.declareObjectArray( ParsedSplit::setChildren,
-                                   (xParser, context) -> context.parseOutputOrSplit(xParser),
-                                    new ParseField("splits"));
+        PARSER.declareObject( ParsedSplit::setLhs,
+                              (xParser, context) -> context.parseOutputOrSplit(xParser),
+                              new ParseField("lhs"));
+
+        PARSER.declareObject( ParsedSplit::setRhs,
+                (xParser, context) -> context.parseOutputOrSplit(xParser),
+                new ParseField("rhs"));
 
         // In the child objects, we'll eithre encounter another split, or an output value
         OUTPUT_OR_SPLIT_PARSER = new ObjectParser<>(NAME, SplitOrOutput::new);
@@ -83,11 +87,14 @@ public class ParsedSplit {
         featureName = name;
     }
 
-    public void setChildren(List<ParsedSplit> splitList) {
-        lhs = splitList.get(0);
-        rhs = splitList.get(1);
-
+    public void setLhs(ParsedSplit split) {
+        lhs = split;
     }
+
+    public void setRhs(ParsedSplit split) {
+        rhs = split;
+    }
+
 
     public void setOutput(double val) {
         output = val;

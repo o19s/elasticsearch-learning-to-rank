@@ -27,32 +27,32 @@ public class EnsembleParserTest {
         String split1 = "{" +
                 " \"feature\": \"foo\"," +
                 " \"threshold\": 0.5,  " +
-                " \"splits\": [   " +
-                "    {\"split\":  " +
-                "       {\"feature\": \"bar\"," +
-                "        \"threshold\": 12.0," +
-                "        \"splits\": [" +
-                "           {\"output\": 100.0}," +
-                "           {\"output\": 500.0}" +
-                "       ]" +
+                " \"lhs\": {\"split\":  " +
+                "           {\"feature\": \"bar\"," +
+                "            \"threshold\": 12.0," +
+                "            \"lhs\": " +
+                "               {\"output\": 100.0}," +
+                "            \"rhs\": " +
+                "               {\"output\": 500.0}" +
+                "       " +
                 "    }},"+
-                "    {\"output\": 1.0}"+
-                "]}";
+                "    \"rhs\": {\"output\": 1.0}"+
+                "}";
 
         String split2 = "{" +
                 " \"feature\": \"foo\"," +
-                " \"threshold\": 20,  " +
-                " \"splits\": [   " +
-                "    {\"split\":  " +
-                "       {\"feature\": \"bar\"," +
-                "        \"threshold\": 12.0," +
-                "        \"splits\": [" +
-                "           {\"output\": 100.0}," +
-                "           {\"output\": 500.0}" +
-                "       ]" +
+                " \"threshold\": 0.5,  " +
+                " \"lhs\": {\"split\":  " +
+                "           {\"feature\": \"bar\"," +
+                "            \"threshold\": 12.0," +
+                "            \"lhs\": " +
+                "               {\"output\": 100.0}," +
+                "            \"rhs\": " +
+                "               {\"output\": 500.0}" +
+                "       " +
                 "    }},"+
-                "    {\"output\": 1.0}"+
-                "]}";
+                "    \"rhs\": {\"output\": 1.0}"+
+                "}";
 
 
         String ensemble = "{" +
