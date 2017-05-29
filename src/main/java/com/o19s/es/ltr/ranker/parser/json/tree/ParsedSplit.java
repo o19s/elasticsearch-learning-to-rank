@@ -80,52 +80,51 @@ public class ParsedSplit {
     }
 
     public ParsedSplit() {
-
     }
 
 
 
-    public void output(double val) {
-        output = val;
-    }
+    public void output(double val) {_output = val;  _isLeaf = true;}
 
     public String featureName() {
-        return featureName;
+        return _featureName;
     }
 
     public ParsedSplit lhs() {
-        return lhs;
+        return _lhs;
     }
 
     public ParsedSplit rhs() {
-        return rhs;
+        return _rhs;
     }
 
     public double threshold() {
-        return threshold;
+        return _threshold;
     }
 
     public double output() {
-        return output;
+        return _output;
     }
 
     public String feature() {
-        return featureName;
+        return _featureName;
     }
+
+    public boolean isLeaf() {return _isLeaf;}
 
 
 
     public void threshold(double val) {
-        threshold = val;
+        _threshold = val;
     }
 
     public void featureName(String name) {
-        featureName = name;
+        _featureName = name;
     }
 
-    public void lhs(ParsedSplit split) { lhs = Objects.requireNonNull(split); }
+    public void lhs(ParsedSplit split) { _lhs = Objects.requireNonNull(split); }
 
-    public void rhs(ParsedSplit split)  { rhs = Objects.requireNonNull(split); }
+    public void rhs(ParsedSplit split)  { _rhs = Objects.requireNonNull(split); }
 
 
 
@@ -133,12 +132,13 @@ public class ParsedSplit {
         return PARSER.parse(xParser, new SplitContext());
     }
 
-    private String featureName;
-    private double threshold;
-    private double output;
-    private ParsedSplit lhs;
-    private ParsedSplit rhs;
-    private double weight = 1.0;
+    private String _featureName;
+    private double _threshold;
+    private double _output;
+    private ParsedSplit _lhs;
+    private ParsedSplit _rhs;
+    private double _weight = 1.0;
+    private boolean _isLeaf = false;
 
 
 }
