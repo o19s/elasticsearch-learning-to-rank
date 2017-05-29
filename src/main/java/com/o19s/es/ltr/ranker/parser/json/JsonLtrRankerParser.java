@@ -1,9 +1,10 @@
-//package com.o19s.es.ltr.ranker.parser;
+//package com.o19s.es.ltr.ranker.parser.json;
 //
 //import com.fasterxml.jackson.core.JsonFactory;
 //import com.fasterxml.jackson.core.JsonParser;
 //import com.o19s.es.ltr.feature.FeatureSet;
 //import com.o19s.es.ltr.ranker.LtrRanker;
+//import com.o19s.es.ltr.ranker.parser.json.tree.ParsedEnsemble;
 //import org.elasticsearch.common.ParseField;
 //import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 //import org.elasticsearch.common.xcontent.ObjectParser;
@@ -18,10 +19,15 @@
 //public class JsonLtrRankerParser implements LtrRankerParser {
 //
 //    public static final String NAME = "json-ltr-ranker-parser";
-//    //private static final ObjectParser<ParsedScript, ParseContext> PARSER;
+//    private static final ObjectParser<ParsedScript, ParseContext> PARSER;
 //
 //
 //    static {
+//
+//
+//
+//
+////        PARSER.declareObject();
 //
 ////
 ////        PARSER = new ObjectParser<>(NAME, ParsedScript::new);
@@ -96,15 +102,16 @@
 //
 //    @Override
 //    public LtrRanker parse(FeatureSet set, String model) {
-//        JsonFactory jfactory = new JsonFactory();
-//        try {
-//            JsonParser jParser = jfactory.createParser(model);
-//            XContentParser xContent = new JsonXContentParser(NamedXContentRegistry.EMPTY, jParser);
-//            PARSER.parse(xContent, new ParseContext());
 //
-//        } catch (IOException e) {
-//            return null;
-//        }
-//        return null;
+////        JsonFactory jfactory = new JsonFactory();
+////        try {
+////            JsonParser jParser = jfactory.createParser(model);
+////            XContentParser xContent = new JsonXContentParser(NamedXContentRegistry.EMPTY, jParser);
+////            PARSER.parse(xContent, new ParseContext());
+////
+////        } catch (IOException e) {
+////            return null;
+////        }
+////        return null;
 //    }
 //}

@@ -1,4 +1,4 @@
-package com.o19s.es.ltr.ranker.parser.tree;
+package com.o19s.es.ltr.ranker.parser.json.tree;
 
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ObjectParser;
@@ -29,7 +29,7 @@ public class ParsedForest {
     public static class Context {
 
         ParsedEnsemble parseEnsemble(XContentParser xContent) throws IOException {
-            return ParsedEnsemble.parseEnsemble(xContent);
+            return ParsedEnsemble.parse(xContent);
         }
 
     }

@@ -1,13 +1,6 @@
 package com.o19s.es.ltr.parser;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.o19s.es.ltr.ranker.parser.tree.ParsedSplit;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.elasticsearch.common.xcontent.json.JsonXContentParser;
-import org.junit.Test;
+import com.o19s.es.ltr.ranker.parser.json.tree.ParsedSplit;
 
 import java.io.IOException;
 
@@ -30,12 +23,12 @@ public class SplitParserTest extends JsonModelParsingTest {
 
 
         ParsedSplit ps = ParsedSplit.parse(makeXContent(split));
-        assert(ps.getFeature().equals("foo"));
-        assert(ps.getThreshold() == 0.5);
-        assert(ps.getLhs() != null);
-        assert(ps.getRhs() != null);
-        assert(ps.getLhs().getOutput() == 5.0);
-        assert(ps.getRhs().getOutput() == 1.0);
+        assert(ps.feature().equals("foo"));
+        assert(ps.threshold() == 0.5);
+        assert(ps.lhs() != null);
+        assert(ps.rhs() != null);
+        assert(ps.lhs().output() == 5.0);
+        assert(ps.rhs().output() == 1.0);
 
     }
 
@@ -57,16 +50,16 @@ public class SplitParserTest extends JsonModelParsingTest {
 
 
         ParsedSplit ps = ParsedSplit.parse(makeXContent(split));
-        assert(ps.getFeature().equals("foo"));
-        assert(ps.getThreshold() == 0.5);
-        assert(ps.getLhs() != null);
-        assert(ps.getRhs() != null);
-        assert(ps.getLhs().getThreshold() == 12.0);
-        assert(ps.getLhs().getLhs() != null);
-        assert(ps.getLhs().getRhs() != null);
-        assert(ps.getLhs().getLhs().getOutput() == 100.0);
-        assert(ps.getLhs().getRhs().getOutput() == 500.0);
-        assert(ps.getRhs().getOutput() == 1.0);
+        assert(ps.feature().equals("foo"));
+        assert(ps.threshold() == 0.5);
+        assert(ps.lhs() != null);
+        assert(ps.rhs() != null);
+        assert(ps.lhs().threshold() == 12.0);
+        assert(ps.lhs().lhs() != null);
+        assert(ps.lhs().rhs() != null);
+        assert(ps.lhs().lhs().output() == 100.0);
+        assert(ps.lhs().rhs().output() == 500.0);
+        assert(ps.rhs().output() == 1.0);
 
     }
 
@@ -110,13 +103,13 @@ public class SplitParserTest extends JsonModelParsingTest {
 
 
         ParsedSplit ps = ParsedSplit.parse(makeXContent(split));
-        assertEquals(ps.getFeature(), " 1 ");
-        assertEquals(ps.getRhs().getOutput(), -0.57825887, 0.01);
-        assertEquals(ps.getLhs().getFeature(), " 6 ");
-        assertEquals(ps.getLhs().getRhs().getOutput(), -1.33861744, 0.01);
-        assertEquals(ps.getLhs().getLhs().getLhs().getRhs().getOutput(), 0.03737, 0.01);
-        assertEquals(ps.getLhs().getLhs().getLhs().getLhs().getOutput(), -0.04588231, 0.01);
-        assertEquals(ps.getLhs().getLhs().getLhs().getThreshold(), -1.0, 0.01);
+        assertEquals(ps.feature(), " 1 ");
+        assertEquals(ps.rhs().output(), -0.57825887, 0.01);
+        assertEquals(ps.lhs().feature(), " 6 ");
+        assertEquals(ps.lhs().rhs().output(), -1.33861744, 0.01);
+        assertEquals(ps.lhs().lhs().lhs().rhs().output(), 0.03737, 0.01);
+        assertEquals(ps.lhs().lhs().lhs().lhs().output(), -0.04588231, 0.01);
+        assertEquals(ps.lhs().lhs().lhs().threshold(), -1.0, 0.01);
 
 
 

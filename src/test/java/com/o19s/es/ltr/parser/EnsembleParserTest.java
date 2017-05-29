@@ -1,14 +1,11 @@
 package com.o19s.es.ltr.parser;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.o19s.es.ltr.ranker.parser.tree.ParsedEnsemble;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContentParser;
+import com.o19s.es.ltr.ranker.parser.json.tree.ParsedEnsemble;
 import org.junit.Test;
 
 import java.io.IOException;
+
+import static junit.framework.TestCase.assertEquals;
 
 /**
  * Created by doug on 5/26/17.
@@ -49,12 +46,21 @@ public class EnsembleParserTest extends JsonModelParsingTest {
 
 
         String ensemble = "{" +
-                " \"ensemble\": [" +
-                         split1 + "," +
-                         split2 + "]}";
+                " \"ensemble\": [ " +
+                        "{\"split\": " +    split1 + "," +
+                        " \"weight\": 0.5, " +
+                         "\"id\": \"1\"}, " +
+                        "{\"split\": " +    split2 + "," +
+                        " \"weight\": 0.1, " +
+                         "\"id\": \"fuzzy-kittehs\"}]} ";
 
-        ParsedEnsemble ens = ParsedEnsemble.parseEnsemble(makeXContent(ensemble));
-        assert(ens.splits().get(0).getThreshold() == 0.5);
+        ParsedEnsemble ens = ParsedEnsemble.parse(makeXContent(ensemble));
+        assertEquals(ens.trees().get(0).weight(), 0.5, 0.01);
+        assertEquals(ens.trees().get(0).id(), "1");
+
+        assertEquals(ens.trees().get(1).weight(), 0.1, 0.01);
+        assertEquals(ens.trees().get(1).id(), "fuzzy-kittehs");
+
     }
 
 }

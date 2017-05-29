@@ -1,16 +1,9 @@
 package com.o19s.es.ltr.parser;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.o19s.es.ltr.ranker.parser.tree.ParsedForest;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContentParser;
+import com.o19s.es.ltr.ranker.parser.json.tree.ParsedForest;
 import org.junit.Test;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -54,19 +47,31 @@ public class ForestParserTest extends JsonModelParsingTest {
 
 
         String ensemble1 = "{" +
-                " \"ensemble\": [" +
-                split1 + "," +
-                split2 + "]}";
+                " \"ensemble\": [ " +
+                "{\"split\": " +    split1 + "," +
+                " \"weight\": 0.5, " +
+                "\"id\": \"1\"}, " +
+                "{\"split\": " +    split2 + "," +
+                " \"weight\": 0.1, " +
+                "\"id\": \"fuzzy-doggos\"}]} ";
 
         String ensemble2 = "{" +
-                " \"ensemble\": [" +
-                split2 + "," +
-                split1 + "]}";
+                " \"ensemble\": [ " +
+                "{\"split\": " +    split1 + "," +
+                " \"weight\": 0.5, " +
+                "\"id\": \"1\"}, " +
+                "{\"split\": " +    split2 + "," +
+                " \"weight\": 0.1, " +
+                "\"id\": \"fuzzy-kittehs\"}]} ";
+
+
 
         String forest = "{\"forest\": [ " + ensemble1 +"," + ensemble2 + "]}";
 
         ParsedForest parsedForest = ParsedForest.parse(makeXContent(forest));
         assertEquals(parsedForest.ensembles().size(), 2);
+        assertEquals(parsedForest.ensembles().get(0).trees().get(1).id(), "fuzzy-doggos");
+        assertEquals(parsedForest.ensembles().get(1).trees().get(1).id(), "fuzzy-kittehs");
 
 
     }

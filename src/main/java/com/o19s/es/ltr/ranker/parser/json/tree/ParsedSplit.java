@@ -1,11 +1,11 @@
-package com.o19s.es.ltr.ranker.parser.tree;
+package com.o19s.es.ltr.ranker.parser.json.tree;
 
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by doug on 5/26/17.
@@ -18,17 +18,17 @@ public class ParsedSplit {
 
     static {
         PARSER = new ObjectParser<>(NAME, ParsedSplit::new);
-        PARSER.declareString((split, featureName) -> split.setFeatureName(featureName),
+        PARSER.declareString((split, featureName) -> split.featureName(featureName),
                              new ParseField("feature"));
 
-        PARSER.declareDouble((split, thresholdValue) -> split.setThreshould(thresholdValue),
+        PARSER.declareDouble((split, thresholdValue) -> split.threshold(thresholdValue),
                 new ParseField("threshold"));
 
-        PARSER.declareObject( ParsedSplit::setLhs,
+        PARSER.declareObject( ParsedSplit::lhs,
                               (xParser, context) -> context.parseOutputOrSplit(xParser),
                               new ParseField("lhs"));
 
-        PARSER.declareObject( ParsedSplit::setRhs,
+        PARSER.declareObject( ParsedSplit::rhs,
                 (xParser, context) -> context.parseOutputOrSplit(xParser),
                 new ParseField("rhs"));
 
@@ -55,7 +55,7 @@ public class ParsedSplit {
 
         public void setOutput(double out) {
             split = new ParsedSplit();
-            split.setOutput(out);
+            split.output(out);
         }
 
 
@@ -83,51 +83,51 @@ public class ParsedSplit {
 
     }
 
-    public void setFeatureName(String name) {
-        featureName = name;
-    }
-
-    public void setLhs(ParsedSplit split) {
-        lhs = split;
-    }
-
-    public void setRhs(ParsedSplit split) {
-        rhs = split;
-    }
 
 
-    public void setOutput(double val) {
+    public void output(double val) {
         output = val;
     }
 
-    public ParsedSplit getLhs() {
+    public String featureName() {
+        return featureName;
+    }
+
+    public ParsedSplit lhs() {
         return lhs;
     }
 
-    public ParsedSplit getRhs() {
+    public ParsedSplit rhs() {
         return rhs;
     }
 
-    public double getThreshold() {
+    public double threshold() {
         return threshold;
     }
 
-    public double getOutput() {
+    public double output() {
         return output;
     }
 
-    public String getFeature() {
+    public String feature() {
         return featureName;
     }
 
 
-    public void setThreshould(double val) {
+
+    public void threshold(double val) {
         threshold = val;
     }
 
-    public String getFeatureName() {
-        return featureName;
+    public void featureName(String name) {
+        featureName = name;
     }
+
+    public void lhs(ParsedSplit split) { lhs = Objects.requireNonNull(split); }
+
+    public void rhs(ParsedSplit split)  { rhs = Objects.requireNonNull(split); }
+
+
 
     public static ParsedSplit parse(XContentParser xParser) throws IOException {
         return PARSER.parse(xParser, new SplitContext());
@@ -138,6 +138,7 @@ public class ParsedSplit {
     private double output;
     private ParsedSplit lhs;
     private ParsedSplit rhs;
+    private double weight = 1.0;
 
 
 }
