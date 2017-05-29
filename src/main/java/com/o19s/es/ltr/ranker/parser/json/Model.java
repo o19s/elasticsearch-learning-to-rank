@@ -32,8 +32,8 @@ public class Model {
                 (xContent, context) -> context.parseRandomForest(xContent),
                 new ParseField("random-forest"));
 
-        PARSER.declareObject(Model::forestModel,
-                (xContent, context) -> context.parseRandomForest(xContent),
+        PARSER.declareObject(Model::martModel,
+                (xContent, context) -> context.parseMart(xContent),
                 new ParseField("mart"));
     }
 
@@ -61,7 +61,12 @@ public class Model {
     private ParsedForest forest;
     private ParsedEnsemble _mart;
 
-    LtrRanker toModel(FeatureSet set) {
+
+    public static Model parse(XContentParser xContent) throws IOException {
+        return PARSER.parse(xContent, new Context());
+    }
+
+    public LtrRanker toModel(FeatureSet set) {
         if (_mart != null) {
             return martToModel(set);
         }
