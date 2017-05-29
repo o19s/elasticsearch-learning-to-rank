@@ -1,4 +1,4 @@
-package com.o19s.es.ltr.parser;
+package com.o19s.es.ltr.ranker.parser.json;
 
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedEnsemble;
 import org.junit.Test;

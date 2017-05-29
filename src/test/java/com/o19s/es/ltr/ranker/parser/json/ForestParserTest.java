@@ -1,6 +1,7 @@
-package com.o19s.es.ltr.parser;
+package com.o19s.es.ltr.ranker.parser.json;
 
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedForest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -76,7 +77,9 @@ public class ForestParserTest extends JsonModelParsingTest {
 
     }
 
-    public void readBigModel() throws IOException {
+    @Test
+    @Ignore
+    public void testBigModel() throws IOException {
         String contents = new String(Files.readAllBytes(Paths.get("/home/doug/ws/es-ltr/big-model.json")));
         ParsedForest parsedForest = ParsedForest.parse(makeXContent(contents));
         assertEquals(parsedForest.ensembles().size(), 10);
