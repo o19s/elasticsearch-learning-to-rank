@@ -16,10 +16,10 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.cache.Cache;
 
@@ -54,7 +54,7 @@ public class CachedFeatureStore implements FeatureStore {
     }
 
     @Override
-    public StoredLtrModel loadModel(String id) throws IOException {
+    public CompiledLtrModel loadModel(String id) throws IOException {
         return innerLoad(id, caches.modelCache(), inner::loadModel);
     }
 
@@ -66,7 +66,7 @@ public class CachedFeatureStore implements FeatureStore {
         return innerGet(id, caches.featureSetCache());
     }
 
-    StoredLtrModel getCachedModel(String id) {
+    CompiledLtrModel getCachedModel(String id) {
         return innerGet(id, caches.modelCache());
     }
 

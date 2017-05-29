@@ -18,10 +18,10 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.MockMustachePlugin;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
@@ -87,7 +87,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                         .missing(0F)).toString());
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         LtrRanker ranker = new LinearRanker(new float[]{0.1F, 0.2F, 0.3F});
-        StoredLtrModel model = new StoredLtrModel("model1", set, ranker);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
 

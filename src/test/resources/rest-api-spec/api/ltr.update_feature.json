@@ -1,0 +1,31 @@
+{
+  "ltr.update_feature": {
+    "methods" : ["POST"],
+    "url": {
+      "path": "/_ltr/{store}/_feature/{name}",
+      "paths": ["/_ltr/_feature/{name}", "/_ltr/{store}/_feature/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The feature name"
+        }
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
+      }
+    },
+    "body": {
+      "description" : "The feature",
+      "required": "true"
+    }
+  }
+}

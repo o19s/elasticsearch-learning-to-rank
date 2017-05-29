@@ -1,0 +1,287 @@
+---
+"CRUD operations test: model on default store":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_model:
+           name: my_model
+           body:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/ranklib
+                definition: |
+                    ## LambdaMART
+                    ## No. of trees = 1
+                    ## No. of leaves = 10
+                    ## No. of threshold candidates = 256
+                    ## Learning rate = 0.1
+                    ## Stop early = 100
+                    <ensemble>
+                        <tree id="1" weight="0.1">
+                            <split>
+                                <feature> 1 </feature>
+                                <threshold> 0.45867884 </threshold>
+                                <split pos="left">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.0 </threshold>
+                                    <split pos="left">
+                                        <output> -2.0 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> -1.3413081169128418 </output>
+                                    </split>
+                                </split>
+                                <split pos="right">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.6115718 </threshold>
+                                    <split pos="left">
+                                        <output> 0.3089442849159241 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> 2.0 </output>
+                                    </split>
+                                </split>
+                            </split>
+                        </tree>
+                    </ensemble>
+
+
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      model-my_model }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_model:
+           name: my_model
+
+  - match: { _source.name: my_model }
+
+  - do:
+        catch: /Element of type \[model\] are not updatable./
+        ltr.update_model:
+           name: my_model
+           body:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/ranklib
+                definition: |
+                    ## LambdaMART
+                    ## No. of trees = 1
+                    ## No. of leaves = 10
+                    ## No. of threshold candidates = 256
+                    ## Learning rate = 0.1
+                    ## Stop early = 100
+                    <ensemble>
+                        <tree id="1" weight="0.1">
+                            <split>
+                                <feature> 1 </feature>
+                                <threshold> 0.45867884 </threshold>
+                                <split pos="left">
+                                    <feature> 1 </feature>
+                                    <threshold> 1.0 </threshold>
+                                    <split pos="left">
+                                        <output> -1.0 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> -1.3413081169128418 </output>
+                                    </split>
+                                </split>
+                                <split pos="right">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.6115718 </threshold>
+                                    <split pos="left">
+                                        <output> 0.3089442849159241 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> 2.0 </output>
+                                    </split>
+                                </split>
+                            </split>
+                        </tree>
+                    </ensemble>
+
+  - do:
+        ltr.delete_model:
+           name: my_model
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_model:
+           name: my_model
+
+---
+"CRUD operations test: model on custom store":
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        ltr.create_model:
+           store: mystore
+           name: my_model
+           body:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/ranklib
+                definition: |
+                    ## LambdaMART
+                    ## No. of trees = 1
+                    ## No. of leaves = 10
+                    ## No. of threshold candidates = 256
+                    ## Learning rate = 0.1
+                    ## Stop early = 100
+                    <ensemble>
+                        <tree id="1" weight="0.1">
+                            <split>
+                                <feature> 1 </feature>
+                                <threshold> 0.45867884 </threshold>
+                                <split pos="left">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.0 </threshold>
+                                    <split pos="left">
+                                        <output> -2.0 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> -1.3413081169128418 </output>
+                                    </split>
+                                </split>
+                                <split pos="right">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.6115718 </threshold>
+                                    <split pos="left">
+                                        <output> 0.3089442849159241 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> 2.0 </output>
+                                    </split>
+                                </split>
+                            </split>
+                        </tree>
+                    </ensemble>
+
+
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      model-my_model }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_model:
+           store: mystore
+           name: my_model
+
+  - match: { _source.name: my_model }
+
+  - do:
+        catch: /Element of type \[model\] are not updatable./
+        ltr.update_model:
+           store: mystore
+           name: my_model
+           body:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/ranklib
+                definition: |
+                    ## LambdaMART
+                    ## No. of trees = 1
+                    ## No. of leaves = 10
+                    ## No. of threshold candidates = 256
+                    ## Learning rate = 0.1
+                    ## Stop early = 100
+                    <ensemble>
+                        <tree id="1" weight="0.1">
+                            <split>
+                                <feature> 1 </feature>
+                                <threshold> 0.45867884 </threshold>
+                                <split pos="left">
+                                    <feature> 1 </feature>
+                                    <threshold> 1.0 </threshold>
+                                    <split pos="left">
+                                        <output> -1.0 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> -1.3413081169128418 </output>
+                                    </split>
+                                </split>
+                                <split pos="right">
+                                    <feature> 1 </feature>
+                                    <threshold> 0.6115718 </threshold>
+                                    <split pos="left">
+                                        <output> 0.3089442849159241 </output>
+                                    </split>
+                                    <split pos="right">
+                                        <output> 2.0 </output>
+                                    </split>
+                                </split>
+                            </split>
+                        </tree>
+                    </ensemble>
+
+  - do:
+        ltr.delete_model:
+           store: mystore
+           name: my_model
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_model:
+           store: mystore
+           name: my_model

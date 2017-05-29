@@ -16,9 +16,9 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.cache.Cache;
 import org.elasticsearch.common.cache.CacheBuilder;
@@ -35,7 +35,7 @@ import java.util.Objects;
 public class Caches {
     private final Cache<CacheKey, StoredFeature> featureCache;
     private final Cache<CacheKey, StoredFeatureSet> featureSetCache;
-    private final Cache<CacheKey, StoredLtrModel> modelCache;
+    private final Cache<CacheKey, CompiledLtrModel> modelCache;
     private final long maxWeight;
 
     public Caches(TimeValue expireAfterWrite, TimeValue expireAfterAccess, long maxWeight) {
@@ -51,7 +51,7 @@ public class Caches {
                 .weigher((s, w) -> w.ramBytesUsed())
                 .setMaximumWeight(maxWeight)
                 .build();
-        this.modelCache = CacheBuilder.<CacheKey, StoredLtrModel>builder()
+        this.modelCache = CacheBuilder.<CacheKey, CompiledLtrModel>builder()
                 .setExpireAfterWrite(expireAfterWrite)
                 .setExpireAfterAccess(expireAfterAccess)
                 .weigher((s, w) -> w.ramBytesUsed())
@@ -73,6 +73,18 @@ public class Caches {
         evict(index, modelCache);
     }
 
+    public void evictFeature(String index, String name) {
+        featureCache.invalidate(new CacheKey(index, name));
+    }
+
+    public void evictFeatureSet(String index, String name) {
+        featureSetCache.invalidate(new CacheKey(index, name));
+    }
+
+    public void evictModel(String index, String name) {
+        modelCache.invalidate(new CacheKey(index, name));
+    }
+
     private void evict(String index, Cache<CacheKey, ?> cache) {
         Iterator<CacheKey> ite = cache.keys().iterator();
         while(ite.hasNext()) {
@@ -90,7 +102,7 @@ public class Caches {
         return featureSetCache;
     }
 
-    public Cache<CacheKey, StoredLtrModel> modelCache() {
+    public Cache<CacheKey, CompiledLtrModel> modelCache() {
         return modelCache;
     }
 

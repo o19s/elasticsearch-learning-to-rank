@@ -16,8 +16,8 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.utils.FeatureStoreProvider;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -36,18 +36,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.DEFAULT_STORE;
+
 /**
  * sltr query, build a ltr query based on a stored model.
  */
 public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBuilder> implements NamedWriteable {
-    public static final String DEFAULT_FEATURE_STORE = "ltr_default_store";
     public static final String NAME = "sltr";
     public static final ParseField MODEL_NAME = new ParseField("model");
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
     private String modelName;
-    private String storeName = DEFAULT_FEATURE_STORE;
+    private String storeName = DEFAULT_STORE;
     private Map<String, Object> params;
 
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
@@ -100,7 +101,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     protected void doXContent(XContentBuilder builder, Params p) throws IOException {
         builder.startObject(NAME);
         builder.field(MODEL_NAME.getPreferredName(), modelName);
-        if (!DEFAULT_FEATURE_STORE.equals(storeName)) {
+        if (!DEFAULT_STORE.equals(storeName)) {
             builder.field(STORE_NAME.getPreferredName(), storeName);
         }
         if (this.params != null && !this.params.isEmpty()) {
@@ -113,7 +114,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         FeatureStore store = FeatureStoreProvider.findFeatureStore(storeName, context);
-        StoredLtrModel model = store.loadModel(modelName);
+        CompiledLtrModel model = store.loadModel(modelName);
         return RankerQuery.build(model, context, params);
     }
 

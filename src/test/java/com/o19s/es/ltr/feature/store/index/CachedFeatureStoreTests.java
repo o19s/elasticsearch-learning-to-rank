@@ -17,10 +17,10 @@
 package com.o19s.es.ltr.feature.store.index;
 
 import com.o19s.es.ltr.LtrTestUtils;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.common.settings.Settings;
@@ -66,7 +66,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     }
 
     public void testCachedModelSet() throws IOException {
-        StoredLtrModel model = LtrTestUtils.buildRandomModel();
+        CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         assertNull(store.getCachedModel(model.name()));
@@ -85,7 +85,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         long maxWeight = caches.getMaxWeight();
         long maxIter = 1000;
         while (true) {
-            StoredLtrModel model = LtrTestUtils.buildRandomModel();
+            CompiledLtrModel model = LtrTestUtils.buildRandomModel();
             memStore.add(model);
             if (curWeight + model.ramBytesUsed() > maxWeight) {
                 store.loadModel(model.name());
@@ -101,7 +101,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     public void testExpirationOnWrite() throws IOException, InterruptedException {
         Caches caches = new Caches(TimeValue.timeValueMillis(100), TimeValue.timeValueHours(1), 1000000);
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
-        StoredLtrModel model = LtrTestUtils.buildRandomModel();
+        CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);
         store.loadModel(model.name());
         assertNotNull(store.getCachedModel(model.name()));
@@ -113,7 +113,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     public void testExpirationOnGet() throws IOException, InterruptedException {
         Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueMillis(100), 1000000);
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
-        StoredLtrModel model = LtrTestUtils.buildRandomModel();
+        CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);
         store.loadModel(model.name()); // fill cache
         store.loadModel(model.name()); // access cache
@@ -135,7 +135,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
             memStore.add(set);
             cachedFeatureStore.loadSet(set.name());
 
-            StoredLtrModel model = LtrTestUtils.buildRandomModel();
+            CompiledLtrModel model = LtrTestUtils.buildRandomModel();
             memStore.add(model);
             cachedFeatureStore.loadModel(model.name());
         }

@@ -1,0 +1,173 @@
+---
+"CRUD operations test: featureset on default store":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_featureset:
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      featureset-my_featureset }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_featureset:
+           name: my_featureset
+
+  - match: { _source.name: my_featureset }
+
+  - do:
+        catch: /version_conflict_engine_exception/
+        ltr.create_featureset:
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                      field_test2: "{{query_string}}"
+
+  - do:
+        ltr.update_featureset:
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                      field_test2: "{{query_string}}"
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      featureset-my_featureset }
+  - match: { _version: 2 }
+
+  - do:
+        ltr.get_featureset:
+           name: my_featureset
+
+  - match: { _source.featureset.features.1.name: "feature2" }
+
+  - do:
+        ltr.delete_featureset:
+           name: my_featureset
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_featureset:
+           name: my_featureset
+
+---
+"CRUD operations test: featureset on custom store":
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        ltr.create_featureset:
+           store: mystore
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      featureset-my_featureset }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_featureset:
+           store: mystore
+           name: my_featureset
+
+  - match: { _source.name: my_featureset }
+
+  - do:
+        catch: /version_conflict_engine_exception/
+        ltr.create_featureset:
+           store: mystore
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                      field_test2: "{{query_string}}"
+
+  - do:
+        ltr.update_featureset:
+           store: mystore
+           name: my_featureset
+           body:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                      field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                      field_test2: "{{query_string}}"
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      featureset-my_featureset }
+  - match: { _version: 2 }
+
+  - do:
+        ltr.get_featureset:
+           store: mystore
+           name: my_featureset
+
+  - match: { _source.featureset.features.1.name: "feature2" }
+
+  - do:
+        ltr.delete_featureset:
+           store: mystore
+           name: my_featureset
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_featureset:
+           store: mystore
+           name: my_featureset

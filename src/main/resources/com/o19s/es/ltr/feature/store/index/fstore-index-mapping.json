@@ -1,0 +1,32 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "name": {
+      "type": "text",
+      "analyzer": "keyword",
+      "fields": {
+        "prefix": {
+          "type": "text",
+          "analyzer": "name_prefix",
+          "search_analyzer": "name_prefix_search"
+        }
+      }
+    },
+    "type": {
+      "type": "text",
+      "analyzer": "keyword"
+    },
+    "feature": {
+      "type": "object",
+      "enabled": "false"
+    },
+    "featureset": {
+      "type": "object",
+      "enabled": "false"
+    },
+    "model": {
+      "type": "object",
+      "enabled": "false"
+    }
+  }
+}

@@ -18,6 +18,10 @@ package com.o19s.es.ltr.feature.store;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 
 import java.io.IOException;
@@ -43,6 +47,10 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
         List<StoredFeature> features = new ArrayList<>();
         String setString = generateRandomFeatureSet("my_set", features::add);
         StoredFeatureSet set = parse(setString);
+        assertFeatureSet(set, features);
+    }
+
+    private void assertFeatureSet(StoredFeatureSet set, List<StoredFeature> features) {
         assertEquals("my_set", set.name());
         assertEquals(features.size(), set.size());
         long ramSize = 0;
@@ -65,6 +73,17 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
                 containsString("Unknown feature"));
 
         assertThat(set.ramBytesUsed(), allOf(greaterThan((long) (ramSize*0.66)), lessThan((long) (ramSize*1.33))));
+    }
+
+    public void testToXContent() throws IOException {
+        List<StoredFeature> features = new ArrayList<>();
+        String featureSetString = generateRandomFeatureSet("my_set", features::add);
+        StoredFeatureSet featureSet = parse(featureSetString);
+
+        XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
+        featureSetString = featureSet.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
+        StoredFeatureSet featureSetReparsed = parse(featureSetString);
+        assertFeatureSet(featureSetReparsed, features);
     }
 
     public void testParseErrorOnDups() throws IOException {
@@ -120,12 +139,19 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     }
 
     public static StoredFeature buildRandomFeature() throws IOException {
-        return StoredFeatureParserTests.parse(generateRandomFeature());
+        return buildRandomFeature(rName());
     }
 
+    public static StoredFeature buildRandomFeature(String name) throws IOException {
+        return StoredFeatureParserTests.parse(generateRandomFeature(name));
+    }
     private static String generateRandomFeature() {
+        return generateRandomFeature(rName());
+    }
+
+    private static String generateRandomFeature(String name) {
         return "{\n" +
-                "\"name\": \"" + rName()+ "\",\n" +
+                "\"name\": \"" + name + "\",\n" +
                 "\"params\": [\"" + rName() + "\", \"" + rName() + "\"],\n" +
                 "\"template_language\": \"" + rName() + "\",\n" +
                 "\"template\": \n" +
@@ -143,7 +169,11 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     }
 
     public static StoredFeatureSet buildRandomFeatureSet() throws IOException {
-        return parse(generateRandomFeatureSet(null));
+        return buildRandomFeatureSet(rName());
+    }
+
+    public static StoredFeatureSet buildRandomFeatureSet(String name) throws IOException {
+        return parse(generateRandomFeatureSet(name, null));
     }
 
     public static String generateRandomFeatureSet() throws IOException {
@@ -151,7 +181,7 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     }
 
     public static String generateRandomFeatureSet(Consumer<StoredFeature> features) throws IOException {
-        return generateRandomFeatureSet(randomSimpleString(random(),5, 10), features);
+        return generateRandomFeatureSet(rName(), features);
     }
     public static String generateRandomFeatureSet(String name, Consumer<StoredFeature> features) throws IOException {
         StringBuilder sb = new StringBuilder();

@@ -16,10 +16,10 @@
 
 package com.o19s.es.ltr;
 
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
@@ -35,15 +35,23 @@ public class LtrTestUtils {
         return StoredFeatureSetParserTests.buildRandomFeature();
     }
 
+    public static StoredFeature randomFeature(String name) throws IOException {
+        return StoredFeatureSetParserTests.buildRandomFeature(name);
+    }
+
     public static StoredFeatureSet randomFeatureSet() throws IOException {
         return StoredFeatureSetParserTests.buildRandomFeatureSet();
     }
 
-    public static StoredLtrModel buildRandomModel() throws IOException {
+    public static StoredFeatureSet randomFeatureSet(String name) throws IOException {
+        return StoredFeatureSetParserTests.buildRandomFeatureSet(name);
+    }
+
+    public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
         LtrRanker ranker;
         ranker = buildRandomRanker(set.size());
-        return new StoredLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set, ranker);
+        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set, ranker);
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {
