@@ -3,6 +3,8 @@ package com.o19s.es.ltr.ranker.parser.json.tree;
 import ciir.umass.edu.learning.tree.RFRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
+import com.o19s.es.ltr.ranker.parser.json.FeatureRegister;
+import com.o19s.es.ltr.ranker.parser.json.Rankerable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -14,7 +16,7 @@ import java.util.Objects;
 /**
  * Created by doug on 5/26/17.
  */
-public class ParsedEnsemble {
+public class ParsedEnsemble implements Rankerable {
     public static final String NAME = "ensemble-parser";
     private static final ObjectParser<ParsedEnsemble, ParsedEnsemble.Context> PARSER;
 
@@ -73,11 +75,39 @@ public class ParsedEnsemble {
     }
 
 
-    // Use directly as a Ranker (ie MART)
-    public static LtrRanker toRfRanker(ParsedEnsemble ensemble) {
-        //NaiveAdditiveDecisionTree.Split optSplit = new NaiveAdditiveDecisionTree.Split()
-        return null;
+
+    @Override
+    public LtrRanker toRanker(FeatureRegister register) {
+        NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[trees().size()];
+        float weights[] = new float[trees().size()];
+        int i = 0;
+        for (ParsedTree tree: trees()) {
+            weights[i] = (float)tree.weight();
+            trees[i] = toNode(tree.root(), register);
+            i++;
+        }
+        LtrRanker rVal = new NaiveAdditiveDecisionTree(trees, weights, register.numFeaturesUsed());
+        return rVal;
     }
+
+
+    private static NaiveAdditiveDecisionTree.Node toNode(ParsedSplit sp, FeatureRegister register) {
+
+        if (sp.isLeaf()) {
+            return new NaiveAdditiveDecisionTree.Leaf((float) sp.output());
+        }
+        else {
+
+            int featureOrd = register.useFeature(sp.feature());
+
+            return new NaiveAdditiveDecisionTree.Split( toNode(sp.lhs(), register),
+                    toNode(sp.rhs(), register),
+                    featureOrd,
+                    (float) sp.threshold());
+        }
+    }
+
+
 
     private List<ParsedTree> _trees;
 

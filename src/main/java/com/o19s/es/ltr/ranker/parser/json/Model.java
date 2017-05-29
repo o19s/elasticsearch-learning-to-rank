@@ -4,6 +4,7 @@ import ciir.umass.edu.learning.tree.RFRanker;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
+import com.o19s.es.ltr.ranker.parser.json.linear.LinearCombination;
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedEnsemble;
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedForest;
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedSplit;
@@ -28,105 +29,50 @@ public class Model {
     static {
         PARSER = new ObjectParser<>(NAME, Model::new);
 
-        PARSER.declareObject(Model::forestModel,
+        PARSER.declareObject(Model::model,
                 (xContent, context) -> context.parseRandomForest(xContent),
                 new ParseField("random-forest"));
 
-        PARSER.declareObject(Model::martModel,
+        PARSER.declareObject(Model::model,
                 (xContent, context) -> context.parseMart(xContent),
                 new ParseField("mart"));
+
+        PARSER.declareObject(Model::model,
+                (xContent, context) -> context.parseLinear(xContent),
+                new ParseField("linear"));
     }
 
     public static class Context {
 
-        ParsedForest parseRandomForest(XContentParser xContent) throws IOException {
-            return ParsedForest.parse(xContent);
+        private FeatureRegister _reg;
+
+        public Context(FeatureRegister reg) {
+            _reg = reg;
         }
 
-        ParsedEnsemble parseMart(XContentParser xContent) throws IOException {
-            return ParsedEnsemble.parse(xContent);
+        LtrRanker parseRandomForest(XContentParser xContent) throws IOException {
+            return null;
+            //return ParsedForest.parse(xContent);
         }
 
+        LtrRanker parseMart(XContentParser xContent) throws IOException {
+            return ParsedEnsemble.parse(xContent).toRanker(_reg);
+        }
+
+        LtrRanker parseLinear(XContentParser xContent) throws IOException {
+            return LinearCombination.parse(xContent).toRanker(_reg);
+        }
     }
 
+    public void model(LtrRanker ranker) {_ranker = ranker;}
+    public LtrRanker model() {return _ranker;}
 
-    public void forestModel(ParsedForest model) {
-        forest = model;
-    }
-
-    public void martModel(ParsedEnsemble model) {
-        _mart = model;
-    }
-
-    private ParsedForest forest;
-    private ParsedEnsemble _mart;
+    private LtrRanker _ranker;
 
 
-    public static Model parse(XContentParser xContent) throws IOException {
-        return PARSER.parse(xContent, new Context());
-    }
 
-    public LtrRanker toModel(FeatureSet set) {
-        if (_mart != null) {
-            return martToModel(set);
-        }
-        return null;
-    }
-
-    private LtrRanker martToModel(FeatureSet set) {
-
-        if (_mart != null) {
-            NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[_mart.trees().size()];
-            float weights[] = new float[_mart.trees().size()];
-            int i = 0;
-            FeatureRegister register = new FeatureRegister(set);
-            for (ParsedTree tree: _mart.trees()) {
-                weights[i] = (float)tree.weight();
-                trees[i] = toNode(tree.root(), register);
-            }
-            LtrRanker rVal = new NaiveAdditiveDecisionTree(trees, weights, register.numFeaturesUsed());
-            return rVal;
-        } else {
-            throw new IllegalStateException("LTR Plugin attempting to grab a mart model when none was specified!? Bug?");
-        }
-
-    }
-
-    // Used to track which features are used
-    private static class FeatureRegister
-    {
-        FeatureRegister (FeatureSet set) {
-            _featureSet = set;
-        }
-
-        int useFeature(String featureName) {
-            int featureOrd = _featureSet.featureOrdinal(featureName);
-            _usedFeatures.add(featureOrd);
-            return featureOrd;
-        }
-
-        int numFeaturesUsed() {
-            return _usedFeatures.size();
-        }
-
-        private Set<Integer> _usedFeatures = new HashSet<Integer>();
-        private FeatureSet _featureSet;
-    }
-
-    private NaiveAdditiveDecisionTree.Node toNode(ParsedSplit sp, FeatureRegister register) {
-
-        if (sp.isLeaf()) {
-            return new NaiveAdditiveDecisionTree.Leaf((float) sp.output());
-        }
-        else {
-
-            int featureOrd = register.useFeature(sp.feature());
-
-            return new NaiveAdditiveDecisionTree.Split( toNode(sp.lhs(), register),
-                                                        toNode(sp.rhs(), register),
-                                                        featureOrd,
-                                                        (float) sp.threshold());
-        }
+    public static Model parse(XContentParser xContent, FeatureSet set) throws IOException {
+        return PARSER.parse(xContent, new Context(new FeatureRegister(set)));
     }
 
 
