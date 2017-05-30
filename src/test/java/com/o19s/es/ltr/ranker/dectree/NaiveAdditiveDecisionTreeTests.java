@@ -61,9 +61,9 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     public void testScore() throws IOException {
         NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt");
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
-        vector.setFeatureScore(0, 2);
+        vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
-        vector.setFeatureScore(2, 1);
+        vector.setFeatureScore(2, 3);
 
         float expected = 1.2F*3.4F + 3.2F*2.8F;
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
