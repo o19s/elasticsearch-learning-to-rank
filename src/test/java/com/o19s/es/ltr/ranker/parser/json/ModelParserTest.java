@@ -1,3 +1,18 @@
+/*
+ * Copyright [2017] OpenSource Connections
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.o19s.es.ltr.ranker.parser.json;
 
 import com.o19s.es.ltr.feature.FeatureSet;
@@ -17,7 +32,6 @@ import static junit.framework.TestCase.assertNotNull;
  */
 public class ModelParserTest extends JsonModelParsingTest {
 
-    @Test
     public void testLinearParsing() throws IOException {
         String basicLinearModel = "{\n" +
                 "  \"linear\": {\n" +
@@ -54,7 +68,6 @@ public class ModelParserTest extends JsonModelParsingTest {
     }
 
 
-    @Test
     public void testMartParsing() throws IOException {
         String split1 = "{" +
                 " \"feature\": \"foo\"," +
@@ -112,7 +125,7 @@ public class ModelParserTest extends JsonModelParsingTest {
         fv.setFeatureScore(barOrd, 12.5f);
 
         float score = ranker.score(fv);
-        //assertEquals(score, 20.0f*0.5f + 500.0f*0.1f);
+        assertEquals(score, 20.0f*0.5f + 500.0f*0.1f);
 
 
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright [2017] OpenSource Connections
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.o19s.es.ltr.ranker.parser.json;
 
 import com.o19s.es.ltr.ranker.parser.json.tree.ParsedForest;
@@ -77,12 +92,11 @@ public class ForestParserTest extends JsonModelParsingTest {
 
     }
 
-    @Test
-    @Ignore
-    public void testBigModel() throws IOException {
-        String contents = new String(Files.readAllBytes(Paths.get("/home/doug/ws/es-ltr/big-model.json")));
-        ParsedForest parsedForest = ParsedForest.parse(makeXContent(contents));
-        assertEquals(parsedForest.ensembles().size(), 10);
-    }
+//    @Ignore
+//    public void testBigModel() throws IOException {
+//        String contents = new String(Files.readAllBytes(Paths.get("/home/doug/ws/es-ltr/big-model.json")));
+//        ParsedForest parsedForest = ParsedForest.parse(makeXContent(contents));
+//        assertEquals(parsedForest.ensembles().size(), 10);
+//    }
 
 }
