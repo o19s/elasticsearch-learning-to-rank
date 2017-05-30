@@ -29,9 +29,18 @@ import java.util.Objects;
  */
 public class LinearRanker extends DenseLtrRanker implements Accountable {
     private final float[] weights;
+    private float _intercept = 0.0f;
 
     public LinearRanker(float[] weights) {
         this.weights = Objects.requireNonNull(weights);
+    }
+
+    public void intercept(float val) {
+        _intercept = val;
+    }
+
+    public double intercept() {
+        return _intercept;
     }
 
     @Override
@@ -42,7 +51,7 @@ public class LinearRanker extends DenseLtrRanker implements Accountable {
     @Override
     protected float score(DenseFeatureVector point) {
         float[] scores = point.scores;
-        float score = 0;
+        float score = _intercept;
         for (int i = 0; i < weights.length; i++) {
             score += weights[i]*scores[i];
         }
