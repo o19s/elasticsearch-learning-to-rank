@@ -22,7 +22,6 @@ import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
@@ -53,22 +52,9 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
         controller.registerHandler(RestRequest.Method.GET, "/_ltr/_cachestats", this);
     }
 
-    /**
-     * Prepare the request for execution. Implementations should consume all request params before
-     * returning the runnable for actual execution. Unconsumed params will immediately terminate
-     * execution of the request. However, some params are only used in processing the response;
-     * implementations can override {@link BaseRestHandler#responseParams()} to indicate such
-     * params.
-     *
-     * @param request the request to execute
-     * @param client  client for executing actions on the local node
-     * @return the action to execute
-     * @throws IOException if an I/O exception occurred parsing the request and preparing for
-     *                     execution
-     */
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
-        if (request.method() == RestRequest.Method.PUT) {
+        if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);
         } else {
             return getStats(client);
