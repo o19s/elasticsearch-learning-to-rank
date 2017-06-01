@@ -23,6 +23,7 @@ import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -75,8 +76,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
 
     @Override
     protected final void doExecute(AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
-        logger.warn("attempt to execute a TransportAddFeatureToSetAction without a task");
-        throw new UnsupportedOperationException("task parameter is required for this operation");
+        throw new UnsupportedOperationException("attempt to execute a TransportAddFeatureToSetAction without a task");
     }
 
     @Override
@@ -84,7 +84,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         if (!clusterService.state().routingTable().hasIndex(request.getStore())) {
             throw new IllegalArgumentException("Store [" + request.getStore() + "] does not exist, please create it first.");
         }
-        new AsyncAction(task, request, listener).start();
+        new AsyncAction(task, request, listener, clusterService, searchAction, getAction, featureStoreAction).start();
     }
 
     /**
@@ -95,26 +95,37 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
      * - merge the StoredFeature and the new list of features
      * - send an async FeatureStoreAction to save the modified (or new) StoredFeatureSet
      */
-    public class AsyncAction {
+    private static class AsyncAction {
         private final Task task;
         private final String store;
         private final ActionListener<AddFeaturesToSetResponse> listener;
         private final String featureNamesQuery;
         private final String featureSetName;
         private final String routing;
-        private final AtomicReference<Exception> exception = new AtomicReference<>();
+        private final AtomicReference<Exception> searchException = new AtomicReference<>();
+        private final AtomicReference<Exception> getException = new AtomicReference<>();
         private final AtomicReference<StoredFeatureSet> setRef = new AtomicReference<>();
         private final AtomicReference<List<StoredFeature>> featuresRef = new AtomicReference<>();
         private final CountDown countdown = new CountDown(2);
         private final AtomicLong version = new AtomicLong(-1L);
+        private final ClusterService clusterService;
+        private final TransportSearchAction searchAction;
+        private final TransportGetAction getAction;
+        private final TransportFeatureStoreAction featureStoreAction;
 
-        public AsyncAction(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
+        AsyncAction(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener,
+                           ClusterService clusterService, TransportSearchAction searchAction, TransportGetAction getAction,
+                           TransportFeatureStoreAction featureStoreAction) {
             this.task = task;
             this.listener = listener;
             this.featureSetName = request.getFeatureSet();
             this.featureNamesQuery = request.getFeatureNameQuery();
             this.store = request.getStore();
             this.routing = request.getRouting();
+            this.clusterService = clusterService;
+            this.searchAction = searchAction;
+            this.getAction = getAction;
+            this.featureStoreAction = featureStoreAction;
         }
 
         private void start() {
@@ -138,7 +149,8 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
-            searchAction.execute(srequest, wrap(this::onSearchResponse, this::onActionFailure));
+            ActionFuture<SearchResponse> resp = searchAction.execute(srequest);
+            searchAction.execute(srequest, wrap(this::onSearchResponse, this::onSearchFailure));
 
             GetRequest getRequest = new GetRequest(store)
                     .type(IndexFeatureStore.ES_TYPE)
@@ -146,7 +158,17 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                     .routing(routing);
 
             getRequest.setParentTask(clusterService.localNode().getId(), task.getId());
-            getAction.execute(getRequest, wrap(this::onGetResponse, this::onActionFailure));
+            getAction.execute(getRequest, wrap(this::onGetResponse, this::onGetFailure));
+        }
+
+        private void onGetFailure(Exception e) {
+            getException.set(e);
+            maybeFinish();
+        }
+
+        private void onSearchFailure(Exception e) {
+            searchException.set(e);
+            maybeFinish();
         }
 
         private void onGetResponse(GetResponse getResponse) {
@@ -160,11 +182,10 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                     featureSet = new StoredFeatureSet(featureSetName, Collections.emptyList());
                 }
                 setRef.set(featureSet);
-                if (countdown.countDown()) {
-                    mergeAndStore();
-                }
             } catch (Exception e) {
-                onActionFailure(e);
+                getException.set(e);
+            } finally {
+                maybeFinish();
             }
         }
 
@@ -181,33 +202,50 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                     features.add(IndexFeatureStore.parse(StoredFeature.class, StoredFeature.TYPE, hit.getSourceRef()));
                 }
                 featuresRef.set(features);
-                if (countdown.countDown()) {
-                    mergeAndStore();
-                }
             } catch (Exception e) {
-                onActionFailure(e);
+                searchException.set(e);
+            } finally {
+                maybeFinish();
             }
         }
 
-        private void onActionFailure(Exception e) {
-            exception.set(e);
-            if (countdown.countDown()) {
-                listener.onFailure(exception.get());
+        private void maybeFinish() {
+            if (!countdown.countDown()) {
+                return;
+            }
+            try {
+                checkErrors();
+                finishRequest();
+            } catch (Exception e) {
+                listener.onFailure(e);
             }
         }
 
-        private void mergeAndStore() {
-            if (exception.get() != null) {
-                listener.onFailure(exception.get());
+        private void finishRequest() throws Exception {
+            assert setRef.get() != null && featuresRef.get() != null;
+            StoredFeatureSet set = setRef.get();
+            set = set.append(featuresRef.get());
+            updateSet(set);
+        }
+
+        private void checkErrors() throws Exception {
+            if (searchException.get() == null && getException.get() == null) {
+                return;
+            }
+
+            Exception sExc = searchException.get();
+            Exception gExc = getException.get();
+            final Exception exc;
+            if (sExc != null && gExc != null) {
+                sExc.addSuppressed(gExc);
+                exc = sExc;
+            } else if (sExc != null) {
+                exc = sExc;
             } else {
-                try {
-                    StoredFeatureSet set = setRef.get();
-                    set = set.append(featuresRef.get());
-                    updateSet(set);
-                } catch (Exception e) {
-                    listener.onFailure(e);
-                }
+                assert gExc != null;
+                exc = gExc;
             }
+            throw exc;
         }
 
         private void updateSet(StoredFeatureSet set) {

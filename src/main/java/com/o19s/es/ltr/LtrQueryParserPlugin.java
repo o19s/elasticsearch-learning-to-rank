@@ -87,6 +87,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     public static LtrRankerParserFactory buildParserFactory() {
+        // Use memoize to Lazy load the RankerFactory as it's a heavy object to construct
         Supplier<RankerFactory> ranklib = Suppliers.memoize(RankerFactory::new);
         return new LtrRankerParserFactory.Builder()
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))

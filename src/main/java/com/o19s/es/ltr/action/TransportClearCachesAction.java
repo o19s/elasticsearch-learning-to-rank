@@ -70,25 +70,20 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
     protected ClearCachesNodeResponse nodeOperation(ClearCachesNodeRequest request) {
         ClearCachesNodesRequest r = request.request;
         switch (r.getOperation()) {
-        case ClearStore: {
+        case ClearStore:
             caches.evict(r.getStore());
             break;
-        }
-        case ClearFeature: {
+        case ClearFeature:
             caches.evictFeature(r.getStore(), r.getName());
             break;
-        }
-        case ClearFeatureSet: {
+        case ClearFeatureSet:
             caches.evictFeatureSet(r.getStore(), r.getName());
             break;
-        }
-        case ClearModel: {
+        case ClearModel:
             caches.evictModel(r.getStore(), r.getName());
             break;
-        }
-        default: {
+        default:
             throw new RuntimeException("Unsupported operation [" + r.getOperation() + "]");
-        }
         }
         return new ClearCachesNodeResponse(clusterService.localNode());
     }

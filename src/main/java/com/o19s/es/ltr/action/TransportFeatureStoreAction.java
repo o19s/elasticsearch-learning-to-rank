@@ -65,8 +65,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
 
     @Override
     protected void doExecute(FeatureStoreRequest request, ActionListener<FeatureStoreResponse> listener) {
-        logger.warn("attempt to execute a TransportFeatureStoreAction without a task");
-        throw new UnsupportedOperationException("task parameter is required for this operation");
+        throw new UnsupportedOperationException("attempt to execute a TransportFeatureStoreAction without a task");
     }
 
     protected void doExecute(Task task, FeatureStoreRequest request, ActionListener<FeatureStoreResponse> listener) {
@@ -98,14 +97,12 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         if (request.getAction() == FeatureStoreRequest.Action.UPDATE) {
              ClearCachesAction.ClearCachesNodesRequest clearCachesNodesRequest = new ClearCachesAction.ClearCachesNodesRequest();
              switch (request.getStorableElement().type()) {
-             case StoredFeature.TYPE: {
+             case StoredFeature.TYPE:
                  clearCachesNodesRequest.clearFeature(request.getStore(), request.getStorableElement().name());
                  return Optional.of(clearCachesNodesRequest);
-             }
-             case StoredFeatureSet.TYPE: {
+             case StoredFeatureSet.TYPE:
                  clearCachesNodesRequest.clearFeatureSet(request.getStore(), request.getStorableElement().name());
                  return Optional.of(clearCachesNodesRequest);
-             }
              }
         }
         return Optional.empty();

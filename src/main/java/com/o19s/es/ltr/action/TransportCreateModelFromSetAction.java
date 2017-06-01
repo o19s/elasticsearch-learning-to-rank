@@ -59,8 +59,7 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
 
     @Override
     protected final void doExecute(CreateModelFromSetRequest request, ActionListener<CreateModelFromSetResponse> listener) {
-        logger.warn("attempt to execute a TransportAddFeatureToSetAction without a task");
-        throw new UnsupportedOperationException("task parameter is required for this operation");
+        throw new UnsupportedOperationException("attempt to execute a TransportCreateModelFromSetAction without a task");
     }
 
     @Override
