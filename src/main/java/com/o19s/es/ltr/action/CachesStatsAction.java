@@ -103,7 +103,7 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             for (CachesStatsNodeResponse resp : super.getNodes()) {
                 builder.startObject(resp.getNode().getId());
                 builder.field("name", resp.getNode().getName());
-                builder.field("hostname", resp.getNode().getName());
+                builder.field("hostname", resp.getNode().getHostName());
                 builder.field("stats", resp);
                 builder.endObject();
             }
