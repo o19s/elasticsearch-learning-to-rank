@@ -16,6 +16,40 @@ Generates a simple linear ranker. The format is a simple `json` object:
   "feature3" : 0.1
 }
 
+## XGBoost
+Type: `model/xgboost+json`
 
+Limitations:
+- only numeric conditions defined in `split_condition` (categorical features are not supported `"split": "feat1=categ1"`)
+- the `missing` branch is not yet fully supported and must point to the `no` branch.
 
+Simple example with one tree:
+
+```json
+[
+   {
+      "nodeid":0,
+      "split":"feature1",
+      "depth":0,
+      "split_condition":0.123,
+      "yes":1,
+      "no":2,
+      "missing":2,
+      "children":[
+         {
+            "nodeid":1,
+            "depth":1,
+            "leaf":0.5
+         },
+         {
+            "nodeid":2,
+            "depth":1,
+            "leaf":0.2
+         }
+      ]
+   }
+]
+```
+
+[xgboost-wmf.json](../src/test/resources/models/xgboost-wmf.json)
 
