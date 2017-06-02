@@ -99,14 +99,15 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.field("all", all);
-            builder.startArray("nodes");
+            builder.startObject("nodes");
             for (CachesStatsNodeResponse resp : super.getNodes()) {
-                builder.startObject();
-                builder.field("node", resp.getNode().getName());
+                builder.startObject(resp.getNode().getId());
+                builder.field("name", resp.getNode().getName());
+                builder.field("hostname", resp.getNode().getName());
                 builder.field("stats", resp);
                 builder.endObject();
             }
-            builder.endArray();
+            builder.endObject();
             return builder;
         }
 
