@@ -33,7 +33,9 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodesRequest,
         CachesStatsAction.CachesStatsNodesResponse, CachesStatsAction.CacheStatsRequestBuilder> {
@@ -98,13 +100,18 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.field("all", all);
+            builder.field("all", all.allStores);
+            builder.startObject("stores");
+            for (Map.Entry<String, StatDetails> entry : all.byStore.entrySet()) {
+                builder.field(entry.getKey(), entry.getValue());
+            }
+            builder.endObject();
             builder.startObject("nodes");
             for (CachesStatsNodeResponse resp : super.getNodes()) {
                 builder.startObject(resp.getNode().getId());
                 builder.field("name", resp.getNode().getName());
                 builder.field("hostname", resp.getNode().getHostName());
-                builder.field("stats", resp);
+                builder.field("stats", resp.allStores);
                 builder.endObject();
             }
             builder.endObject();
@@ -115,23 +122,78 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             return all;
         }
     }
-
-    public static class CachesStatsNodeResponse extends BaseNodeResponse implements ToXContent {
-        private Stat total;
-        private Stat features;
-        private Stat featuresets;
-        private Stat models;
+    public static class CachesStatsNodeResponse extends BaseNodeResponse {
+        private StatDetails allStores;
+        private Map<String, StatDetails> byStore;
 
         CachesStatsNodeResponse() {
             empty();
-        }
-
+        };
         CachesStatsNodeResponse(DiscoveryNode node) {
             super(node);
             empty();
         }
 
         CachesStatsNodeResponse(StreamInput in) throws IOException {
+            readFrom(in);
+        }
+
+            @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            allStores.writeTo(out);
+            out.writeMap(byStore, StreamOutput::writeString, (o, s) -> s.writeTo(o));
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            allStores = new StatDetails(in);
+            byStore = in.readMap(StreamInput::readString, StatDetails::new);
+        }
+
+        public void empty() {
+            allStores = new StatDetails();
+            byStore = new HashMap<>();
+        }
+
+        public void sum(CachesStatsNodeResponse other) {
+            allStores.doSum(other.allStores);
+            other.byStore.forEach((k, v) -> byStore.merge(k, v, StatDetails::sum));
+        }
+
+
+        public CachesStatsNodeResponse initFromCaches(Caches caches) {
+            allStores = new StatDetails();
+            byStore = new HashMap<>();
+            caches.perStoreStatsStream().forEach((en) -> {
+                StatDetails details = new StatDetails(en.getValue());
+                allStores.doSum(details);
+                byStore.compute(en.getKey(), (k, v) -> StatDetails.sum(v, details));
+            });
+            return this;
+        }
+
+        public StatDetails getAllStores() {
+            return allStores;
+        }
+    }
+    public static class StatDetails extends BaseNodeResponse implements ToXContent {
+        private Stat total;
+        private Stat features;
+        private Stat featuresets;
+        private Stat models;
+
+        StatDetails() {
+            empty();
+        }
+
+        public StatDetails(Caches.PerStoreStats stats) {
+            total = new Stat(stats.totalRam(), stats.totalCount());
+            features = new Stat(stats.featureRam(), stats.featureCount());
+            featuresets = new Stat(stats.featureSetRam(), stats.featureSetCount());
+            models = new Stat(stats.modelRam(), stats.modelCount());
+        }
+
+        StatDetails(StreamInput in) throws IOException {
             readFrom(in);
         }
 
@@ -160,16 +222,19 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             models = new Stat(0, 0);
         }
 
-        public CachesStatsNodeResponse initFromCaches(Caches caches) {
-            features = new Stat(caches.featureCache().weight(), caches.featureCache().count());
-            featuresets = new Stat(caches.featureSetCache().weight(), caches.featureSetCache().count());
-            models = new Stat(caches.modelCache().weight(), caches.modelCache().count());
-            total = new Stat(features.ram + featuresets.ram + models.ram,
-                    features.count + featuresets.count + models.count);
-            return this;
+        public static StatDetails sum(StatDetails one, StatDetails two) {
+            if (one != null && two != null) {
+                one.doSum(two);
+                return one;
+            } else if (one != null) {
+                return one;
+            } else if (two != null) {
+                return two;
+            }
+            return null;
         }
 
-        public void sum(CachesStatsNodeResponse other) {
+        public void doSum(StatDetails other) {
             total.sum(other.total);
             features.sum(other.features);
             featuresets.sum(other.featuresets);

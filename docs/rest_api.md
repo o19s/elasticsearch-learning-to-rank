@@ -26,6 +26,13 @@ or a custom store:
 DELETE /_ltr/custom
 ```
 
+### Internals
+
+A feature store is a normal elasticsearch index, the default store is named `.ltrstore`
+and a store named `my_store` will be named `.ltrstore_my_store`.
+
+While all normal operations are allowed on these indices we strongly suggest not to interact directly with these indices
+and always use the `_ltr` API endpoints to update their contents.
 
 ## Features
 
@@ -85,7 +92,7 @@ Will create or update the `my_featureset` by collecting all features named with 
 
 ### Models
 
-`/_ltr/_model/feature_name` supports `PUT`, `GET` and `DELETE` operations.
+`/_ltr/_model/model_name` supports `PUT`, `GET` and `DELETE` operations.
 
 The format of a model is:
 ```json
@@ -144,4 +151,79 @@ POST /_ltr/custom_store/_clearcache
 Get cluster wide cache statistics:
 ```
 GET /_ltr/_cachestats
+```
+
+Will display cache usage of the plugin for the cluster. The details on a per node and per store basis is shown.
+```json
+{
+  "_nodes": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "cluster_name": "nomoa",
+  "all": {
+    "total": {
+      "ram": 634,
+      "count": 1
+    },
+    "features": {
+      "ram": 0,
+      "count": 0
+    },
+    "featuresets": {
+      "ram": 0,
+      "count": 0
+    },
+    "models": {
+      "ram": 634,
+      "count": 1
+    }
+  },
+  "stores": {
+    ".ltrstore": {
+      "total": {
+        "ram": 634,
+        "count": 1
+      },
+      "features": {
+        "ram": 0,
+        "count": 0
+      },
+      "featuresets": {
+        "ram": 0,
+        "count": 0
+      },
+      "models": {
+        "ram": 634,
+        "count": 1
+      }
+    }
+  },
+  "nodes": {
+    "at7Isa5OSSSPOnhpqUdL6w": {
+      "name": "at7Isa5",
+      "hostname": "192.168.0.21",
+      "stats": {
+        "total": {
+          "ram": 634,
+          "count": 1
+        },
+        "features": {
+          "ram": 0,
+          "count": 0
+        },
+        "featuresets": {
+          "ram": 0,
+          "count": 0
+        },
+        "models": {
+          "ram": 634,
+          "count": 1
+        }
+      }
+    }
+  }
+}
+
 ```

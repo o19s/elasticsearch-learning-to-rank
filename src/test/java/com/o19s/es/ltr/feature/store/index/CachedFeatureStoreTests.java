@@ -48,6 +48,10 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         assertNotNull(store.getCachedFeature(feat.name()));
         assertEquals(feat.ramBytesUsed(), store.featuresWeight());
         assertEquals(feat.ramBytesUsed(), store.totalWeight());
+        assertEquals(feat.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).featureRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).featureCount());
+        assertEquals(feat.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).totalRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
         assertThat(expectThrows(IOException.class, () -> store.load("unk")).getCause(),
             instanceOf(IllegalArgumentException.class));
     }
@@ -61,6 +65,11 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         assertNotNull(store.getCachedFeatureSet(set.name()));
         assertEquals(set.ramBytesUsed(), store.featureSetWeight());
         assertEquals(set.ramBytesUsed(), store.totalWeight());
+        assertEquals(set.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).featureSetRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).featureSetCount());
+        assertEquals(set.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).totalRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
+
         assertThat(expectThrows(IOException.class, () -> store.loadSet("unk")).getCause(),
                 instanceOf(IllegalArgumentException.class));
     }
@@ -74,6 +83,10 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         assertNotNull(store.getCachedModel(model.name()));
         assertEquals(model.ramBytesUsed(), store.modelWeight());
         assertEquals(model.ramBytesUsed(), store.totalWeight());
+        assertEquals(model.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).modelRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).modelCount());
+        assertEquals(model.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).modelRam());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
         assertThat(expectThrows(IOException.class, () -> store.loadModel("unk")).getCause(),
                 instanceOf(IllegalArgumentException.class));
     }
@@ -105,9 +118,14 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         memStore.add(model);
         store.loadModel(model.name());
         assertNotNull(store.getCachedModel(model.name()));
+        assertFalse(caches.getCachedStoreNames().isEmpty());
+        assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
         Thread.sleep(500);
         caches.modelCache().refresh();
         assertNull(store.getCachedModel(model.name()));
+        assertTrue(caches.getCachedStoreNames().isEmpty());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).modelRam());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
     }
 
     public void testExpirationOnGet() throws IOException, InterruptedException {
@@ -121,6 +139,10 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         Thread.sleep(500);
         caches.modelCache().refresh();
         assertNull(store.getCachedModel(model.name()));
+        assertNull(store.getCachedModel(model.name()));
+        assertTrue(caches.getCachedStoreNames().isEmpty());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).modelRam());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
     }
 
     public void testFullEviction() throws IOException {
@@ -141,5 +163,28 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         }
         caches.evict(memStore.getStoreName());
         assertEquals(0, cachedFeatureStore.totalWeight());
+        assertTrue(caches.getCachedStoreNames().isEmpty());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).modelRam());
+        assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
+    }
+
+    public void testCacheStatsIsolation() throws IOException {
+        MemStore one = new MemStore("one");
+        MemStore two = new MemStore("two");
+        CachedFeatureStore onefs = new CachedFeatureStore(one, caches);
+        CachedFeatureStore twofs = new CachedFeatureStore(two, caches);
+        int pass = TestUtil.nextInt(random(), 10, 20);
+        while (pass-- > 0) {
+            StoredFeature feat = LtrTestUtils.randomFeature();
+            one.add(feat);
+            two.add(feat);
+            onefs.load(feat.name());
+            twofs.load(feat.name());
+        }
+        assertEquals(2, caches.getCachedStoreNames().size());
+        caches.evict(one.getStoreName());
+        assertEquals(1, caches.getCachedStoreNames().size());
+        caches.evict(two.getStoreName());
+        assertTrue(caches.getCachedStoreNames().isEmpty());
     }
 }

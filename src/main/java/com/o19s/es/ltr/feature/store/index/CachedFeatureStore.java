@@ -20,11 +20,9 @@ import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.cache.Cache;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Cache layer on top of an {@link IndexFeatureStore}
@@ -45,17 +43,17 @@ public class CachedFeatureStore implements FeatureStore {
 
     @Override
     public StoredFeature load(String id) throws IOException {
-        return innerLoad(id, caches.featureCache(), inner::load);
+        return caches.loadFeature(key(id), inner::load);
     }
 
     @Override
     public StoredFeatureSet loadSet(String id) throws IOException {
-        return innerLoad(id, caches.featureSetCache(), inner::loadSet);
+        return caches.loadFeatureSet(key(id), inner::loadSet);
     }
 
     @Override
     public CompiledLtrModel loadModel(String id) throws IOException {
-        return innerLoad(id, caches.modelCache(), inner::loadModel);
+        return caches.loadModel(key(id), inner::loadModel);
     }
 
     StoredFeature getCachedFeature(String id) {
@@ -86,15 +84,11 @@ public class CachedFeatureStore implements FeatureStore {
         return caches.modelCache().weight();
     }
 
-    private <T> T innerLoad(String id, Cache<Caches.CacheKey, T> cache, CheckedFunction<String, T, IOException> loader) throws IOException {
-        try {
-            return cache.computeIfAbsent(new Caches.CacheKey(inner.getStoreName(), id), (k) -> loader.apply(k.getId()));
-        } catch (ExecutionException e) {
-            throw new IOException(e.getMessage(), e.getCause());
-        }
+    private <T> T innerGet(String id, Cache<Caches.CacheKey, T> cache) {
+        return cache.get(key(id));
     }
 
-    private <T> T innerGet(String id, Cache<Caches.CacheKey, T> cache) {
-        return cache.get(new Caches.CacheKey(inner.getStoreName(), id));
+    private Caches.CacheKey key(String id) {
+        return new Caches.CacheKey(inner.getStoreName(), id);
     }
 }

@@ -97,7 +97,7 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
                 arve = addValidationError("storable element must be set", arve);
             }
             if (action == Action.UPDATE && !storableElement.updatable()) {
-                arve = addValidationError("Element of type [" + storableElement.type() + "] are not updatable.", arve);
+                arve = addValidationError("Elements of type [" + storableElement.type() + "] are not updatable.", arve);
             }
             if (updatedVersion != null && action != Action.UPDATE) {
                 arve = addValidationError("Only UPDATE supports a version.", arve);

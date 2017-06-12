@@ -28,9 +28,19 @@ public class MemStore implements FeatureStore {
     private final Map<String, StoredFeatureSet> sets = new HashMap<>();
     private final Map<String, CompiledLtrModel> models = new HashMap<>();
 
+    private final String storeName;
+
+    public MemStore(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public MemStore() {
+        this("memstore");
+    }
+
     @Override
     public String getStoreName() {
-        return "memstore";
+        return storeName;
     }
 
     @Override

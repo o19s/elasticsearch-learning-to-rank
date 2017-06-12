@@ -77,10 +77,10 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
     private void doStore(Task parentTask, GetResponse response, CreateModelFromSetRequest request,
                          ActionListener<CreateModelFromSetResponse> listener) {
         if (!response.isExists()) {
-            throw new IllegalArgumentException("Stored feature [" + request.getFeatureSetName() + "] does not exist");
+            throw new IllegalArgumentException("Stored feature set [" + request.getFeatureSetName() + "] does not exist");
         }
         if (request.getExpectedSetVersion() != null && request.getExpectedSetVersion() != response.getVersion()) {
-            throw new IllegalArgumentException("Stored feature [" + request.getFeatureSetName() + "]" +
+            throw new IllegalArgumentException("Stored feature set [" + request.getFeatureSetName() + "]" +
                     " has version [" + response.getVersion() + "] but [" + request.getExpectedSetVersion() + "] was expected.");
         }
         final StoredFeatureSet set;
