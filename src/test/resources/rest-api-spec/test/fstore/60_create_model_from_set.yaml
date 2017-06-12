@@ -25,8 +25,9 @@
             name: my_featureset
             body:
                 name: my_model
-                type: model/ranklib
-                definition: |
+                model:
+                  type: model/ranklib
+                  definition: |
                     ## LambdaMART
                     ## No. of trees = 1
                     ## No. of leaves = 10
@@ -96,8 +97,9 @@
             name: my_featureset
             body:
                 name: my_model
-                type: model/ranklib
-                definition: |
+                model:
+                  type: model/ranklib
+                  definition: |
                     ## LambdaMART
                     ## No. of trees = 1
                     ## No. of leaves = 10

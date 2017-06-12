@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
@@ -63,24 +64,22 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
         }
 
         public CreateModelFromSetRequestBuilder withVersion(String store, String featureSetName, long expectedSetVersion,
-                                                            String modelName, String modelType, String modelDefinition) {
+                                                            String modelName, StoredLtrModel.LtrModelDefinition definition) {
             request.store = store;
             request.featureSetName = featureSetName;
             request.expectedSetVersion = expectedSetVersion;
             request.modelName = modelName;
-            request.modelType = modelType;
-            request.modelDefinition = modelDefinition;
+            request.definition = definition;
             return this;
         }
 
         public CreateModelFromSetRequestBuilder withoutVersion(String store, String featureSetName, String modelName,
-                                                               String modelType, String modelDefinition) {
+                                                               StoredLtrModel.LtrModelDefinition definition) {
             request.store = store;
             request.featureSetName = featureSetName;
             request.expectedSetVersion = null;
             request.modelName = modelName;
-            request.modelType = modelType;
-            request.modelDefinition = modelDefinition;
+            request.definition = definition;
             return this;
         }
 
@@ -95,8 +94,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
         private String featureSetName;
         private Long expectedSetVersion;
         private String modelName;
-        private String modelType;
-        private String modelDefinition;
+        private StoredLtrModel.LtrModelDefinition definition;
         private String routing;
 
         public CreateModelFromSetRequest() {
@@ -114,11 +112,8 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             if (modelName == null) {
                 arve = addValidationError("modelName must be set", arve);
             }
-            if (modelType == null) {
-                arve = addValidationError("modelType must be set", arve);
-            }
-            if (modelDefinition == null) {
-                arve = addValidationError("modelDefinition must be set", arve);
+            if (definition == null) {
+                arve = addValidationError("defition must be set", arve);
             }
             return arve;
         }
@@ -130,8 +125,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             featureSetName = in.readString();
             expectedSetVersion = in.readOptionalLong();
             modelName = in.readString();
-            modelType = in.readString();
-            modelDefinition = in.readString();
+            definition = new StoredLtrModel.LtrModelDefinition(in);
             routing = in.readOptionalString();
         }
 
@@ -142,8 +136,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             out.writeString(featureSetName);
             out.writeOptionalLong(expectedSetVersion);
             out.writeString(modelName);
-            out.writeString(modelType);
-            out.writeString(modelDefinition);
+            definition.writeTo(out);
             out.writeOptionalString(routing);
         }
 
@@ -159,12 +152,8 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             return modelName;
         }
 
-        public String getModelType() {
-            return modelType;
-        }
-
-        public String getModelDefinition() {
-            return modelDefinition;
+        public StoredLtrModel.LtrModelDefinition getDefinition() {
+            return definition;
         }
 
         public Long getExpectedSetVersion() {

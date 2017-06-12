@@ -90,7 +90,7 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
             throw new IllegalStateException("Cannot parse stored feature set [" + request.getFeatureSetName() + "]", ioe);
         }
         // Model will be parsed & checked by TransportFeatureStoreAction
-        StoredLtrModel model = new StoredLtrModel(request.getModelName(), set, request.getModelType(), request.getModelDefinition());
+        StoredLtrModel model = new StoredLtrModel(request.getModelName(), set, request.getDefinition());
         FeatureStoreRequest featureStoreRequest = new FeatureStoreRequest(request.getStore(), model, FeatureStoreRequest.Action.CREATE);
         featureStoreRequest.setRouting(request.getRouting());
         featureStoreRequest.setParentTask(clusterService.localNode().getId(), parentTask.getId());

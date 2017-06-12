@@ -96,7 +96,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
         createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,
-                "my_model", "model/ranklib", SIMPLE_MODEL);
+                "my_model", new StoredLtrModel.LtrModelDefinition("model/ranklib", SIMPLE_MODEL, true));
         createModelFromSetRequestBuilder.get();
         buildIndex();
         Map<String, Object> params = new HashMap<>();

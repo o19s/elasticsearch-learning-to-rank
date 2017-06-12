@@ -131,8 +131,10 @@ A model can be created by using an existing feature set:
 ```json
 {
   "name": "my_model_name",
-  "type": "model/ranklib",
-  "definition": "definition of the model in the model/ranklib format"
+  "model": {
+    "type": "model/ranklib",
+    "definition": "definition of the model in the model/ranklib format"
+  }
 }
 ```
 

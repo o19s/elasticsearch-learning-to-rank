@@ -46,7 +46,8 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
                 randomSimpleString(random(), 5, 10),
                 LtrTestUtils.randomFeatureSet(),
                 randomSimpleString(random(), 5, 10),
-                randomRealisticUnicodeString(random(), 5, 1000)));
+                randomRealisticUnicodeString(random(), 5, 1000),
+                true));
     }
 
     public void testBadValues() throws IOException {

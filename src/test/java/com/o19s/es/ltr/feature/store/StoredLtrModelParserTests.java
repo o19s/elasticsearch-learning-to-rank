@@ -57,15 +57,37 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 " }" +
                 "}";
     }
+
+    public String getTestModelAsXContent() throws IOException {
+        return "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" +
+                StoredFeatureSetParserTests.generateRandomFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": [\"completely ignored\"]\n"+
+                " }" +
+                "}";
+    }
+
     public void testParse() throws IOException {
         StoredLtrModel model = parse(getTestModel());
         assertTestModel(model);
     }
 
-    private void assertTestModel(StoredLtrModel model) {
+    private void assertTestModel(StoredLtrModel model) throws IOException {
         assertEquals("my_model", model.name());
         assertEquals("model/dummy", model.rankingModelType());
         assertEquals("completely ignored", model.rankingModel());
+        assertSame(ranker, model.compile(factory).ranker());
+        assertTrue(model.featureSet().size() > 0);
+    }
+
+    private void assertTestModelAsXContent(StoredLtrModel model) throws IOException {
+        assertEquals("my_model", model.name());
+        assertEquals("model/dummy", model.rankingModelType());
+        assertEquals("[\"completely ignored\"]", model.rankingModel());
         assertSame(ranker, model.compile(factory).ranker());
         assertTrue(model.featureSet().size() > 0);
     }
@@ -77,6 +99,12 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         String modelString = model.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
         StoredLtrModel modelReparsed = parse(modelString);
         assertTestModel(modelReparsed);
+
+        model = parse(getTestModelAsXContent());
+        builder = XContentFactory.contentBuilder(XContentType.JSON);
+        modelString = model.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
+        modelReparsed = parse(modelString);
+        assertTestModelAsXContent(modelReparsed);
     }
 
     public void testParseFailureOnMissingName() throws IOException {
@@ -134,5 +162,4 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
     private StoredLtrModel parse(String missingName) throws IOException {
         return StoredLtrModel.parse(jsonXContent.createParser(EMPTY, missingName));
     }
-
 }

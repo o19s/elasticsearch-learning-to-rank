@@ -18,6 +18,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -35,8 +36,9 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
     static {
         PARSER = new ObjectParser<>("model", ParserState::new);
         PARSER.declareString(ParserState::setName, new ParseField("name"));
-        PARSER.declareString(ParserState::setModelType, new ParseField("type"));
-        PARSER.declareString(ParserState::setModelDefinition, new ParseField("definition"));
+        PARSER.declareObject(ParserState::setModel,
+                StoredLtrModel.LtrModelDefinition::parse,
+                new ParseField("model"));
     }
 
     public RestCreateModelFromSet(Settings settings, RestController controller) {
@@ -60,9 +62,9 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
         request.withContentOrSourceParamParserOrNull((p) -> ParserState.parse(p, state));
         CreateModelFromSetRequestBuilder builder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client);
         if (expectedVersion != null) {
-            builder.withVersion(store, request.param("name"), expectedVersion, state.name, state.modelType, state.modelDefinition);
+            builder.withVersion(store, request.param("name"), expectedVersion, state.name, state.model);
         } else {
-            builder.withoutVersion(store, request.param("name"), state.name, state.modelType, state.modelDefinition);
+            builder.withoutVersion(store, request.param("name"), state.name, state.model);
         }
         builder.routing(routing);
         return (channel) -> builder.execute(new RestStatusToXContentListener<>(channel, (r) -> r.getResponse().getLocation(routing)));
@@ -70,31 +72,20 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
 
     private static class ParserState {
         String name;
-        String modelType;
-        String modelDefinition;
+        StoredLtrModel.LtrModelDefinition model;
 
         public void setName(String name) {
             this.name = name;
         }
 
-        public void setModelType(String modelType) {
-            this.modelType = modelType;
-        }
-
-        public void setModelDefinition(String modelDefinition) {
-            this.modelDefinition = modelDefinition;
+        public void setModel(StoredLtrModel.LtrModelDefinition model) {
+            this.model = model;
         }
 
         public static void parse(XContentParser parser, ParserState value) throws IOException {
             PARSER.parse(parser, value, null);
             if (value.name == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Missing required value [name]");
-            }
-            if (value.modelType == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Missing required value [type]");
-            }
-            if (value.modelDefinition == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Missing required value [definition]");
             }
         }
     }
