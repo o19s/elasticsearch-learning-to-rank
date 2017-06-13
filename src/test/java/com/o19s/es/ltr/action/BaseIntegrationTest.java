@@ -46,6 +46,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     }
 
     public void createStore(String name) throws Exception {
+        assert IndexFeatureStore.isIndexStore(name);
         CreateIndexResponse resp = client().execute(CreateIndexAction.INSTANCE, IndexFeatureStore.buildIndexRequest(name)).get();
         assertTrue(resp.isAcknowledged());
     }

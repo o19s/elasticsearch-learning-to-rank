@@ -35,6 +35,7 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
@@ -52,6 +53,9 @@ import java.util.function.Supplier;
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 
 public class IndexFeatureStore implements FeatureStore {
+    public static final int VERSION = 1;
+    public static final Setting<Integer> STORE_VERSION_PROP = Setting.intSetting("index.ltrstore_version",
+            VERSION, -1, Integer.MAX_VALUE, Setting.Property.IndexScope);
     public static final String DEFAULT_STORE = ".ltrstore";
     public static final String STORE_PREFIX = DEFAULT_STORE + "_";
     private static final String MAPPING_FILE = "fstore-index-mapping.json";
@@ -95,6 +99,46 @@ public class IndexFeatureStore implements FeatureStore {
     @Override
     public StoredFeatureSet loadSet(String name) throws IOException {
         return getAndParse(name, StoredFeatureSet.class, StoredFeatureSet.TYPE);
+    }
+
+    /**
+     * Construct the elasticsearch index name based on a store name
+     */
+    public static String indexName(String storeName) {
+        if (Objects.requireNonNull(storeName).isEmpty()) {
+            throw new IllegalArgumentException("Store name cannot be empty");
+        }
+        return STORE_PREFIX + storeName;
+    }
+
+    /**
+     * Infer the store name based on an elasticsearch index name
+     * This function is only meant for user display, _default_ is returned
+     * in case indexName equals to DEFAULT_STORE.
+     *
+     * @throws IllegalArgumentException if indexName is not a valid
+     * index name.
+     * @see IndexFeatureStore#isIndexStore(String)
+     */
+    public static String storeName(String indexName) {
+        if (!isIndexStore(indexName)) {
+            throw new IllegalArgumentException("[" + indexName + "] is not a valid index name for a feature store");
+        }
+        if (DEFAULT_STORE.equals(indexName)) {
+            return "_default_";
+        }
+        assert indexName.length() > STORE_PREFIX.length();
+        return indexName.substring(STORE_PREFIX.length());
+    }
+
+    /**
+     * Returns true if this index name is a possible index store
+     * false otherwise.
+     * The index must be {@link #DEFAULT_STORE} or starts with {@link #STORE_PREFIX}
+     */
+    public static boolean isIndexStore(String indexName) {
+        return Objects.requireNonNull(indexName).equals(DEFAULT_STORE) ||
+                (indexName.startsWith(STORE_PREFIX) && indexName.length() > STORE_PREFIX.length());
     }
 
     @Override
@@ -207,6 +251,7 @@ public class IndexFeatureStore implements FeatureStore {
         return Settings.builder()
                 .put(IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
                 .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-1")
+                .put(STORE_VERSION_PROP.getKey(), VERSION)
                 .put(IndexMetaData.SETTING_PRIORITY, Integer.MAX_VALUE)
                 .put(Settings.builder()
                         .loadFromSource(readResourceFile(indexName, ANALYSIS_FILE), XContentType.JSON)

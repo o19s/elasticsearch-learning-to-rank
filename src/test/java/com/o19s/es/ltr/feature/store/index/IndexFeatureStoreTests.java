@@ -22,6 +22,7 @@ import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
@@ -33,6 +34,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.STORE_PREFIX;
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.indexName;
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.isIndexStore;
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.storeName;
 import static org.apache.lucene.util.TestUtil.randomRealisticUnicodeString;
 import static org.apache.lucene.util.TestUtil.randomSimpleString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -48,6 +53,35 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
                 randomSimpleString(random(), 5, 10),
                 randomRealisticUnicodeString(random(), 5, 1000),
                 true));
+    }
+
+    public void testIsIndexName() {
+        assertTrue(isIndexStore(IndexFeatureStore.DEFAULT_STORE));
+        assertFalse(isIndexStore("not_really"));
+        assertFalse(isIndexStore(IndexFeatureStore.STORE_PREFIX));
+        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+            assertTrue(isIndexStore(indexName(TestUtil.randomSimpleString(random(), 1, 10))));
+            assertFalse(isIndexStore(TestUtil.randomSimpleString(random(), 1, STORE_PREFIX.length())));
+        }
+    }
+
+    public void testIndexName() {
+        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+            String name = indexName(TestUtil.randomSimpleString(random(), 1, 10));
+            assertTrue(name.startsWith(STORE_PREFIX));
+        }
+    }
+
+    public void testStoreName() {
+        assertEquals("_default_", storeName(IndexFeatureStore.DEFAULT_STORE));
+        assertEquals("test", storeName(STORE_PREFIX + "test"));
+        expectThrows(IllegalArgumentException.class, () -> IndexFeatureStore.storeName("not really"));
+
+        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+            String storeName = TestUtil.randomSimpleString(random(), 1, 10);
+            String indexName = indexName(storeName);
+            assertEquals(storeName, storeName(indexName));
+        }
     }
 
     public void testBadValues() throws IOException {

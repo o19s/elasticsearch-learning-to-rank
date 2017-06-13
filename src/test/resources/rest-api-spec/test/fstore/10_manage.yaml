@@ -59,3 +59,25 @@
         ltr.cache_stats: {}
 
   - match: { all.total.ram: 0 }
+
+---
+"List stores":
+  - do:
+        ltr.list_stores: {}
+
+  - match: { stores: {} }
+
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        ltr.list_stores: {}
+
+  - match: { stores._default_.version: 1 }
+  - match: { stores._default_.index: .ltrstore }
+  - match: { stores.mystore.version: 1 }
+  - match: { stores.mystore.index: .ltrstore_mystore }

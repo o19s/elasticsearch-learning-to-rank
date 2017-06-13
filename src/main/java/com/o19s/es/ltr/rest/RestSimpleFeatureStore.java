@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
@@ -110,6 +111,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
         }
 
         /**
@@ -130,10 +132,18 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.PUT) {
                 return createIndex(client, indexName);
-            } else {
+            } else if (request.method() == RestRequest.Method.DELETE) {
                 return deleteIndex(client, indexName);
+            } else {
+                assert request.method() == RestRequest.Method.GET;
+                return listStores(client);
             }
         }
+    }
+
+    RestChannelConsumer listStores(NodeClient client) {
+        return (channel) -> ListStoresAction.INSTANCE.newRequestBuilder(client).execute(
+                new RestToXContentListener<ListStoresAction.ListStoresActionResponse>(channel));
     }
 
     RestChannelConsumer createIndex(NodeClient client, String indexName) {

@@ -13,8 +13,7 @@
       }
     },
     "type": {
-      "type": "text",
-      "analyzer": "keyword"
+      "type": "keyword"
     },
     "feature": {
       "type": "object",

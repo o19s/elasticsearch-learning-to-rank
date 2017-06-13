@@ -22,16 +22,19 @@ import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.action.TransportAddFeatureToSetAction;
 import com.o19s.es.ltr.action.TransportCacheStatsAction;
 import com.o19s.es.ltr.action.TransportClearCachesAction;
 import com.o19s.es.ltr.action.TransportCreateModelFromSetAction;
 import com.o19s.es.ltr.action.TransportFeatureStoreAction;
+import com.o19s.es.ltr.action.TransportListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.Caches;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
@@ -53,6 +56,7 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
@@ -75,6 +79,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin {
@@ -134,7 +139,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new ActionHandler<>(CachesStatsAction.INSTANCE, TransportCacheStatsAction.class),
                 new ActionHandler<>(ClearCachesAction.INSTANCE, TransportClearCachesAction.class),
                 new ActionHandler<>(AddFeaturesToSetAction.INSTANCE, TransportAddFeatureToSetAction.class),
-                new ActionHandler<>(CreateModelFromSetAction.INSTANCE, TransportCreateModelFromSetAction.class)));
+                new ActionHandler<>(CreateModelFromSetAction.INSTANCE, TransportCreateModelFromSetAction.class),
+                new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class)));
     }
 
     @Override
@@ -162,8 +168,12 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         ));
     }
 
+    @Override
+    public List<Setting<?>> getSettings() {
+        return singletonList(IndexFeatureStore.STORE_VERSION_PROP);
+    }
+
     protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {
         return FeatureStoreProvider.defaultFeatureStoreLoad(caches, parserFactory);
     }
-
 }

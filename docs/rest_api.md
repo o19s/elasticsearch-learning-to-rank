@@ -15,6 +15,38 @@ Initialize a custom store:
 PUT /_ltr/custom
 ```
 
+List feature stores:
+```
+GET /_ltr
+```
+```json
+{
+  "stores": {
+    "_default_": {
+      "store": "_default_",
+      "index": ".ltrstore",
+      "version": 1,
+      "counts": {
+        "feature": 12,
+        "featureset": 10,
+        "model": 10
+      }
+    },
+    "custom": {
+      "store": "custom",
+      "index": ".ltrstore_custom",
+      "version": 1,
+      "counts": {
+        "feature": 5,
+        "featureset": 4,
+        "model": 3
+      }
+    }
+  }
+}
+
+```
+
 Stores can be deleted:
 
 ```
