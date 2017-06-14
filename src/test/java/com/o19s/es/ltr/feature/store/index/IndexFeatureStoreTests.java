@@ -59,14 +59,16 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
         assertTrue(isIndexStore(IndexFeatureStore.DEFAULT_STORE));
         assertFalse(isIndexStore("not_really"));
         assertFalse(isIndexStore(IndexFeatureStore.STORE_PREFIX));
-        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+        int nPass = random().nextInt(10) + 10;
+        for (int i = 0; i < nPass; i++) {
             assertTrue(isIndexStore(indexName(TestUtil.randomSimpleString(random(), 1, 10))));
             assertFalse(isIndexStore(TestUtil.randomSimpleString(random(), 1, STORE_PREFIX.length())));
         }
     }
 
     public void testIndexName() {
-        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+        int nPass = random().nextInt(10) + 10;
+        for (int i = 0; i < nPass; i++) {
             String name = indexName(TestUtil.randomSimpleString(random(), 1, 10));
             assertTrue(name.startsWith(STORE_PREFIX));
         }
@@ -77,7 +79,8 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
         assertEquals("test", storeName(STORE_PREFIX + "test"));
         expectThrows(IllegalArgumentException.class, () -> IndexFeatureStore.storeName("not really"));
 
-        for (int i = 0; i < random().nextInt(10) + 10; i++) {
+        int nPass = random().nextInt(10) + 10;
+        for (int i = 0; i < nPass; i++) {
             String storeName = TestUtil.randomSimpleString(random(), 1, 10);
             String indexName = indexName(storeName);
             assertEquals(storeName, storeName(indexName));

@@ -34,7 +34,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
@@ -53,6 +52,9 @@ import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
 import static org.elasticsearch.rest.RestStatus.OK;
 
@@ -234,9 +236,9 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         String prefix = request.param("prefix");
         int from = request.paramAsInt("from", 0);
         int size = request.paramAsInt("size", 20);
-        BoolQueryBuilder qb = QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("type", type));
+        BoolQueryBuilder qb = boolQuery().filter(termQuery("type", type));
         if (prefix != null && !prefix.isEmpty()) {
-            qb.must(QueryBuilders.matchQuery("name.prefix", prefix));
+            qb.must(matchQuery("name.prefix", prefix));
         }
         return (channel) -> client.prepareSearch(indexName)
                 .setTypes(IndexFeatureStore.ES_TYPE)
