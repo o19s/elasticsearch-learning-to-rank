@@ -32,28 +32,6 @@ import java.util.Map;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.indexName;
 
 public class ListStoresActionIT extends BaseIntegrationTest {
-    private static final String SIMPLE_MODEL = "## LambdaMART\n" +
-            "## No. of trees = 1\n" +
-            "## No. of leaves = 10\n" +
-            "## No. of threshold candidates = 256\n" +
-            "## Learning rate = 0.1\n" +
-            "## Stop early = 100\n" +
-            "\n" +
-            "<ensemble>\n" +
-            " <tree id=\"1\" weight=\"0.1\">\n" +
-            "   <split pos=\"left\">\n" +
-            "     <feature> 1 </feature>\n" +
-            "     <threshold> 0.0 </threshold>\n" +
-            "     <split pos=\"left\">\n" +
-            "       <output> -2.0 </output>\n" +
-            "     </split>\n" +
-            "     <split pos=\"right\">\n" +
-            "        <output> -1.3413081169128418 </output>\n" +
-            "     </split>\n" +
-            "   </split>\n" +
-            " </tree>\n" +
-            "</ensemble>";
-
     public void testListStore() throws Exception {
         createStore(indexName("test2"));
         createStore(indexName("test3"));
@@ -102,12 +80,7 @@ public class ListStoresActionIT extends BaseIntegrationTest {
         }
 
         for (int i = 0; i < nModels; i++) {
-            StoredLtrModel model = new StoredLtrModel("model" + i,
-                    sets.get(random().nextInt(sets.size())),
-                    "model/ranklib",
-                    SIMPLE_MODEL,
-                    true);
-            addElement(model, store);
+            addElement(LtrTestUtils.randomLinearModel("model" + i, sets.get(random().nextInt(sets.size()))), store);
         }
     }
 }

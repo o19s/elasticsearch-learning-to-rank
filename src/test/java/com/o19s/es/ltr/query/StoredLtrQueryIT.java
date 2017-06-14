@@ -27,6 +27,7 @@ import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequest
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -42,41 +43,10 @@ import java.util.Map;
  */
 public class StoredLtrQueryIT extends BaseIntegrationTest {
 
-    private static final String SIMPLE_MODEL = "## LambdaMART\n" +
-            "## No. of trees = 1\n" +
-            "## No. of leaves = 10\n" +
-            "## No. of threshold candidates = 256\n" +
-            "## Learning rate = 0.1\n" +
-            "## Stop early = 100\n" +
-            "\n" +
-            "<ensemble>\n" +
-            "\t<tree id=\"1\" weight=\"0.1\">\n" +
-            "\t\t<split>\n" +
-            "\t\t\t<feature> 1 </feature>\n" +
-            "\t\t\t<threshold> 0.45867884 </threshold>\n" +
-            "\t\t\t<split pos=\"left\">\n" +
-            "\t\t\t\t<feature> 1 </feature>\n" +
-            "\t\t\t\t<threshold> 0.0 </threshold>\n" +
-            "\t\t\t\t<split pos=\"left\">\n" +
-            "\t\t\t\t\t<output> -2.0 </output>\n" +
-            "\t\t\t\t</split>\n" +
-            "\t\t\t\t<split pos=\"right\">\n" +
-            "\t\t\t\t\t<output> -1.3413081169128418 </output>\n" +
-            "\t\t\t\t</split>\n" +
-            "\t\t\t</split>\n" +
-            "\t\t\t<split pos=\"right\">\n" +
-            "\t\t\t\t<feature> 1 </feature>\n" +
-            "\t\t\t\t<threshold> 0.6115718 </threshold>\n" +
-            "\t\t\t\t<split pos=\"left\">\n" +
-            "\t\t\t\t\t<output> 0.3089442849159241 </output>\n" +
-            "\t\t\t\t</split>\n" +
-            "\t\t\t\t<split pos=\"right\">\n" +
-            "\t\t\t\t\t<output> 2.0 </output>\n" +
-            "\t\t\t\t</split>\n" +
-            "\t\t\t</split>\n" +
-            "\t\t</split>\n" +
-            "\t</tree>" +
-            "</ensemble>";
+    private static final String SIMPLE_MODEL = "{" +
+            "\"feature1\": 1," +
+            "\"feature2\": -1" +
+            "}";
 
 
     public void testFullUsecase() throws Exception {
@@ -96,21 +66,23 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
         createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,
-                "my_model", new StoredLtrModel.LtrModelDefinition("model/ranklib", SIMPLE_MODEL, true));
+                "my_model", new StoredLtrModel.LtrModelDefinition("model/linear", SIMPLE_MODEL, true));
         createModelFromSetRequestBuilder.get();
         buildIndex();
         Map<String, Object> params = new HashMap<>();
         params.put("query", "bonjour");
-        SearchResponse sr = client().prepareSearch("test_index")
+        SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(RescoreBuilder
                         .queryRescorer(new StoredLtrQueryBuilder().modelName("my_model").params(params))
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
-                        .setRescoreQueryWeight(1))
-                .get();
+                        .setRescoreQueryWeight(1));
+
+        params.put("query", "hello");
+        SearchResponse sr = sb.get();
         assertEquals(1, sr.getHits().getTotalHits());
-        assertEquals(-0.2F, sr.getHits().getAt(0).score(), Math.ulp(-0.2F));
+        assertTrue(sr.getHits().getAt(0).score() > 0);
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();

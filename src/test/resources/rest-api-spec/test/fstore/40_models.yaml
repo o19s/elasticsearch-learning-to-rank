@@ -22,44 +22,10 @@
                       match:
                         field_test2: "{{query_string}}"
               model:
-                type: model/ranklib
-                definition: |
-                    ## LambdaMART
-                    ## No. of trees = 1
-                    ## No. of leaves = 10
-                    ## No. of threshold candidates = 256
-                    ## Learning rate = 0.1
-                    ## Stop early = 100
-                    <ensemble>
-                        <tree id="1" weight="0.1">
-                            <split>
-                                <feature> 1 </feature>
-                                <threshold> 0.45867884 </threshold>
-                                <split pos="left">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.0 </threshold>
-                                    <split pos="left">
-                                        <output> -2.0 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> -1.3413081169128418 </output>
-                                    </split>
-                                </split>
-                                <split pos="right">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.6115718 </threshold>
-                                    <split pos="left">
-                                        <output> 0.3089442849159241 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> 2.0 </output>
-                                    </split>
-                                </split>
-                            </split>
-                        </tree>
-                    </ensemble>
-
-
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
 
   - match: { _index:   .ltrstore }
   - match: { _id:      model-my_model }
@@ -70,6 +36,7 @@
            name: my_model
 
   - match: { _source.name: my_model }
+  - match: { _source.model.model.definition.feature1: 1.2 }
 
   - do:
         catch: /Element of type \[model\] are not updatable./
@@ -91,42 +58,10 @@
                       match:
                         field_test2: "{{query_string}}"
               model:
-                type: model/ranklib
-                definition: |
-                    ## LambdaMART
-                    ## No. of trees = 1
-                    ## No. of leaves = 10
-                    ## No. of threshold candidates = 256
-                    ## Learning rate = 0.1
-                    ## Stop early = 100
-                    <ensemble>
-                        <tree id="1" weight="0.1">
-                            <split>
-                                <feature> 1 </feature>
-                                <threshold> 0.45867884 </threshold>
-                                <split pos="left">
-                                    <feature> 1 </feature>
-                                    <threshold> 1.0 </threshold>
-                                    <split pos="left">
-                                        <output> -1.0 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> -1.3413081169128418 </output>
-                                    </split>
-                                </split>
-                                <split pos="right">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.6115718 </threshold>
-                                    <split pos="left">
-                                        <output> 0.3089442849159241 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> 2.0 </output>
-                                    </split>
-                                </split>
-                            </split>
-                        </tree>
-                    </ensemble>
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
 
   - do:
         ltr.delete_model:
@@ -165,44 +100,10 @@
                       match:
                         field_test2: "{{query_string}}"
               model:
-                type: model/ranklib
-                definition: |
-                    ## LambdaMART
-                    ## No. of trees = 1
-                    ## No. of leaves = 10
-                    ## No. of threshold candidates = 256
-                    ## Learning rate = 0.1
-                    ## Stop early = 100
-                    <ensemble>
-                        <tree id="1" weight="0.1">
-                            <split>
-                                <feature> 1 </feature>
-                                <threshold> 0.45867884 </threshold>
-                                <split pos="left">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.0 </threshold>
-                                    <split pos="left">
-                                        <output> -2.0 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> -1.3413081169128418 </output>
-                                    </split>
-                                </split>
-                                <split pos="right">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.6115718 </threshold>
-                                    <split pos="left">
-                                        <output> 0.3089442849159241 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> 2.0 </output>
-                                    </split>
-                                </split>
-                            </split>
-                        </tree>
-                    </ensemble>
-
-
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
 
   - match: { _index:   .ltrstore_mystore }
   - match: { _id:      model-my_model }
@@ -214,6 +115,7 @@
            name: my_model
 
   - match: { _source.name: my_model }
+  - match: { _source.model.model.definition.feature1: 1.2 }
 
   - do:
         catch: /Element of type \[model\] are not updatable./
@@ -236,42 +138,10 @@
                       match:
                         field_test2: "{{query_string}}"
               model:
-                type: model/ranklib
-                definition: |
-                    ## LambdaMART
-                    ## No. of trees = 1
-                    ## No. of leaves = 10
-                    ## No. of threshold candidates = 256
-                    ## Learning rate = 0.1
-                    ## Stop early = 100
-                    <ensemble>
-                        <tree id="1" weight="0.1">
-                            <split>
-                                <feature> 1 </feature>
-                                <threshold> 0.45867884 </threshold>
-                                <split pos="left">
-                                    <feature> 1 </feature>
-                                    <threshold> 1.0 </threshold>
-                                    <split pos="left">
-                                        <output> -1.0 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> -1.3413081169128418 </output>
-                                    </split>
-                                </split>
-                                <split pos="right">
-                                    <feature> 1 </feature>
-                                    <threshold> 0.6115718 </threshold>
-                                    <split pos="left">
-                                        <output> 0.3089442849159241 </output>
-                                    </split>
-                                    <split pos="right">
-                                        <output> 2.0 </output>
-                                    </split>
-                                </split>
-                            </split>
-                        </tree>
-                    </ensemble>
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
 
   - do:
         ltr.delete_model:

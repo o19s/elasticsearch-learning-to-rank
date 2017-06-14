@@ -37,6 +37,7 @@ import com.o19s.es.ltr.feature.store.index.Caches;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
+import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
@@ -96,6 +97,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         Supplier<RankerFactory> ranklib = Suppliers.memoize(RankerFactory::new);
         return new LtrRankerParserFactory.Builder()
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))
+                .register(LinearRankerParser.TYPE, LinearRankerParser::new)
                 .build();
     }
 

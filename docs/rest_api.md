@@ -146,11 +146,26 @@ The format of a model is:
     ]
   },
   "model": {
-    "type": "model/ranklib",
-    "definition" : "definition of the model in the model/ranklib format"
+    "type": "model/linear",
+    "definition": {
+      "feature" : 0.3
+    }
   }
 }
 ```
+
+For models that are not based on `json` the definition must be encoded into the `definition` field as a `string`:
+```json
+{
+  "model": {
+    "type": "model/nonjson",
+    "definition": "Model serialized as a string that complies to the model/nonjson format"
+  }
+}
+```
+
+See [models](models.md) for details on supported model types.
+
 
 To use a custom store simply prefix with the name of the store:
 `/_ltr/custom_store/_model/model_name`
@@ -164,8 +179,12 @@ A model can be created by using an existing feature set:
 {
   "name": "my_model_name",
   "model": {
-    "type": "model/ranklib",
-    "definition": "definition of the model in the model/ranklib format"
+    "type": "model/linear",
+    "definition": {
+      "feature1" : 0.3,
+      "feature2" : 0.4,
+      "feature3" : 0.8
+    }
   }
 }
 ```
