@@ -58,6 +58,23 @@
   - match: { _source.feature.template.match.field_test: "{{query_string2}}" }
 
   - do:
+        ltr.list_feature: {}
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+            prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+            prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
         ltr.delete_feature:
            name: my_feature
 
@@ -132,6 +149,26 @@
            name: my_feature
 
   - match: { _source.feature.template.match.field_test: "{{query_string2}}" }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+           prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+           prefix: hop
+
+  - match: { hits.total: 0 }
 
   - do:
         ltr.delete_feature:

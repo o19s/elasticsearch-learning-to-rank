@@ -87,6 +87,19 @@ The format of a feature is :
 To use a custom store simply prefix with the name of the store:
 `/_ltr/custom_store/_feature/feature_name`
 
+### List features
+
+Features can be listed with a `GET` on `/_ltr/_feature`, this endpoinds accepts the following params:
+- prefix (optional): filter feature by prefix
+- start (optional): extract features at a specific offset (similar to the `start` param of the `_search` endpoint)
+- size (optional): limit the number of feautres extractd (defaults to 20)
+
+Example: extract `30` features whose name starts with `feat` at offset `20`:
+
+`GET /_ltr/_feature?prefix=feat&start=20&size=30`
+
+The output is exactly the same as the `_search` API.
+
 ## Feature Sets
 
 `/_ltr/_featureset/featureset_name` supports `PUT`, `POST`, `GET` and `DELETE` operations.
@@ -114,6 +127,13 @@ Feature names in the set must be unique.
 
 To use a custom store simply prefix with the name of the store:
 `/_ltr/custom_store/_feature/feature_name`
+
+### List feature sets
+
+Example: extract `30` feature sets whose name starts with `set` at offset `20`:
+
+`GET /_ltr/_featureset?prefix=set&start=20&size=30`
+
 
 ### Append features to a set
 A set can also be created/updated from existing features:
@@ -169,6 +189,12 @@ See [models](models.md) for details on supported model types.
 
 To use a custom store simply prefix with the name of the store:
 `/_ltr/custom_store/_model/model_name`
+
+### List feature sets
+
+Example: extract `30` models whose name starts with `mod` at offset `20`:
+
+`GET /_ltr/_model?prefix=mod&start=20&size=30`
 
 ### Create a model from an existing set
 

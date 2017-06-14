@@ -33,6 +33,8 @@ import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
@@ -70,6 +72,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     public static void register(List<RestHandler> list, Settings settings, RestController restController) {
         for (String type : SUPPORTED_TYPES) {
             list.add(new RestAddOrUpdateFeature(settings, restController, type));
+            list.add(new RestSearchStoreElements(settings, restController, type));
         }
         list.add(new RestStoreManager(settings, restController));
     }
@@ -101,6 +104,22 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             } else {
                 return addOrUpdate(client, type, indexName, request);
             }
+        }
+    }
+
+    static class RestSearchStoreElements extends RestSimpleFeatureStore {
+        private final String type;
+
+        RestSearchStoreElements(Settings settings, RestController controller, String type) {
+            super(settings);
+            this.type = type;
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type, this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type, this);
+        }
+
+        @Override
+        protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+            return search(client, type, indexName(request), request);
         }
     }
 
@@ -209,6 +228,22 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                         return response.isExists() ? OK : NOT_FOUND;
                     }
                 });
+    }
+
+    RestChannelConsumer search(NodeClient client, String type, String indexName, RestRequest request) {
+        String prefix = request.param("prefix");
+        int from = request.paramAsInt("from", 0);
+        int size = request.paramAsInt("size", 20);
+        BoolQueryBuilder qb = QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("type", type));
+        if (prefix != null && !prefix.isEmpty()) {
+            qb.must(QueryBuilders.matchQuery("name.prefix", prefix));
+        }
+        return (channel) -> client.prepareSearch(indexName)
+                .setTypes(IndexFeatureStore.ES_TYPE)
+                .setQuery(qb)
+                .setSize(size)
+                .setFrom(from)
+                .execute(new RestStatusToXContentListener<>(channel));
     }
 
 }

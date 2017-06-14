@@ -64,6 +64,23 @@
                     feature2: 0.2
 
   - do:
+        ltr.list_model: {}
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+            prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+            prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
         ltr.delete_model:
            name: my_model
 
@@ -142,6 +159,26 @@
                 definition:
                     feature1: 1.2
                     feature2: 0.2
+
+  - do:
+        ltr.list_model:
+           store: mystore
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+           store: mystore
+           prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+           store: mystore
+           prefix: hop
+
+  - match: { hits.total: 0 }
 
   - do:
         ltr.delete_model:
