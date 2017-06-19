@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQueryBuilder> {
@@ -102,6 +103,21 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         params.put("query_string", "a wonderful query");
         builder.params(params);
         return builder;
+    }
+
+    public void testMissingParams() {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder();
+        builder.modelName("model1");
+
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+                equalTo("Missing required param(s): [query_string]"));
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query_string2", "a wonderful query");
+        builder.params(params);
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+                equalTo("Missing required param(s): [query_string]"));
+
     }
 
     @Override

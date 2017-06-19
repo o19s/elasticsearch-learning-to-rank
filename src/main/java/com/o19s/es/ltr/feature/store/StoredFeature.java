@@ -17,7 +17,6 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.Feature;
-import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -47,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
@@ -175,11 +175,12 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
 
     @Override
     public Query doToQuery(QueryShardContext context, Map<String, Object> params) {
-        boolean missingParam = queryParams.stream().anyMatch(x -> !params.containsKey(x));
-        if (missingParam) {
-            // Is it sane to do this?
-            // should we fail?
-            return new MatchNoDocsQuery();
+        List<String> missingParams = queryParams.stream()
+                .filter((x) -> params == null || !params.containsKey(x))
+                .collect(Collectors.toList());
+        if (!missingParams.isEmpty()) {
+            String names = missingParams.stream().collect(Collectors.joining(","));
+            throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
         ExecutableScript script = context.getExecutableScript(new Script(ScriptType.INLINE,
                 templateLanguage, template, params), ScriptContext.Standard.SEARCH);
