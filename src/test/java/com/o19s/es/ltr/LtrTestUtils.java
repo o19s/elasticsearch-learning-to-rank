@@ -21,6 +21,8 @@ import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.ranker.DenseFeatureVector;
+import com.o19s.es.ltr.ranker.DenseLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
@@ -32,6 +34,7 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import java.io.IOException;
 
 import static org.apache.lucene.util.LuceneTestCase.random;
+import static org.junit.Assert.assertEquals;
 
 public class LtrTestUtils {
 
@@ -81,5 +84,24 @@ public class LtrTestUtils {
                     5, 50, null);
         }
         return ranker;
+    }
+
+    public static void assertRankersHaveSameScores(DenseLtrRanker one, DenseLtrRanker two, int nPass) {
+        DenseFeatureVector vectorOne = one.newFeatureVector(null);
+        DenseFeatureVector vectorTwo = two.newFeatureVector(null);
+        assertEquals(vectorOne.scores.length, vectorTwo.scores.length);
+        float[][] scores = new float[100][vectorOne.scores.length];
+        for (float[] s : scores) {
+            LinearRankerTests.fillRandomWeights(s);
+        }
+        for (int i = 0; i < nPass; i++) {
+            vectorOne = one.newFeatureVector(vectorOne);
+            vectorTwo = one.newFeatureVector(vectorTwo);
+            System.arraycopy(scores[i%100], 0, vectorOne.scores, 0, vectorOne.scores.length);
+            System.arraycopy(scores[i%100], 0, vectorTwo.scores, 0, vectorTwo.scores.length);
+            float scoreOne = one.score(vectorOne);
+            float scoreTwo = two.score(vectorTwo);
+            assertEquals(scoreOne, scoreTwo, Math.ulp(scoreOne));
+        }
     }
 }

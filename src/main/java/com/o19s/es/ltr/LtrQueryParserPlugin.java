@@ -99,7 +99,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         parserFactory = new LtrRankerParserFactory.Builder()
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))
                 .register(LinearRankerParser.TYPE, LinearRankerParser::new)
-                .register(XGBoostJsonParser.TYPE, XGBoostJsonParser::new)
+                .register(XGBoostJsonParser.TYPE, () -> new XGBoostJsonParser(settings))
                 .build();
     }
 
@@ -190,7 +190,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 IndexFeatureStore.STORE_VERSION_PROP,
                 Caches.LTR_CACHE_MEM_SETTING,
                 Caches.LTR_CACHE_EXPIRE_AFTER_READ,
-                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
+                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE,
+                XGBoostJsonParser.DEC_TREE_IMPL));
     }
 
     protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {

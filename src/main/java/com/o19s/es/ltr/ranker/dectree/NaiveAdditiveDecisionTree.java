@@ -31,7 +31,6 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
 
     private final Node[] trees;
-    private final float[] weights;
     private final int modelSize;
 
     /**
@@ -40,13 +39,10 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      * changing this according to model parsers we implement.
      *
      * @param trees an array of trees
-     * @param weights the respective weights
      * @param modelSize the modelSize in number of feature used
      */
-    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize) {
-        assert trees.length == weights.length;
+    public NaiveAdditiveDecisionTree(Node[] trees, int modelSize) {
         this.trees = trees;
-        this.weights = weights;
         this.modelSize = modelSize;
     }
 
@@ -55,12 +51,36 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         return "naive_additive_decision_tree";
     }
 
+
+    public BinBinTree toBinBinTree() {
+        return new BinBinTree.BuildState(trees, modelSize).build();
+    }
+
+    public PrimTree toPrimTree() {
+        return new PrimTree.BuildState(trees, modelSize).build();
+    }
+
+    public DenseLtrRanker transform(Implementation impl) {
+        switch (impl) {
+            case Naive: return this;
+            case Prim: return this.toPrimTree();
+            case BinBin: return this.toBinBinTree();
+            default: throw new IllegalArgumentException("Unknown " + impl);
+        }
+    }
+
+    public enum Implementation {
+        Naive,
+        Prim,
+        BinBin
+    }
+
     @Override
     protected float score(DenseFeatureVector vector) {
         float sum = 0;
         float[] scores = vector.scores;
         for (int i = 0; i < trees.length; i++) {
-            sum += weights[i]*trees[i].eval(scores);
+            sum += trees[i].eval(scores);
         }
         return sum;
     }
@@ -75,13 +95,19 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      */
     @Override
     public long ramBytesUsed() {
-        return BASE_RAM_USED + RamUsageEstimator.sizeOf(weights)
-                + RamUsageEstimator.sizeOf(trees);
+        return BASE_RAM_USED + RamUsageEstimator.sizeOf(trees);
     }
 
     public interface Node extends Accountable {
          boolean isLeaf();
          float eval(float[] scores);
+         int count(CountType type);
+    }
+
+    public enum CountType {
+        All,
+        Leaves,
+        Splits
     }
 
     public static class Split implements Node {
@@ -119,6 +145,33 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             return n.eval(scores);
         }
 
+        Node left() {
+            return left;
+        }
+
+        Node right() {
+            return right;
+        }
+
+        int feature() {
+            return feature;
+        }
+
+        float threshold() {
+            return threshold;
+        }
+
+        public int count(CountType type) {
+            int left = this.left.count(type);
+            int right = this.right.count(type);
+            int total = Math.addExact(left, right);
+            int myself = 0;
+            if (type == CountType.All || type == CountType.Splits) {
+                myself = 1;
+            }
+            return Math.addExact(total, myself);
+        }
+
         /**
          * Return the memory usage of this object in bytes. Negative values are illegal.
          */
@@ -145,6 +198,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         @Override
         public float eval(float[] scores) {
             return output;
+        }
+
+        float output() {
+            return output;
+        }
+
+        public int count(CountType type) {
+            return type == CountType.All || type == CountType.Leaves ? 1 : 0;
         }
 
         /**

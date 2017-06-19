@@ -21,8 +21,8 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
+import com.o19s.es.ltr.ranker.DenseLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker.FeatureVector;
-import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.LuceneTestCase;
@@ -46,7 +46,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
     public void testReadLeaf() throws IOException {
         String model = "[ {\"nodeid\": 0, \"leaf\": 0.234}]";
         FeatureSet set = randomFeatureSet();
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        DenseLtrRanker tree = parser.parse(set, model);
         assertEquals(0.234F, tree.score(tree.newFeatureVector(null)), Math.ulp(0.234F));
     }
 
@@ -65,7 +65,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
                 "]}]";
 
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        DenseLtrRanker tree = parser.parse(set, model);
         FeatureVector v = tree.newFeatureVector(null);
         v.setFeatureScore(0, 0.124F);
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
@@ -143,7 +143,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         }
 
         StoredFeatureSet set = new StoredFeatureSet("set", features);
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        DenseLtrRanker tree = parser.parse(set, model);
         DenseFeatureVector v = tree.newFeatureVector(null);
         assertEquals(v.scores.length, features.size());
 
