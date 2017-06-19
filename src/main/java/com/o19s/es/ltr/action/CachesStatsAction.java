@@ -140,12 +140,14 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
 
             @Override
         public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
             allStores.writeTo(out);
             out.writeMap(byStore, StreamOutput::writeString, (o, s) -> s.writeTo(o));
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
             allStores = new StatDetails(in);
             byStore = in.readMap(StreamInput::readString, StatDetails::new);
         }
