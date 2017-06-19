@@ -86,22 +86,22 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
-        assertEquals(1, stats.getAll().getAllStores().getTotal().getCount());
-        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getAllStores().getTotal().getRam());
-        assertEquals(1, stats.getAll().getAllStores().getModels().getCount());
-        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getAllStores().getModels().getRam());
-        assertEquals(0, stats.getAll().getAllStores().getFeatures().getCount());
-        assertEquals(0, stats.getAll().getAllStores().getFeatures().getRam());
-        assertEquals(0, stats.getAll().getAllStores().getFeaturesets().getCount());
-        assertEquals(0, stats.getAll().getAllStores().getFeaturesets().getRam());
+        assertEquals(1, stats.getAll().getTotal().getCount());
+        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getTotal().getRam());
+        assertEquals(1, stats.getAll().getModels().getCount());
+        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getModels().getRam());
+        assertEquals(0, stats.getAll().getFeatures().getCount());
+        assertEquals(0, stats.getAll().getFeatures().getRam());
+        assertEquals(0, stats.getAll().getFeaturesets().getCount());
+        assertEquals(0, stats.getAll().getFeaturesets().getRam());
 
         ClearCachesAction.RequestBuilder clearCache = ClearCachesAction.INSTANCE.newRequestBuilder(client());
         clearCache.request().clearModel(IndexFeatureStore.DEFAULT_STORE, "my_model");
         clearCache.get();
 
         stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
-        assertEquals(0, stats.getAll().getAllStores().getTotal().getCount());
-        assertEquals(0, stats.getAll().getAllStores().getTotal().getRam());
+        assertEquals(0, stats.getAll().getTotal().getCount());
+        assertEquals(0, stats.getAll().getTotal().getRam());
     }
 
     public void buildIndex() {

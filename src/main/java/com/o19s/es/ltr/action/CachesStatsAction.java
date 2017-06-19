@@ -64,16 +64,21 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
     }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
-
     }
 
     public static class CachesStatsNodesResponse extends BaseNodesResponse<CachesStatsNodeResponse> implements ToXContent {
-        CachesStatsNodeResponse all = new CachesStatsNodeResponse();
+        private StatDetails allStores;
+        private Map<String, StatDetails> byStore;
         public CachesStatsNodesResponse() {}
 
         public CachesStatsNodesResponse(ClusterName clusterName, List<CachesStatsNodeResponse> nodes, List<FailedNodeException> failures) {
             super(clusterName, nodes, failures);
-            nodes.forEach(all::sum);
+            allStores = new StatDetails();
+            byStore = new HashMap<>();
+            nodes.forEach((n) -> {
+                allStores.doSum(n.allStores);
+                n.byStore.forEach((k, v) -> byStore.merge(k, v, StatDetails::sum));
+            });
         }
 
         @Override
@@ -89,20 +94,22 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            all = new CachesStatsNodeResponse(in);
+            allStores = new StatDetails(in);
+            byStore = in.readMap(StreamInput::readString, StatDetails::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            all.writeTo(out);
+            allStores.writeTo(out);
+            out.writeMap(byStore, StreamOutput::writeString, (o, s) -> s.writeTo(o));
         }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.field("all", all.allStores);
+            builder.field("all", allStores);
             builder.startObject("stores");
-            for (Map.Entry<String, StatDetails> entry : all.byStore.entrySet()) {
+            for (Map.Entry<String, StatDetails> entry : byStore.entrySet()) {
                 builder.field(entry.getKey(), entry.getValue());
             }
             builder.endObject();
@@ -118,8 +125,8 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             return builder;
         }
 
-        public CachesStatsNodeResponse getAll() {
-            return all;
+        public StatDetails getAll() {
+            return allStores;
         }
     }
     public static class CachesStatsNodeResponse extends BaseNodeResponse {
@@ -157,12 +164,6 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             byStore = new HashMap<>();
         }
 
-        public void sum(CachesStatsNodeResponse other) {
-            allStores.doSum(other.allStores);
-            other.byStore.forEach((k, v) -> byStore.merge(k, v, StatDetails::sum));
-        }
-
-
         public CachesStatsNodeResponse initFromCaches(Caches caches) {
             allStores = new StatDetails();
             byStore = new HashMap<>();
@@ -178,7 +179,7 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             return allStores;
         }
     }
-    public static class StatDetails extends BaseNodeResponse implements ToXContent {
+    public static class StatDetails implements Writeable, ToXContent {
         private Stat total;
         private Stat features;
         private Stat featuresets;
@@ -199,9 +200,7 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             readFrom(in);
         }
 
-        @Override
         public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
             total = new Stat(in);
             features = new Stat(in);
             featuresets = new Stat(in);
@@ -210,7 +209,6 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
             total.writeTo(out);
             features.writeTo(out);
             featuresets.writeTo(out);
