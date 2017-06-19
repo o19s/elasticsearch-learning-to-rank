@@ -64,8 +64,8 @@ public class XGBoostJsonParser implements LtrRankerParser {
             PARSER.declareInt(SplitParserState::setDepth, new ParseField("depth"));
             PARSER.declareString(SplitParserState::setSplit, new ParseField("split"));
             PARSER.declareFloat(SplitParserState::setThreshold, new ParseField("split_condition"));
-            PARSER.declareInt(SplitParserState::setRightNodeId, new ParseField("yes"));
-            PARSER.declareInt(SplitParserState::setLeftNodeId, new ParseField("no"));
+            PARSER.declareInt(SplitParserState::setRightNodeId, new ParseField("no"));
+            PARSER.declareInt(SplitParserState::setLeftNodeId, new ParseField("yes"));
             PARSER.declareInt(SplitParserState::setMissingNodeId, new ParseField("missing"));
             PARSER.declareFloat(SplitParserState::setLeaf, new ParseField("leaf"));
             PARSER.declareObjectArray(SplitParserState::setChildren, SplitParserState::parse,
@@ -79,6 +79,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
         private Float threshold;
         private Integer rightNodeId;
         private Integer leftNodeId;
+        // Ignored
         private Integer missingNodeId;
         private Float leaf;
         private List<SplitParserState> children;
@@ -148,7 +149,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         boolean splitHasValidChildren() {
             return children.size() == 2 &&
-                    rightNodeId.equals(children.get(0).nodeId) && leftNodeId.equals(children.get(1).nodeId);
+                    leftNodeId.equals(children.get(0).nodeId) && rightNodeId.equals(children.get(1).nodeId);
         }
         boolean isSplit() {
             return leaf == null;
