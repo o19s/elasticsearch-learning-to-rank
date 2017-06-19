@@ -21,7 +21,7 @@ Type: `model/xgboost+json`
 
 Limitations:
 - only numeric conditions defined in `split_condition` (categorical features are not supported `"split": "feat1=categ1"`)
-- the `missing` branch is not yet fully supported and must point to the `no` branch.
+- the `missing` branch is not supported and is completely ignored. (NOTE: that the plugin will use 0 for missing features).
 
 Simple example with one tree:
 

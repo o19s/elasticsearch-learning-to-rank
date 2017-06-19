@@ -148,8 +148,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         boolean splitHasValidChildren() {
             return children.size() == 2 &&
-                    rightNodeId.equals(children.get(0).nodeId) && leftNodeId.equals(children.get(1).nodeId) &&
-                    (missingNodeId == null || missingNodeId.equals(children.get(1).nodeId));
+                    rightNodeId.equals(children.get(0).nodeId) && leftNodeId.equals(children.get(1).nodeId);
         }
         boolean isSplit() {
             return leaf == null;
@@ -158,7 +157,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         Node toNode(FeatureSet set) {
             if (isSplit()) {
-                return new NaiveAdditiveDecisionTree.Split(children.get(1).toNode(set), children.get(0).toNode(set),
+                return new NaiveAdditiveDecisionTree.Split(children.get(0).toNode(set), children.get(1).toNode(set),
                         set.featureOrdinal(split), threshold);
             } else {
                 return new NaiveAdditiveDecisionTree.Leaf(leaf);

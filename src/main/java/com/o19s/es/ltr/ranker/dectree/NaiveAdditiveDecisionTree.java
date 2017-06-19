@@ -109,7 +109,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             while (!n.isLeaf()) {
                 assert n instanceof Split;
                 Split s = (Split) n;
-                if (s.threshold >= scores[s.feature]) {
+                if (s.threshold > scores[s.feature]) {
                     n = s.left;
                 } else {
                     n = s.right;
