@@ -1,0 +1,31 @@
+{
+  "ltr.create_model_from_set": {
+    "methods" : ["POST"],
+    "url": {
+      "path": "/_ltr/{store}/_featureset/{name}/_createmodel",
+      "paths": ["/_ltr/{store}/_featureset/{name}/_createmodel","/_ltr/_featureset/{name}/_createmodel"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
+        }
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
+      }
+    },
+    "body": {
+      "description" : "Definition of the model: name, type and model",
+      "required": "true"
+    }
+  }
+}

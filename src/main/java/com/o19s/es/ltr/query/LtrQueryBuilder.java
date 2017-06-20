@@ -20,11 +20,7 @@ package com.o19s.es.ltr.query;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
-import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
-import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -132,10 +128,6 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
         features = Collections.unmodifiableList(features);
-        final LtrRankerParser parser;
-        switch (_rankLibScript.getType()) {
-            case FILE:
-        }
         // pull model out of script
         LtrRanker ranker = (LtrRanker) context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH).run();
         PrebuiltFeatureSet featureSet = new PrebuiltFeatureSet(queryName(), features);

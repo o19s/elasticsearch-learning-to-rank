@@ -1,0 +1,10 @@
+{
+  "ltr.list_stores": {
+    "methods" : ["GET"],
+    "url": {
+      "paths": ["/_ltr"],
+      "parts": {}
+    },
+    "body": null
+  }
+}

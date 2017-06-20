@@ -18,10 +18,10 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.MockMustachePlugin;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQueryBuilder> {
@@ -87,7 +88,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                         .missing(0F)).toString());
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         LtrRanker ranker = new LinearRanker(new float[]{0.1F, 0.2F, 0.3F});
-        StoredLtrModel model = new StoredLtrModel("model1", set, ranker);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
 
@@ -102,6 +103,21 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         params.put("query_string", "a wonderful query");
         builder.params(params);
         return builder;
+    }
+
+    public void testMissingParams() {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder();
+        builder.modelName("model1");
+
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+                equalTo("Missing required param(s): [query_string]"));
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query_string2", "a wonderful query");
+        builder.params(params);
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+                equalTo("Missing required param(s): [query_string]"));
+
     }
 
     @Override

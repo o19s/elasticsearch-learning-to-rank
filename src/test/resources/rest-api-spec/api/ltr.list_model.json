@@ -1,0 +1,33 @@
+{
+  "ltr.list_model": {
+    "methods" : ["GET"],
+    "url": {
+      "paths": ["/_ltr/_model", "/_ltr/{store}/_model"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        }
+      },
+      "params": {
+        "prefix": {
+          "type": "string",
+          "required": false,
+          "description": "Filter elements by name prefix"
+        },
+        "size": {
+          "type": "integer",
+          "required": false,
+          "description": "Page size"
+        },
+        "from": {
+          "type": "integer",
+          "required": false,
+          "description": "Page results"
+        }
+      }
+    },
+    "body": null
+  }
+}

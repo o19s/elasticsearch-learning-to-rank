@@ -1,0 +1,83 @@
+---
+"Create and delete the default store":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        indices.exists:
+            index: .ltrstore
+
+  - is_true: ''
+
+  - do:
+        ltr.delete_store: {}
+
+  - do:
+        indices.exists:
+            index: .ltrstore
+
+  - is_false: ''
+
+---
+"Create and delete a custom store":
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        indices.exists:
+            index: .ltrstore_mystore
+
+  - is_true: ''
+
+  - do:
+        ltr.delete_store:
+            store: mystore
+
+  - do:
+        indices.exists:
+            index: .ltrstore_mystore
+
+  - is_false: ''
+
+---
+"Get cache stats":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.cache_stats: {}
+
+  - match: { all.total.ram: 0 }
+
+  - do:
+        ltr.clear_cache: {}
+
+  - is_true: ''
+
+  - do:
+        ltr.cache_stats: {}
+
+  - match: { all.total.ram: 0 }
+
+---
+"List stores":
+  - do:
+        ltr.list_stores: {}
+
+  - match: { stores: {} }
+
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        ltr.list_stores: {}
+
+  - match: { stores._default_.version: 1 }
+  - match: { stores._default_.index: .ltrstore }
+  - match: { stores.mystore.version: 1 }
+  - match: { stores.mystore.index: .ltrstore_mystore }

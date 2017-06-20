@@ -17,18 +17,20 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.Feature;
-import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
@@ -41,46 +43,100 @@ import org.elasticsearch.script.ScriptType;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
 
-public class StoredFeature implements Feature, Accountable {
+public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
     private static final String DEFAULT_TEMPLATE_LANGUAGE = "mustache";
+    public static final String TYPE = "feature";
     private final String name;
-    private final Collection<String> queryParams;
+    private final List<String> queryParams;
     private final String templateLanguage;
     private final String template;
+    private final boolean templateAsString;
 
     private static final ObjectParser<ParsingState, Void> PARSER;
 
+    private static final ParseField NAME = new ParseField("name");
+    private static final ParseField PARAMS = new ParseField("params");
+    private static final ParseField TEMPLATE_LANGUAGE = new ParseField("template_language");
+    private static final ParseField TEMPLATE = new ParseField("template");
+
     static {
-        PARSER = new ObjectParser<>("ltr_feature", ParsingState::new);
-        PARSER.declareString(ParsingState::setName, new ParseField("name"));
-        PARSER.declareStringArray(ParsingState::setQueryParams, new ParseField("params"));
-        PARSER.declareString(ParsingState::setTemplateLanguage, new ParseField("template_language"));
+        PARSER = new ObjectParser<>(TYPE, ParsingState::new);
+        PARSER.declareString(ParsingState::setName, NAME);
+        PARSER.declareStringArray(ParsingState::setQueryParams, PARAMS);
+        PARSER.declareString(ParsingState::setTemplateLanguage, TEMPLATE_LANGUAGE);
         PARSER.declareField(ParsingState::setTemplate, (parser, value) -> {
             if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
-                try (XContentBuilder builder = XContentFactory.contentBuilder(parser.contentType())) {
-                    return builder.copyCurrentStructure(parser).bytes().utf8ToString();
+                // Force json
+                try (XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON)) {
+                    return builder.copyCurrentStructure(parser);
                 } catch (IOException e) {
                     throw new ParsingException(parser.getTokenLocation(), "Could not parse inline template", e);
                 }
             } else {
                 return parser.text();
             }
-        }, new ParseField("template"), ObjectParser.ValueType.OBJECT_OR_STRING);
+        }, TEMPLATE, ObjectParser.ValueType.OBJECT_OR_STRING);
     }
 
-    public StoredFeature(String name, Collection<String> params, String templateLanguage, String template) {
+    public StoredFeature(String name, List<String> params, String templateLanguage, String template, boolean storedAsString) {
         this.name = Objects.requireNonNull(name);
         this.queryParams = Objects.requireNonNull(params);
         this.templateLanguage = Objects.requireNonNull(templateLanguage);
         this.template = Objects.requireNonNull(template);
+        this.templateAsString = storedAsString;
+    }
+
+    public StoredFeature(StreamInput input) throws IOException {
+        name = input.readString();
+        queryParams = input.readList(StreamInput::readString);
+        templateLanguage = input.readString();
+        template = input.readString();
+        templateAsString = input.readBoolean();
+    }
+
+    public StoredFeature(String name, List<String> params, String templateLanguage, String template) {
+        this(name, params, templateLanguage, template, true);
+    }
+
+    public StoredFeature(String name, List<String> params, String templateLanguage, XContentBuilder template) {
+        this(name, params, templateLanguage, Objects.requireNonNull(template).bytes().utf8ToString(), false);
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(name);
+        out.writeStringList(queryParams);
+        out.writeString(templateLanguage);
+        out.writeString(template);
+        out.writeBoolean(templateAsString);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(NAME.getPreferredName(), name);
+        builder.field(PARAMS.getPreferredName(), queryParams);
+        builder.field(TEMPLATE_LANGUAGE.getPreferredName(), templateLanguage);
+        if (templateAsString) {
+            builder.field(TEMPLATE.getPreferredName(), template);
+        } else {
+            builder.field(TEMPLATE.getPreferredName());
+            // it's ok to use NamedXContentRegistry.EMPTY because we don't really parse we copy the structure...
+            XContentParser parser = XContentFactory.xContent(template).createParser(NamedXContentRegistry.EMPTY, template);
+            builder.copyCurrentStructure(parser);
+        }
+        builder.endObject();
+        return builder;
     }
 
     public static StoredFeature parse(XContentParser parser) {
@@ -95,8 +151,14 @@ public class StoredFeature implements Feature, Accountable {
             if (state.template == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Field [template] is mandatory");
             }
-            return new StoredFeature(state.name, Collections.unmodifiableCollection(state.queryParams),
-                    state.templateLanguage, state.template);
+            if (state.template instanceof String) {
+                return new StoredFeature(state.name, Collections.unmodifiableList(state.queryParams),
+                        state.templateLanguage, (String) state.template);
+            } else {
+                assert state.template instanceof XContentBuilder;
+                return new StoredFeature(state.name, Collections.unmodifiableList(state.queryParams),
+                        state.templateLanguage, (XContentBuilder) state.template);
+            }
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -107,13 +169,18 @@ public class StoredFeature implements Feature, Accountable {
         return name;
     }
 
+    public String type() {
+        return TYPE;
+    }
+
     @Override
     public Query doToQuery(QueryShardContext context, Map<String, Object> params) {
-        boolean missingParam = queryParams.stream().anyMatch(x -> !params.containsKey(x));
-        if (missingParam) {
-            // Is it sane to do this?
-            // should we fail?
-            return new MatchNoDocsQuery();
+        List<String> missingParams = queryParams.stream()
+                .filter((x) -> params == null || !params.containsKey(x))
+                .collect(Collectors.toList());
+        if (!missingParams.isEmpty()) {
+            String names = missingParams.stream().collect(Collectors.joining(","));
+            throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
         ExecutableScript script = context.getExecutableScript(new Script(ScriptType.INLINE,
                 templateLanguage, template, params), ScriptContext.Standard.SEARCH);
@@ -145,16 +212,20 @@ public class StoredFeature implements Feature, Accountable {
         }
     }
 
-    protected Collection<String> queryParams() {
+    Collection<String> queryParams() {
         return queryParams;
     }
 
-    protected String templateLanguage() {
+    String templateLanguage() {
         return templateLanguage;
     }
 
-    protected String template() {
+    String template() {
         return template;
+    }
+
+    boolean templateAsString() {
+        return templateAsString;
     }
 
     @Override
@@ -169,25 +240,49 @@ public class StoredFeature implements Feature, Accountable {
                 (Character.BYTES * template.length()) + NUM_BYTES_ARRAY_HEADER;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StoredFeature)) return false;
+
+        StoredFeature feature = (StoredFeature) o;
+        if (templateAsString != feature.templateAsString) return false;
+        if (!name.equals(feature.name)) return false;
+        if (!queryParams.equals(feature.queryParams)) return false;
+        if (!templateLanguage.equals(feature.templateLanguage)) return false;
+        return template.equals(feature.template);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + queryParams.hashCode();
+        result = 31 * result + templateLanguage.hashCode();
+        result = 31 * result + template.hashCode();
+        result = 31 * result + (templateAsString ? 1 : 0);
+        return result;
+    }
+
     private static class ParsingState {
         private String name;
-        private Collection<String> queryParams;
+        private List<String> queryParams;
         private String templateLanguage = DEFAULT_TEMPLATE_LANGUAGE;
+        private Object template;
 
-        private String template;
         public void setName(String name) {
             this.name = name;
         }
 
-        void setQueryParams(Collection<String> queryParams) {
+        void setQueryParams(List<String> queryParams) {
             this.queryParams = queryParams;
         }
 
-        public void setTemplateLanguage(String templateLanguage) {
+        void setTemplateLanguage(String templateLanguage) {
             this.templateLanguage = templateLanguage;
         }
 
-        void setTemplate(String template) {
+        void setTemplate(Object template) {
+            assert template instanceof String || template instanceof XContentBuilder;
             this.template = template;
         }
     }

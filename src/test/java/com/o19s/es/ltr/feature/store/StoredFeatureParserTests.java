@@ -19,6 +19,9 @@ package com.o19s.es.ltr.feature.store;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 
 import java.io.IOException;
@@ -46,10 +49,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         String featureString = generateTestFeature();
 
         StoredFeature feature = parse(featureString);
-        assertEquals("testFeature", feature.name());
-        assertArrayEquals(Arrays.asList("param1", "param2").toArray(), feature.queryParams().toArray());
-        assertEquals("mustache", feature.templateLanguage());
-        assertEquals(new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY), feature.template());
+        assertTestFeature(feature);
     }
 
     public static String generateTestFeature() {
@@ -62,6 +62,15 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                     "\n}\n";
     }
 
+    public void assertTestFeature(StoredFeature feature) {
+        assertEquals("testFeature", feature.name());
+        assertArrayEquals(Arrays.asList("param1", "param2").toArray(), feature.queryParams().toArray());
+        assertEquals("mustache", feature.templateLanguage());
+        assertEquals(new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY), feature.template());
+        assertFalse(feature.templateAsString());
+    }
+
+
     public void testParseFeatureAsString() throws IOException {
         String featureString = "{\n" +
                 "\"name\": \"testFeature\",\n" +
@@ -72,12 +81,23 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                         .replace("\"", "\\\"") +
                 "\"\n}\n";
 
+
         StoredFeature feature = parse(featureString);
         assertEquals("testFeature", feature.name());
         assertArrayEquals(Arrays.asList("param1", "param2").toArray(), feature.queryParams().toArray());
         assertEquals("mustache", feature.templateLanguage());
         assertEquals(new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY),
                 feature.template());
+        assertTrue(feature.templateAsString());
+    }
+
+    public void testToXContent() throws IOException {
+        String featureString = generateTestFeature();
+        StoredFeature feature = parse(featureString);
+        XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
+        featureString = feature.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
+        StoredFeature featureReparsed = parse(featureString);
+        assertTestFeature(featureReparsed);
     }
 
     public void testParseErrorOnMissingName() throws IOException {

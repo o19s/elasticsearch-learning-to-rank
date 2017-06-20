@@ -26,11 +26,21 @@ import java.util.Map;
 public class MemStore implements FeatureStore {
     private final Map<String, StoredFeature> features = new HashMap<>();
     private final Map<String, StoredFeatureSet> sets = new HashMap<>();
-    private final Map<String, StoredLtrModel> models = new HashMap<>();
+    private final Map<String, CompiledLtrModel> models = new HashMap<>();
+
+    private final String storeName;
+
+    public MemStore(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public MemStore() {
+        this("memstore");
+    }
 
     @Override
     public String getStoreName() {
-        return "memstore";
+        return storeName;
     }
 
     @Override
@@ -52,8 +62,8 @@ public class MemStore implements FeatureStore {
     }
 
     @Override
-    public StoredLtrModel loadModel(String id) throws IOException {
-        StoredLtrModel model = models.get(id);
+    public CompiledLtrModel loadModel(String id) throws IOException {
+        CompiledLtrModel model = models.get(id);
         if (model == null) {
             throw new IllegalArgumentException("Feature [" + id + "] not found");
         }
@@ -68,7 +78,7 @@ public class MemStore implements FeatureStore {
         sets.put(set.name(), set);
     }
 
-    public void add(StoredLtrModel model) {
+    public void add(CompiledLtrModel model) {
         models.put(model.name(), model);
     }
 

@@ -1,0 +1,28 @@
+{
+  "ltr.delete_featureset": {
+    "methods" : ["DELETE"],
+    "url": {
+      "path": "/_ltr/{store}/_featureset/{name}",
+      "paths": ["/_ltr/_featureset/{name}", "/_ltr/{store}/_featureset/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
+        }
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
+      }
+    },
+    "body": null
+  }
+}

@@ -23,10 +23,14 @@ import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryShardContext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +42,9 @@ import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
 
-public class StoredFeatureSet implements FeatureSet, Accountable {
+public class StoredFeatureSet implements FeatureSet, Accountable, StorableElement {
+    public static final int MAX_FEATURES = 10000;
+    public static final String TYPE = "featureset";
     private final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeatureSet.class);
     private final String name;
     private final Map<String, Integer> featureMap;
@@ -46,12 +52,15 @@ public class StoredFeatureSet implements FeatureSet, Accountable {
 
     private static final ObjectParser<ParsingState, Void> PARSER;
 
+    static final ParseField NAME = new ParseField("name");
+    static final ParseField FEATURES = new ParseField("features");
+
     static {
-        PARSER = new ObjectParser<>("ltr_feature", ParsingState::new);
-        PARSER.declareString(ParsingState::setName, new ParseField("name"));
+        PARSER = new ObjectParser<>(TYPE, ParsingState::new);
+        PARSER.declareString(ParsingState::setName, NAME);
         PARSER.declareObjectArray(ParsingState::setFeatures,
                 (p, c) -> StoredFeature.parse(p),
-                new ParseField("features"));
+                FEATURES);
     }
 
     public static StoredFeatureSet parse(XContentParser parser) {
@@ -88,11 +97,59 @@ public class StoredFeatureSet implements FeatureSet, Accountable {
                         "feature names must be unique in a set.");
             }
         }
-
     }
+
+    public StoredFeatureSet(StreamInput input) throws IOException {
+        this(input.readString(), input.readList(StoredFeature::new));
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(name);
+        out.writeList(features);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(NAME.getPreferredName(), name);
+        builder.startArray(FEATURES.getPreferredName());
+        for (StoredFeature feature : features) {
+            feature.toXContent(builder, params);
+        }
+        builder.endArray();
+        builder.endObject();
+        return builder;
+    }
+
     @Override
     public String name() {
         return name;
+    }
+
+    @Override
+    public String type() {
+        return TYPE;
+    }
+
+    /**
+     * Generates a new StoredFeatureSet by adding extra features.
+     * The name is kept, features provided here are added at the end
+     * of existing features.
+     * @param features new features to append
+     * @return a new StoredFeatureSet
+     * @throws IllegalArgumentException if the resulting size of the set exceed MAX_FEATURES
+     * or if uniqueness of feature names is not met.
+     */
+    public StoredFeatureSet append(List<StoredFeature> features) {
+        int nFeature = features.size() + this.features.size();
+        if (nFeature > MAX_FEATURES) {
+            throw new IllegalArgumentException("The resulting feature set would be too large");
+        }
+        List<StoredFeature> newFeatures = new ArrayList<>(nFeature);
+        newFeatures.addAll(this.features);
+        newFeatures.addAll(features);
+        return new StoredFeatureSet(name, newFeatures);
     }
 
     @Override
@@ -138,6 +195,24 @@ public class StoredFeatureSet implements FeatureSet, Accountable {
         return BASE_RAM_USED +
                 featureMap.size() * NUM_BYTES_OBJECT_REF + NUM_BYTES_OBJECT_HEADER + NUM_BYTES_ARRAY_HEADER +
                 features.stream().mapToLong(StoredFeature::ramBytesUsed).sum();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StoredFeatureSet)) return false;
+
+        StoredFeatureSet that = (StoredFeatureSet) o;
+
+        if (!name.equals(that.name)) return false;
+        return features.equals(that.features);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + features.hashCode();
+        return result;
     }
 
     private static class ParsingState {

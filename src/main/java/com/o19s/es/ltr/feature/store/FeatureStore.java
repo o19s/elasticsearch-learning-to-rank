@@ -23,7 +23,7 @@ import java.io.IOException;
  */
 public interface FeatureStore {
     String getStoreName();
-    StoredFeature load(String id) throws IOException;
-    StoredFeatureSet loadSet(String id) throws IOException;
-    StoredLtrModel loadModel(String id) throws IOException;
+    StoredFeature load(String name) throws IOException;
+    StoredFeatureSet loadSet(String name) throws IOException;
+    CompiledLtrModel loadModel(String name) throws IOException;
 }

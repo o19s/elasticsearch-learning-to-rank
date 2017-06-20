@@ -16,18 +16,30 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
+import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.cache.Cache;
 import org.elasticsearch.common.cache.CacheBuilder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 /**
  * Store various caches used by the plugin
@@ -35,7 +47,8 @@ import java.util.Objects;
 public class Caches {
     private final Cache<CacheKey, StoredFeature> featureCache;
     private final Cache<CacheKey, StoredFeatureSet> featureSetCache;
-    private final Cache<CacheKey, StoredLtrModel> modelCache;
+    private final Cache<CacheKey, CompiledLtrModel> modelCache;
+    private final Map<String, PerStoreStats> perStoreStats = new ConcurrentHashMap<>();
     private final long maxWeight;
 
     public Caches(TimeValue expireAfterWrite, TimeValue expireAfterAccess, long maxWeight) {
@@ -44,18 +57,21 @@ public class Caches {
                 .setExpireAfterAccess(expireAfterAccess)
                 .setMaximumWeight(maxWeight)
                 .weigher((s, w) -> w.ramBytesUsed())
+                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
         this.featureSetCache = CacheBuilder.<CacheKey, StoredFeatureSet>builder()
                 .setExpireAfterWrite(expireAfterWrite)
                 .setExpireAfterAccess(expireAfterAccess)
                 .weigher((s, w) -> w.ramBytesUsed())
                 .setMaximumWeight(maxWeight)
+                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
-        this.modelCache = CacheBuilder.<CacheKey, StoredLtrModel>builder()
+        this.modelCache = CacheBuilder.<CacheKey, CompiledLtrModel>builder()
                 .setExpireAfterWrite(expireAfterWrite)
                 .setExpireAfterAccess(expireAfterAccess)
                 .weigher((s, w) -> w.ramBytesUsed())
                 .setMaximumWeight(maxWeight)
+                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
         this.maxWeight = maxWeight;
     }
@@ -67,10 +83,61 @@ public class Caches {
                 Math.min(JvmInfo.jvmInfo().getMem().getHeapMax().getBytes()/10, RamUsageEstimator.ONE_MB*10));
     }
 
+    private void onAdd(CacheKey k, Accountable acc) {
+        perStoreStats.compute(k.getStoreName(), (k2, v) -> v != null ? v.add(acc) : new PerStoreStats(acc));
+    }
+
+    private void onRemove(CacheKey k, Accountable acc) {
+        perStoreStats.compute(k.getStoreName(), (k2, v) -> {
+            assert v != null;
+            // return null should remove the entry
+            return v.remove(acc) > 0 ? v : null;
+        });
+    }
+
+    StoredFeature loadFeature(CacheKey key, CheckedFunction<String, StoredFeature, IOException> loader) throws IOException {
+        return cacheLoad(key, featureCache, loader);
+    }
+
+    StoredFeatureSet loadFeatureSet(CacheKey key, CheckedFunction<String, StoredFeatureSet, IOException> loader) throws IOException {
+        return cacheLoad(key, featureSetCache, loader);
+    }
+
+    CompiledLtrModel loadModel(CacheKey key, CheckedFunction<String, CompiledLtrModel, IOException> loader) throws IOException {
+        return cacheLoad(key, modelCache, loader);
+    }
+
+    private <E extends Accountable> E cacheLoad(CacheKey key, Cache<CacheKey, E> cache,
+                                                CheckedFunction<String, E, IOException> loader) throws IOException {
+        try {
+            return cache.computeIfAbsent(key, (k) -> {
+                E elt = loader.apply(k.getId());
+                if (elt != null) {
+                    onAdd(k, elt);
+                }
+                return elt;
+            });
+        } catch (ExecutionException e) {
+            throw new IOException(e.getMessage(), e.getCause());
+        }
+    }
+
     public void evict(String index) {
         evict(index, featureCache);
         evict(index, featureSetCache);
         evict(index, modelCache);
+    }
+
+    public void evictFeature(String index, String name) {
+        featureCache.invalidate(new CacheKey(index, name));
+    }
+
+    public void evictFeatureSet(String index, String name) {
+        featureSetCache.invalidate(new CacheKey(index, name));
+    }
+
+    public void evictModel(String index, String name) {
+        modelCache.invalidate(new CacheKey(index, name));
     }
 
     private void evict(String index, Cache<CacheKey, ?> cache) {
@@ -90,8 +157,24 @@ public class Caches {
         return featureSetCache;
     }
 
-    public Cache<CacheKey, StoredLtrModel> modelCache() {
+    public Cache<CacheKey, CompiledLtrModel> modelCache() {
         return modelCache;
+    }
+
+    public Set<String> getCachedStoreNames() {
+        return perStoreStats.keySet();
+    }
+
+    public Stream<Map.Entry<String, PerStoreStats>> perStoreStatsStream() {
+        return perStoreStats.entrySet().stream();
+    }
+
+    public PerStoreStats getPerStoreStats(String store) {
+        PerStoreStats stats = perStoreStats.get(store);
+        if (stats != null) {
+            return stats;
+        }
+        return PerStoreStats.EMPTY;
     }
 
     public long getMaxWeight() {
@@ -131,6 +214,96 @@ public class Caches {
             int result = storeName.hashCode();
             result = 31 * result + id.hashCode();
             return result;
+        }
+    }
+
+    public static class PerStoreStats {
+        public static final PerStoreStats EMPTY = new PerStoreStats();
+        private final AtomicLong ramAll = new AtomicLong();
+        private final AtomicInteger countAll = new AtomicInteger();
+
+        private final AtomicLong featureRam = new AtomicLong();
+        private final AtomicInteger featureCount = new AtomicInteger();
+        private final AtomicLong featureSetRam = new AtomicLong();
+        private final AtomicInteger featureSetCount = new AtomicInteger();
+        private final AtomicLong modelRam = new AtomicLong();
+        private final AtomicInteger modelCount = new AtomicInteger();
+
+        PerStoreStats() {}
+
+        PerStoreStats(Accountable acc) {
+            add(Objects.requireNonNull(acc));
+        }
+
+        public PerStoreStats add(Accountable elt) {
+            int nb = update(true, elt);
+            assert nb > 0;
+            return this;
+        }
+
+        private long remove(Accountable elt) {
+            return update(false, elt);
+        }
+
+        private int update(boolean add, Accountable elt) {
+            Objects.requireNonNull(elt);
+            final AtomicInteger count;
+            final AtomicLong ram;
+            final int factor = add ? 1 : -1;
+            if (elt instanceof Feature) {
+                count = featureCount;
+                ram = featureRam;
+            } else if (elt instanceof FeatureSet) {
+                count = featureSetCount;
+                ram = featureSetRam;
+            } else if (elt instanceof CompiledLtrModel) {
+                count = modelCount;
+                ram = modelRam;
+            } else {
+                throw new IllegalArgumentException("Unsupported class " + elt.getClass());
+            }
+            long ramUsed = elt.ramBytesUsed();
+
+            ram.addAndGet(factor * ramUsed);
+            assert ram.get() >= 0;
+            count.addAndGet(factor);
+            assert count.get() >= 0;
+
+            ramAll.addAndGet(factor * ramUsed);
+            assert ramAll.get() >= 0;
+            return countAll.addAndGet(factor);
+        }
+
+        public long totalRam() {
+            return ramAll.get();
+        }
+
+        public int totalCount() {
+            return countAll.get();
+        }
+
+        public long featureRam() {
+            return featureRam.get();
+        }
+
+        public int featureCount() {
+            return featureCount.get();
+        }
+
+        public long featureSetRam() {
+            return featureSetRam.get();
+        }
+
+        public int featureSetCount() {
+            return featureSetCount.get();
+        }
+
+        public long modelRam() {
+            return modelRam.get();
+        }
+
+        public int modelCount() {
+            return modelCount.get();
         }
     }
 }
