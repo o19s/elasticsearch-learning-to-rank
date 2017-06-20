@@ -17,6 +17,9 @@
 package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.RankerFactory;
+import com.o19s.es.explore.ExplorerExtBuilder;
+import com.o19s.es.explore.ExplorerFetchSubPhase;
+import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
@@ -71,6 +74,7 @@ import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.NativeScriptFactory;
 import org.elasticsearch.script.ScriptEngineService;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
@@ -104,8 +108,14 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     @Override
+    public List<FetchSubPhase> getFetchSubPhases(SearchPlugin.FetchPhaseConstructionContext context) {
+        return singletonList(new ExplorerFetchSubPhase());
+    }
+
+    @Override
     public List<QuerySpec<?>> getQueries() {
         return asList(
+                new QuerySpec<>(ExplorerQueryBuilder.NAME, ExplorerQueryBuilder::new, ExplorerQueryBuilder::fromXContent),
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
                 new QuerySpec<>(StoredLtrQueryBuilder.NAME, StoredLtrQueryBuilder::new, StoredLtrQueryBuilder::fromXContent));
     }
@@ -114,6 +124,12 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     public ScriptEngineService getScriptEngineService(Settings settings) {
         return new RankLibScriptEngine(settings, parserFactory);
     }
+
+    @Override
+    public List<SearchExtSpec<?>> getSearchExts() {
+        return singletonList(new SearchExtSpec<>(ExplorerExtBuilder.NAME, ExplorerExtBuilder::new, ExplorerExtBuilder::fromXContent));
+    }
+
 
     /**
      * Returns a list of {@link NativeScriptFactory} instances.
