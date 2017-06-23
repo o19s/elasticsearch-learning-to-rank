@@ -87,9 +87,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
         assertEquals(1, stats.getAll().getTotal().getCount());
-        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getTotal().getRam());
+        assertEquals(model.compile(parserFactory()).ramBytesUsed(), stats.getAll().getTotal().getRam());
         assertEquals(1, stats.getAll().getModels().getCount());
-        assertEquals(model.compile(factory).ramBytesUsed(), stats.getAll().getModels().getRam());
+        assertEquals(model.compile(parserFactory()).ramBytesUsed(), stats.getAll().getModels().getRam());
         assertEquals(0, stats.getAll().getFeatures().getCount());
         assertEquals(0, stats.getAll().getFeatures().getRam());
         assertEquals(0, stats.getAll().getFeaturesets().getCount());

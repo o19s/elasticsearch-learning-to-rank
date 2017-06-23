@@ -172,6 +172,10 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
         return buildRandomFeatureSet(rName());
     }
 
+    public static StoredFeatureSet buildRandomFeatureSet(int nbFeatures) throws IOException {
+        return parse(generateRandomFeatureSet(rName(), null, nbFeatures));
+    }
+
     public static StoredFeatureSet buildRandomFeatureSet(String name) throws IOException {
         return parse(generateRandomFeatureSet(name, null));
     }
@@ -183,13 +187,17 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     public static String generateRandomFeatureSet(Consumer<StoredFeature> features) throws IOException {
         return generateRandomFeatureSet(rName(), features);
     }
+
     public static String generateRandomFeatureSet(String name, Consumer<StoredFeature> features) throws IOException {
+        return generateRandomFeatureSet(name, features, random().nextInt(20)+1);
+    }
+
+    public static String generateRandomFeatureSet(String name, Consumer<StoredFeature> features, int nbFeat) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"name\" : \"")
                 .append(name)
                 .append("\",\n");
         sb.append("\"features\":[");
-        int nbFeat = random().nextInt(20)+1;
         boolean first = true;
         // Simply avoid adding the same feature twice because of random string
         Set<String> addedFeatures = new HashSet<>();
