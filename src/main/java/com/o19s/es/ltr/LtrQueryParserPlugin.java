@@ -81,7 +81,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin {
@@ -90,13 +89,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     public LtrQueryParserPlugin(Settings settings) {
         caches = new Caches(settings);
-        parserFactory = buildParserFactory();
-    }
-
-    public static LtrRankerParserFactory buildParserFactory() {
         // Use memoize to Lazy load the RankerFactory as it's a heavy object to construct
         Supplier<RankerFactory> ranklib = Suppliers.memoize(RankerFactory::new);
-        return new LtrRankerParserFactory.Builder()
+        parserFactory = new LtrRankerParserFactory.Builder()
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))
                 .register(LinearRankerParser.TYPE, LinearRankerParser::new)
                 .register(XGBoostJsonParser.TYPE, XGBoostJsonParser::new)
@@ -174,7 +169,11 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<Setting<?>> getSettings() {
-        return singletonList(IndexFeatureStore.STORE_VERSION_PROP);
+        return unmodifiableList(asList(
+                IndexFeatureStore.STORE_VERSION_PROP,
+                Caches.LTR_CACHE_MEM_SETTING,
+                Caches.LTR_CACHE_EXPIRE_AFTER_READ,
+                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
     }
 
     protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {

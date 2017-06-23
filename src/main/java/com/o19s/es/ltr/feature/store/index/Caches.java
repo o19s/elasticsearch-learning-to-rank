@@ -26,7 +26,9 @@ import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.cache.Cache;
 import org.elasticsearch.common.cache.CacheBuilder;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 
@@ -45,42 +47,61 @@ import java.util.stream.Stream;
  * Store various caches used by the plugin
  */
 public class Caches {
+    public static final Setting<ByteSizeValue> LTR_CACHE_MEM_SETTING;
+    public static final Setting<TimeValue> LTR_CACHE_EXPIRE_AFTER_WRITE = Setting.timeSetting("ltr.caches.expire_after_write",
+            TimeValue.timeValueHours(1),
+            TimeValue.timeValueNanos(0),
+            Setting.Property.NodeScope);
+    public static final Setting<TimeValue> LTR_CACHE_EXPIRE_AFTER_READ = Setting.timeSetting("ltr.caches.expire_after_read",
+            TimeValue.timeValueHours(1),
+            TimeValue.timeValueNanos(0),
+            Setting.Property.NodeScope);
+
     private final Cache<CacheKey, StoredFeature> featureCache;
     private final Cache<CacheKey, StoredFeatureSet> featureSetCache;
     private final Cache<CacheKey, CompiledLtrModel> modelCache;
+
+    static {
+        LTR_CACHE_MEM_SETTING = Setting.memorySizeSetting("ltr.caches.max_mem",
+                (s) -> new ByteSizeValue(Math.min(RamUsageEstimator.ONE_MB*10,
+                        JvmInfo.jvmInfo().getMem().getHeapMax().getBytes()/10)).toString(),
+                Setting.Property.NodeScope);
+    }
     private final Map<String, PerStoreStats> perStoreStats = new ConcurrentHashMap<>();
     private final long maxWeight;
 
-    public Caches(TimeValue expireAfterWrite, TimeValue expireAfterAccess, long maxWeight) {
-        this.featureCache = CacheBuilder.<CacheKey, StoredFeature>builder()
-                .setExpireAfterWrite(expireAfterWrite)
-                .setExpireAfterAccess(expireAfterAccess)
-                .setMaximumWeight(maxWeight)
+    public Caches(TimeValue expAfterWrite, TimeValue expAfterAccess, ByteSizeValue maxWeight) {
+        this.featureCache = configCache(CacheBuilder.<CacheKey, StoredFeature>builder(), expAfterWrite, expAfterAccess, maxWeight)
                 .weigher((s, w) -> w.ramBytesUsed())
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
-        this.featureSetCache = CacheBuilder.<CacheKey, StoredFeatureSet>builder()
-                .setExpireAfterWrite(expireAfterWrite)
-                .setExpireAfterAccess(expireAfterAccess)
+        this.featureSetCache = configCache(CacheBuilder.<CacheKey, StoredFeatureSet>builder(), expAfterWrite, expAfterAccess, maxWeight)
                 .weigher((s, w) -> w.ramBytesUsed())
-                .setMaximumWeight(maxWeight)
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
-        this.modelCache = CacheBuilder.<CacheKey, CompiledLtrModel>builder()
-                .setExpireAfterWrite(expireAfterWrite)
-                .setExpireAfterAccess(expireAfterAccess)
+        this.modelCache = configCache(CacheBuilder.<CacheKey, CompiledLtrModel>builder(), expAfterWrite, expAfterAccess, maxWeight)
                 .weigher((s, w) -> w.ramBytesUsed())
-                .setMaximumWeight(maxWeight)
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
-        this.maxWeight = maxWeight;
+        this.maxWeight = maxWeight.getBytes();
+    }
+
+    private <K, V> CacheBuilder<K, V> configCache(CacheBuilder<K, V> builder, TimeValue expireAfterWrite,
+                                                  TimeValue expireAfterAccess, ByteSizeValue maxWeight) {
+        if (expireAfterWrite.nanos() > 0) {
+            builder.setExpireAfterWrite(expireAfterWrite);
+        }
+        if (expireAfterAccess.nanos() > 0) {
+            builder.setExpireAfterAccess(expireAfterAccess);
+        }
+        builder.setMaximumWeight(maxWeight.getBytes());
+        return builder;
     }
 
     public Caches(Settings settings) {
-        // TODO: use settings
-        this(TimeValue.timeValueMinutes(10),
-                TimeValue.timeValueMinutes(2),
-                Math.min(JvmInfo.jvmInfo().getMem().getHeapMax().getBytes()/10, RamUsageEstimator.ONE_MB*10));
+        this(LTR_CACHE_EXPIRE_AFTER_WRITE.get(settings),
+                LTR_CACHE_EXPIRE_AFTER_READ.get(settings),
+                LTR_CACHE_MEM_SETTING.get(settings));
     }
 
     private void onAdd(CacheKey k, Accountable acc) {
