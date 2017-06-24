@@ -4,7 +4,7 @@ Rank Elasticsearch results using tree based (LambdaMART, Random Forest, MART) an
 
 # Installing
 
-Generally new features follow the latest ES version, but you can get older versions on older ES versions. The format of the filename follows this 
+Generally new features follow the latest ES version, but you can get older versions on older ES versions. The format of the filename follows this
 convention: `ltr-query-<PLUGIN VERSION>-es<ES VERSION>.zip`. The full listing
 can be found [here](http://es-learn-to-rank.labs.o19s.com). For example, to install version 0.1.2 of the plugin on ES 5.4.0, do the following:
 
@@ -237,7 +237,7 @@ Notes if you want to dig into the code.
 This plugin requires the very specific 2.13 version of Gradle.  Fortunately running the build with the included Gradle Wrapper will download this version for you!
 
 ```
-gradlew clean check
+./gradlew clean check
 ```
 
 This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file.
