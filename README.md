@@ -245,7 +245,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
-./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.0.1-SNAPSHOT.zip
+./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.1.2-es5.4.0.zip
 ```
 
 ## Acknowledgements
