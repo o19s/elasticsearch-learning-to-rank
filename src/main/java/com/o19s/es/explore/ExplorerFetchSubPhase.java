@@ -36,14 +36,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Daniel on 6/15/2017.
- */
+
 public class ExplorerFetchSubPhase implements FetchSubPhase {
     @Override
     public void hitExecute(SearchContext context, HitContext hitContext) {
         if (hitContext.hit().fieldsOrNull() == null) {
-            hitContext.hit().fields(new HashMap<>(2));
+            hitContext.hit().fields(new HashMap<>(13));
         }
 
         // Check to see if we're enabled

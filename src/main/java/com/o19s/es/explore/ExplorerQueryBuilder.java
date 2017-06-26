@@ -15,13 +15,13 @@
 
 package com.o19s.es.explore;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
@@ -30,21 +30,34 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuilder> {
+public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuilder> implements NamedWriteable{
     public static final String NAME = "match_explorer";
 
-    private static final ParseField QUERY_FIELD = new ParseField("query");
-    private static final ParseField FIELD_FIELD = new ParseField("field");
-    private static final ParseField TYPE_FIELD = new ParseField("type");
+    private static final ParseField QUERY_NAME = new ParseField("query");
+    private static final ParseField FIELD_NAME = new ParseField("field");
+    private static final ParseField TYPE_NAME = new ParseField("type");
 
-    QueryBuilder query;
-    String field;
-    String type;
+    private QueryBuilder query;
+    private String field;
+    private String type;
+
+    private static final ObjectParser<ExplorerQueryBuilder, QueryParseContext> PARSER;
+
+    static {
+        PARSER = new ObjectParser<>(NAME, ExplorerQueryBuilder::new);
+        PARSER.declareObject(
+                ExplorerQueryBuilder::query,
+                (parser, context) -> context.parseInnerQueryBuilder().get(),
+                QUERY_NAME
+        );
+        PARSER.declareString(ExplorerQueryBuilder::field, FIELD_NAME);
+        PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
+        declareStandardFields(PARSER);
+    }
+
 
     public ExplorerQueryBuilder() {
     }
@@ -71,53 +84,36 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
         query.toXContent(builder, params);
 
-        builder.field(FIELD_FIELD.getPreferredName(), field);
-        builder.field(TYPE_FIELD.getPreferredName(), type);
+        builder.field(FIELD_NAME.getPreferredName(), field);
+        builder.field(TYPE_NAME.getPreferredName(), type);
 
         builder.endObject();
     }
 
-    public static Optional<ExplorerQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
-        XContentParser parser = parseContext.parser();
+    public static Optional<ExplorerQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
+        XContentParser parser = context.parser();
+        final ExplorerQueryBuilder builder;
 
-        final List<QueryBuilder> queries = new ArrayList<>();
-
-        String field = "";
-        String type = "";
-
-        String currentFieldName = null;
-        XContentParser.Token token;
-
-        while((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
-            } else if(token == XContentParser.Token.START_OBJECT) {
-                if(QUERY_FIELD.match(currentFieldName)) {
-                    parseContext.parseInnerQueryBuilder().ifPresent(queries::add);
-                }
-            } else {
-                if(FIELD_FIELD.match(currentFieldName)) {
-                    field = parser.text();
-                } else if(TYPE_FIELD.match(currentFieldName)) {
-                    type = parser.text();
-                }
-            }
+        try {
+            builder = PARSER.parse(context.parser(), context);
+        } catch (IllegalArgumentException iae) {
+            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
 
-        ExplorerQueryBuilder builder = new ExplorerQueryBuilder();
-        builder.query = queries.get(0);
-        builder.field = field;
-        builder.type = type;
-
+        if (builder.query == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Field [" + QUERY_NAME + "] is mandatory.");
+        }
+        if (builder.field() == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Field [" + FIELD_NAME + "] is mandatory.");
+        }
+        if (builder.statsType() == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
+        }
         return Optional.of(builder);
     }
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        if (query == null) {
-            return new MatchAllDocsQuery();
-        }
-
         return new ExplorerQuery(query.toQuery(context), field, type);
     }
 
@@ -138,16 +134,27 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         return NAME;
     }
 
-
     public QueryBuilder query() {
         return query;
+    }
+    public ExplorerQueryBuilder query(QueryBuilder query) {
+        this.query = query;
+        return this;
     }
 
     public String field() {
         return field;
     }
+    public ExplorerQueryBuilder field(String field) {
+        this.field = field;
+        return this;
+    }
 
     public String statsType() {
         return type;
+    }
+    public ExplorerQueryBuilder statsType(String type) {
+        this.type = type;
+        return this;
     }
 }

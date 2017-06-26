@@ -15,7 +15,7 @@
  */
 package com.o19s.es.explore;
 
-import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Explanation;
@@ -23,8 +23,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.similarities.Similarity;
-import org.elasticsearch.common.logging.Loggers;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -57,6 +55,15 @@ public class ExplorerQuery extends Query {
     }
 
     @Override
+    public Query rewrite(IndexReader reader) throws IOException {
+        Query rewritten = query.rewrite(reader);
+        if(rewritten != query) {
+            return new ExplorerQuery(rewritten, field, type);
+        }
+        return query;
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(query, field, type);
     }
@@ -69,14 +76,9 @@ public class ExplorerQuery extends Query {
     protected class ExplorerWeight extends Weight {
         protected final Weight weight;
 
-        private Similarity _similarity;
-
         protected ExplorerWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
             super(ExplorerQuery.this);
-            Query rewritten = query.rewrite(searcher.getIndexReader());
-            weight = searcher.createWeight(rewritten, false);
-
-            this._similarity = searcher.getSimilarity(false);
+            weight = searcher.createWeight(ExplorerQuery.this, false);
         }
 
         @Override
@@ -101,14 +103,7 @@ public class ExplorerQuery extends Query {
 
         @Override
         public float getValueForNormalization() throws IOException {
-            float valueToNormalize = weight.getValueForNormalization();
-            float norm = _similarity.queryNorm(valueToNormalize);
-            if(Float.isInfinite(norm) || Float.isNaN(norm)) {
-                norm = 1.0f;
-            }
-            weight.normalize(norm, 1.0f);
-
-            return 0.0f;
+            return 1.0f;
         }
 
         @Override

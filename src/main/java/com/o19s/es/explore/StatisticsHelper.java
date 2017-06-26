@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class StatisticsHelper {
-    private final ArrayList<Float> data = new ArrayList<>();
+    private final ArrayList<Float> data = new ArrayList<>(10);
 
     private float min = Float.MAX_VALUE;
     private float max = 0.0f;
@@ -75,11 +75,10 @@ public class StatisticsHelper {
     }
 
     public float median() {
-        Integer[] sortedData = data.toArray(new Integer[data.size()]);
+        Float[] sortedData = data.toArray(new Float[data.size()]);
         Arrays.sort(sortedData);
 
-        if (sortedData.length % 2 == 0)
-        {
+        if (sortedData.length % 2 == 0) {
             return (sortedData[(sortedData.length / 2) - 1] + sortedData[sortedData.length / 2]) / 2.0f;
         }
         return sortedData[sortedData.length / 2];
