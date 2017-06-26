@@ -46,7 +46,6 @@ public class ExplorerScorer extends Scorer {
 
     @Override
     public float score() throws IOException {
-        // TODO: Cleanup DRY violation, similar code in the Explorer fetch phase
         Set<Term> terms = new HashSet<Term>();
         weight.extractTerms(terms);
 
@@ -96,19 +95,19 @@ public class ExplorerScorer extends Scorer {
             case("stddev_raw_tf"):
                 retval = tf_stats.getStdDev();
                 break;
-            case("sum_raw_idf"):
+            case("sum_classic_idf"):
                 retval = idf_stats.getSum();
                 break;
-            case("mean_raw_idf"):
+            case("mean_classic_idf"):
                 retval = idf_stats.getMean();
                 break;
-            case("max_raw_idf"):
+            case("max_classic_idf"):
                 retval = idf_stats.getMax();
                 break;
-            case("min_raw_idf"):
+            case("min_classic_idf"):
                 retval = idf_stats.getMin();
                 break;
-            case("stddev_raw_idf"):
+            case("stddev_classic_idf"):
                 retval = idf_stats.getStdDev();
                 break;
         }
