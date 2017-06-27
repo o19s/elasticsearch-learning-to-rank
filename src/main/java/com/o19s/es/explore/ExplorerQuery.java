@@ -57,10 +57,12 @@ public class ExplorerQuery extends Query {
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
         Query rewritten = query.rewrite(reader);
+
         if(rewritten != query) {
             return new ExplorerQuery(rewritten, field, type);
         }
-        return query;
+
+        return this;
     }
 
     @Override
@@ -78,7 +80,7 @@ public class ExplorerQuery extends Query {
 
         protected ExplorerWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
             super(ExplorerQuery.this);
-            weight = searcher.createWeight(ExplorerQuery.this, false);
+            weight = searcher.createWeight(query, false);
         }
 
         @Override
