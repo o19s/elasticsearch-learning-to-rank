@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.ranker.parser;
 
 import com.o19s.es.ltr.LtrTestUtils;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
@@ -82,5 +83,15 @@ public class LinearRankerParserTests extends LuceneTestCase {
         StoredFeatureSet set = new StoredFeatureSet("test", singletonList(LtrTestUtils.randomFeature("feature")));
         LinearRankerParser parser = new LinearRankerParser();
         expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"features\": 1.5 }"));
+    }
+
+    public static String generateRandomModelString(FeatureSet set) throws IOException {
+        XContentBuilder builder = JsonXContent.contentBuilder();
+        builder.startObject();
+        for (int i = 0; i < set.size(); i++) {
+            builder.field(set.feature(i).name(), random().nextFloat());
+        }
+        builder.endObject().close();
+        return builder.bytes().utf8ToString();
     }
 }

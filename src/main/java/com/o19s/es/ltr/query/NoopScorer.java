@@ -37,6 +37,11 @@ public class NoopScorer extends Scorer {
 
     }
 
+    public NoopScorer(Weight weight, DocIdSetIterator iterator) {
+        super(weight);
+        _noopIter = iterator;
+    }
+
     @Override
     public int docID() {
         return _noopIter.docID();
