@@ -60,6 +60,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     static {
         PARSER = new ObjectParser<>(NAME, StoredLtrQueryBuilder::new);
         PARSER.declareString(StoredLtrQueryBuilder::modelName, MODEL_NAME);
+        PARSER.declareString(StoredLtrQueryBuilder::featureSetName, FEATURESET_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
         PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map,
                 PARAMS, ObjectParser.ValueType.OBJECT);
@@ -103,7 +104,12 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected void doXContent(XContentBuilder builder, Params p) throws IOException {
         builder.startObject(NAME);
-        builder.field(MODEL_NAME.getPreferredName(), modelName);
+        if (modelName != null) {
+            builder.field(MODEL_NAME.getPreferredName(), modelName);
+        }
+        if (featureSetName != null) {
+            builder.field(FEATURESET_NAME.getPreferredName(), featureSetName);
+        }
         if (storeName != null) {
             builder.field(STORE_NAME.getPreferredName(), storeName);
         }
@@ -134,13 +140,14 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected boolean doEquals(StoredLtrQueryBuilder other) {
         return Objects.equals(modelName, other.modelName) &&
+                Objects.equals(featureSetName, other.featureSetName) &&
                 Objects.equals(storeName, other.storeName) &&
                 Objects.equals(params, other.params);
     }
 
     @Override
     protected int doHashCode() {
-        return Objects.hash(modelName, storeName, params);
+        return Objects.hash(modelName, featureSetName, storeName, params);
     }
 
     @Override

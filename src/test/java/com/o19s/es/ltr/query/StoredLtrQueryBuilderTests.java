@@ -87,6 +87,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                         .modifier(FieldValueFactorFunction.Modifier.LN2P)
                         .missing(0F)).toString());
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
+        store.add(set);
         LtrRanker ranker = new LinearRanker(new float[]{0.1F, 0.2F, 0.3F});
         CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
@@ -98,7 +99,11 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     @Override
     protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder();
-        builder.modelName("model1");
+        if (random().nextBoolean()) {
+            builder.modelName("model1");
+        } else {
+            builder.featureSetName("set1");
+        }
         Map<String, Object> params = new HashMap<>();
         params.put("query_string", "a wonderful query");
         builder.params(params);
