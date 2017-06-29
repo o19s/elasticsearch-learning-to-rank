@@ -26,6 +26,8 @@ import com.o19s.es.ltr.ranker.NullRanker;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
@@ -163,7 +165,16 @@ public class RankerQuery extends Query {
     }
 
     @Override
-    public RankerWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        if (!needsScores) {
+            // If scores are not needed simply return a constant score on all docs
+            return new ConstantScoreWeight(this) {
+                @Override
+                public Scorer scorer(LeafReaderContext context) throws IOException {
+                    return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
+                }
+            };
+        }
         List<Weight> weights = new ArrayList<>(queries.size());
         for (Query q : queries) {
             weights.add(searcher.createWeight(q, needsScores));
