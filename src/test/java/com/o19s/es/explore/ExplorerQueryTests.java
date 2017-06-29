@@ -53,16 +53,15 @@ public class ExplorerQueryTests extends LuceneTestCase {
     @Before
     public void setupIndex() throws Exception {
         dir = new RAMDirectory();
-        IndexWriter indexWriter = new IndexWriter(dir, new IndexWriterConfig(Lucene.STANDARD_ANALYZER));
 
-        for(int i = 0; i < docs.length; i++) {
-            Document doc = new Document();
-            doc.add(new Field("_id", Integer.toString(i + 1), StoredField.TYPE));
-            doc.add(newTextField("text", docs[i], Field.Store.YES));
-            indexWriter.addDocument(doc);
+        try(IndexWriter indexWriter = new IndexWriter(dir, new IndexWriterConfig(Lucene.STANDARD_ANALYZER))) {
+            for (int i = 0; i < docs.length; i++) {
+                Document doc = new Document();
+                doc.add(new Field("_id", Integer.toString(i + 1), StoredField.TYPE));
+                doc.add(newTextField("text", docs[i], Field.Store.YES));
+                indexWriter.addDocument(doc);
+            }
         }
-
-        indexWriter.close();
 
         reader = DirectoryReader.open(dir);
         searcher = new IndexSearcher(reader);
@@ -70,16 +69,18 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
     @After
     public void cleanup() throws Exception {
-        reader.close();
-        dir.close();
+        try {
+            reader.close();
+        } finally {
+            dir.close();
+        }
     }
 
     public void testQuery() throws Exception {
         Query q = new TermQuery(new Term("text", "cow"));
-        String field = "text";
-        String statsType = "max_raw_tf";
+        String statsType = "sum_raw_tf";
 
-        ExplorerQuery eq = new ExplorerQuery(q, field, statsType);
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
         // Basic query check, should match 2 docs
         assertThat(searcher.count(eq), equalTo(2));
@@ -87,6 +88,17 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify explain
         TopDocs docs = searcher.search(eq, 4);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: sum_raw_tf of text"));
+        assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: sum_raw_tf"));
+    }
+
+    public void testInvalidStat() throws Exception {
+        Query q = new TermQuery(new Term("text", "cow"));
+        String statsType = "sum_invalid_stat";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        expectThrows(RuntimeException.class, () -> {
+            searcher.search(eq, 4);
+        });
     }
 }

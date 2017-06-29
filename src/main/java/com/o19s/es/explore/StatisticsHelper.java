@@ -16,7 +16,6 @@
 package com.o19s.es.explore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class StatisticsHelper {
     private final ArrayList<Float> data = new ArrayList<>(10);
@@ -40,19 +39,27 @@ public class StatisticsHelper {
         }
     }
 
-    float getMax() {
+    public float getMax() {
+        assert !data.isEmpty();
+
         return max;
     }
 
-    float getMin() {
+    public float getMin() {
+        assert !data.isEmpty();
+
         return min;
     }
 
-    float getMean() {
+    public float getMean() {
+        assert !data.isEmpty();
+
         return getSum() / data.size();
     }
 
-    float getSum() {
+    public float getSum() {
+        assert !data.isEmpty();
+
         float sum = 0.0f;
 
         for(float a : data) {
@@ -62,7 +69,9 @@ public class StatisticsHelper {
         return sum;
     }
 
-    double getVariance() {
+    public float getVariance() {
+        assert !data.isEmpty();
+
         float mean = getMean();
         float temp = 0.0f;
         for(float a : data)
@@ -70,17 +79,9 @@ public class StatisticsHelper {
         return temp/(data.size()-1);
     }
 
-    float getStdDev() {
+    public float getStdDev() {
+        assert !data.isEmpty();
+
         return (float) Math.sqrt(getVariance());
-    }
-
-    public float median() {
-        Float[] sortedData = data.toArray(new Float[data.size()]);
-        Arrays.sort(sortedData);
-
-        if (sortedData.length % 2 == 0) {
-            return (sortedData[(sortedData.length / 2) - 1] + sortedData[sortedData.length / 2]) / 2.0f;
-        }
-        return sortedData[sortedData.length / 2];
     }
 }

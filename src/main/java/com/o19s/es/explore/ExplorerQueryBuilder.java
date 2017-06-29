@@ -37,11 +37,9 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     public static final String NAME = "match_explorer";
 
     private static final ParseField QUERY_NAME = new ParseField("query");
-    private static final ParseField FIELD_NAME = new ParseField("field");
     private static final ParseField TYPE_NAME = new ParseField("type");
 
     private QueryBuilder query;
-    private String field;
     private String type;
 
     private static final ObjectParser<ExplorerQueryBuilder, QueryParseContext> PARSER;
@@ -53,7 +51,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
                 (parser, context) -> context.parseInnerQueryBuilder().get(),
                 QUERY_NAME
         );
-        PARSER.declareString(ExplorerQueryBuilder::field, FIELD_NAME);
         PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
         declareStandardFields(PARSER);
     }
@@ -65,14 +62,12 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     public ExplorerQueryBuilder(StreamInput in) throws IOException {
         super(in);
         query = in.readNamedWriteable(QueryBuilder.class);
-        field = in.readString();
         type = in.readString();
     }
 
     @Override
     protected void doWriteTo(StreamOutput out) throws IOException {
         out.writeNamedWriteable(query);
-        out.writeString(field);
         out.writeString(type);
     }
 
@@ -82,9 +77,9 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
         printBoostAndQueryName(builder);
 
+        builder.field(QUERY_NAME.getPreferredName());
         query.toXContent(builder, params);
 
-        builder.field(FIELD_NAME.getPreferredName(), field);
         builder.field(TYPE_NAME.getPreferredName(), type);
 
         builder.endObject();
@@ -103,9 +98,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         if (builder.query == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + QUERY_NAME + "] is mandatory.");
         }
-        if (builder.field() == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Field [" + FIELD_NAME + "] is mandatory.");
-        }
         if (builder.statsType() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
         }
@@ -114,18 +106,17 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        return new ExplorerQuery(query.toQuery(context), field, type);
+        return new ExplorerQuery(query.toQuery(context), type);
     }
 
     @Override
     protected int doHashCode() {
-        return Objects.hash(query, field, type);
+        return Objects.hash(query, type);
     }
 
     @Override
     protected boolean doEquals(ExplorerQueryBuilder other) {
         return Objects.equals(query, other.query)
-                && Objects.equals(field, other.field)
                 && Objects.equals(type, other.type);
     }
 
@@ -139,14 +130,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     }
     public ExplorerQueryBuilder query(QueryBuilder query) {
         this.query = query;
-        return this;
-    }
-
-    public String field() {
-        return field;
-    }
-    public ExplorerQueryBuilder field(String field) {
-        this.field = field;
         return this;
     }
 

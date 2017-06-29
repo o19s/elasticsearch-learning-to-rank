@@ -15,33 +15,25 @@
  */
 package com.o19s.es.explore;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.similarities.ClassicSimilarity;
-import org.elasticsearch.common.logging.Loggers;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ExplorerScorer extends Scorer {
-    private Scorer subscorer;
-    private String field, type;
+    private Scorer subScorer;
+    private String type;
     private LeafReaderContext context;
 
-    protected ExplorerScorer(Weight weight, LeafReaderContext context, String field, String type, Scorer subscorer) {
+    protected ExplorerScorer(Weight weight, LeafReaderContext context, String type, Scorer subScorer) {
         super(weight);
         this.context = context;
-        this.field = field;
         this.type = type;
-        this.subscorer = subscorer;
+        this.subScorer = subScorer;
     }
 
     @Override
@@ -52,29 +44,18 @@ public class ExplorerScorer extends Scorer {
         // No stats if no terms
         if(terms.size() == 0) return 0.0f;
 
-        Terms termVector = context.reader().getTermVector(docID(), field);
-
-        // No stats are available if no term vectors...
-        if(termVector == null) return 0.0f;
-
-        TermsEnum itr = termVector.iterator();
-        PostingsEnum postings = null;
-
-        ClassicSimilarity sim = new ClassicSimilarity();
         StatisticsHelper tf_stats = new StatisticsHelper();
-        StatisticsHelper idf_stats = new StatisticsHelper();
 
-        for (Term term : terms) {
-            boolean found = itr.seekExact(term.bytes());
-
-            if(found) {
-                postings = itr.postings(postings, PostingsEnum.FREQS);
-                postings.nextDoc();
-                tf_stats.add(postings.freq());
-                idf_stats.add(sim.idf(context.reader().docFreq(term), context.reader().numDocs()));
-            } else {
-                tf_stats.add(0);
-                idf_stats.add(0);
+        // Grab freq from subscorer, or the children if available
+        if(subScorer.getChildren().size() > 0) {
+            for(ChildScorer child : subScorer.getChildren()) {
+                if(child.child.docID() == docID()){
+                    tf_stats.add(subScorer.freq());
+                }
+            }
+        } else {
+            if(subScorer.docID() == docID()) {
+                tf_stats.add(subScorer.freq());
             }
         }
 
@@ -95,21 +76,8 @@ public class ExplorerScorer extends Scorer {
             case("stddev_raw_tf"):
                 retval = tf_stats.getStdDev();
                 break;
-            case("sum_classic_idf"):
-                retval = idf_stats.getSum();
-                break;
-            case("mean_classic_idf"):
-                retval = idf_stats.getMean();
-                break;
-            case("max_classic_idf"):
-                retval = idf_stats.getMax();
-                break;
-            case("min_classic_idf"):
-                retval = idf_stats.getMin();
-                break;
-            case("stddev_classic_idf"):
-                retval = idf_stats.getStdDev();
-                break;
+            default:
+                throw new RuntimeException("Invalid stat type specified.");
         }
 
         return retval;
@@ -117,16 +85,16 @@ public class ExplorerScorer extends Scorer {
 
     @Override
     public int docID() {
-        return subscorer.docID();
+        return subScorer.docID();
     }
 
     @Override
     public int freq() throws IOException {
-        return subscorer.freq();
+        return subScorer.freq();
     }
 
     @Override
     public DocIdSetIterator iterator() {
-        return subscorer.iterator();
+        return subScorer.iterator();
     }
 }
