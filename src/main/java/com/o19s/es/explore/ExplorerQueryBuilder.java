@@ -74,14 +74,9 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(NAME);
-
         printBoostAndQueryName(builder);
-
-        builder.field(QUERY_NAME.getPreferredName());
-        query.toXContent(builder, params);
-
+        builder.field(QUERY_NAME.getPreferredName(), query);
         builder.field(TYPE_NAME.getPreferredName(), type);
-
         builder.endObject();
     }
 

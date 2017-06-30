@@ -44,9 +44,10 @@ public class ExplorerQuery extends Query {
     }
 
     private boolean isCollectionScoped() {
-        return type.contains("_df")
-                || type.contains("_idf")
-                || type.contains(("_ttf"));
+        return type.endsWith("_count")
+                || type.endsWith("_df")
+                || type.endsWith("_idf")
+                || type.endsWith(("_ttf"));
     }
 
     public Query getQuery() { return this.query; }
@@ -153,6 +154,9 @@ public class ExplorerQuery extends Query {
                         break;
                     case "stddev_raw_ttf":
                         constantScore = ttf_stats.getStdDev();
+                        break;
+                    case "unique_terms_count":
+                        constantScore = terms.size();
                         break;
 
                     default:

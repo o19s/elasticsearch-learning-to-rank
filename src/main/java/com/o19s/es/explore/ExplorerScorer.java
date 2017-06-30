@@ -16,13 +16,10 @@
 package com.o19s.es.explore;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 public class ExplorerScorer extends Scorer {
     private Scorer subScorer;
@@ -38,25 +35,18 @@ public class ExplorerScorer extends Scorer {
 
     @Override
     public float score() throws IOException {
-        Set<Term> terms = new HashSet<Term>();
-        weight.extractTerms(terms);
-
-        // No stats if no terms
-        if(terms.size() == 0) return 0.0f;
-
         StatisticsHelper tf_stats = new StatisticsHelper();
 
         // Grab freq from subscorer, or the children if available
         if(subScorer.getChildren().size() > 0) {
             for(ChildScorer child : subScorer.getChildren()) {
-                if(child.child.docID() == docID()){
-                    tf_stats.add(subScorer.freq());
+                if(child.child.docID() == docID()) {
+                    tf_stats.add(child.child.freq());
                 }
             }
         } else {
-            if(subScorer.docID() == docID()) {
-                tf_stats.add(subScorer.freq());
-            }
+            assert subScorer.docID() == docID();
+            tf_stats.add(subScorer.freq());
         }
 
         float retval = 0.0f;

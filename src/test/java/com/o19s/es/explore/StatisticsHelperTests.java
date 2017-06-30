@@ -16,18 +16,11 @@
 package com.o19s.es.explore;
 
 import org.apache.lucene.util.LuceneTestCase;
-import org.junit.Test;
 
 public class StatisticsHelperTests extends LuceneTestCase {
     private final float[] dataset = new float[] {
       0.0f, -5.0f, 10.0f, 5.0f
     };
-
-    @Test(expected=AssertionError.class)
-    public void testEmptyStats() throws Exception {
-        StatisticsHelper stats = new StatisticsHelper();
-        stats.getMax();
-    }
 
     public void testStats() throws Exception {
         StatisticsHelper stats = new StatisticsHelper();

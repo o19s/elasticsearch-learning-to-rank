@@ -23,6 +23,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -89,6 +91,51 @@ public class ExplorerQueryTests extends LuceneTestCase {
         TopDocs docs = searcher.search(eq, 4);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
         assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: sum_raw_tf"));
+    }
+
+    public void testBooleanQuery() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq2 = new TermQuery(new Term("text", "brown"));
+        TermQuery tq3 = new TermQuery(new Term("text", "how"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "sum_raw_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify tf score
+        TopDocs docs = searcher.search(eq, 4);
+        assertThat(docs.getMaxScore(), equalTo(3.0f));
+    }
+
+    public void testUniqueTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "how"));
+        TermQuery tq2 = new TermQuery(new Term("text", "now"));
+        TermQuery tq3 = new TermQuery(new Term("text", "brown"));
+        TermQuery tq4 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq5 = new TermQuery(new Term("text", "cow"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+        builder.add(tq4, BooleanClause.Occur.SHOULD);
+        builder.add(tq5, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "unique_terms_count";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 4 (4 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.getMaxScore(), equalTo(4.0f));
     }
 
     public void testInvalidStat() throws Exception {
