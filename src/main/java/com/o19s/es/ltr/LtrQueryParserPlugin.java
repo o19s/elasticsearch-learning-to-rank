@@ -17,6 +17,7 @@
 package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.RankerFactory;
+import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
@@ -101,6 +102,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public List<QuerySpec<?>> getQueries() {
         return asList(
+                new QuerySpec<>(ExplorerQueryBuilder.NAME, ExplorerQueryBuilder::new, ExplorerQueryBuilder::fromXContent),
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
                 new QuerySpec<>(StoredLtrQueryBuilder.NAME, StoredLtrQueryBuilder::new, StoredLtrQueryBuilder::fromXContent));
     }
