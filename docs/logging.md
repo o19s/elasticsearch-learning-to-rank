@@ -83,7 +83,7 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
         "_id" : "1",
         "_score": 1.3862944,
         "fields" : {
-          "_ltrlog": {
+          "_ltrlog": [{
             "log_entry1": {
               "feature1": 1.232,
               "feature2": 0,
@@ -95,7 +95,7 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
               "feature3": 2.324,
               "feature4": 0.3234
             }
-          }
+          }]
         }
       },
       {
@@ -104,7 +104,7 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
         "_id" : "4",
         "_score": 1.2324,
         "fields" : {
-          "_ltrlog": {
+          "_ltrlog": [{
             "log_entry1": {
               "feature1": 1.112,
               "feature2": 3.234,
@@ -115,7 +115,7 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
               "feature1": 1.112,
               "feature2": 3.234
             }
-          }
+          }]
         }
       }
     ]
