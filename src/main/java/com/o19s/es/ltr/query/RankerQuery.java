@@ -20,10 +20,14 @@ import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.NullRanker;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
@@ -87,6 +91,20 @@ public class RankerQuery extends Query {
         return new RankerQuery(queries, features, ranker);
     }
 
+    public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,
+                                            QueryShardContext context, Map<String, Object> params) {
+        List<Query> queries = features.toQueries(context, params);
+        return new RankerQuery(queries, features, new LogLtrRanker(consumer, features.size()));
+    }
+
+    public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer, boolean replaceWithNullRanker) {
+        LtrRanker newRanker = ranker;
+        if (replaceWithNullRanker && !(ranker instanceof NullRanker)) {
+            newRanker = new NullRanker(features.size());
+        }
+        return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer));
+    }
+
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
         List<Query> rewrittenQueries = new ArrayList<>(queries.size());
@@ -142,8 +160,21 @@ public class RankerQuery extends Query {
         return ranker;
     }
 
+    public FeatureSet featureSet() {
+        return features;
+    }
+
     @Override
-    public RankerWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        if (!needsScores) {
+            // If scores are not needed simply return a constant score on all docs
+            return new ConstantScoreWeight(this) {
+                @Override
+                public Scorer scorer(LeafReaderContext context) throws IOException {
+                    return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
+                }
+            };
+        }
         List<Weight> weights = new ArrayList<>(queries.size());
         for (Query q : queries) {
             weights.add(searcher.createWeight(q, needsScores));
@@ -181,15 +212,12 @@ public class RankerQuery extends Query {
                     featureString += "(" + features.feature(ordinal).name() + ")";
                 }
                 featureString += ":";
-                float featureVal = 0.0f;
                 if (!explain.isMatch()) {
                     subs.add(Explanation.noMatch(featureString + " [no match, default value 0.0 used]"));
-                }
-                else {
+                } else {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
-                    featureVal = explain.getValue();
+                    d.setFeatureScore(ordinal, explain.getValue());
                 }
-                d.setFeatureScore(ordinal, featureVal);
             }
             float modelScore = ranker.score(d);
             return Explanation.match(modelScore, " LtrModel: " + ranker.name() + " using features:", subs);
@@ -227,7 +255,7 @@ public class RankerQuery extends Query {
             for (Weight weight : weights) {
                 Scorer scorer = weight.scorer(context);
                 if (scorer == null) {
-                    scorer = new NoopScorer(this, context.reader().maxDoc());
+                    scorer = new NoopScorer(this, DocIdSetIterator.empty());
                 }
                 scorers.add(scorer);
                 subIterators.add(scorer.iterator());
@@ -267,9 +295,10 @@ public class RankerQuery extends Query {
                     ordinal++;
                     // FIXME: Probably inefficient, again we loop over all scorers..
                     if (scorer.docID() == docID()) {
+                        float score = scorer.score();
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        featureVector.setFeatureScore(ordinal, scorer.score());
+                        featureVector.setFeatureScore(ordinal, score);
                     }
                 }
                 return ranker.score(featureVector);

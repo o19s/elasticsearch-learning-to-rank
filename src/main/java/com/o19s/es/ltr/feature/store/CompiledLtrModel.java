@@ -29,10 +29,10 @@ public class CompiledLtrModel implements LtrModel, Accountable {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredLtrModel.class);
 
     private final String name;
-    private final StoredFeatureSet set;
+    private final FeatureSet set;
     private final LtrRanker ranker;
 
-    public CompiledLtrModel(String name, StoredFeatureSet set, LtrRanker ranker) {
+    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
         this.name = name;
         this.set = set;
         this.ranker = ranker;
@@ -68,7 +68,7 @@ public class CompiledLtrModel implements LtrModel, Accountable {
     @Override
     public long ramBytesUsed() {
         return BASE_RAM_USED + name.length() * Character.BYTES + NUM_BYTES_ARRAY_HEADER
-                + set.ramBytesUsed()
+                + (set instanceof Accountable ? ((Accountable)set).ramBytesUsed() : set.size() * NUM_BYTES_OBJECT_HEADER)
                 + (ranker instanceof Accountable ?
                 ((Accountable)ranker).ramBytesUsed() : set.size() * NUM_BYTES_OBJECT_HEADER);
     }
