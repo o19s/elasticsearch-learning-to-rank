@@ -34,10 +34,14 @@ public interface FeatureSet {
      */
     String name();
 
+
+
     /**
      * Parse and build lucene queries
      */
     List<Query> toQueries(QueryShardContext context, Map<String, Object> params);
+
+    List<DerivedFeature> derivedFeatures();
 
     /**
      * Retrieve feature ordinal by its name.

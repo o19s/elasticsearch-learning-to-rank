@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.DerivedFeature;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import org.apache.lucene.search.Query;
@@ -160,6 +161,10 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         }
         return queries;
     }
+
+    // TODO: Need to add support for stored derived features
+    @Override
+    public List<DerivedFeature> derivedFeatures() { return null; }
 
     @Override
     public int featureOrdinal(String featureName) {

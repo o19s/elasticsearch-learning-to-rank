@@ -27,12 +27,21 @@ import java.util.Objects;
 import java.util.stream.IntStream;
 
 public class PrebuiltFeatureSet implements FeatureSet {
+    private final List<Feature> sourceFeatures;
+
     private final List<Query> features;
+    private final List<DerivedFeature> derivedFeatures;
     private final String name;
 
     public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
+        this(name, features, new ArrayList<>());
+    }
+
+    public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features, List<PrebuiltDerivedFeature> derivedFeatures) {
         this.name = name;
+        this.sourceFeatures = new ArrayList<>(Objects.requireNonNull(features));
         this.features = new ArrayList<>(Objects.requireNonNull(features));
+        this.derivedFeatures = new ArrayList<>(Objects.requireNonNull(derivedFeatures));
     }
 
     @Override
@@ -47,6 +56,9 @@ public class PrebuiltFeatureSet implements FeatureSet {
     public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         return features;
     }
+
+    @Override
+    public List<DerivedFeature> derivedFeatures() { return derivedFeatures; }
 
     @Override
     public int featureOrdinal(String featureName) {

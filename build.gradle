@@ -34,9 +34,19 @@ repositories {
     jcenter()
 }
 dependencies {
+  compile "org.apache.lucene:lucene-expressions:6.4.1"
+  compile 'org.antlr:antlr4-runtime:4.5.1-1'
+  compile 'org.ow2.asm:asm:5.0.4'
+  compile 'org.ow2.asm:asm-commons:5.0.4'
+  compile 'org.ow2.asm:asm-tree:5.0.4'
   compile 'org.elasticsearch:elasticsearch:5.3.0'
   compile 'com.o19s:RankyMcRankFace:0.1.0'
   testCompile 'org.elasticsearch.test:framework:5.3.0'
+}
+
+dependencyLicenses {
+  mapping from: /lucene-.*/, to: 'lucene'
+  mapping from: /asm-.*/, to: 'asm'
 }
 
 // Set to false to not use elasticsearch checkstyle rules

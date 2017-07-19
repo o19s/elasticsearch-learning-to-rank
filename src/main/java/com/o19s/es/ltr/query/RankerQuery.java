@@ -16,15 +16,22 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.feature.DerivedFeature;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Expression;
+import org.apache.lucene.expressions.SimpleBindings;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.function.valuesource.DoubleConstValueSource;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.DoubleValues;
+import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -152,12 +159,24 @@ public class RankerQuery extends Query {
     }
 
     public class RankerWeight extends Weight {
+        private final List<Expression> expressions;
         private final List<Weight> weights;
 
         RankerWeight(List<Weight> weights) {
             super(RankerQuery.this);
             assert weights instanceof RandomAccess;
             this.weights = weights;
+
+            // TODO: Can remove null check once derived features are implemented for stored queries
+            // Compile expressions for the derived features
+            if(features.derivedFeatures() != null) {
+                this.expressions = new ArrayList<>(features.derivedFeatures().size());
+                for (DerivedFeature df : features.derivedFeatures()) {
+                    expressions.add((Expression) Scripting.compile(df.expression()));
+                }
+            } else {
+                this.expressions = new ArrayList<>();
+            }
         }
 
         @Override
@@ -171,6 +190,7 @@ public class RankerQuery extends Query {
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             List<Explanation> subs = new ArrayList<>(weights.size());
 
+            SimpleBindings bindings = new SimpleBindings();
             LtrRanker.FeatureVector d = ranker.newFeatureVector(null);
             int ordinal = -1;
             for (Weight weight : weights) {
@@ -190,7 +210,22 @@ public class RankerQuery extends Query {
                     featureVal = explain.getValue();
                 }
                 d.setFeatureScore(ordinal, featureVal);
+
+                // Add feature binding, bound to name if set, otherwise $[ordinal]
+                Feature f = features.feature(ordinal);
+                bindings.add(f.name() == null ? ("$" + ordinal) : f.name(),
+                        new DoubleConstValueSource(d.getFeatureScore(ordinal)).asDoubleValuesSource());
             }
+
+            for(Expression expr : expressions) {
+                ordinal++;
+
+                DoubleValuesSource dvs = expr.getDoubleValuesSource(bindings);
+                DoubleValues values = dvs.getValues(null, null);
+                values.advanceExact(doc);
+                d.setFeatureScore(ordinal, (float) values.doubleValue());
+            }
+
             float modelScore = ranker.score(d);
             return Explanation.match(modelScore, " LtrModel: " + ranker.name() + " using features:", subs);
         }
@@ -260,18 +295,39 @@ public class RankerQuery extends Query {
             @Override
             public float score() throws IOException {
                 featureVector = ranker.newFeatureVector(featureVector);
+
                 int ordinal = -1;
                 // a DisiPriorityQueue could help to avoid
                 // looping on all scorers
+
+                SimpleBindings bindings = new SimpleBindings();
                 for (Scorer scorer : scorers) {
                     ordinal++;
+
                     // FIXME: Probably inefficient, again we loop over all scorers..
                     if (scorer.docID() == docID()) {
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
                         featureVector.setFeatureScore(ordinal, scorer.score());
                     }
+
+                    // Add feature binding, bound to name if set, otherwise $[ordinal]
+                    Feature f = features.feature(ordinal);
+                    bindings.add(f.name() == null ? ("$" + ordinal) : f.name(),
+                            new DoubleConstValueSource(featureVector.getFeatureScore(ordinal)).asDoubleValuesSource());
                 }
+
+                // Evaluate the expressions(from derived features) and add them as features
+                for (Expression expr : expressions) {
+                    ordinal++;
+
+                    DoubleValuesSource dvs = expr.getDoubleValuesSource(bindings);
+                    DoubleValues values = dvs.getValues(null, null);
+                    values.advanceExact(docID());
+                    featureVector.setFeatureScore(ordinal, (float) values.doubleValue());
+                }
+
+
                 return ranker.score(featureVector);
             }
 
