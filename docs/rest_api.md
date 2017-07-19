@@ -304,5 +304,16 @@ Will display cache usage of the plugin for the cluster. The details on a per nod
     }
   }
 }
+```
 
+## Cache configuration
+
+Characteristics of the internal cache can be controlled with these node settings :
+```yaml
+# limit cache usage to 12 megabytes (defaults to 10mb or max_heap/10 if lower)
+ltr.caches.max_mem: 12mb
+# Evict cache entries 10 minutes after insertion (defaults to 1hour, set to 0 to disable)
+ltr.caches.expire_after_write: 10m
+# Evict cache entries 10 minutes after access (defaults to 1hour, set to 0 to disable)
+ltr.caches.expire_after_access: 10m
 ```

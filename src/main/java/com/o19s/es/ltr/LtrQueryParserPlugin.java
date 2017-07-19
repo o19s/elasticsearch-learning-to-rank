@@ -36,6 +36,8 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.Caches;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import com.o19s.es.ltr.logging.LoggingFetchSubPhase;
+import com.o19s.es.ltr.logging.LoggingSearchExtBuilder;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
@@ -72,6 +74,7 @@ import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.NativeScriptFactory;
 import org.elasticsearch.script.ScriptEngineService;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
@@ -91,13 +94,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     public LtrQueryParserPlugin(Settings settings) {
         caches = new Caches(settings);
-        parserFactory = buildParserFactory();
-    }
-
-    public static LtrRankerParserFactory buildParserFactory() {
         // Use memoize to Lazy load the RankerFactory as it's a heavy object to construct
         Supplier<RankerFactory> ranklib = Suppliers.memoize(RankerFactory::new);
-        return new LtrRankerParserFactory.Builder()
+        parserFactory = new LtrRankerParserFactory.Builder()
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))
                 .register(LinearRankerParser.TYPE, LinearRankerParser::new)
                 .register(XGBoostJsonParser.TYPE, XGBoostJsonParser::new)
@@ -110,6 +109,17 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new QuerySpec<>(ExplorerQueryBuilder.NAME, ExplorerQueryBuilder::new, ExplorerQueryBuilder::fromXContent),
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
                 new QuerySpec<>(StoredLtrQueryBuilder.NAME, StoredLtrQueryBuilder::new, StoredLtrQueryBuilder::fromXContent));
+    }
+
+    @Override
+    public List<FetchSubPhase> getFetchSubPhases(FetchPhaseConstructionContext context) {
+        return singletonList(new LoggingFetchSubPhase());
+    }
+
+    @Override
+    public List<SearchExtSpec<?>> getSearchExts() {
+        return singletonList(
+                new SearchExtSpec<>(LoggingSearchExtBuilder.NAME, LoggingSearchExtBuilder::new, LoggingSearchExtBuilder::parse));
     }
 
     @Override
@@ -176,7 +186,11 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<Setting<?>> getSettings() {
-        return singletonList(IndexFeatureStore.STORE_VERSION_PROP);
+        return unmodifiableList(asList(
+                IndexFeatureStore.STORE_VERSION_PROP,
+                Caches.LTR_CACHE_MEM_SETTING,
+                Caches.LTR_CACHE_EXPIRE_AFTER_READ,
+                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
     }
 
     protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {

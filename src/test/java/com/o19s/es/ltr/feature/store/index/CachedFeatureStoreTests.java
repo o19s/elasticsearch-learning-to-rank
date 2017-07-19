@@ -24,6 +24,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
@@ -92,7 +93,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     }
 
     public void testWontBlowUp() throws IOException {
-        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueHours(1), 100000);
+        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueHours(1), new ByteSizeValue(100000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         long curWeight = store.modelWeight();
         long maxWeight = caches.getMaxWeight();
@@ -112,7 +113,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     }
 
     public void testExpirationOnWrite() throws IOException, InterruptedException {
-        Caches caches = new Caches(TimeValue.timeValueMillis(100), TimeValue.timeValueHours(1), 1000000);
+        Caches caches = new Caches(TimeValue.timeValueMillis(100), TimeValue.timeValueHours(1), new ByteSizeValue(1000000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);
@@ -129,7 +130,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     }
 
     public void testExpirationOnGet() throws IOException, InterruptedException {
-        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueMillis(100), 1000000);
+        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueMillis(100), new ByteSizeValue(1000000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);

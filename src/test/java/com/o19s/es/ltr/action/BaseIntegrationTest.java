@@ -37,9 +37,6 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
-    protected static final LtrRankerParserFactory factory = LtrQueryParserPlugin.buildParserFactory();
-
-
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Arrays.asList(LtrQueryParserPlugin.class, MockMustachePlugin.class);
@@ -78,7 +75,11 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     }
 
     public <E extends StorableElement> E getElement(Class<E> clazz, String type, String name, String store) throws IOException {
-        return new IndexFeatureStore(store, client(), factory).getAndParse(name, clazz, type);
+        return new IndexFeatureStore(store, client(), parserFactory()).getAndParse(name, clazz, type);
+    }
+
+    protected LtrRankerParserFactory parserFactory() {
+        return getInstanceFromNode(LtrRankerParserFactory.class);
     }
 
     public FeatureStoreResponse addElement(StorableElement element, String store) throws ExecutionException, InterruptedException {

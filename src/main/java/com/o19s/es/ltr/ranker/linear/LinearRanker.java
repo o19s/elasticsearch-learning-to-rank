@@ -21,6 +21,7 @@ import com.o19s.es.ltr.ranker.DenseLtrRanker;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -52,6 +53,21 @@ public class LinearRanker extends DenseLtrRanker implements Accountable {
     @Override
     protected int size() {
         return weights.length;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LinearRanker ranker = (LinearRanker) o;
+
+        return Arrays.equals(weights, ranker.weights);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(weights);
     }
 
     /**

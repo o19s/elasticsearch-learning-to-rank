@@ -16,8 +16,11 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreProvider;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -32,11 +35,10 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.DEFAULT_STORE;
 
 /**
  * sltr query, build a ltr query based on a stored model.
@@ -44,11 +46,13 @@ import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.DEFAULT_STOR
 public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBuilder> implements NamedWriteable {
     public static final String NAME = "sltr";
     public static final ParseField MODEL_NAME = new ParseField("model");
+    public static final ParseField FEATURESET_NAME = new ParseField("featureset");
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
     private String modelName;
-    private String storeName = DEFAULT_STORE;
+    private String featureSetName;
+    private String storeName;
     private Map<String, Object> params;
 
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
@@ -56,6 +60,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     static {
         PARSER = new ObjectParser<>(NAME, StoredLtrQueryBuilder::new);
         PARSER.declareString(StoredLtrQueryBuilder::modelName, MODEL_NAME);
+        PARSER.declareString(StoredLtrQueryBuilder::featureSetName, FEATURESET_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
         PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map,
                 PARAMS, ObjectParser.ValueType.OBJECT);
@@ -65,16 +70,18 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public StoredLtrQueryBuilder() {}
     public StoredLtrQueryBuilder(StreamInput input) throws IOException {
         super(input);
-        modelName = input.readString();
+        modelName = input.readOptionalString();
+        featureSetName = input.readOptionalString();
         params = input.readMap();
-        storeName = input.readString();
+        storeName = input.readOptionalString();
     }
 
     @Override
     protected void doWriteTo(StreamOutput out) throws IOException {
-        out.writeString(modelName);
+        out.writeOptionalString(modelName);
+        out.writeOptionalString(featureSetName);
         out.writeMap(params);
-        out.writeString(storeName);
+        out.writeOptionalString(storeName);
     }
 
     public static Optional<StoredLtrQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
@@ -85,11 +92,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
-        if (builder.modelName() == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Field [" + MODEL_NAME + "] is mandatory.");
-        }
-        if (builder.storeName() == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Field [" + STORE_NAME + "] cannot be null.");
+        if (builder.modelName() == null && builder.featureSetName() == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Either [" + MODEL_NAME + "] or [" + FEATURESET_NAME + "] must be set.");
         }
         if (builder.params() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + PARAMS + "] is mandatory.");
@@ -100,8 +104,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected void doXContent(XContentBuilder builder, Params p) throws IOException {
         builder.startObject(NAME);
-        builder.field(MODEL_NAME.getPreferredName(), modelName);
-        if (!DEFAULT_STORE.equals(storeName)) {
+        if (modelName != null) {
+            builder.field(MODEL_NAME.getPreferredName(), modelName);
+        }
+        if (featureSetName != null) {
+            builder.field(FEATURESET_NAME.getPreferredName(), featureSetName);
+        }
+        if (storeName != null) {
             builder.field(STORE_NAME.getPreferredName(), storeName);
         }
         if (this.params != null && !this.params.isEmpty()) {
@@ -113,21 +122,32 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
 
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
-        FeatureStore store = FeatureStoreProvider.findFeatureStore(storeName, context);
-        CompiledLtrModel model = store.loadModel(modelName);
-        return RankerQuery.build(model, context, params);
+        String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
+        FeatureStore store = FeatureStoreProvider.findFeatureStore(indexName, context);
+        if (modelName != null) {
+            CompiledLtrModel model = store.loadModel(modelName);
+            return RankerQuery.build(model, context, params);
+        } else {
+            FeatureSet set = store.loadSet(featureSetName);
+            float[] weitghs = new float[set.size()];
+            Arrays.fill(weitghs, 1F);
+            LinearRanker ranker = new LinearRanker(weitghs);
+            CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
+            return RankerQuery.build(model, context, params);
+        }
     }
 
     @Override
     protected boolean doEquals(StoredLtrQueryBuilder other) {
         return Objects.equals(modelName, other.modelName) &&
+                Objects.equals(featureSetName, other.featureSetName) &&
                 Objects.equals(storeName, other.storeName) &&
                 Objects.equals(params, other.params);
     }
 
     @Override
     protected int doHashCode() {
-        return Objects.hash(modelName, storeName, params);
+        return Objects.hash(modelName, featureSetName, storeName, params);
     }
 
     @Override
@@ -144,12 +164,21 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         return this;
     }
 
+    public String featureSetName() {
+        return featureSetName;
+    }
+
+    public StoredLtrQueryBuilder featureSetName(String featureSetName) {
+        this.featureSetName = featureSetName;
+        return this;
+    }
+
     public String storeName() {
         return storeName;
     }
 
     public StoredLtrQueryBuilder storeName(String storeName) {
-        this.storeName = Objects.requireNonNull(storeName);
+        this.storeName = storeName;
         return this;
     }
 

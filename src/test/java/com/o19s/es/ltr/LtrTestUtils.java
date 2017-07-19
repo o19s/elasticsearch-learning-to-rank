@@ -47,6 +47,10 @@ public class LtrTestUtils {
         return StoredFeatureSetParserTests.buildRandomFeatureSet();
     }
 
+    public static StoredFeatureSet randomFeatureSet(int nbFeature) throws IOException {
+        return StoredFeatureSetParserTests.buildRandomFeatureSet(nbFeature);
+    }
+
     public static StoredFeatureSet randomFeatureSet(String name) throws IOException {
         return StoredFeatureSetParserTests.buildRandomFeatureSet(name);
     }
