@@ -41,7 +41,7 @@ public interface FeatureSet {
      */
     List<Query> toQueries(QueryShardContext context, Map<String, Object> params);
 
-    List<DerivedFeature> derivedFeatures();
+    List<? extends DerivedFeature> derivedFeatures();
 
     /**
      * Retrieve feature ordinal by its name.

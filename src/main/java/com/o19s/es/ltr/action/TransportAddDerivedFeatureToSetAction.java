@@ -16,11 +16,11 @@
 
 package com.o19s.es.ltr.action;
 
-import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequest;
-import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetResponse;
+import com.o19s.es.ltr.action.AddDerivedFeaturesToSetAction.AddDerivedFeaturesToSetRequest;
+import com.o19s.es.ltr.action.AddDerivedFeaturesToSetAction.AddDerivedFeaturesToSetResponse;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequest;
 import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.ActionFuture;
@@ -54,20 +54,21 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.action.ActionListener.wrap;
 
-public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
+public class TransportAddDerivedFeatureToSetAction extends HandledTransportAction<AddDerivedFeaturesToSetRequest,
+        AddDerivedFeaturesToSetResponse> {
     private final ClusterService clusterService;
     private final TransportSearchAction searchAction;
     private final TransportGetAction getAction;
     private final TransportFeatureStoreAction featureStoreAction;
 
     @Inject
-    public TransportAddFeatureToSetAction(Settings settings, ThreadPool threadPool,
-                                             TransportService transportService, ActionFilters actionFilters,
-                                             IndexNameExpressionResolver indexNameExpressionResolver,
-                                             ClusterService clusterService, TransportSearchAction searchAction,
-                                             TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
-        super(settings, AddFeaturesToSetAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver,
-                AddFeaturesToSetRequest::new);
+    public TransportAddDerivedFeatureToSetAction(Settings settings, ThreadPool threadPool,
+                                                 TransportService transportService, ActionFilters actionFilters,
+                                                 IndexNameExpressionResolver indexNameExpressionResolver,
+                                                 ClusterService clusterService, TransportSearchAction searchAction,
+                                                 TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
+        super(settings, AddDerivedFeaturesToSetAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver,
+                AddDerivedFeaturesToSetRequest::new);
         this.clusterService = clusterService;
         this.searchAction = searchAction;
         this.getAction = getAction;
@@ -75,12 +76,12 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
     }
 
     @Override
-    protected final void doExecute(AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
+    protected final void doExecute(AddDerivedFeaturesToSetRequest request, ActionListener<AddDerivedFeaturesToSetResponse> listener) {
         throw new UnsupportedOperationException("attempt to execute a TransportAddDerivedFeatureToSetAction without a task");
     }
 
     @Override
-    protected void doExecute(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
+    protected void doExecute(Task task, AddDerivedFeaturesToSetRequest request, ActionListener<AddDerivedFeaturesToSetResponse> listener) {
         if (!clusterService.state().routingTable().hasIndex(request.getStore())) {
             throw new IllegalArgumentException("Store [" + request.getStore() + "] does not exist, please create it first.");
         }
@@ -98,14 +99,14 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
     private static class AsyncAction {
         private final Task task;
         private final String store;
-        private final ActionListener<AddFeaturesToSetResponse> listener;
-        private final String featureNamesQuery;
+        private final ActionListener<AddDerivedFeaturesToSetResponse> listener;
+        private final String dfName;
         private final String featureSetName;
         private final String routing;
         private final AtomicReference<Exception> searchException = new AtomicReference<>();
         private final AtomicReference<Exception> getException = new AtomicReference<>();
         private final AtomicReference<StoredFeatureSet> setRef = new AtomicReference<>();
-        private final AtomicReference<List<StoredFeature>> featuresRef = new AtomicReference<>();
+        private final AtomicReference<List<StoredDerivedFeature>> featuresRef = new AtomicReference<>();
         private final CountDown countdown = new CountDown(2);
         private final AtomicLong version = new AtomicLong(-1L);
         private final ClusterService clusterService;
@@ -113,13 +114,13 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private final TransportGetAction getAction;
         private final TransportFeatureStoreAction featureStoreAction;
 
-        AsyncAction(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener,
+        AsyncAction(Task task, AddDerivedFeaturesToSetRequest request, ActionListener<AddDerivedFeaturesToSetResponse> listener,
                            ClusterService clusterService, TransportSearchAction searchAction, TransportGetAction getAction,
                            TransportFeatureStoreAction featureStoreAction) {
             this.task = task;
             this.listener = listener;
             this.featureSetName = request.getFeatureSet();
-            this.featureNamesQuery = request.getFeatureNameQuery();
+            this.dfName = request.getDerivedName();
             this.store = request.getStore();
             this.routing = request.getRouting();
             this.clusterService = clusterService;
@@ -132,19 +133,19 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             SearchRequest srequest = new SearchRequest(store);
             srequest.setParentTask(clusterService.localNode().getId(), task.getId());
             QueryBuilder nameQuery;
-            if (featureNamesQuery.endsWith("*")) {
-                String parsed = featureNamesQuery.replaceAll("[*]+$", "");
+            if (dfName.endsWith("*")) {
+                String parsed = dfName.replaceAll("[*]+$", "");
                 if (parsed.isEmpty()) {
                     nameQuery = QueryBuilders.matchAllQuery();
                 } else {
                     nameQuery = QueryBuilders.matchQuery("name.prefix", parsed);
                 }
             } else {
-                nameQuery = QueryBuilders.matchQuery("name", featureNamesQuery);
+                nameQuery = QueryBuilders.matchQuery("name", dfName);
             }
             BoolQueryBuilder bq = QueryBuilders.boolQuery();
             bq.must(nameQuery);
-            bq.must(QueryBuilders.matchQuery("type", StoredFeature.TYPE));
+            bq.must(QueryBuilders.matchQuery("type", StoredDerivedFeature.TYPE));
             srequest.types(IndexFeatureStore.ES_TYPE);
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
@@ -192,14 +193,14 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private void onSearchResponse(SearchResponse sr) {
             try {
                 if (sr.getHits().getTotalHits() > StoredFeatureSet.MAX_FEATURES) {
-                    throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returns too many features");
+                    throw new IllegalArgumentException("The feature query [" + dfName + "] returns too many features");
                 }
                 if (sr.getHits().getTotalHits() == 0) {
-                    throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returned no features");
+                    throw new IllegalArgumentException("The feature query [" + dfName + "] returned no features");
                 }
-                final List<StoredFeature> features = new ArrayList<>(sr.getHits().getHits().length);
+                final List<StoredDerivedFeature> features = new ArrayList<>(sr.getHits().getHits().length);
                 for (SearchHit hit : sr.getHits().getHits()) {
-                    features.add(IndexFeatureStore.parse(StoredFeature.class, StoredFeature.TYPE, hit.getSourceRef()));
+                    features.add(IndexFeatureStore.parse(StoredDerivedFeature.class, StoredDerivedFeature.TYPE, hit.getSourceRef()));
                 }
                 featuresRef.set(features);
             } catch (Exception e) {
@@ -224,7 +225,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private void finishRequest() throws Exception {
             assert setRef.get() != null && featuresRef.get() != null;
             StoredFeatureSet set = setRef.get();
-            set = set.append(featuresRef.get());
+            set = set.appendDerived(featuresRef.get());
             updateSet(set);
         }
 
@@ -260,13 +261,13 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             frequest.setParentTask(clusterService.localNode().getId(), task.getId());
 
             featureStoreAction.execute(frequest, wrap(
-                    (r) -> listener.onResponse(new AddFeaturesToSetResponse(r.getResponse())),
+                    (r) -> listener.onResponse(new AddDerivedFeaturesToSetResponse(r.getResponse())),
                     listener::onFailure));
         }
     }
 
     private static class AsyncFetchSet implements ActionListener<GetResponse> {
-        private ActionListener<AddFeaturesToSetResponse> listener;
+        private ActionListener<AddDerivedFeaturesToSetResponse> listener;
 
         @Override
         public void onResponse(GetResponse getFields) {

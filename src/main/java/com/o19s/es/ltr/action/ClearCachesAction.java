@@ -96,6 +96,10 @@ public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodes
             store = Objects.requireNonNull(storeName);
         }
 
+        public void clearDerivedFeature(String storeName, String name) {
+            clearElement(storeName, name, ClearCachesNodesRequest.Operation.ClearDerivedFeature);
+        }
+
         public void clearFeature(String storeName, String name) {
             clearElement(storeName, name, ClearCachesNodesRequest.Operation.ClearFeature);
         }
@@ -124,6 +128,7 @@ public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodes
 
         public enum Operation {
             ClearStore,
+            ClearDerivedFeature,
             ClearFeature,
             ClearFeatureSet,
             ClearModel

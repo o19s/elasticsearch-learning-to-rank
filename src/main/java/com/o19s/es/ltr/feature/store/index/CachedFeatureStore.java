@@ -18,6 +18,7 @@ package com.o19s.es.ltr.feature.store.index;
 
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import org.elasticsearch.common.cache.Cache;
@@ -44,6 +45,12 @@ public class CachedFeatureStore implements FeatureStore {
     @Override
     public StoredFeature load(String id) throws IOException {
         return caches.loadFeature(key(id), inner::load);
+    }
+
+
+    @Override
+    public StoredDerivedFeature loadDerived(String id) throws IOException {
+        return caches.loadDerivedFeature(key(id), inner::loadDerived);
     }
 
     @Override

@@ -24,6 +24,7 @@ import java.util.Map;
  * in memory test store
  */
 public class MemStore implements FeatureStore {
+    private final Map<String, StoredDerivedFeature> derivedFeatures = new HashMap<>();
     private final Map<String, StoredFeature> features = new HashMap<>();
     private final Map<String, StoredFeatureSet> sets = new HashMap<>();
     private final Map<String, CompiledLtrModel> models = new HashMap<>();
@@ -53,6 +54,15 @@ public class MemStore implements FeatureStore {
     }
 
     @Override
+    public StoredDerivedFeature loadDerived(String id) throws IOException {
+        StoredDerivedFeature derived = derivedFeatures.get(id);
+        if(derived == null) {
+            throw new IllegalArgumentException(("Derived Featured [" + id + "] not found"));
+        }
+        return derived;
+    }
+
+    @Override
     public StoredFeatureSet loadSet(String id) throws IOException {
         StoredFeatureSet set = sets.get(id);
         if (set == null) {
@@ -70,6 +80,8 @@ public class MemStore implements FeatureStore {
         return model;
     }
 
+    public void add(StoredDerivedFeature derived) { derivedFeatures.put(derived.name(), derived); }
+
     public void add(StoredFeature feature) {
         features.put(feature.name(), feature);
     }
@@ -83,6 +95,7 @@ public class MemStore implements FeatureStore {
     }
 
     public void clear() {
+        derivedFeatures.clear();
         features.clear();
         sets.clear();
         models.clear();
