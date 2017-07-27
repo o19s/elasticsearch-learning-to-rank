@@ -33,6 +33,7 @@ import com.o19s.es.ltr.action.TransportCreateModelFromSetAction;
 import com.o19s.es.ltr.action.TransportFeatureStoreAction;
 import com.o19s.es.ltr.action.TransportListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -174,6 +175,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public List<Entry> getNamedWriteables() {
         return unmodifiableList(asList(
+                new Entry(StorableElement.class, StoredDerivedFeature.TYPE, StoredDerivedFeature::new),
                 new Entry(StorableElement.class, StoredFeature.TYPE, StoredFeature::new),
                 new Entry(StorableElement.class, StoredFeatureSet.TYPE, StoredFeatureSet::new),
                 new Entry(StorableElement.class, StoredLtrModel.TYPE, StoredLtrModel::new)
@@ -183,6 +185,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public List<NamedXContentRegistry.Entry> getNamedXContent() {
         return unmodifiableList(asList(
+                new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredDerivedFeature.TYPE),
+                        StoredDerivedFeature::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredFeature.TYPE), StoredFeature::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredFeatureSet.TYPE), StoredFeatureSet::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredLtrModel.TYPE), StoredLtrModel::parse)
