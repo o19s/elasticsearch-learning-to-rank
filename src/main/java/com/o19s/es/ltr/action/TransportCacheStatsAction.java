@@ -69,11 +69,6 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
         return new CachesStatsNodeResponse(clusterService.localNode()).initFromCaches(caches);
     }
 
-    @Override
-    protected boolean accumulateExceptions() {
-        return false;
-    }
-
     public static class CachesStatsNodeRequest extends BaseNodeRequest {
         public CachesStatsNodeRequest() {
         }

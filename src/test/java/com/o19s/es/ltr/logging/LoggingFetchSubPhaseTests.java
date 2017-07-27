@@ -48,7 +48,6 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.fielddata.plain.SortedNumericDVIndexFieldData;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.internal.InternalSearchHit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -113,7 +112,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 .add(new BooleanClause(query2, BooleanClause.Occur.MUST))
                 .build();
         LoggingFetchSubPhase subPhase = new LoggingFetchSubPhase();
-        InternalSearchHit[] hits = selectRandomHits();
+        SearchHit[] hits = selectRandomHits();
         subPhase.doLog(query, Arrays.asList(logger1, logger2), searcher, hits);
         for (SearchHit hit : hits) {
             assertTrue(docs.containsKey(hit.getId()));
@@ -145,10 +144,10 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         }
     }
 
-    public InternalSearchHit[] selectRandomHits() throws IOException {
+    public SearchHit[] selectRandomHits() throws IOException {
         int minHits = TestUtil.nextInt(random(), 5, 10);
         int maxHits = TestUtil.nextInt(random(), minHits, minHits+10);
-        List<InternalSearchHit> hits = new ArrayList<>(maxHits);
+        List<SearchHit> hits = new ArrayList<>(maxHits);
         searcher.search(new MatchAllDocsQuery(), new SimpleCollector() {
             LeafReaderContext context;
 
@@ -163,7 +162,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 if (hits.size() < minHits || (random().nextBoolean() && hits.size() < maxHits)) {
                     Document d = context.reader().document(doc);
                     String id = d.get("id");
-                    InternalSearchHit hit = new InternalSearchHit(doc+context.docBase, id,
+                    SearchHit hit = new SearchHit(doc+context.docBase, id,
                             new Text("text"), random().nextBoolean() ? new HashMap<>() : null);
                     hits.add(hit);
                 }
@@ -176,7 +175,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         });
         assert hits.size() >= minHits;
         Collections.shuffle(hits, random());
-        return hits.toArray(new InternalSearchHit[hits.size()]);
+        return hits.toArray(new SearchHit[hits.size()]);
     }
 
     public static Document buildDoc(String text, float value) throws IOException {

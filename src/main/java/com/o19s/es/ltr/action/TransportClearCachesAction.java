@@ -88,11 +88,6 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
         return new ClearCachesNodeResponse(clusterService.localNode());
     }
 
-    @Override
-    protected boolean accumulateExceptions() {
-        return false;
-    }
-
     public static class ClearCachesNodeRequest extends BaseNodeRequest {
         private ClearCachesNodesRequest request;
 
