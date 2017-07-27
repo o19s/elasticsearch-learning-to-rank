@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.feature.DerivedFeature;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
@@ -23,12 +24,19 @@ import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.NullRanker;
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Bindings;
+import org.apache.lucene.expressions.Expression;
+import org.apache.lucene.expressions.SimpleBindings;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.function.valuesource.DoubleConstValueSource;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.DoubleValues;
+import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -183,12 +191,24 @@ public class RankerQuery extends Query {
     }
 
     public class RankerWeight extends Weight {
+        private final List<Expression> expressions;
         private final List<Weight> weights;
 
         RankerWeight(List<Weight> weights) {
             super(RankerQuery.this);
             assert weights instanceof RandomAccess;
             this.weights = weights;
+
+            // TODO: Can remove null check once derived features are implemented for stored queries
+            // Compile expressions for the derived features
+            if(features.derivedFeatures() != null) {
+                this.expressions = new ArrayList<>(features.derivedFeatures().size());
+                for (DerivedFeature df : features.derivedFeatures()) {
+                    expressions.add((Expression) Scripting.compile(df.expression()));
+                }
+            } else {
+                this.expressions = new ArrayList<>();
+            }
         }
 
         @Override
@@ -202,6 +222,7 @@ public class RankerQuery extends Query {
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
             List<Explanation> subs = new ArrayList<>(weights.size());
 
+            SimpleBindings bindings = new SimpleBindings();
             LtrRanker.FeatureVector d = ranker.newFeatureVector(null);
             int ordinal = -1;
             for (Weight weight : weights) {
@@ -218,7 +239,22 @@ public class RankerQuery extends Query {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
                     d.setFeatureScore(ordinal, explain.getValue());
                 }
+
+                // Add feature binding, bound to name if set, otherwise $[ordinal]
+                Feature f = features.feature(ordinal);
+                bindings.add(f.name() == null ? ("$" + ordinal) : f.name(),
+                        new DoubleConstValueSource(d.getFeatureScore(ordinal)).asDoubleValuesSource());
             }
+
+            for(Expression expr : expressions) {
+                ordinal++;
+
+                DoubleValuesSource dvs = expr.getDoubleValuesSource(bindings);
+                DoubleValues values = dvs.getValues(null, null);
+                values.advanceExact(doc);
+                d.setFeatureScore(ordinal, (float) values.doubleValue());
+            }
+
             float modelScore = ranker.score(d);
             return Explanation.match(modelScore, " LtrModel: " + ranker.name() + " using features:", subs);
         }
@@ -252,6 +288,22 @@ public class RankerQuery extends Query {
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
             List<Scorer> scorers = new ArrayList<>(weights.size());
             List<DocIdSetIterator> subIterators = new ArrayList<>(weights.size());
+
+            String pattern = "\\$(\\d+)";
+
+            FVHolder holder = new FVHolder();
+            Bindings bindings = new Bindings(){
+              @Override
+              public DoubleValuesSource getDoubleValuesSource(String name) {
+                  if (name.matches(pattern)) {
+                      int ordinal = Integer.parseInt(name.substring(1));
+                      return new FVDoubleValuesSource(holder, ordinal);
+                  } else {
+                      return new FVDoubleValuesSource(holder, RankerQuery.this.features.featureOrdinal(name));
+                  }
+              }
+            };
+
             for (Weight weight : weights) {
                 Scorer scorer = weight.scorer(context);
                 if (scorer == null) {
@@ -261,8 +313,16 @@ public class RankerQuery extends Query {
                 subIterators.add(scorer.iterator());
             }
 
+            for(Expression expr: expressions) {
+                DoubleValuesSource src = expr.getDoubleValuesSource(bindings);
+                DoubleValues values = src.getValues(context, null);
+                DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
+                scorers.add(new DValScorer(this, iterator, values));
+                subIterators.add(iterator);
+            }
+
             NaiveDisjunctionDISI rankerIterator = new NaiveDisjunctionDISI(DocIdSetIterator.all(context.reader().maxDoc()), subIterators);
-            return new RankerScorer(scorers, rankerIterator);
+            return new RankerScorer(scorers, rankerIterator, holder);
         }
 
         class RankerScorer extends Scorer {
@@ -272,12 +332,13 @@ public class RankerQuery extends Query {
              */
             private final List<Scorer> scorers;
             private final NaiveDisjunctionDISI iterator;
-            private LtrRanker.FeatureVector featureVector;
+            private final FVHolder featureVector;
 
-            RankerScorer(List<Scorer> scorers, NaiveDisjunctionDISI iterator) {
+            RankerScorer(List<Scorer> scorers, NaiveDisjunctionDISI iterator, FVHolder fvholder) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
+                this.featureVector = fvholder;
             }
 
             @Override
@@ -287,10 +348,11 @@ public class RankerQuery extends Query {
 
             @Override
             public float score() throws IOException {
-                featureVector = ranker.newFeatureVector(featureVector);
+                featureVector.vector = ranker.newFeatureVector(featureVector.vector);
                 int ordinal = -1;
                 // a DisiPriorityQueue could help to avoid
                 // looping on all scorers
+
                 for (Scorer scorer : scorers) {
                     ordinal++;
                     // FIXME: Probably inefficient, again we loop over all scorers..
@@ -298,10 +360,11 @@ public class RankerQuery extends Query {
                         float score = scorer.score();
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        featureVector.setFeatureScore(ordinal, score);
+                        featureVector.vector.setFeatureScore(ordinal, score);
                     }
                 }
-                return ranker.score(featureVector);
+
+                return ranker.score(featureVector.vector);
             }
 
             @Override
@@ -314,6 +377,79 @@ public class RankerQuery extends Query {
                 return iterator;
             }
         }
+    }
+
+    static class FVDoubleValuesSource extends DoubleValuesSource {
+        private final int ordinal;
+        private final FVHolder fvholder;
+
+        FVDoubleValuesSource(FVHolder fvholder, int ordinal) {
+            this.fvholder = fvholder;
+            this.ordinal = ordinal;
+        }
+
+        @Override
+        public DoubleValues getValues(LeafReaderContext ctx, DoubleValues scores) throws IOException {
+            return new DoubleValues() {
+                @Override
+                public double doubleValue() throws IOException {
+                    assert fvholder.vector != null;
+                    return fvholder.vector.getFeatureScore(ordinal);
+                }
+
+                @Override
+                public boolean advanceExact(int doc) throws IOException {
+                    return true;
+                }
+            };
+        }
+
+        /**
+         * Return true if document scores are needed to calculate values
+         */
+        @Override
+        public boolean needsScores() {
+            return true;
+        }
+    }
+
+    static class DValScorer extends Scorer {
+        private final DocIdSetIterator iterator;
+        private final DoubleValues values;
+
+        DValScorer(Weight weight, DocIdSetIterator iterator, DoubleValues values) {
+            super(weight);
+            this.iterator = iterator;
+            this.values = values;
+        }
+
+        @Override
+        public int docID() {
+            return iterator.docID();
+        }
+
+        @Override
+        public float score() throws IOException {
+            values.advanceExact(docID());
+            return (float) values.doubleValue();
+        }
+
+        /**
+         * Returns the freq of this Scorer on the current document
+         */
+        @Override
+        public int freq() throws IOException {
+            return 1;
+        }
+
+        @Override
+        public DocIdSetIterator iterator() {
+            return iterator;
+        }
+    }
+
+    static class FVHolder {
+        LtrRanker.FeatureVector vector;
     }
 
     /**

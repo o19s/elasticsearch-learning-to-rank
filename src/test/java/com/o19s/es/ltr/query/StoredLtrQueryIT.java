@@ -16,6 +16,7 @@
  */
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.action.AddDerivedFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
 import com.o19s.es.ltr.action.BaseIntegrationTest;
@@ -24,6 +25,7 @@ import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesResponse;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
@@ -45,7 +47,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
     private static final String SIMPLE_MODEL = "{" +
             "\"feature1\": 1," +
-            "\"feature2\": -1" +
+            "\"feature2\": -1," +
+            "\"feature3\": 1" +
             "}";
 
 
@@ -55,6 +58,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         addElement(new StoredFeature("feature2", Collections.singletonList("query"), "mustache",
                 QueryBuilders.matchQuery("field2", "{{query}}").toString()));
 
+        addElement(new StoredDerivedFeature("feature3", "feature1 * 2"));
+
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
         builder.request().setFeatureNameQuery("feature1");
@@ -62,7 +67,15 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.execute().get();
 
         builder.request().setFeatureNameQuery("feature2");
-        long version = builder.get().getResponse().getVersion();
+        builder.execute().get();
+
+        AddDerivedFeaturesToSetAction.AddDerivedFeaturesToSetRequestBuilder derivedBuilder =
+                AddDerivedFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        derivedBuilder.request().setFeatureSet("my_set");
+        derivedBuilder.request().setDerivedName("feature3");
+        derivedBuilder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
+
+        long version = derivedBuilder.get().getResponse().getVersion();
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
         createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,

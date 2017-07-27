@@ -15,6 +15,10 @@
     "type": {
       "type": "keyword"
     },
+    "derived_feature": {
+      "type": "object",
+      "enabled": "false"
+    },
     "feature": {
       "type": "object",
       "enabled": "false"

@@ -16,9 +16,11 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.DerivedFeature;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import org.apache.lucene.util.Accountable;
@@ -57,6 +59,7 @@ public class Caches {
             TimeValue.timeValueNanos(0),
             Setting.Property.NodeScope);
 
+    private final Cache<CacheKey, StoredDerivedFeature> derivedFeatureCache;
     private final Cache<CacheKey, StoredFeature> featureCache;
     private final Cache<CacheKey, StoredFeatureSet> featureSetCache;
     private final Cache<CacheKey, CompiledLtrModel> modelCache;
@@ -71,20 +74,25 @@ public class Caches {
     private final long maxWeight;
 
     public Caches(TimeValue expAfterWrite, TimeValue expAfterAccess, ByteSizeValue maxWeight) {
+        this.derivedFeatureCache = configCache(CacheBuilder.<CacheKey, StoredDerivedFeature>builder(), expAfterWrite,
+                expAfterAccess, maxWeight)
+            .weigher((s, w) -> w.ramBytesUsed())
+            .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
+            .build();
         this.featureCache = configCache(CacheBuilder.<CacheKey, StoredFeature>builder(), expAfterWrite, expAfterAccess, maxWeight)
-                .weigher((s, w) -> w.ramBytesUsed())
-                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
-                .build();
+            .weigher((s, w) -> w.ramBytesUsed())
+            .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
+            .build();
         this.featureSetCache = configCache(CacheBuilder.<CacheKey, StoredFeatureSet>builder(), expAfterWrite, expAfterAccess, maxWeight)
-                .weigher((s, w) -> w.ramBytesUsed())
-                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
-                .build();
+            .weigher((s, w) -> w.ramBytesUsed())
+            .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
+            .build();
         this.modelCache = configCache(CacheBuilder.<CacheKey, CompiledLtrModel>builder(), expAfterWrite, expAfterAccess, maxWeight)
-                .weigher((s, w) -> w.ramBytesUsed())
-                .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
-                .build();
+            .weigher((s, w) -> w.ramBytesUsed())
+            .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
+            .build();
         this.maxWeight = maxWeight.getBytes();
-    }
+}
 
     private <K, V> CacheBuilder<K, V> configCache(CacheBuilder<K, V> builder, TimeValue expireAfterWrite,
                                                   TimeValue expireAfterAccess, ByteSizeValue maxWeight) {
@@ -116,6 +124,11 @@ public class Caches {
         });
     }
 
+    StoredDerivedFeature loadDerivedFeature(CacheKey key, CheckedFunction<String, StoredDerivedFeature, IOException> loader)
+        throws IOException {
+        return cacheLoad(key, derivedFeatureCache, loader);
+    }
+
     StoredFeature loadFeature(CacheKey key, CheckedFunction<String, StoredFeature, IOException> loader) throws IOException {
         return cacheLoad(key, featureCache, loader);
     }
@@ -144,10 +157,13 @@ public class Caches {
     }
 
     public void evict(String index) {
+        evict(index, derivedFeatureCache);
         evict(index, featureCache);
         evict(index, featureSetCache);
         evict(index, modelCache);
     }
+
+    public void evictDerivedFeature(String index, String name) { derivedFeatureCache.invalidate(new CacheKey(index, name));}
 
     public void evictFeature(String index, String name) {
         featureCache.invalidate(new CacheKey(index, name));
@@ -169,6 +185,8 @@ public class Caches {
             }
         }
     }
+
+    public Cache<CacheKey, StoredDerivedFeature> derivedFeatureCache() { return derivedFeatureCache; }
 
     public Cache<CacheKey, StoredFeature> featureCache() {
         return featureCache;
@@ -243,6 +261,8 @@ public class Caches {
         private final AtomicLong ramAll = new AtomicLong();
         private final AtomicInteger countAll = new AtomicInteger();
 
+        private final AtomicLong derivedFeatureRam = new AtomicLong();
+        private final AtomicInteger derivedFeatureCount = new AtomicInteger();
         private final AtomicLong featureRam = new AtomicLong();
         private final AtomicInteger featureCount = new AtomicInteger();
         private final AtomicLong featureSetRam = new AtomicLong();
@@ -271,7 +291,10 @@ public class Caches {
             final AtomicInteger count;
             final AtomicLong ram;
             final int factor = add ? 1 : -1;
-            if (elt instanceof Feature) {
+            if(elt instanceof DerivedFeature) {
+                count = derivedFeatureCount;
+                ram = derivedFeatureRam;
+            } else if (elt instanceof Feature) {
                 count = featureCount;
                 ram = featureRam;
             } else if (elt instanceof FeatureSet) {
@@ -302,6 +325,10 @@ public class Caches {
         public int totalCount() {
             return countAll.get();
         }
+
+        public long derivedFeatureRam() { return derivedFeatureRam.get(); }
+
+        public int derivedFeatureCount() { return derivedFeatureCount.get(); }
 
         public long featureRam() {
             return featureRam.get();

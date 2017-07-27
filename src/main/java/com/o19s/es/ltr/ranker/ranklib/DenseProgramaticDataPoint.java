@@ -30,6 +30,7 @@ public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.Fe
 
     public DenseProgramaticDataPoint(int numFeatures) {
         this.fVals = new float[numFeatures+1]; // add 1 because RankLib features 1 based
+        featureCount = numFeatures;
     }
 
     public float getFeatureValue(int fid) {

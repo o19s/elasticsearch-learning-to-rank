@@ -18,12 +18,14 @@ package com.o19s.es.ltr;
 
 import ciir.umass.edu.learning.RankerFactory;
 import com.o19s.es.explore.ExplorerQueryBuilder;
+import com.o19s.es.ltr.action.AddDerivedFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
 import com.o19s.es.ltr.action.ListStoresAction;
+import com.o19s.es.ltr.action.TransportAddDerivedFeatureToSetAction;
 import com.o19s.es.ltr.action.TransportAddFeatureToSetAction;
 import com.o19s.es.ltr.action.TransportCacheStatsAction;
 import com.o19s.es.ltr.action.TransportClearCachesAction;
@@ -31,6 +33,7 @@ import com.o19s.es.ltr.action.TransportCreateModelFromSetAction;
 import com.o19s.es.ltr.action.TransportFeatureStoreAction;
 import com.o19s.es.ltr.action.TransportListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -45,6 +48,7 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
+import com.o19s.es.ltr.rest.RestAddDerivedFeatureToSet;
 import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
@@ -145,6 +149,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         list.add(new RestFeatureStoreCaches(settings, restController));
         list.add(new RestCreateModelFromSet(settings, restController));
         list.add(new RestAddFeatureToSet(settings, restController));
+        list.add(new RestAddDerivedFeatureToSet(settings, restController));
         return unmodifiableList(list);
     }
 
@@ -154,6 +159,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new ActionHandler<>(FeatureStoreAction.INSTANCE, TransportFeatureStoreAction.class),
                 new ActionHandler<>(CachesStatsAction.INSTANCE, TransportCacheStatsAction.class),
                 new ActionHandler<>(ClearCachesAction.INSTANCE, TransportClearCachesAction.class),
+                new ActionHandler<>(AddDerivedFeaturesToSetAction.INSTANCE, TransportAddDerivedFeatureToSetAction.class),
                 new ActionHandler<>(AddFeaturesToSetAction.INSTANCE, TransportAddFeatureToSetAction.class),
                 new ActionHandler<>(CreateModelFromSetAction.INSTANCE, TransportCreateModelFromSetAction.class),
                 new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class)));
@@ -169,6 +175,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public List<Entry> getNamedWriteables() {
         return unmodifiableList(asList(
+                new Entry(StorableElement.class, StoredDerivedFeature.TYPE, StoredDerivedFeature::new),
                 new Entry(StorableElement.class, StoredFeature.TYPE, StoredFeature::new),
                 new Entry(StorableElement.class, StoredFeatureSet.TYPE, StoredFeatureSet::new),
                 new Entry(StorableElement.class, StoredLtrModel.TYPE, StoredLtrModel::new)
@@ -178,6 +185,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public List<NamedXContentRegistry.Entry> getNamedXContent() {
         return unmodifiableList(asList(
+                new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredDerivedFeature.TYPE),
+                        StoredDerivedFeature::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredFeature.TYPE), StoredFeature::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredFeatureSet.TYPE), StoredFeatureSet::parse),
                 new NamedXContentRegistry.Entry(StorableElement.class, new ParseField(StoredLtrModel.TYPE), StoredLtrModel::parse)

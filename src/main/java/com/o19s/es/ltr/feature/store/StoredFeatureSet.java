@@ -47,13 +47,16 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     public static final String TYPE = "featureset";
     private final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeatureSet.class);
     private final String name;
+    private final Map<String, Integer> derivedFeatureMap;
     private final Map<String, Integer> featureMap;
     private final List<StoredFeature> features;
+    private final List<StoredDerivedFeature> derivedFeatures;
 
     private static final ObjectParser<ParsingState, Void> PARSER;
 
     static final ParseField NAME = new ParseField("name");
     static final ParseField FEATURES = new ParseField("features");
+    static final ParseField DERIVED_FEATURES = new ParseField("derived_features");
 
     static {
         PARSER = new ObjectParser<>(TYPE, ParsingState::new);
@@ -61,6 +64,9 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         PARSER.declareObjectArray(ParsingState::setFeatures,
                 (p, c) -> StoredFeature.parse(p),
                 FEATURES);
+        PARSER.declareObjectArray(ParsingState::setDerivedFeatures,
+                (p, c) -> StoredDerivedFeature.parse(p),
+                DERIVED_FEATURES);
     }
 
     public static StoredFeatureSet parse(XContentParser parser) {
@@ -75,13 +81,16 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
             if (state.features.isEmpty()) {
                 throw new ParsingException(parser.getTokenLocation(), "At least one feature must be defined in [features]");
             }
-            return new StoredFeatureSet(state.name, state.features);
+            if (state.derivedFeatures == null) {
+                state.derivedFeatures = new ArrayList<>();
+            }
+            return new StoredFeatureSet(state.name, state.features, state.derivedFeatures);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
     }
 
-    public StoredFeatureSet(String name, List<StoredFeature> features) {
+    public StoredFeatureSet(String name, List<StoredFeature> features, List<StoredDerivedFeature> derivedFeatures) {
         this.name = Objects.requireNonNull(name);
         features = Objects.requireNonNull(features);
         if (!(features instanceof RandomAccess)) {
@@ -97,16 +106,32 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
                         "feature names must be unique in a set.");
             }
         }
+
+        this.derivedFeatures = derivedFeatures;
+        derivedFeatureMap = new HashMap<>();
+        for (StoredDerivedFeature feature : derivedFeatures) {
+            ordinal++;
+            if (derivedFeatureMap.put(feature.name(), ordinal) != null) {
+                throw new IllegalArgumentException("Derived Feature [" + feature.name() + "] defined twice in this set: " +
+                        "feature names must be unique in a set.");
+            }
+        }
+
+    }
+
+    public StoredFeatureSet(String name, List<StoredFeature> features) {
+        this(name, features, new ArrayList<>());
     }
 
     public StoredFeatureSet(StreamInput input) throws IOException {
-        this(input.readString(), input.readList(StoredFeature::new));
+        this(input.readString(), input.readList(StoredFeature::new), input.readList(StoredDerivedFeature::new));
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(name);
         out.writeList(features);
+        out.writeList(derivedFeatures);
     }
 
     @Override
@@ -118,6 +143,13 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
             feature.toXContent(builder, params);
         }
         builder.endArray();
+
+        builder.startArray(DERIVED_FEATURES.getPreferredName());
+        for (StoredDerivedFeature derived: derivedFeatures) {
+            derived.toXContent(builder, params);
+        }
+        builder.endArray();
+
         builder.endObject();
         return builder;
     }
@@ -149,7 +181,19 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         List<StoredFeature> newFeatures = new ArrayList<>(nFeature);
         newFeatures.addAll(this.features);
         newFeatures.addAll(features);
-        return new StoredFeatureSet(name, newFeatures);
+        return new StoredFeatureSet(name, newFeatures, derivedFeatures);
+    }
+
+    public StoredFeatureSet appendDerived(List<StoredDerivedFeature> derivedFeatures) {
+        int nFeature = derivedFeatures.size() + this.derivedFeatures.size();
+
+        if(nFeature > MAX_FEATURES) {
+            throw new IllegalArgumentException("The resulting feature set would be too large");
+        }
+        List<StoredDerivedFeature> newDerived = new ArrayList<>(nFeature);
+        newDerived.addAll(this.derivedFeatures);
+        newDerived.addAll(derivedFeatures);
+        return new StoredFeatureSet(name, features, newDerived);
     }
 
     @Override
@@ -162,8 +206,11 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     @Override
+    public List<StoredDerivedFeature> derivedFeatures() { return derivedFeatures; }
+
+    @Override
     public int featureOrdinal(String featureName) {
-        Integer ordinal = featureMap.get(featureName);
+        Integer ordinal = featureMap.get(featureName) == null ? derivedFeatureMap.get(featureName) : featureMap.get(featureName);
         if (ordinal == null) {
             throw new IllegalArgumentException("Unknown feature [" + featureName + "]");
         }
@@ -182,12 +229,12 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
 
     @Override
     public boolean hasFeature(String featureName) {
-        return featureMap.containsKey(featureName);
+        return featureMap.containsKey(featureName) || derivedFeatureMap.containsKey(featureName);
     }
 
     @Override
     public int size() {
-        return features.size();
+        return features.size() + derivedFeatures.size();
     }
 
     @Override
@@ -217,6 +264,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
 
     private static class ParsingState {
         private String name;
+        private List<StoredDerivedFeature> derivedFeatures;
         private List<StoredFeature> features;
 
         public void setName(String name) {
@@ -226,5 +274,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         public void setFeatures(List<StoredFeature> features) {
             this.features = features;
         }
+
+        public void setDerivedFeatures(List<StoredDerivedFeature> features) { this.derivedFeatures = features; }
     }
 }

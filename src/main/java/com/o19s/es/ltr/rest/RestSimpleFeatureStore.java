@@ -19,6 +19,7 @@ package com.o19s.es.ltr.rest;
 import com.o19s.es.ltr.action.FeatureStoreAction;
 import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -63,6 +64,7 @@ import static org.elasticsearch.rest.RestStatus.OK;
  */
 public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler {
     private static final Set<String> SUPPORTED_TYPES = unmodifiableSet(new HashSet<>(asList(
+            StoredDerivedFeature.TYPE,
             StoredFeature.TYPE,
             StoredFeatureSet.TYPE,
             StoredLtrModel.TYPE)));

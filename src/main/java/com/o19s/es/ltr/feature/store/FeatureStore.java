@@ -24,6 +24,7 @@ import java.io.IOException;
 public interface FeatureStore {
     String getStoreName();
     StoredFeature load(String name) throws IOException;
+    StoredDerivedFeature loadDerived(String name) throws IOException;
     StoredFeatureSet loadSet(String name) throws IOException;
     CompiledLtrModel loadModel(String name) throws IOException;
 }

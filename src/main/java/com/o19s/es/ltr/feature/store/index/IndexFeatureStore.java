@@ -19,6 +19,7 @@ package com.o19s.es.ltr.feature.store.index;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredDerivedFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -68,6 +69,8 @@ public class IndexFeatureStore implements FeatureStore {
     private static final ObjectParser<ParserState, Void> SOURCE_PARSER;
     static {
         SOURCE_PARSER = new ObjectParser<>("", true, ParserState::new);
+        SOURCE_PARSER.declareField(ParserState::setElement, StoredDerivedFeature::parse,
+                new ParseField(StoredDerivedFeature.TYPE), ObjectParser.ValueType.OBJECT);
         SOURCE_PARSER.declareField(ParserState::setElement, StoredFeature::parse,
                 new ParseField(StoredFeature.TYPE), ObjectParser.ValueType.OBJECT);
         SOURCE_PARSER.declareField(ParserState::setElement, StoredFeatureSet::parse,
@@ -94,6 +97,11 @@ public class IndexFeatureStore implements FeatureStore {
     @Override
     public StoredFeature load(String name) throws IOException {
         return getAndParse(name, StoredFeature.class, StoredFeature.TYPE);
+    }
+
+    @Override
+    public StoredDerivedFeature loadDerived(String name) throws IOException {
+        return getAndParse(name, StoredDerivedFeature.class, StoredDerivedFeature.TYPE);
     }
 
     @Override
@@ -158,6 +166,8 @@ public class IndexFeatureStore implements FeatureStore {
             return null;
         }
     }
+
+    public GetResponse getDerivedFeature(String name) { return internalGet(generateId(StoredDerivedFeature.TYPE, name)).get(); }
 
     public GetResponse getFeature(String name) {
         return internalGet(generateId(StoredFeature.TYPE, name)).get();
