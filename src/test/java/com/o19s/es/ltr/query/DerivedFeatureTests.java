@@ -303,6 +303,31 @@ public class DerivedFeatureTests extends LuceneTestCase {
         checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs);
     }
 
+    public void testDivByZero() throws IOException {
+        String userQuery = "brown cow";
+        List<Query> features = Arrays.asList(
+                new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                new PhraseQuery("field", userQuery.split(" ")));
+
+        List<PrebuiltDerivedFeature> dfs = new ArrayList<>();
+        dfs.add(new PrebuiltDerivedFeature("div_by_zero", "$0 / 0"));
+
+
+        expectThrows(AssertionError.class, () -> checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs));
+    }
+
+    public void testBadVars() throws IOException {
+        String userQuery = "brown cow";
+        List<Query> features = Arrays.asList(
+                new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                new PhraseQuery("field", userQuery.split(" ")));
+
+        List<PrebuiltDerivedFeature> dfs = new ArrayList<>();
+        dfs.add(new PrebuiltDerivedFeature("bar_vars", "$0 / hamburgers"));
+
+        expectThrows(IllegalArgumentException.class, () -> checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs));
+    }
+
     private List<PrebuiltFeature> toPrebuildFeatureWithNoName(List<Query> features) {
         return features.stream()
                 .map(x -> new PrebuiltFeature(null, x))
