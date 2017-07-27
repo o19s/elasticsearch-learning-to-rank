@@ -119,23 +119,24 @@ public class ExplorerQueryTests extends LuceneTestCase {
         TermQuery tq3 = new TermQuery(new Term("text", "brown"));
         TermQuery tq4 = new TermQuery(new Term("text", "cow"));
         TermQuery tq5 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq6 = new TermQuery(new Term("text", "not_here"));
 
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        builder.add(tq1, BooleanClause.Occur.SHOULD);
-        builder.add(tq2, BooleanClause.Occur.SHOULD);
-        builder.add(tq3, BooleanClause.Occur.SHOULD);
-        builder.add(tq4, BooleanClause.Occur.SHOULD);
-        builder.add(tq5, BooleanClause.Occur.SHOULD);
+        builder.add(tq1, BooleanClause.Occur.MUST);
+        builder.add(tq2, BooleanClause.Occur.MUST);
+        builder.add(tq3, BooleanClause.Occur.MUST);
+        builder.add(tq4, BooleanClause.Occur.MUST);
+        builder.add(tq6, BooleanClause.Occur.MUST);
 
         Query q = builder.build();
         String statsType = "unique_terms_count";
 
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
-        // Verify score is 4 (4 unique terms)
+        // Verify score is 5 (5 unique terms)
         TopDocs docs = searcher.search(eq, 4);
 
-        assertThat(docs.getMaxScore(), equalTo(4.0f));
+        assertThat(docs.getMaxScore(), equalTo(5.0f));
     }
 
     public void testInvalidStat() throws Exception {

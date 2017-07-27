@@ -21,6 +21,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -170,25 +171,16 @@ public class ExplorerQuery extends Query {
                 @Override
                 public Explanation explain(LeafReaderContext context, int doc) throws IOException {
                     Scorer scorer = scorer(context);
-
-                    if (scorer != null) {
-                        int newDoc = scorer.iterator().advance(doc);
-                        if (newDoc == doc) {
-                            return Explanation.match(
-                                    scorer.score(),
-                                    "Stat Score: " + type);
-                        }
-                    }
-                    return Explanation.noMatch("no matching term");
+                    int newDoc = scorer.iterator().advance(doc);
+                    assert newDoc == doc; // this is a DocIdSetIterator.all
+                    return Explanation.match(
+                            scorer.score(),
+                            "Stat Score: " + type);
                 }
 
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
-                    Scorer subScorer = subWeight.scorer(context);
-                    if(subScorer != null) {
-                        return new ConstantScoreScorer(this, constantScore, subScorer.iterator());
-                    }
-                    return null;
+                    return new ConstantScoreScorer(this, constantScore, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
             };
         } else {
