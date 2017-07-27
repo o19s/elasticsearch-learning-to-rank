@@ -25,7 +25,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.utils.FeatureStoreProvider;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.settings.Settings;
@@ -98,7 +98,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
      */
     @Override
     protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder();
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(getFeatureStoreLoader());
         if (random().nextBoolean()) {
             builder.modelName("model1");
         } else {
@@ -111,7 +111,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     }
 
     public void testMissingParams() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder();
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(getFeatureStoreLoader());
         builder.modelName("model1");
 
         assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
@@ -175,9 +175,13 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         }
 
         @Override
-        protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {
-            // Ignore storeName for tests
-            return (name, client) -> store;
+        protected FeatureStoreLoader getFeatureStoreLoader() {
+            return StoredLtrQueryBuilderTests.getFeatureStoreLoader();
         }
+    }
+
+    public static FeatureStoreLoader getFeatureStoreLoader() {
+        // Ignore storeName for tests
+        return (name, client) -> store;
     }
 }

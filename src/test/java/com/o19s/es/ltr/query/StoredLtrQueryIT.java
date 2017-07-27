@@ -31,6 +31,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.rescore.QueryRescoreMode;
 import org.elasticsearch.search.rescore.RescoreBuilder;
 
@@ -70,19 +71,19 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         createModelFromSetRequestBuilder.get();
         buildIndex();
         Map<String, Object> params = new HashMap<>();
-        params.put("query", "bonjour");
+        boolean negativeScore = random().nextBoolean();
+        params.put("query", negativeScore ? "bonjour" : "hello");
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(RescoreBuilder
-                        .queryRescorer(new StoredLtrQueryBuilder().modelName("my_model").params(params))
+                        .queryRescorer(new WrapperQueryBuilder(new StoredLtrQueryBuilder().modelName("my_model").params(params).toString()))
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        params.put("query", "hello");
         SearchResponse sr = sb.get();
         assertEquals(1, sr.getHits().getTotalHits());
-        assertTrue(sr.getHits().getAt(0).score() > 0);
+        assertEquals(sr.getHits().getAt(0).getScore() < 0, negativeScore);
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();

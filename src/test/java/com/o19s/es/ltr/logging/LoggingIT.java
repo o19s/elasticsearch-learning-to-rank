@@ -31,6 +31,7 @@ import org.elasticsearch.common.lucene.search.function.FiltersFunctionScoreQuery
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -149,11 +150,12 @@ public class LoggingIT extends BaseIntegrationTest {
                 .params(params)
                 .queryName("test_rescore");
 
-        QueryBuilder query = QueryBuilders.boolQuery().must(sbuilder).filter(QueryBuilders.idsQuery("test").addIds(ids));
+        QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
                 .fetchSource(false)
                 .size(10)
-                .addRescorer(new QueryRescorerBuilder(sbuilder_rescore))
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
                 .ext(Collections.singletonList(
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)
@@ -165,6 +167,17 @@ public class LoggingIT extends BaseIntegrationTest {
         sbuilder.modelName("my_model");
         sbuilder_rescore.featureSetName(null);
         sbuilder_rescore.modelName("my_model");
+
+        query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
 
         SearchResponse resp2 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
         assertSearchHits(docs, resp2);
