@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.logging;
 
+import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.action.BaseIntegrationTest;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
@@ -140,12 +141,12 @@ public class LoggingIT extends BaseIntegrationTest {
         List<String> idsColl = new ArrayList<>(docs.keySet());
         Collections.shuffle(idsColl, random());
         String[] ids = idsColl.subList(0, TestUtil.nextInt(random(), 5, 15)).toArray(new String[0]);
-        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder()
+        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
                 .featureSetName("my_set")
                 .params(params)
                 .queryName("test");
 
-        StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder()
+        StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
                 .featureSetName("my_set")
                 .params(params)
                 .queryName("test_rescore");

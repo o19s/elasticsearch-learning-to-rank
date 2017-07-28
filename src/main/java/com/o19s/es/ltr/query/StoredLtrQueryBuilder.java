@@ -50,6 +50,9 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
+    /**
+     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(QueryShardContext)}
+     */
     private final transient FeatureStoreLoader storeLoader;
     private String modelName;
     private String featureSetName;
@@ -59,7 +62,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
 
     static {
-        PARSER = new ObjectParser<>(NAME, StoredLtrQueryBuilder::new);
+        PARSER = new ObjectParser<>(NAME);
         PARSER.declareString(StoredLtrQueryBuilder::modelName, MODEL_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::featureSetName, FEATURESET_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
@@ -68,28 +71,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         declareStandardFields(PARSER);
     }
 
-    /**
-     * This constructor is meant to be used by a client that will send the
-     * query using a serialization mechanism (XContent or Streamable).
-     * If this builder is instantiated using this constructor it won't be able
-     * to construct a lucene query: doToQuery will throw IllegalStateException.
-     * This is because some contexts needed to transform it (see doToQuery)
-     * must be injected by elasticsearch (see its QuerySpec in the plugin
-     * class).
-     * In short this constructor is mostly useful for integration testing or
-     * XContent parser tests where doToQuery won't be called on this instance.
-     */
-    public StoredLtrQueryBuilder() {
-        storeLoader = (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
-                "built without a valid store loader");};
-    }
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader) {
         this.storeLoader = storeLoader;
     }
 
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader, StreamInput input) throws IOException {
         super(input);
-        this.storeLoader = storeLoader;
+        this.storeLoader = Objects.requireNonNull(storeLoader);
         modelName = input.readOptionalString();
         featureSetName = input.readOptionalString();
         params = input.readMap();
@@ -104,10 +92,11 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalString(storeName);
     }
 
-    public static Optional<StoredLtrQueryBuilder> fromXContent(FeatureStoreLoader storedLoader,
+    public static Optional<StoredLtrQueryBuilder> fromXContent(FeatureStoreLoader storeLoader,
                                                                QueryParseContext context) throws IOException {
+        storeLoader = Objects.requireNonNull(storeLoader);
         XContentParser parser = context.parser();
-        final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storedLoader);
+        final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storeLoader);
         try {
             PARSER.parse(context.parser(), builder, null);
         } catch (IllegalArgumentException iae) {
@@ -149,6 +138,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             CompiledLtrModel model = store.loadModel(modelName);
             return RankerQuery.build(model, context, params);
         } else {
+            assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
             float[] weitghs = new float[set.size()];
             Arrays.fill(weitghs, 1F);
