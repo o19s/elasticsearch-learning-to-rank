@@ -50,7 +50,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
-    private final transient FeatureStoreLoader storeLoder;
+    private final transient FeatureStoreLoader storeLoader;
     private String modelName;
     private String featureSetName;
     private String storeName;
@@ -69,16 +69,16 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     }
 
     public StoredLtrQueryBuilder() {
-        storeLoder = (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
+        storeLoader = (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
                 "built without a valid store loader");};
     }
-    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoder) {
-        this.storeLoder = storeLoder;
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader) {
+        this.storeLoader = storeLoader;
     }
 
-    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoder, StreamInput input) throws IOException {
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader, StreamInput input) throws IOException {
         super(input);
-        this.storeLoder = storeLoder;
+        this.storeLoader = storeLoader;
         modelName = input.readOptionalString();
         featureSetName = input.readOptionalString();
         params = input.readMap();
@@ -98,7 +98,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         XContentParser parser = context.parser();
         final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storedLoader);
         try {
-            PARSER.parse(context.parser(), builder,null);
+            PARSER.parse(context.parser(), builder, null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -133,7 +133,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
-        FeatureStore store = storeLoder.load(indexName, context.getClient());
+        FeatureStore store = storeLoader.load(indexName, context.getClient());
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
             return RankerQuery.build(model, context, params);
