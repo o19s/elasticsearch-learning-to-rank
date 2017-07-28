@@ -34,6 +34,7 @@ import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.feature.store.index.CachedFeatureStore;
 import com.o19s.es.ltr.feature.store.index.Caches;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.logging.LoggingFetchSubPhase;
@@ -49,7 +50,7 @@ import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
 import com.o19s.es.ltr.rest.RestSimpleFeatureStore;
-import com.o19s.es.ltr.utils.FeatureStoreProvider;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
@@ -71,7 +72,6 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.script.NativeScriptFactory;
 import org.elasticsearch.script.ScriptEngineService;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
@@ -80,7 +80,6 @@ import org.elasticsearch.watcher.ResourceWatcherService;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -108,7 +107,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         return asList(
                 new QuerySpec<>(ExplorerQueryBuilder.NAME, ExplorerQueryBuilder::new, ExplorerQueryBuilder::fromXContent),
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
-                new QuerySpec<>(StoredLtrQueryBuilder.NAME, StoredLtrQueryBuilder::new, StoredLtrQueryBuilder::fromXContent));
+                new QuerySpec<>(StoredLtrQueryBuilder.NAME,
+                        (input) -> new StoredLtrQueryBuilder(getFeatureStoreLoader(), input),
+                        (ctx) -> StoredLtrQueryBuilder.fromXContent(getFeatureStoreLoader(), ctx)));
     }
 
     @Override
@@ -125,14 +126,6 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     @Override
     public ScriptEngineService getScriptEngineService(Settings settings) {
         return new RankLibScriptEngine(settings, parserFactory);
-    }
-
-    /**
-     * Returns a list of {@link NativeScriptFactory} instances.
-     */
-    @Override
-    public List<NativeScriptFactory> getNativeScripts() {
-        return Collections.singletonList(new FeatureStoreProvider.Factory(getFeatureStoreLoader()));
     }
 
     @Override
@@ -193,7 +186,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
     }
 
-    protected FeatureStoreProvider.FeatureStoreLoader getFeatureStoreLoader() {
-        return FeatureStoreProvider.defaultFeatureStoreLoad(caches, parserFactory);
+    protected FeatureStoreLoader getFeatureStoreLoader() {
+        return (storeName, client) -> new CachedFeatureStore(new IndexFeatureStore(storeName, client, parserFactory), caches);
     }
 }

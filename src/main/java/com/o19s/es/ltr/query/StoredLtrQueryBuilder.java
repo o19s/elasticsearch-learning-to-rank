@@ -21,7 +21,7 @@ import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.utils.FeatureStoreProvider;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
@@ -50,6 +50,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
+    private final transient FeatureStoreLoader storeLoder;
     private String modelName;
     private String featureSetName;
     private String storeName;
@@ -67,9 +68,17 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         declareStandardFields(PARSER);
     }
 
-    public StoredLtrQueryBuilder() {}
-    public StoredLtrQueryBuilder(StreamInput input) throws IOException {
+    public StoredLtrQueryBuilder() {
+        storeLoder = (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
+                "built without a valid store loader");};
+    }
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoder) {
+        this.storeLoder = storeLoder;
+    }
+
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoder, StreamInput input) throws IOException {
         super(input);
+        this.storeLoder = storeLoder;
         modelName = input.readOptionalString();
         featureSetName = input.readOptionalString();
         params = input.readMap();
@@ -84,11 +93,12 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalString(storeName);
     }
 
-    public static Optional<StoredLtrQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
+    public static Optional<StoredLtrQueryBuilder> fromXContent(FeatureStoreLoader storedLoader,
+                                                               QueryParseContext context) throws IOException {
         XContentParser parser = context.parser();
-        final StoredLtrQueryBuilder builder;
+        final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storedLoader);
         try {
-            builder = PARSER.parse(context.parser(), null);
+            PARSER.parse(context.parser(), builder,null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -123,7 +133,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
-        FeatureStore store = FeatureStoreProvider.findFeatureStore(indexName, context);
+        FeatureStore store = storeLoder.load(indexName, context.getClient());
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
             return RankerQuery.build(model, context, params);
