@@ -32,6 +32,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,28 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
                 throw new IllegalArgumentException("Feature [" + feature.name() + "] defined twice in this set: " +
                         "feature names must be unique in a set.");
             }
+        }
+    }
+
+    @Override
+    public FeatureSet optimize() {
+        List<Feature> optimizedFeatures = new ArrayList<>(this.features.size());
+        boolean optimized = false;
+        for (StoredFeature feature: this.features) {
+            Feature optimizedFeature = feature.optimize();
+            optimized |= optimizedFeature != feature;
+            optimizedFeatures.add(optimizedFeature);
+        }
+        if (optimized) {
+            return new OptimizedFeatureSet(this.name, optimizedFeatures, Collections.unmodifiableMap(featureMap));
+        }
+        return this;
+    }
+
+    @Override
+    public void validate() {
+        for (StoredFeature feature : features) {
+            feature.validate(this);
         }
     }
 

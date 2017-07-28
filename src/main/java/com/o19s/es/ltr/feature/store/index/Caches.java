@@ -19,8 +19,6 @@ package com.o19s.es.ltr.feature.store.index;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.CheckedFunction;
@@ -57,8 +55,8 @@ public class Caches {
             TimeValue.timeValueNanos(0),
             Setting.Property.NodeScope);
 
-    private final Cache<CacheKey, StoredFeature> featureCache;
-    private final Cache<CacheKey, StoredFeatureSet> featureSetCache;
+    private final Cache<CacheKey, Feature> featureCache;
+    private final Cache<CacheKey, FeatureSet> featureSetCache;
     private final Cache<CacheKey, CompiledLtrModel> modelCache;
 
     static {
@@ -71,12 +69,12 @@ public class Caches {
     private final long maxWeight;
 
     public Caches(TimeValue expAfterWrite, TimeValue expAfterAccess, ByteSizeValue maxWeight) {
-        this.featureCache = configCache(CacheBuilder.<CacheKey, StoredFeature>builder(), expAfterWrite, expAfterAccess, maxWeight)
-                .weigher((s, w) -> w.ramBytesUsed())
+        this.featureCache = configCache(CacheBuilder.<CacheKey, Feature>builder(), expAfterWrite, expAfterAccess, maxWeight)
+                .weigher(Caches::weigther)
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
-        this.featureSetCache = configCache(CacheBuilder.<CacheKey, StoredFeatureSet>builder(), expAfterWrite, expAfterAccess, maxWeight)
-                .weigher((s, w) -> w.ramBytesUsed())
+        this.featureSetCache = configCache(CacheBuilder.<CacheKey, FeatureSet>builder(), expAfterWrite, expAfterAccess, maxWeight)
+                .weigher(Caches::weigther)
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
         this.modelCache = configCache(CacheBuilder.<CacheKey, CompiledLtrModel>builder(), expAfterWrite, expAfterAccess, maxWeight)
@@ -84,6 +82,13 @@ public class Caches {
                 .removalListener((l) -> this.onRemove(l.getKey(), l.getValue()))
                 .build();
         this.maxWeight = maxWeight.getBytes();
+    }
+
+    public static long weigther(CacheKey key, Object data) {
+        if (data instanceof Accountable) {
+            return ((Accountable)data).ramBytesUsed();
+        }
+        return 1;
     }
 
     private <K, V> CacheBuilder<K, V> configCache(CacheBuilder<K, V> builder, TimeValue expireAfterWrite,
@@ -104,11 +109,11 @@ public class Caches {
                 LTR_CACHE_MEM_SETTING.get(settings));
     }
 
-    private void onAdd(CacheKey k, Accountable acc) {
+    private void onAdd(CacheKey k, Object acc) {
         perStoreStats.compute(k.getStoreName(), (k2, v) -> v != null ? v.add(acc) : new PerStoreStats(acc));
     }
 
-    private void onRemove(CacheKey k, Accountable acc) {
+    private void onRemove(CacheKey k, Object acc) {
         perStoreStats.compute(k.getStoreName(), (k2, v) -> {
             assert v != null;
             // return null should remove the entry
@@ -116,11 +121,11 @@ public class Caches {
         });
     }
 
-    StoredFeature loadFeature(CacheKey key, CheckedFunction<String, StoredFeature, IOException> loader) throws IOException {
+    Feature loadFeature(CacheKey key, CheckedFunction<String, Feature, IOException> loader) throws IOException {
         return cacheLoad(key, featureCache, loader);
     }
 
-    StoredFeatureSet loadFeatureSet(CacheKey key, CheckedFunction<String, StoredFeatureSet, IOException> loader) throws IOException {
+    FeatureSet loadFeatureSet(CacheKey key, CheckedFunction<String, FeatureSet, IOException> loader) throws IOException {
         return cacheLoad(key, featureSetCache, loader);
     }
 
@@ -128,7 +133,7 @@ public class Caches {
         return cacheLoad(key, modelCache, loader);
     }
 
-    private <E extends Accountable> E cacheLoad(CacheKey key, Cache<CacheKey, E> cache,
+    private <E extends Object> E cacheLoad(CacheKey key, Cache<CacheKey, E> cache,
                                                 CheckedFunction<String, E, IOException> loader) throws IOException {
         try {
             return cache.computeIfAbsent(key, (k) -> {
@@ -170,11 +175,11 @@ public class Caches {
         }
     }
 
-    public Cache<CacheKey, StoredFeature> featureCache() {
+    public Cache<CacheKey, Feature> featureCache() {
         return featureCache;
     }
 
-    public Cache<CacheKey, StoredFeatureSet> featureSetCache() {
+    public Cache<CacheKey, FeatureSet> featureSetCache() {
         return featureSetCache;
     }
 
@@ -252,21 +257,21 @@ public class Caches {
 
         PerStoreStats() {}
 
-        PerStoreStats(Accountable acc) {
+        PerStoreStats(Object acc) {
             add(Objects.requireNonNull(acc));
         }
 
-        public PerStoreStats add(Accountable elt) {
+        public PerStoreStats add(Object elt) {
             int nb = update(true, elt);
             assert nb > 0;
             return this;
         }
 
-        private long remove(Accountable elt) {
+        private long remove(Object elt) {
             return update(false, elt);
         }
 
-        private int update(boolean add, Accountable elt) {
+        private int update(boolean add, Object elt) {
             Objects.requireNonNull(elt);
             final AtomicInteger count;
             final AtomicLong ram;
@@ -283,7 +288,10 @@ public class Caches {
             } else {
                 throw new IllegalArgumentException("Unsupported class " + elt.getClass());
             }
-            long ramUsed = elt.ramBytesUsed();
+            long ramUsed = 1;
+            if (elt instanceof Accountable) {
+                ramUsed = ((Accountable)elt).ramBytesUsed();
+            }
 
             ram.addAndGet(factor * ramUsed);
             assert ram.get() >= 0;

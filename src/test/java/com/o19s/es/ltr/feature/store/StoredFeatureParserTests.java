@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 
 public class StoredFeatureParserTests extends LuceneTestCase {
@@ -111,6 +112,17 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 equalTo("Field [name] is mandatory"));
     }
 
+    public void testParseErrorOnBadTemplate() throws IOException {
+        String featureString = "{\n" +
+                "\"name\": \"testFeature\",\n" +
+                "\"params\":[\"param1\",\"param2\"]," +
+                "\"template_language\":\"mustache\",\n" +
+                "\"template\": \"{{hop\"" +
+                "}";
+        assertThat(expectThrows(IllegalArgumentException.class, () -> parse(featureString).optimize()).getMessage(),
+                containsString("Improperly closed variable"));
+    }
+
     public void testParseErrorOnMissingTemplate() throws IOException {
         String featureString = "{\n" +
                 "\"name\":\"testFeature\"," +
@@ -170,6 +182,30 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         assertThat(feature.ramBytesUsed(),
                 allOf(greaterThan((long) (approxSize*0.66)),
                     lessThan((long) (approxSize*1.33))));
+    }
+
+    public void testMustacheOptimization() throws IOException {
+        String featureString = "{\n" +
+                "\"name\":\"testFeature\"," +
+                "\"params\":[\"param1\",\"param2\"]," +
+                "\"template_language\":\"mustache\",\n" +
+                "\"template\":\"" +
+                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY).replace("\"", "\\\"") +
+                "\"}";
+        StoredFeature feature = parse(featureString);
+        assertThat(feature.optimize(), instanceOf(PrecompiledTemplateFeature.class));
+    }
+
+    public void testDontOptimizeOnThirdPartyTemplateEngine() throws IOException {
+        String featureString = "{\n" +
+                "\"name\":\"testFeature\"," +
+                "\"params\":[\"param1\",\"param2\"]," +
+                "\"template_language\":\"third_party_template_engine\",\n" +
+                "\"template\":\"" +
+                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY).replace("\"", "\\\"") +
+                "\"}";
+        StoredFeature feature = parse(featureString);
+        assertSame(feature, feature.optimize());
     }
 
     static StoredFeature parse(String featureString) throws IOException {

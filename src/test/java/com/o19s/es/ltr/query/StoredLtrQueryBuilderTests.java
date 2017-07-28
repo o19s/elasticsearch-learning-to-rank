@@ -18,7 +18,6 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
-import com.o19s.es.ltr.MockMustachePlugin;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -56,7 +55,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     private static final MemStore store = new MemStore();
 
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(TestPlugin.class, MockMustachePlugin.class);
+        return Arrays.asList(TestPlugin.class);
     }
 
     /**

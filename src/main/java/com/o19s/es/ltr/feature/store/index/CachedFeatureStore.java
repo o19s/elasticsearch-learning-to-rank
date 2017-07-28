@@ -16,10 +16,10 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import org.elasticsearch.common.cache.Cache;
 
 import java.io.IOException;
@@ -42,12 +42,12 @@ public class CachedFeatureStore implements FeatureStore {
     }
 
     @Override
-    public StoredFeature load(String id) throws IOException {
+    public Feature load(String id) throws IOException {
         return caches.loadFeature(key(id), inner::load);
     }
 
     @Override
-    public StoredFeatureSet loadSet(String id) throws IOException {
+    public FeatureSet loadSet(String id) throws IOException {
         return caches.loadFeatureSet(key(id), inner::loadSet);
     }
 
@@ -56,11 +56,11 @@ public class CachedFeatureStore implements FeatureStore {
         return caches.loadModel(key(id), inner::loadModel);
     }
 
-    StoredFeature getCachedFeature(String id) {
+    Feature getCachedFeature(String id) {
         return innerGet(id, caches.featureCache());
     }
 
-    StoredFeatureSet getCachedFeatureSet(String id) {
+    FeatureSet getCachedFeatureSet(String id) {
         return innerGet(id, caches.featureSetCache());
     }
 

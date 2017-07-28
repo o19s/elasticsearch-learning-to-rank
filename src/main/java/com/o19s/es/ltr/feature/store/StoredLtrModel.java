@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
@@ -107,8 +108,9 @@ public class StoredLtrModel implements StorableElement {
 
     public CompiledLtrModel compile(LtrRankerParserFactory factory) throws IOException {
         LtrRankerParser modelParser = factory.getParser(rankingModelType);
-        LtrRanker ranker = modelParser.parse(featureSet, rankingModel);
-        return new CompiledLtrModel(name, featureSet, ranker);
+        FeatureSet optimized = featureSet.optimize();
+        LtrRanker ranker = modelParser.parse(optimized, rankingModel);
+        return new CompiledLtrModel(name, optimized, ranker);
     }
 
     /**

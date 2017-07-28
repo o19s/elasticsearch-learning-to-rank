@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.template.mustache.MustacheUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -54,7 +55,7 @@ import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
 
 public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
-    private static final String DEFAULT_TEMPLATE_LANGUAGE = "mustache";
+    private static final String DEFAULT_TEMPLATE_LANGUAGE = MustacheUtils.TEMPLATE_LANGUAGE;
     public static final String TYPE = "feature";
     private final String name;
     private final List<String> queryParams;
@@ -165,6 +166,14 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     }
 
     @Override
+    public Feature optimize() {
+        if (MustacheUtils.TEMPLATE_LANGUAGE.equals(templateLanguage)) {
+            return PrecompiledTemplateFeature.compile(this);
+        }
+        return this;
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -182,6 +191,11 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
             String names = missingParams.stream().collect(Collectors.joining(","));
             throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
+
+        // mustache templates must be optimized
+        assert !DEFAULT_TEMPLATE_LANGUAGE.equals(templateLanguage);
+        // XXX: we hope that in most case users will use mustache that is embedded in the plugin
+        // compiling the template from the script engine may hit a circuit breaker
         ExecutableScript script = context.getExecutableScript(new Script(ScriptType.INLINE,
                 templateLanguage, template, params), ScriptContext.Standard.SEARCH);
         Object source = script.run();

@@ -34,7 +34,7 @@ public class CompiledLtrModel implements LtrModel, Accountable {
 
     public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
         this.name = name;
-        this.set = set;
+        this.set = set.optimize();
         this.ranker = ranker;
     }
 

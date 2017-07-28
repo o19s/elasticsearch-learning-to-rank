@@ -69,4 +69,11 @@ public interface FeatureSet {
      * Number of features in the set.
      */
     int size();
+
+    default FeatureSet optimize() {
+        return this;
+    }
+
+    default void validate() {
+    }
 }

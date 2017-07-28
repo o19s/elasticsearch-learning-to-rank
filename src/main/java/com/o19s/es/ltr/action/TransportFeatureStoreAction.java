@@ -130,6 +130,12 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                 throw new IllegalArgumentException("Error while parsing model [" +  model.name() + "]" +
                         " with type [" + model.rankingModelType() + "]", e);
             }
+        } else if (request.getStorableElement() instanceof StoredFeatureSet) {
+            StoredFeatureSet set = (StoredFeatureSet) request.getStorableElement();
+            set.optimize().validate();
+        } else if (request.getStorableElement() instanceof StoredFeature) {
+            StoredFeature feature = (StoredFeature) request.getStorableElement();
+            feature.optimize();
         }
     }
 }
