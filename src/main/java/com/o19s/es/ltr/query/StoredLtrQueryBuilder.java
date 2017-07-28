@@ -68,6 +68,17 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         declareStandardFields(PARSER);
     }
 
+    /**
+     * This constructor is meant to be used by a client that will send the
+     * query using a serialization mechanism (XContent or Streamable).
+     * If this builder is instantiated using this constructor it won't be able
+     * to construct a lucene query: doToQuery will throw IllegalStateException.
+     * This is because some contexts needed to transform it (see doToQuery)
+     * must be injected by elasticsearch (see its QuerySpec in the plugin
+     * class).
+     * In short this constructor is mostly useful for integration testing or
+     * XContent parser tests where doToQuery won't be called on this instance.
+     */
     public StoredLtrQueryBuilder() {
         storeLoader = (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
                 "built without a valid store loader");};
