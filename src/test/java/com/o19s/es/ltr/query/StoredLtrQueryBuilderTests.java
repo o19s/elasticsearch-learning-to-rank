@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
+import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.MockMustachePlugin;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
@@ -98,7 +99,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
      */
     @Override
     protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(getFeatureStoreLoader());
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(store));
         if (random().nextBoolean()) {
             builder.modelName("model1");
         } else {
@@ -111,7 +112,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     }
 
     public void testMissingParams() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(getFeatureStoreLoader());
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
         builder.modelName("model1");
 
         assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
@@ -176,12 +177,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
         @Override
         protected FeatureStoreLoader getFeatureStoreLoader() {
-            return StoredLtrQueryBuilderTests.getFeatureStoreLoader();
+            return LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store);
         }
-    }
-
-    public static FeatureStoreLoader getFeatureStoreLoader() {
-        // Ignore storeName for tests
-        return (name, client) -> store;
     }
 }

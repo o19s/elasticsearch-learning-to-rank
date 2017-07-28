@@ -16,6 +16,7 @@
  */
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
 import com.o19s.es.ltr.action.BaseIntegrationTest;
@@ -76,7 +77,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(RescoreBuilder
-                        .queryRescorer(new WrapperQueryBuilder(new StoredLtrQueryBuilder().modelName("my_model").params(params).toString()))
+                        .queryRescorer(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                                .modelName("my_model").params(params).toString()))
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));

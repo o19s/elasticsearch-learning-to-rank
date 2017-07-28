@@ -17,17 +17,21 @@
 package com.o19s.es.ltr;
 
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 
 import java.io.IOException;
 
@@ -81,5 +85,19 @@ public class LtrTestUtils {
                     5, 50, null);
         }
         return ranker;
+    }
+
+    public static FeatureStoreLoader nullLoader() {
+        return (storeName, client) -> {throw new IllegalStateException("Invalid state, this query cannot be " +
+                "built without a valid store loader. Your are seeing this exception because you attempt to call " +
+                "doToQuery on a " + StoredLtrQueryBuilder.class.getSimpleName() + " instance that was built with " +
+                "an invalid FeatureStoreLoader. If you are trying to run integration tests with this query consider " +
+                "wrapping it inside a " + WrapperQueryBuilder.class.getSimpleName() + ":\n" +
+                "\tnew WrapperQueryBuilder(sltrBuilder.toString())\n" +
+                "This will force elastic to initialize the feature loader properly");};
+    }
+
+    public static FeatureStoreLoader wrapMemStore(MemStore store) {
+        return (storeName, client) -> store;
     }
 }
