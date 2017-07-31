@@ -37,20 +37,32 @@
                   field_test_other: "{{query_string}}"
 
   - do:
+        ltr.create_derived_feature:
+           name: derived_feature
+           body:
+              name: derived_feature
+              expr: my_feature1 * 4
+
+  - do:
         ltr.add_features_to_set:
             name: my_generated_set
             query: my_feature*
 
+  - do:
+        ltr.add_derived_features_to_set:
+            name: my_generated_set
+            query: derived_feature*
 
   - match: { _index:   .ltrstore }
   - match: { _id:      featureset-my_generated_set }
-  - match: { _version: 1 }
+  - match: { _version: 2 }
 
   - do:
          ltr.get_featureset:
              name: my_generated_set
 
   - length: { _source.featureset.features: 2 }
+  - length: { _source.featureset.derived_features: 1 }
 
   - do:
         ltr.add_features_to_set:
@@ -63,7 +75,7 @@
 
   - match: { _index: .ltrstore }
   - match: { _id:  featureset-my_generated_set }
-  - match: { _version: 2 }
+  - match: { _version: 3 }
   - length: { _source.featureset.features: 3 }
 
   - do:

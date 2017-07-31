@@ -1,0 +1,22 @@
+{
+  "ltr.get_derived_feature": {
+    "methods" : ["GET"],
+    "url": {
+      "path": "/_ltr/{store}/_derivedfeature/{name}",
+      "paths": ["/_ltr/_derived_feature/{name}", "/_ltr/{store}/_derived_feature/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The derived feature name"
+        }
+      }
+    },
+    "body": null
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "ltr.add_derived_features_to_set": {
+    "methods" : ["POST"],
+    "url": {
+      "path": "/_ltr/{store}/_featureset/{name}/_addderivedfeatures/{query}",
+      "paths": ["/_ltr/{store}/_featureset/{name}/_addderivedfeatures/{query}","/_ltr/_featureset/{name}/_addderivedfeatures/{query}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
+        },
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "The derived feature names query"
+        }
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        },
+        "version": {
+          "type" : "long",
+          "description" : "Extra check to ensure that the model is created with this version of the set"
+        }
+      }
+    },
+    "body": null
+  }
+}

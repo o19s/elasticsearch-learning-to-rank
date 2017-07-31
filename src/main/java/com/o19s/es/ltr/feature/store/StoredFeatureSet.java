@@ -126,7 +126,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     public StoredFeatureSet(String name, List<StoredFeature> features) {
-        this(name, features, new ArrayList<>());
+        this(name, features, Collections.emptyList());
     }
 
     public StoredFeatureSet(StreamInput input) throws IOException {

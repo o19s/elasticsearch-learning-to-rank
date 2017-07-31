@@ -30,8 +30,8 @@ public class RestAddDerivedFeatureToSet extends FeatureStoreBaseRestHandler {
 
     public RestAddDerivedFeatureToSet(Settings settings, RestController controller) {
         super(settings);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addderivedfeatures/{expr}", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addderivedfeatures/{expr}", this);
+        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addderivedfeatures/{query}", this);
+        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addderivedfeatures/{query}", this);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class RestAddDerivedFeatureToSet extends FeatureStoreBaseRestHandler {
         String store = indexName(request);
         String setName = request.param("name");
         String routing = request.param("routing");
-        String exprName = request.param("expr");
+        String exprName = request.param("query");
         AddDerivedFeaturesToSetRequestBuilder builder = AddDerivedFeaturesToSetAction.INSTANCE.newRequestBuilder(client);
         builder.request().setStore(store);
         builder.request().setFeatureSet(setName);
