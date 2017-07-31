@@ -123,6 +123,10 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
     public static StoredDerivedFeature parse(XContentParser parser) {
         try {
             ParsingState state = PARSER.apply(parser, null);
+            if(state.name == null) {
+                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
+            }
+
             if(state.expr == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Field [expr] is mandatory");
             }
