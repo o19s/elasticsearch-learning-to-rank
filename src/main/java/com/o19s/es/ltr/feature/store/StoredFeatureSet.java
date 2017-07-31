@@ -112,12 +112,17 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         derivedFeatureMap = new HashMap<>();
         for (StoredDerivedFeature feature : derivedFeatures) {
             ordinal++;
+
             if (derivedFeatureMap.put(feature.name(), ordinal) != null) {
                 throw new IllegalArgumentException("Derived Feature [" + feature.name() + "] defined twice in this set: " +
                         "feature names must be unique in a set.");
             }
-        }
 
+            for(String var: feature.expression().variables) {
+                // Exception will be triggered if an unknown variable is encountered
+                feature(var);
+            }
+        }
     }
 
     public StoredFeatureSet(String name, List<StoredFeature> features) {

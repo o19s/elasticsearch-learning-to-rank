@@ -117,6 +117,32 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertEquals(0, stats.getAll().getTotal().getRam());
     }
 
+    public void testInvalidVar() throws Exception {
+        addElement(new StoredFeature("feature1", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field1", "{{query}}").toString()));
+        addElement(new StoredFeature("feature2", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field2", "{{query}}").toString()));
+
+        addElement(new StoredDerivedFeature("feature3", "unknownFeature * 2"));
+
+        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder.request().setFeatureSet("my_set");
+        builder.request().setFeatureNameQuery("feature1");
+        builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
+        builder.execute().get();
+
+        builder.request().setFeatureNameQuery("feature2");
+        builder.execute().get();
+
+        AddDerivedFeaturesToSetAction.AddDerivedFeaturesToSetRequestBuilder derivedBuilder =
+                AddDerivedFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        derivedBuilder.request().setFeatureSet("my_set");
+        derivedBuilder.request().setDerivedName("feature3");
+        derivedBuilder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
+
+        expectThrows(IllegalArgumentException.class, () -> derivedBuilder.get().getResponse().getVersion());
+    }
+
     public void buildIndex() {
         client().admin().indices().prepareCreate("test_index").get();
         client().prepareIndex("test_index", "test")
