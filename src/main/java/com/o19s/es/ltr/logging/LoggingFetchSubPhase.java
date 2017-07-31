@@ -27,11 +27,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.fetch.FetchPhaseExecutionException;
 import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.search.internal.InternalSearchHit;
-import org.elasticsearch.search.internal.InternalSearchHitField;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreSearchContext;
@@ -47,7 +46,7 @@ import java.util.Map;
 
 public class LoggingFetchSubPhase implements FetchSubPhase {
     @Override
-    public void hitsExecute(SearchContext context, InternalSearchHit[] hits) {
+    public void hitsExecute(SearchContext context, SearchHit[] hits) {
         LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
         if (ext == null) {
             return;
@@ -78,12 +77,12 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
     }
 
-    void doLog(BooleanQuery query, List<HitLogConsumer> loggers, IndexSearcher searcher, InternalSearchHit[] hits) throws IOException {
+    void doLog(BooleanQuery query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
         // Reorder hits by id so we can scan all the docs belonging to the same
         // segment by reusing the same scorer.
-        InternalSearchHit[] reordered = new InternalSearchHit[hits.length];
+        SearchHit[] reordered = new SearchHit[hits.length];
         System.arraycopy(hits, 0, reordered, 0, hits.length);
-        Arrays.sort(reordered, Comparator.comparingInt(InternalSearchHit::docId));
+        Arrays.sort(reordered, Comparator.comparingInt(SearchHit::docId));
 
         int hitUpto = 0;
         int readerUpto = -1;
@@ -93,7 +92,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         Weight weight = searcher.createNormalizedWeight(query, true);
         // Loop logic borrowed from lucene QueryRescorer
         while (hitUpto < reordered.length) {
-            InternalSearchHit hit = reordered[hitUpto];
+            SearchHit hit = reordered[hitUpto];
             int docID = hit.docId();
             loggers.forEach((l) -> l.nextDoc(hit));
             LeafReaderContext readerContext = null;
@@ -193,7 +192,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             currentLog.put(set.feature(featureOrdinal).name(), score);
         }
 
-        void nextDoc(InternalSearchHit hit) {
+        void nextDoc(SearchHit hit) {
             if (hit.fieldsOrNull() == null) {
                 hit.fields(new HashMap<>());
             }
@@ -206,7 +205,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
         SearchHitField newLogField() {
             List<Object> logList = Collections.singletonList(new HashMap<String, Map<String, Float>>());
-            return new InternalSearchHitField(FIELD_NAME, logList);
+            return new SearchHitField(FIELD_NAME, logList);
         }
     }
 }

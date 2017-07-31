@@ -6,3 +6,4 @@ packaging==16.8
 pyparsing==2.1.10
 six==1.10.0
 urllib3==1.20
+requests==2.13.0

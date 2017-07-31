@@ -21,14 +21,6 @@ pyvenv venv
 source venv/bin/activate
 ```
 
-## Download Ranklib.jar to the demo folder
-
-Ranklib is a Java library used to train learning to rank models. You can download it with this command in the "demo" folder:
-
-```
-wget -O RankLib.jar http://es-learn-to-rank.labs.o19s.com/RankLib-2.8.jar
-```
-
 ## Download TMDB Data
 
 The steps below create a `tmdb.json` file full of movie data we can then use with Elasticsearch
@@ -45,7 +37,7 @@ export TMDB_API_KEY=<key from step 1>
 
 #### 3. Pull down the TMDB data
 
-Run the script that prepares the movie data. This will create a file called "tmdb.json." The requests are rate limited as specified by TMDB's API params, so expect it to take a while.
+Run the script that prepares the movie data. First it will grab the `RankLib` jar.   Then it downloads the data using your key, creating a file called "tmdb.json." The requests are rate limited as specified by TMDB's API params, so expect it to take a while.
 
 ```
 ./prepareData.sh

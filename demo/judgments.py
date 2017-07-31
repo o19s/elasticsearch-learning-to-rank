@@ -53,6 +53,7 @@ def _judgmentsFromBody(lines):
 def judgmentsFromFile(filename):
     with open(filename) as f:
         qidToKeywords = _queriesFromHeader(f)
+    with open(filename) as f:
         for grade, qid, docId in _judgmentsFromBody(f):
             yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId)
 

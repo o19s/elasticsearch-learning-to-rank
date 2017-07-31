@@ -21,7 +21,7 @@ import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.utils.FeatureStoreProvider;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
@@ -50,6 +50,10 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
 
+    /**
+     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(QueryShardContext)}
+     */
+    private final transient FeatureStoreLoader storeLoader;
     private String modelName;
     private String featureSetName;
     private String storeName;
@@ -58,7 +62,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
 
     static {
-        PARSER = new ObjectParser<>(NAME, StoredLtrQueryBuilder::new);
+        PARSER = new ObjectParser<>(NAME);
         PARSER.declareString(StoredLtrQueryBuilder::modelName, MODEL_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::featureSetName, FEATURESET_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
@@ -67,9 +71,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         declareStandardFields(PARSER);
     }
 
-    public StoredLtrQueryBuilder() {}
-    public StoredLtrQueryBuilder(StreamInput input) throws IOException {
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader) {
+        this.storeLoader = storeLoader;
+    }
+
+    public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader, StreamInput input) throws IOException {
         super(input);
+        this.storeLoader = Objects.requireNonNull(storeLoader);
         modelName = input.readOptionalString();
         featureSetName = input.readOptionalString();
         params = input.readMap();
@@ -84,11 +92,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalString(storeName);
     }
 
-    public static Optional<StoredLtrQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
+    public static Optional<StoredLtrQueryBuilder> fromXContent(FeatureStoreLoader storeLoader,
+                                                               QueryParseContext context) throws IOException {
+        storeLoader = Objects.requireNonNull(storeLoader);
         XContentParser parser = context.parser();
-        final StoredLtrQueryBuilder builder;
+        final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storeLoader);
         try {
-            builder = PARSER.parse(context.parser(), null);
+            PARSER.parse(context.parser(), builder, null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -123,11 +133,12 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
-        FeatureStore store = FeatureStoreProvider.findFeatureStore(indexName, context);
+        FeatureStore store = storeLoader.load(indexName, context.getClient());
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
             return RankerQuery.build(model, context, params);
         } else {
+            assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
             float[] weitghs = new float[set.size()];
             Arrays.fill(weitghs, 1F);
