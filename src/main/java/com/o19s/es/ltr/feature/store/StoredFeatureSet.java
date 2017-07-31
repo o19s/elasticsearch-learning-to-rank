@@ -174,7 +174,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
      * or if uniqueness of feature names is not met.
      */
     public StoredFeatureSet append(List<StoredFeature> features) {
-        int nFeature = features.size() + this.features.size();
+        int nFeature = this.features.size() + features.size();
         if (nFeature > MAX_FEATURES) {
             throw new IllegalArgumentException("The resulting feature set would be too large");
         }
@@ -185,7 +185,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     public StoredFeatureSet appendDerived(List<StoredDerivedFeature> derivedFeatures) {
-        int nFeature = derivedFeatures.size() + this.derivedFeatures.size();
+        int nFeature = this.derivedFeatures.size() + derivedFeatures.size();
 
         if(nFeature > MAX_FEATURES) {
             throw new IllegalArgumentException("The resulting feature set would be too large");
@@ -210,7 +210,14 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
 
     @Override
     public int featureOrdinal(String featureName) {
-        Integer ordinal = featureMap.get(featureName) == null ? derivedFeatureMap.get(featureName) : featureMap.get(featureName);
+        Integer ordinal = featureMap.get(featureName);
+
+        // Check derived feature map if feature ordinal was null
+        if(ordinal == null ) {
+            ordinal = derivedFeatureMap.get(featureName);
+        }
+
+        // If still null, throw an exception
         if (ordinal == null) {
             throw new IllegalArgumentException("Unknown feature [" + featureName + "]");
         }
@@ -240,6 +247,8 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     @Override
     public long ramBytesUsed() {
         return BASE_RAM_USED +
+                derivedFeatureMap.size() * NUM_BYTES_OBJECT_REF + NUM_BYTES_ARRAY_HEADER + NUM_BYTES_ARRAY_HEADER +
+                derivedFeatures.stream().mapToLong(StoredDerivedFeature::ramBytesUsed).sum() +
                 featureMap.size() * NUM_BYTES_OBJECT_REF + NUM_BYTES_OBJECT_HEADER + NUM_BYTES_ARRAY_HEADER +
                 features.stream().mapToLong(StoredFeature::ramBytesUsed).sum();
     }

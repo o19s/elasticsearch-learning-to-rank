@@ -53,7 +53,7 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
         PARSER.declareString(ParsingState::setExpr, EXPR);
     }
 
-    public StoredDerivedFeature(@Nullable String name, String expression) {
+    public StoredDerivedFeature(String name, String expression) {
         this.name = name;
         this.expression = expression;
     }

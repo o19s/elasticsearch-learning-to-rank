@@ -199,15 +199,10 @@ public class RankerQuery extends Query {
             assert weights instanceof RandomAccess;
             this.weights = weights;
 
-            // TODO: Can remove null check once derived features are implemented for stored queries
             // Compile expressions for the derived features
-            if(features.derivedFeatures() != null) {
-                this.expressions = new ArrayList<>(features.derivedFeatures().size());
-                for (DerivedFeature df : features.derivedFeatures()) {
-                    expressions.add((Expression) Scripting.compile(df.expression()));
-                }
-            } else {
-                this.expressions = new ArrayList<>();
+            this.expressions = new ArrayList<>(features.derivedFeatures().size());
+            for (DerivedFeature df : features.derivedFeatures()) {
+                expressions.add((Expression) Scripting.compile(df.expression()));
             }
         }
 
@@ -289,18 +284,11 @@ public class RankerQuery extends Query {
             List<Scorer> scorers = new ArrayList<>(weights.size());
             List<DocIdSetIterator> subIterators = new ArrayList<>(weights.size());
 
-            String pattern = "\\$(\\d+)";
-
             FVHolder holder = new FVHolder();
             Bindings bindings = new Bindings(){
               @Override
               public DoubleValuesSource getDoubleValuesSource(String name) {
-                  if (name.matches(pattern)) {
-                      int ordinal = Integer.parseInt(name.substring(1));
-                      return new FVDoubleValuesSource(holder, ordinal);
-                  } else {
-                      return new FVDoubleValuesSource(holder, RankerQuery.this.features.featureOrdinal(name));
-                  }
+                  return new FVDoubleValuesSource(holder, RankerQuery.this.features.featureOrdinal(name));
               }
             };
 

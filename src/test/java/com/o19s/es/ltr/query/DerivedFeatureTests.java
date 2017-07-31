@@ -72,6 +72,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "RankURL does this when training models... ")
@@ -87,6 +88,7 @@ public class DerivedFeatureTests extends LuceneTestCase {
         return new Field(name, value, tagsFieldType);
     }
 
+    private final AtomicInteger featureOrdinal = new AtomicInteger(0);
     private IndexSearcher searcherUnderTest;
     private RandomIndexWriter indexWriterUnderTest;
     private IndexReader indexReaderUnderTest;
@@ -298,7 +300,7 @@ public class DerivedFeatureTests extends LuceneTestCase {
                 new PhraseQuery("field", userQuery.split(" ")));
 
         List<PrebuiltDerivedFeature> dfs = new ArrayList<>();
-        dfs.add(new PrebuiltDerivedFeature("double_it", "$0 * 2"));
+        dfs.add(new PrebuiltDerivedFeature("double_it", "feature1 * 2"));
 
         checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs);
     }
@@ -310,7 +312,7 @@ public class DerivedFeatureTests extends LuceneTestCase {
                 new PhraseQuery("field", userQuery.split(" ")));
 
         List<PrebuiltDerivedFeature> dfs = new ArrayList<>();
-        dfs.add(new PrebuiltDerivedFeature("div_by_zero", "$0 / 0"));
+        dfs.add(new PrebuiltDerivedFeature("div_by_zero", "feature1 / 0"));
 
 
         expectThrows(AssertionError.class, () -> checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs));
@@ -323,14 +325,14 @@ public class DerivedFeatureTests extends LuceneTestCase {
                 new PhraseQuery("field", userQuery.split(" ")));
 
         List<PrebuiltDerivedFeature> dfs = new ArrayList<>();
-        dfs.add(new PrebuiltDerivedFeature("bar_vars", "$0 / hamburgers"));
+        dfs.add(new PrebuiltDerivedFeature("bad_vars", "feature1 / hamburgers"));
 
         expectThrows(IllegalArgumentException.class, () -> checkModelWithFeatures(toPrebuildFeatureWithNoName(features), dfs));
     }
 
     private List<PrebuiltFeature> toPrebuildFeatureWithNoName(List<Query> features) {
         return features.stream()
-                .map(x -> new PrebuiltFeature(null, x))
+                .map(x -> new PrebuiltFeature("feature" + (featureOrdinal.addAndGet(1)), x))
                 .collect(Collectors.toList());
     }
 
