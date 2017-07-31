@@ -16,6 +16,8 @@
 
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Expression;
 import org.elasticsearch.common.Nullable;
 import java.util.Objects;
 
@@ -24,11 +26,11 @@ import java.util.Objects;
  */
 public class PrebuiltDerivedFeature implements DerivedFeature {
     private final String name;
-    private final String expression;
+    private final Expression expression;
 
     public PrebuiltDerivedFeature(@Nullable String name, String expression) {
         this.name = name;
-        this.expression = expression;
+        this.expression = (Expression) Scripting.compile(expression);
     }
 
     @Override @Nullable
@@ -37,7 +39,7 @@ public class PrebuiltDerivedFeature implements DerivedFeature {
     }
 
     @Override
-    public String expression() { return expression;}
+    public Expression expression() { return expression;}
 
     @Override
     public int hashCode() {

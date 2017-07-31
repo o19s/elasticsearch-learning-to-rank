@@ -18,6 +18,8 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.DerivedFeature;
 import com.o19s.es.ltr.feature.PrebuiltDerivedFeature;
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.Nullable;
@@ -39,8 +41,7 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
     public static final String TYPE = "derived_feature";
 
     private final String name;
-    private final String expression;
-
+    private final Expression expression;
 
     private static final ObjectParser<ParsingState, Void> PARSER;
 
@@ -55,7 +56,7 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
 
     public StoredDerivedFeature(String name, String expression) {
         this.name = name;
-        this.expression = expression;
+        this.expression = (Expression) Scripting.compile(expression);
     }
 
     public StoredDerivedFeature(StreamInput in) throws IOException {
@@ -65,14 +66,14 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(name);
-        out.writeString(expression);
+        out.writeString(expression.sourceText);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         builder.field(NAME.getPreferredName(), name);
-        builder.field(EXPR.getPreferredName(), expression);
+        builder.field(EXPR.getPreferredName(), expression.sourceText);
         builder.endObject();
         return builder;
     }
@@ -82,7 +83,7 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
         // rough estimation...
         return BASE_RAM_USED +
                 (Character.BYTES * name.length()) + NUM_BYTES_ARRAY_HEADER +
-                (Character.BYTES * expression.length()) + NUM_BYTES_ARRAY_HEADER;
+                (Character.BYTES * expression.sourceText.length()) + NUM_BYTES_ARRAY_HEADER;
     }
 
     @Override @Nullable
@@ -96,7 +97,7 @@ public class StoredDerivedFeature implements Accountable, StorableElement, Deriv
     }
 
     @Override
-    public String expression() { return expression;}
+    public Expression expression() { return expression;}
 
     @Override
     public int hashCode() {

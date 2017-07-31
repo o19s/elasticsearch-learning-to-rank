@@ -191,19 +191,12 @@ public class RankerQuery extends Query {
     }
 
     public class RankerWeight extends Weight {
-        private final List<Expression> expressions;
         private final List<Weight> weights;
 
         RankerWeight(List<Weight> weights) {
             super(RankerQuery.this);
             assert weights instanceof RandomAccess;
             this.weights = weights;
-
-            // Compile expressions for the derived features
-            this.expressions = new ArrayList<>(features.derivedFeatures().size());
-            for (DerivedFeature df : features.derivedFeatures()) {
-                expressions.add((Expression) Scripting.compile(df.expression()));
-            }
         }
 
         @Override
@@ -241,10 +234,10 @@ public class RankerQuery extends Query {
                         new DoubleConstValueSource(d.getFeatureScore(ordinal)).asDoubleValuesSource());
             }
 
-            for(Expression expr : expressions) {
+            for(DerivedFeature df : features.derivedFeatures()) {
                 ordinal++;
 
-                DoubleValuesSource dvs = expr.getDoubleValuesSource(bindings);
+                DoubleValuesSource dvs = df.expression().getDoubleValuesSource(bindings);
                 DoubleValues values = dvs.getValues(null, null);
                 values.advanceExact(doc);
                 d.setFeatureScore(ordinal, (float) values.doubleValue());
@@ -301,8 +294,8 @@ public class RankerQuery extends Query {
                 subIterators.add(scorer.iterator());
             }
 
-            for(Expression expr: expressions) {
-                DoubleValuesSource src = expr.getDoubleValuesSource(bindings);
+            for(DerivedFeature df : features.derivedFeatures()) {
+                DoubleValuesSource src = df.expression().getDoubleValuesSource(bindings);
                 DoubleValues values = src.getValues(context, null);
                 DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
                 scorers.add(new DValScorer(this, iterator, values));

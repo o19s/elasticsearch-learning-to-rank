@@ -16,10 +16,7 @@
 
 package com.o19s.es.ltr.feature;
 
-import org.apache.lucene.search.Query;
-import org.elasticsearch.index.query.QueryShardContext;
-
-import java.util.Map;
+import org.apache.lucene.expressions.Expression;
 
 /**
  * A feature derived from an expression of existing feature names
@@ -33,5 +30,5 @@ public interface DerivedFeature {
     /**
      * The expression that generates the feature score
      */
-    String expression();
+    Expression expression();
 }

@@ -32,9 +32,10 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.RandomAccess;
 
@@ -82,7 +83,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
                 throw new ParsingException(parser.getTokenLocation(), "At least one feature must be defined in [features]");
             }
             if (state.derivedFeatures == null) {
-                state.derivedFeatures = new ArrayList<>();
+                state.derivedFeatures = Collections.emptyList();
             }
             return new StoredFeatureSet(state.name, state.features, state.derivedFeatures);
         } catch (IllegalArgumentException iae) {
