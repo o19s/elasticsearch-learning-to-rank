@@ -18,6 +18,7 @@ package com.o19s.es.ltr.feature.store;
 
 import com.github.mustachejava.Mustache;
 import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.template.mustache.MustacheUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
@@ -78,7 +79,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, Map<String, Object> params) {
+    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
                 .filter((x) -> params == null || !params.containsKey(x))
                 .collect(Collectors.toList());

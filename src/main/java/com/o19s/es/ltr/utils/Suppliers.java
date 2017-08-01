@@ -56,4 +56,20 @@ public final class Suppliers {
             return value;
         }
     }
+
+    /**
+     * A mutable supplier
+     */
+    public static class MutableSupplier<T> implements Supplier<T> {
+        T obj;
+
+        @Override
+        public T get() {
+            return obj;
+        }
+
+        public void set(T obj) {
+            this.obj = obj;
+        }
+    }
 }

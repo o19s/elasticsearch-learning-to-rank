@@ -46,7 +46,7 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, Map<String, Object> params) {
+    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
         return query;
     }
 

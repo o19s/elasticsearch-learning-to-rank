@@ -33,7 +33,7 @@ public interface Feature {
     /**
      * Transform this feature into a lucene query
      */
-    Query doToQuery(QueryShardContext context, Map<String, Object> params);
+    Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params);
 
     /**
      * Optional optimization step

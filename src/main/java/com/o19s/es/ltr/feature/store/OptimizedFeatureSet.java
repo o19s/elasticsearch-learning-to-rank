@@ -53,7 +53,7 @@ public class OptimizedFeatureSet implements FeatureSet, Accountable {
     public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());
         for(Feature feature : features) {
-            queries.add(feature.doToQuery(context, params));
+            queries.add(feature.doToQuery(context, this, params));
         }
         return queries;
     }
