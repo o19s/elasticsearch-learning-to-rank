@@ -32,6 +32,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,28 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         }
     }
 
+    @Override
+    public FeatureSet optimize() {
+        List<Feature> optimizedFeatures = new ArrayList<>(this.features.size());
+        boolean optimized = false;
+        for (StoredFeature feature: this.features) {
+            Feature optimizedFeature = feature.optimize();
+            optimized |= optimizedFeature != feature;
+            optimizedFeatures.add(optimizedFeature);
+        }
+        if (optimized) {
+            return new OptimizedFeatureSet(this.name, optimizedFeatures, Collections.unmodifiableMap(featureMap));
+        }
+        return this;
+    }
+
+    @Override
+    public void validate() {
+        for (StoredFeature feature : features) {
+            feature.validate(this);
+        }
+    }
+
     public StoredFeatureSet(StreamInput input) throws IOException {
         this(input.readString(), input.readList(StoredFeature::new));
     }
@@ -156,7 +179,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());
         for(Feature feature : features) {
-            queries.add(feature.doToQuery(context, params));
+            queries.add(feature.doToQuery(context, this, params));
         }
         return queries;
     }

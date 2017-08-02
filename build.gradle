@@ -36,6 +36,7 @@ repositories {
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.5.0'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
+  compile "com.github.spullara.mustache.java:compiler:0.9.3"
   testCompile 'org.elasticsearch.test:framework:5.5.0'
 }
 

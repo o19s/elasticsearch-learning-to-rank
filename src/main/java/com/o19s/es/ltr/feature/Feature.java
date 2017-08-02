@@ -33,5 +33,20 @@ public interface Feature {
     /**
      * Transform this feature into a lucene query
      */
-    Query doToQuery(QueryShardContext context, Map<String, Object> params);
+    Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params);
+
+    /**
+     * Optional optimization step
+     *
+     * @return an optimized version of the feature if applicable
+     */
+    default Feature optimize() {
+        return this;
+    }
+
+    /**
+     * Validate this feature against a featureset
+     * Some feature may depend on other feature
+     */
+    default void validate(FeatureSet set) {}
 }
