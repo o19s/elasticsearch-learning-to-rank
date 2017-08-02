@@ -16,6 +16,8 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.StorableElement;
@@ -92,13 +94,13 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     @Override
-    public StoredFeature load(String name) throws IOException {
-        return getAndParse(name, StoredFeature.class, StoredFeature.TYPE);
+    public Feature load(String name) throws IOException {
+        return getAndParse(name, StoredFeature.class, StoredFeature.TYPE).optimize();
     }
 
     @Override
-    public StoredFeatureSet loadSet(String name) throws IOException {
-        return getAndParse(name, StoredFeatureSet.class, StoredFeatureSet.TYPE);
+    public FeatureSet loadSet(String name) throws IOException {
+        return getAndParse(name, StoredFeatureSet.class, StoredFeatureSet.TYPE).optimize();
     }
 
     /**

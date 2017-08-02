@@ -17,7 +17,6 @@
 package com.o19s.es.ltr.action;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
-import com.o19s.es.ltr.MockMustachePlugin;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
 import com.o19s.es.ltr.feature.store.StorableElement;
@@ -39,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, MockMustachePlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class);
     }
 
     public void createStore(String name) throws Exception {

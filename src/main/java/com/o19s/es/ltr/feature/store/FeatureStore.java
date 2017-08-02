@@ -16,6 +16,9 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+
 import java.io.IOException;
 
 /**
@@ -23,7 +26,7 @@ import java.io.IOException;
  */
 public interface FeatureStore {
     String getStoreName();
-    StoredFeature load(String name) throws IOException;
-    StoredFeatureSet loadSet(String name) throws IOException;
+    Feature load(String name) throws IOException;
+    FeatureSet loadSet(String name) throws IOException;
     CompiledLtrModel loadModel(String name) throws IOException;
 }

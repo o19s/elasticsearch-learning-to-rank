@@ -16,6 +16,9 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,21 +47,21 @@ public class MemStore implements FeatureStore {
     }
 
     @Override
-    public StoredFeature load(String id) throws IOException {
+    public Feature load(String id) throws IOException {
         StoredFeature feature = features.get(id);
         if (feature == null) {
             throw new IllegalArgumentException("Feature [" + id + "] not found");
         }
-        return feature;
+        return feature.optimize();
     }
 
     @Override
-    public StoredFeatureSet loadSet(String id) throws IOException {
+    public FeatureSet loadSet(String id) throws IOException {
         StoredFeatureSet set = sets.get(id);
         if (set == null) {
             throw new IllegalArgumentException("Feature [" + id + "] not found");
         }
-        return set;
+        return set.optimize();
     }
 
     @Override

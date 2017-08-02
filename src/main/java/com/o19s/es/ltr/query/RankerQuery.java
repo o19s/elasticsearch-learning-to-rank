@@ -23,6 +23,7 @@ import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.NullRanker;
+import com.o19s.es.ltr.utils.Suppliers.MutableSupplier;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -206,7 +207,12 @@ public class RankerQuery extends Query {
             int ordinal = -1;
             for (Weight weight : weights) {
                 ordinal++;
-                Explanation explain = weight.explain(context, doc);
+                final Explanation explain;
+                if (weight instanceof FeatureVectorWeight) {
+                    explain = ((FeatureVectorWeight)weight).explain(context, d, doc);
+                } else {
+                    explain = weight.explain(context, doc);
+                }
                 String featureString = "Feature " + Integer.toString(ordinal);
                 if (features.feature(ordinal).name() != null) {
                     featureString += "(" + features.feature(ordinal).name() + ")";
@@ -252,8 +258,14 @@ public class RankerQuery extends Query {
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
             List<Scorer> scorers = new ArrayList<>(weights.size());
             List<DocIdSetIterator> subIterators = new ArrayList<>(weights.size());
+            MutableSupplier<LtrRanker.FeatureVector> vectorSupplier = new MutableSupplier<>();
             for (Weight weight : weights) {
-                Scorer scorer = weight.scorer(context);
+                Scorer scorer;
+                if (weight instanceof FeatureVectorWeight) {
+                    scorer = ((FeatureVectorWeight)weight).scorer(context, vectorSupplier);
+                } else {
+                    scorer = weight.scorer(context);
+                }
                 if (scorer == null) {
                     scorer = new NoopScorer(this, DocIdSetIterator.empty());
                 }
@@ -262,7 +274,7 @@ public class RankerQuery extends Query {
             }
 
             NaiveDisjunctionDISI rankerIterator = new NaiveDisjunctionDISI(DocIdSetIterator.all(context.reader().maxDoc()), subIterators);
-            return new RankerScorer(scorers, rankerIterator);
+            return new RankerScorer(scorers, rankerIterator, vectorSupplier);
         }
 
         class RankerScorer extends Scorer {
@@ -272,12 +284,13 @@ public class RankerQuery extends Query {
              */
             private final List<Scorer> scorers;
             private final NaiveDisjunctionDISI iterator;
-            private LtrRanker.FeatureVector featureVector;
+            private final MutableSupplier<LtrRanker.FeatureVector> featureVector;
 
-            RankerScorer(List<Scorer> scorers, NaiveDisjunctionDISI iterator) {
+            RankerScorer(List<Scorer> scorers, NaiveDisjunctionDISI iterator, MutableSupplier<LtrRanker.FeatureVector> featureVector) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
+                this.featureVector = featureVector;
             }
 
             @Override
@@ -287,7 +300,9 @@ public class RankerQuery extends Query {
 
             @Override
             public float score() throws IOException {
-                featureVector = ranker.newFeatureVector(featureVector);
+                LtrRanker.FeatureVector fv = featureVector.get();
+                fv = ranker.newFeatureVector(fv);
+                featureVector.set(fv);
                 int ordinal = -1;
                 // a DisiPriorityQueue could help to avoid
                 // looping on all scorers
@@ -298,10 +313,10 @@ public class RankerQuery extends Query {
                         float score = scorer.score();
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        featureVector.setFeatureScore(ordinal, score);
+                        fv.setFeatureScore(ordinal, score);
                     }
                 }
-                return ranker.score(featureVector);
+                return ranker.score(fv);
             }
 
             @Override
