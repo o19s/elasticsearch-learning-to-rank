@@ -118,13 +118,10 @@ public class FeatureVectorQuery extends Query {
 
         @Override
         public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) {
-            Suppliers.MutableSupplier<LtrRanker.FeatureVector> supplier = new Suppliers.MutableSupplier<>();
-            supplier.set(vector);
-
             Bindings bindings = new Bindings(){
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
-                    return new FVDoubleValuesSource(supplier, features.featureOrdinal(name));
+                    return new FVDoubleValuesSource(() -> vector, features.featureOrdinal(name));
                 }
             };
 
