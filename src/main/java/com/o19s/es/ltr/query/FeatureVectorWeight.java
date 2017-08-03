@@ -54,5 +54,5 @@ public abstract class FeatureVectorWeight extends Weight {
      * @param vectorSupplier supplier of the feature vector (always call get(), it must not be cached)
      * @return The scorer
      */
-    public abstract Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier);
+    public abstract Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException;
 }

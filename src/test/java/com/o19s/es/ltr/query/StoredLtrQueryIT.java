@@ -35,10 +35,12 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.rescore.QueryRescoreMode;
 import org.elasticsearch.search.rescore.RescoreBuilder;
+import org.hamcrest.CoreMatchers;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by doug on 12/29/16.
@@ -47,7 +49,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
     private static final String SIMPLE_MODEL = "{" +
             "\"feature1\": 1," +
-            "\"feature2\": -1" +
+            "\"feature2\": -1," +
+            "\"feature3\": 0" +
             "}";
 
 
@@ -56,6 +59,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 QueryBuilders.matchQuery("field1", "{{query}}").toString()));
         addElement(new StoredFeature("feature2", Collections.singletonList("query"), "mustache",
                 QueryBuilders.matchQuery("field2", "{{query}}").toString()));
+        addElement(new StoredFeature("feature3", Collections.singletonList("query"), "derived_expression",
+                "(feature1 + feature2) * 5"));
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
@@ -64,6 +69,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.execute().get();
 
         builder.request().setFeatureNameQuery("feature2");
+        builder.execute().get();
+
+        builder.request().setFeatureNameQuery("feature3");
         long version = builder.get().getResponse().getVersion();
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
@@ -105,6 +113,19 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
         assertEquals(0, stats.getAll().getTotal().getCount());
         assertEquals(0, stats.getAll().getTotal().getRam());
+    }
+
+    public void testInvalidDerived() throws Exception {
+        addElement(new StoredFeature("bad_df", Collections.singletonList("query"), "derived_expression",
+                "what + is + this"));
+
+        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder.request().setFeatureSet("my_bad_set");
+        builder.request().setFeatureNameQuery("bad_df");
+        builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
+
+        assertThat(expectThrows(ExecutionException.class, () -> builder.execute().get()).getMessage(),
+                CoreMatchers.containsString("refers to unknown feature"));
     }
 
     public void buildIndex() {

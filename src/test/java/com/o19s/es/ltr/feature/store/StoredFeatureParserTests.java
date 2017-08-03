@@ -184,6 +184,16 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                     lessThan((long) (approxSize*1.33))));
     }
 
+    public void testExpressionOptimization() throws IOException {
+        String featureString = "{\n" +
+                "\"name\":\"testFeature\"," +
+                "\"template_language\":\"derived_expression\",\n" +
+                "\"template\":\"Math.random()" +
+                "\"}";
+        StoredFeature feature = parse(featureString);
+        assertThat(feature.optimize(), instanceOf(PrecompiledExpressionFeature.class));
+    }
+
     public void testMustacheOptimization() throws IOException {
         String featureString = "{\n" +
                 "\"name\":\"testFeature\"," +

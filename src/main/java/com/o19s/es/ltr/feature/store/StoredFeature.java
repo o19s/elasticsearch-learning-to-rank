@@ -168,10 +168,14 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
 
     @Override
     public Feature optimize() {
-        if (MustacheUtils.TEMPLATE_LANGUAGE.equals(templateLanguage)) {
-            return PrecompiledTemplateFeature.compile(this);
+        switch(templateLanguage) {
+            case MustacheUtils.TEMPLATE_LANGUAGE:
+                return PrecompiledTemplateFeature.compile(this);
+            case PrecompiledExpressionFeature.TEMPLATE_LANGUAGE:
+                return PrecompiledExpressionFeature.compile(this);
+            default:
+                return this;
         }
-        return this;
     }
 
     @Override
