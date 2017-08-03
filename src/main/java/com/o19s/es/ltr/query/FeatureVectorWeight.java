@@ -46,7 +46,7 @@ public abstract class FeatureVectorWeight extends Weight {
                 "you must call explain(context, vector, doc)");
     }
 
-    public abstract Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc);
+    public abstract Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException;
 
     /**
      *

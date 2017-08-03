@@ -36,6 +36,7 @@ import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.rescore.QueryRescoreMode;
 import org.elasticsearch.search.rescore.RescoreBuilder;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +51,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
     private static final String SIMPLE_MODEL = "{" +
             "\"feature1\": 1," +
             "\"feature2\": -1," +
-            "\"feature3\": 0" +
+            "\"feature3\": 10" +
             "}";
 
 
@@ -60,7 +61,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         addElement(new StoredFeature("feature2", Collections.singletonList("query"), "mustache",
                 QueryBuilders.matchQuery("field2", "{{query}}").toString()));
         addElement(new StoredFeature("feature3", Collections.singletonList("query"), "derived_expression",
-                "(feature1 + feature2) * 5"));
+                "(feature1 - feature2) > 0 ? 1 : -1"));
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
@@ -93,7 +94,12 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         SearchResponse sr = sb.get();
         assertEquals(1, sr.getHits().getTotalHits());
-        assertEquals(sr.getHits().getAt(0).getScore() < 0, negativeScore);
+
+        if(negativeScore) {
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-10.0f));
+        } else {
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(10.0f));
+        }
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();

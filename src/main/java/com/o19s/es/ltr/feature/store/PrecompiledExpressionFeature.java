@@ -18,7 +18,7 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.query.FeatureVectorQuery;
+import com.o19s.es.ltr.query.DerivedExpressionQuery;
 import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.search.Query;
@@ -63,7 +63,7 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
 
     @Override
     public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
-        return new FeatureVectorQuery(set, expression);
+        return new DerivedExpressionQuery(set, expression);
     }
 
     @Override

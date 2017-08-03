@@ -18,7 +18,6 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
@@ -39,11 +38,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class FeatureVectorQuery extends Query {
+public class DerivedExpressionQuery extends Query {
     private final FeatureSet features;
     private final Expression expression;
 
-    public FeatureVectorQuery(FeatureSet features, Expression expr) {
+    public DerivedExpressionQuery(FeatureSet features, Expression expr) {
         this.features = features;
         this.expression = expr;
     }
@@ -71,14 +70,14 @@ public class FeatureVectorQuery extends Query {
         if (!sameClassAs(obj)) {
             return false;
         }
-        FeatureVectorQuery that = (FeatureVectorQuery) obj;
+        DerivedExpressionQuery that = (DerivedExpressionQuery) obj;
         return Objects.deepEquals(expression, that.expression);
     }
 
     @Override
     public int hashCode() {
-    return 31 * classHash() + Objects.hash(expression);
-}
+        return 31 * classHash() + Objects.hash(expression);
+    }
 
     @Override
     public String toString(String field) {
@@ -117,7 +116,7 @@ public class FeatureVectorQuery extends Query {
         }
 
         @Override
-        public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) {
+        public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException {
             Bindings bindings = new Bindings(){
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
@@ -125,14 +124,10 @@ public class FeatureVectorQuery extends Query {
                 }
             };
 
-            try {
-                DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
-                DoubleValues values = src.getValues(context, null);
-                values.advanceExact(doc);
-                return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText);
-            } catch (IOException ex) {
-                return Explanation.noMatch("Exception parsing derived feature: " + ex.getMessage());
-            }
+            DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
+            DoubleValues values = src.getValues(context, null);
+            values.advanceExact(doc);
+            return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText);
         }
 
         @Override
