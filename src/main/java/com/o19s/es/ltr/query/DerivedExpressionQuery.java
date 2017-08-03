@@ -71,12 +71,13 @@ public class DerivedExpressionQuery extends Query {
             return false;
         }
         DerivedExpressionQuery that = (DerivedExpressionQuery) obj;
-        return Objects.deepEquals(expression, that.expression);
+        return Objects.deepEquals(expression, that.expression)
+                && Objects.deepEquals(features, that.features);
     }
 
     @Override
     public int hashCode() {
-        return 31 * classHash() + Objects.hash(expression);
+        return Objects.hash(expression, features);
     }
 
     @Override

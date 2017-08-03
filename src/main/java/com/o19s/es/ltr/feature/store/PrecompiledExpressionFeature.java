@@ -27,6 +27,7 @@ import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 
@@ -73,15 +74,13 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
 
         PrecompiledExpressionFeature that = (PrecompiledExpressionFeature) o;
 
-        if (!name.equals(that.name)) return false;
-        return !expression.equals(that.expression);
+        return Objects.equals(name, that.name)
+                && Objects.equals(expression, that.expression);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + expression.hashCode();
-        return result;
+        return Objects.hash(name, expression);
     }
 
     @Override
