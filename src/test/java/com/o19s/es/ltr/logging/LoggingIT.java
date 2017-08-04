@@ -62,6 +62,8 @@ public class LoggingIT extends BaseIntegrationTest {
                         .factor(FACTOR)
                         .modifier(FieldValueFactorFunction.Modifier.LN2P)
                         .missing(0F)).scoreMode(FiltersFunctionScoreQuery.ScoreMode.MULTIPLY).toString()));
+        features.add(new StoredFeature("derived_feature", Collections.singletonList("query"), "derived_expression",
+                "100"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
         addElement(set);
@@ -217,6 +219,11 @@ public class LoggingIT extends BaseIntegrationTest {
 
             assertEquals(score, log1.get("numeric_feature1"), Math.ulp(score));
             assertEquals(score, log2.get("numeric_feature1"), Math.ulp(score));
+
+            assertTrue(log1.containsKey("derived_feature"));
+            assertTrue(log2.containsKey("derived_feature"));
+            assertEquals(100.0, log1.get("derived_feature"), Math.ulp(100.0));
+            assertEquals(100.0, log2.get("derived_feature"), Math.ulp(100.0));
         }
     }
 
