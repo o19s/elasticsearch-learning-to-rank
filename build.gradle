@@ -24,7 +24,6 @@ esplugin {
   classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
 }
 
-
 // In this section you declare the dependencies for your production and test code
 // Note, the two dependencies are not really needed as the buildscript dependency gets them in already
 // they are just here as an example
@@ -33,11 +32,22 @@ repositories {
     mavenLocal()
     jcenter()
 }
+
 dependencies {
   compile 'org.elasticsearch:elasticsearch:5.3.2'
+  compile "org.apache.lucene:lucene-expressions:6.4.2"
+  compile 'org.antlr:antlr4-runtime:4.5.1-1'
+  compile 'org.ow2.asm:asm:5.0.4'
+  compile 'org.ow2.asm:asm-commons:5.0.4'
+  compile 'org.ow2.asm:asm-tree:5.0.4'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   testCompile 'org.elasticsearch.test:framework:5.3.2'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
+}
+
+dependencyLicenses {
+  mapping from: /lucene-.*/, to: 'lucene'
+  mapping from: /asm-.*/, to: 'asm'
 }
 
 // Set to false to not use elasticsearch checkstyle rules
