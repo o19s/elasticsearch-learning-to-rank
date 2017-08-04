@@ -69,6 +69,26 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
+    public void testNegativeScores() throws IOException {
+        float[] weights = {1F};
+        NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[1];
+        trees[0] = new NaiveAdditiveDecisionTree.Split(
+                new NaiveAdditiveDecisionTree.Leaf(-5F),
+                new NaiveAdditiveDecisionTree.Leaf(5F),
+                0,0F);
+
+        NaiveAdditiveDecisionTree tree = new NaiveAdditiveDecisionTree.BuildState(trees, weights, 1).build();
+        float[] scores = {1F};
+        DenseFeatureVector vector = tree.newFeatureVector(null);
+        vector.scores[0] = 1F;
+        float expectedAdjustment = 5F + NaiveAdditiveDecisionTree.MIN_LEAF_VALUE;
+        assertEquals(5F + expectedAdjustment, tree.score(vector),
+                Math.ulp(NaiveAdditiveDecisionTree.MIN_LEAF_VALUE));
+        vector.scores[0] = -1F;
+        assertEquals(-5F + expectedAdjustment, tree.score(vector),
+                Math.ulp(NaiveAdditiveDecisionTree.MIN_LEAF_VALUE));
+    }
+
     public void testPerfAndRobustness() {
         SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
         NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,

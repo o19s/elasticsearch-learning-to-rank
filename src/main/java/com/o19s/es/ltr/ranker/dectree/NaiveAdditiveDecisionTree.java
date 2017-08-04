@@ -28,6 +28,7 @@ import java.util.Objects;
  * May be slow when the number of trees and tree complexity if high comparatively to the number of features.
  */
 public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Accountable {
+    static final float MIN_LEAF_VALUE = 0.1F;
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
 
     private final Node[] trees;
@@ -43,7 +44,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      * @param weights the respective weights
      * @param modelSize the modelSize in number of feature used
      */
-    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize) {
+    NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize) {
         assert trees.length == weights.length;
         this.trees = trees;
         this.weights = weights;
@@ -119,6 +120,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             return n.eval(scores);
         }
 
+        Node left() { return left; }
+
+        Node right() { return right; }
+
+        int feature() { return feature; }
+
+        float threshold() { return threshold; }
+
         /**
          * Return the memory usage of this object in bytes. Negative values are illegal.
          */
@@ -147,12 +156,73 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             return output;
         }
 
+        float output() { return output; }
+
         /**
          * Return the memory usage of this object in bytes. Negative values are illegal.
          */
         @Override
         public long ramBytesUsed() {
             return BASE_RAM_USED;
+        }
+    }
+
+    public static class BuildState {
+        Node[] trees;
+        float[] weights;
+        int modelSize;
+
+        public BuildState(Node[] trees, float[] weights, int modelSize) {
+            this.trees = trees;
+            this.weights = weights;
+            this.modelSize = modelSize;
+        }
+
+        public NaiveAdditiveDecisionTree build() {
+            Node[] res = new Node[trees.length];
+            for (int i = 0; i < trees.length; i++) {
+                res[i] = fixMinLeafValue(trees[i]);
+            }
+            return new NaiveAdditiveDecisionTree(res, this.weights, this.modelSize);
+        }
+
+        /**
+         * Adjust the minimum leaf value within trees to MIN_LEAF_VALUE. Various
+         * learning algos will build trees that return negative values, but that
+         * can cause issues when combining ltr scores with non-ltr scores, or
+         * even just when zeroing out non-ltr scores as the negative values
+         * may sort last.
+         *
+         * @param tree A tree to fix the minimum value of
+         * @return A new tree with fixed minimum value.
+         */
+        private Node fixMinLeafValue(Node tree) {
+            float minLeaf = minLeaf(tree);
+            if (minLeaf >= MIN_LEAF_VALUE) {
+                return tree;
+            } else {
+                return addToLeafs(tree, -minLeaf + MIN_LEAF_VALUE);
+            }
+        }
+
+        private float minLeaf(Node n) {
+            if (n.isLeaf()) {
+                Leaf l = (Leaf) n;
+                return l.output();
+            } else {
+                Split s = (Split) n;
+                return Math.min(minLeaf(s.left()), minLeaf(s.right()));
+            }
+        }
+
+        private Node addToLeafs(Node n, float value) {
+            if (n.isLeaf()) {
+                Leaf l = (Leaf) n;
+                return new Leaf(l.output() + value);
+            } else {
+                Split s = (Split) n;
+                return new Split(addToLeafs(s.left(), value), addToLeafs(s.right(), value), s.feature(), s.threshold());
+            }
         }
     }
 }
