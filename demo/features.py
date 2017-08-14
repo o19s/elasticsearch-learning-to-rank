@@ -80,10 +80,14 @@ def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
 
 
 if __name__ == "__main__":
+    import configparser
     from elasticsearch import Elasticsearch
     from judgments import judgmentsFromFile, judgmentsByQid
-    esUrl="http://localhost:9200"
-    es = Elasticsearch()
+
+    config = configparser.ConfigParser()
+    config.read('settings.cfg')
+    esUrl = config['DEFAULT']['ESHost']
+    es = Elasticsearch(esUrl)
     judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
     kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
     for qid, judgmentList in judgements.items():

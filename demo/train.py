@@ -23,10 +23,15 @@ def saveModel(es, scriptName, modelFname):
 
 
 if __name__ == "__main__":
+    import configparser
     from elasticsearch import Elasticsearch
     from judgments import judgmentsFromFile, judgmentsByQid
-    esUrl="http://localhost:9200"
-    es = Elasticsearch(timeout=1000)
+
+    config = configparser.ConfigParser()
+    config.read('settings.cfg')
+    esUrl = config['DEFAULT']['ESHost']
+
+    es = Elasticsearch(esUrl, timeout=1000)
     # Parse a judgments
     judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
     # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
