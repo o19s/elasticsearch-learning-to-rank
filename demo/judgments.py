@@ -6,7 +6,7 @@ class Judgment:
         self.qid = qid
         self.keywords = keywords
         self.docId = docId
-        self.features = []
+        self.features = [] # 0th feature is ranklib feature 1
 
     def __str__(self):
         return "grade:%s qid:%s (%s) docid:%s" % (self.grade, self.qid, self.keywords, self.docId)
