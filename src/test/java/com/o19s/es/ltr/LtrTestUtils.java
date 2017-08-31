@@ -27,13 +27,18 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.TestUtil;
+import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import static org.apache.lucene.util.LuceneTestCase.random;
 
@@ -99,5 +104,13 @@ public class LtrTestUtils {
 
     public static FeatureStoreLoader wrapMemStore(MemStore store) {
         return (storeName, client) -> store;
+    }
+
+    public static String readFileToString(String model) throws IOException {
+        try (InputStream is = LtrTestUtils.class.getResourceAsStream(model)) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            Streams.copy(is,  bos);
+            return bos.toString(IOUtils.UTF_8);
+        }
     }
 }

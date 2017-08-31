@@ -40,6 +40,7 @@ import java.util.List;
 
 import static com.o19s.es.ltr.LtrTestUtils.randomFeature;
 import static com.o19s.es.ltr.LtrTestUtils.randomFeatureSet;
+import static com.o19s.es.ltr.LtrTestUtils.readFileToString;
 import static java.util.Collections.singletonList;
 
 public class XGBoostJsonParserTests extends LuceneTestCase {
@@ -129,7 +130,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
     }
 
     public void testComplexModel() throws Exception {
-        String model = readModel("/models/xgboost-wmf.json");
+        String model = readFileToString("/models/xgboost-wmf.json");
         List<StoredFeature> features = new ArrayList<>();
         List<String> names = Arrays.asList("all_near_match",
                 "category",
@@ -151,14 +152,6 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         for (int i = random().nextInt(5000) + 1000; i > 0; i--) {
             LinearRankerTests.fillRandomWeights(v.scores);
             assertFalse(Float.isNaN(tree.score(v)));
-        }
-    }
-
-    private String readModel(String model) throws IOException {
-        try (InputStream is = this.getClass().getResourceAsStream(model)) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            Streams.copy(is,  bos);
-            return bos.toString(IOUtils.UTF_8);
         }
     }
 }

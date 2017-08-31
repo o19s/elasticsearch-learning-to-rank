@@ -44,6 +44,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.o19s.es.ltr.LtrTestUtils.readFileToString;
+
 public class LtrRankerParserTests extends LuceneTestCase {
     private final List<String> modelFiles = Arrays.asList("coord_ascent.txt",
             "lambdaMART.txt",
@@ -72,7 +74,7 @@ public class LtrRankerParserTests extends LuceneTestCase {
     }
 
     private void evalModel(String filename, boolean validFeatures) throws IOException {
-        String model = readModel("/models/" + filename);
+        String model = readFileToString("/models/" + filename);
         List<StoredFeature> features = new ArrayList<>();
         List<String> names;
 
@@ -92,14 +94,6 @@ public class LtrRankerParserTests extends LuceneTestCase {
             parser.parse(set, model, FEATURE_TYPE.NAMED);
         } else {
             expectThrows(RankLibError.class, () -> parser.parse(set, model, FEATURE_TYPE.NAMED));
-        }
-    }
-
-    private String readModel(String model) throws IOException {
-        try (InputStream is = this.getClass().getResourceAsStream(model)) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            Streams.copy(is,  bos);
-            return bos.toString(IOUtils.UTF_8);
         }
     }
 }
