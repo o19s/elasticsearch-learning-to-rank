@@ -22,6 +22,7 @@ import com.o19s.es.ltr.ranker.LogLtrRanker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
@@ -44,6 +45,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class LoggingFetchSubPhase implements FetchSubPhase {
     @Override
@@ -130,12 +132,12 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         if (q == null) {
             throw new IllegalArgumentException("No query named [" + logSpec.getNamedQuery() + "] found");
         }
-        if (!(q instanceof RankerQuery)) {
-            throw new IllegalArgumentException("Query named [" + logSpec.getNamedQuery() +
-                    "] must be a [sltr] query [" + q.getClass().getSimpleName() + "] found");
-        }
-        RankerQuery query = (RankerQuery) q;
-        return toLogger(logSpec, query);
+        final RankerQuery query;
+        return toLogger(logSpec, inspectQuery(q)
+                .orElseThrow(() -> new IllegalArgumentException("Query named [" + logSpec.getNamedQuery() +
+                    "] must be a [sltr] query [" +
+                    ((q instanceof BoostQuery) ? ((BoostQuery)q).getQuery().getClass().getSimpleName()  : q.getClass().getSimpleName()) +
+                    "] found")));
     }
 
     private Tuple<RankerQuery, HitLogConsumer> extractRescore(LoggingSearchExtBuilder.LogSpec logSpec,
@@ -151,14 +153,19 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                     "at index [" + logSpec.getRescoreIndex() + "]");
         }
         QueryRescorer.QueryRescoreContext qrescore = (QueryRescorer.QueryRescoreContext) context;
-        if (!(qrescore.query() instanceof RankerQuery)) {
-            throw new IllegalArgumentException("Expected a [sltr] query but found a " +
+        return toLogger(logSpec, inspectQuery(qrescore.query())
+                .orElseThrow(() -> new IllegalArgumentException("Expected a [sltr] query but found a " +
                     "[" + qrescore.query().getClass().getSimpleName() + "] " +
-                    "at index [" + logSpec.getRescoreIndex() + "]");
-        }
+                    "at index [" + logSpec.getRescoreIndex() + "]")));
+    }
 
-        RankerQuery query = (RankerQuery) qrescore.query();
-        return toLogger(logSpec, query);
+    private Optional<RankerQuery> inspectQuery(Query q) {
+        if (q instanceof RankerQuery) {
+            return Optional.of((RankerQuery) q);
+        } else if (q instanceof BoostQuery && ((BoostQuery) q).getQuery() instanceof RankerQuery) {
+            return Optional.of((RankerQuery) ((BoostQuery) q).getQuery());
+        }
+        return Optional.empty();
     }
 
     Tuple<RankerQuery, HitLogConsumer> toLogger(LoggingSearchExtBuilder.LogSpec logSpec, RankerQuery query) {

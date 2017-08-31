@@ -77,7 +77,9 @@ public class LoggingIT extends BaseIntegrationTest {
         buildIndex();
         Map<String, Object> params = new HashMap<>();
         params.put("query", "found");
-        QueryBuilder query = QueryBuilders.matchQuery("field1", "found").queryName("not_sltr");
+        QueryBuilder query = QueryBuilders.matchQuery("field1", "found")
+                .boost(random().nextInt(3))
+                .queryName("not_sltr");
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
                 .fetchSource(false)
                 .size(10)
@@ -146,12 +148,14 @@ public class LoggingIT extends BaseIntegrationTest {
         StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
                 .featureSetName("my_set")
                 .params(params)
-                .queryName("test");
+                .queryName("test")
+                .boost(random().nextInt(3));
 
         StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
                 .featureSetName("my_set")
                 .params(params)
-                .queryName("test_rescore");
+                .queryName("test_rescore")
+                .boost(random().nextInt(3));
 
         QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
                 .filter(QueryBuilders.idsQuery("test").addIds(ids));
@@ -168,8 +172,10 @@ public class LoggingIT extends BaseIntegrationTest {
         assertSearchHits(docs, resp);
         sbuilder.featureSetName(null);
         sbuilder.modelName("my_model");
+        sbuilder.boost(random().nextInt(3));
         sbuilder_rescore.featureSetName(null);
         sbuilder_rescore.modelName("my_model");
+        sbuilder_rescore.boost(random().nextInt(3));
 
         query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
                 .filter(QueryBuilders.idsQuery("test").addIds(ids));
