@@ -18,6 +18,7 @@ package com.o19s.es.ltr.ranker.parser;
 
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -30,7 +31,7 @@ public class LinearRankerParser implements LtrRankerParser {
     public static String TYPE = "model/linear";
 
     @Override
-    public LinearRanker parse(FeatureSet set, String model) {
+    public LinearRanker parse(FeatureSet set, String model, FEATURE_TYPE type) {
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY, model)) {
             return parse(parser, set);
         } catch (IOException e) {

@@ -20,6 +20,7 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -109,7 +110,7 @@ public class StoredLtrModel implements StorableElement {
     public CompiledLtrModel compile(LtrRankerParserFactory factory) throws IOException {
         LtrRankerParser modelParser = factory.getParser(rankingModelType);
         FeatureSet optimized = featureSet.optimize();
-        LtrRanker ranker = modelParser.parse(optimized, rankingModel);
+        LtrRanker ranker = modelParser.parse(optimized, rankingModel, FEATURE_TYPE.NAMED);
         return new CompiledLtrModel(name, optimized, ranker);
     }
 

@@ -18,6 +18,7 @@ package com.o19s.es.ltr.ranker.parser;
 
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 
 /**
  * A model parser (don't have to be thread-safe)
@@ -26,5 +27,5 @@ public interface LtrRankerParser {
     /**
      * Parse the model with the given FeatureSet
      */
-    LtrRanker parse(FeatureSet set, String model);
+    LtrRanker parse(FeatureSet set, String model, FEATURE_TYPE type);
 }

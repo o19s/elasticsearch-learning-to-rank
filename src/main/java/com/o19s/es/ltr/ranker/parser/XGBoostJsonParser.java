@@ -19,6 +19,7 @@ package com.o19s.es.ltr.ranker.parser;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree.Node;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
@@ -38,7 +39,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
     public static final String TYPE = "model/xgboost+json";
 
     @Override
-    public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
+    public NaiveAdditiveDecisionTree parse(FeatureSet set, String model, FEATURE_TYPE type) {
         List<Node> trees = new ArrayList<>();
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY, model)) {
             if (parser.nextToken() != XContentParser.Token.START_ARRAY) {

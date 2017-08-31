@@ -16,7 +16,6 @@
  */
 package com.o19s.es.ltr;
 
-import ciir.umass.edu.learning.RankerFactory;
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
@@ -46,6 +45,7 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
+import com.o19s.es.ltr.ranker.ranklib.learning.RankerFactory;
 import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
