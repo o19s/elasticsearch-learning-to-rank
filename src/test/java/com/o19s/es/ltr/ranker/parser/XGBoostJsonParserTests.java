@@ -24,16 +24,11 @@ import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker.FeatureVector;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
-import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
-import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.io.Streams;
 import org.hamcrest.CoreMatchers;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +43,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
     public void testReadLeaf() throws IOException {
         String model = "[ {\"nodeid\": 0, \"leaf\": 0.234}]";
         FeatureSet set = randomFeatureSet();
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model, FEATURE_TYPE.NAMED);
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
         assertEquals(0.234F, tree.score(tree.newFeatureVector(null)), Math.ulp(0.234F));
     }
 
@@ -67,7 +62,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
                 "]}]";
 
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model, FEATURE_TYPE.NAMED);
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
         FeatureVector v = tree.newFeatureVector(null);
         v.setFeatureScore(0, 0.124F);
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
@@ -90,7 +85,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
                 "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
                 "]}]";
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model, FEATURE_TYPE.NAMED)).getMessage(),
+        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
                 CoreMatchers.containsString("This split does not have all the required fields"));
     }
 
@@ -107,7 +102,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
                 "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
                 "]}]";
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model, FEATURE_TYPE.NAMED)).getMessage(),
+        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
                 CoreMatchers.containsString("Split structure is invalid, yes, no and/or"));
     }
 
@@ -125,7 +120,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
                 "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
                 "]}]";
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model, FEATURE_TYPE.NAMED)).getMessage(),
+        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
                 CoreMatchers.containsString("Unknown feature [feat2]"));
     }
 
@@ -145,7 +140,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         }
 
         StoredFeatureSet set = new StoredFeatureSet("set", features);
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model, FEATURE_TYPE.NAMED);
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
         DenseFeatureVector v = tree.newFeatureVector(null);
         assertEquals(v.scores.length, features.size());
 

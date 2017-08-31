@@ -43,6 +43,7 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
+import com.o19s.es.ltr.ranker.ranklib.LegacyRanklibModelParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
 import com.o19s.es.ltr.ranker.ranklib.learning.RankerFactory;
@@ -96,6 +97,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         // Use memoize to Lazy load the RankerFactory as it's a heavy object to construct
         Supplier<RankerFactory> ranklib = Suppliers.memoize(RankerFactory::new);
         parserFactory = new LtrRankerParserFactory.Builder()
+                .register(LegacyRanklibModelParser.TYPE, () -> new LegacyRanklibModelParser(ranklib.get()))
                 .register(RanklibModelParser.TYPE, () -> new RanklibModelParser(ranklib.get()))
                 .register(LinearRankerParser.TYPE, LinearRankerParser::new)
                 .register(XGBoostJsonParser.TYPE, XGBoostJsonParser::new)

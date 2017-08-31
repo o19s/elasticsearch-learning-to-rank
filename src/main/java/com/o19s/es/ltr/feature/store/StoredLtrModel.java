@@ -110,7 +110,7 @@ public class StoredLtrModel implements StorableElement {
     public CompiledLtrModel compile(LtrRankerParserFactory factory) throws IOException {
         LtrRankerParser modelParser = factory.getParser(rankingModelType);
         FeatureSet optimized = featureSet.optimize();
-        LtrRanker ranker = modelParser.parse(optimized, rankingModel, FEATURE_TYPE.NAMED);
+        LtrRanker ranker = modelParser.parse(optimized, rankingModel);
         return new CompiledLtrModel(name, optimized, ranker);
     }
 

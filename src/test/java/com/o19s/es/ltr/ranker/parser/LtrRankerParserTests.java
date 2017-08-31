@@ -19,26 +19,15 @@ package com.o19s.es.ltr.ranker.parser;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.ranker.DenseFeatureVector;
-import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
-import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
-import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import com.o19s.es.ltr.ranker.ranklib.learning.RankLibError;
 import com.o19s.es.ltr.ranker.ranklib.learning.RankerFactory;
 import com.o19s.es.ltr.utils.Suppliers;
-import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.io.Streams;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.junit.Assert;
+
 import org.junit.Before;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -91,9 +80,9 @@ public class LtrRankerParserTests extends LuceneTestCase {
         StoredFeatureSet set = new StoredFeatureSet("set", features);
 
         if(validFeatures) {
-            parser.parse(set, model, FEATURE_TYPE.NAMED);
+            parser.parse(set, model);
         } else {
-            expectThrows(RankLibError.class, () -> parser.parse(set, model, FEATURE_TYPE.NAMED));
+            expectThrows(RankLibError.class, () -> parser.parse(set, model));
         }
     }
 }

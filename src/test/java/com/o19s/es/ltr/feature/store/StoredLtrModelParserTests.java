@@ -41,7 +41,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         super.setUp();
         ranker = new LinearRanker(new float[]{1F,2F,3F});
         factory = new LtrRankerParserFactory.Builder()
-                .register("model/dummy", () -> (set, model, type) -> ranker)
+                .register("model/dummy", () -> (set, model) -> ranker)
                 .build();
     }
 

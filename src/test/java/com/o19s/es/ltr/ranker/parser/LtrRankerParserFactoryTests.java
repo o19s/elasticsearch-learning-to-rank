@@ -22,7 +22,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 
 public class LtrRankerParserFactoryTests extends LuceneTestCase {
     public void testGetParser() {
-        LtrRankerParser parser = (set, model, type) -> null;
+        LtrRankerParser parser = (set, model) -> null;
         LtrRankerParserFactory factory = new LtrRankerParserFactory.Builder()
                 .register("model/test", () -> parser)
                 .build();
@@ -33,7 +33,7 @@ public class LtrRankerParserFactoryTests extends LuceneTestCase {
     }
 
     public void testDeclareMultiple() {
-        LtrRankerParser parser = (set, model, type) -> null;
+        LtrRankerParser parser = (set, model) -> null;
         LtrRankerParserFactory.Builder builder = new LtrRankerParserFactory.Builder()
                 .register("model/test", () -> parser);
         expectThrows(RuntimeException.class,

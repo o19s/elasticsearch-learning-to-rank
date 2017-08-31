@@ -22,7 +22,6 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
-import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -47,7 +46,7 @@ public class LinearRankerParserTests extends LuceneTestCase {
         builder.endObject();
         String json = builder.bytes().utf8ToString();
         LinearRankerParser parser = new LinearRankerParser();
-        LinearRanker ranker = parser.parse(set, json, FEATURE_TYPE.NAMED);
+        LinearRanker ranker = parser.parse(set, json);
         DenseFeatureVector v = ranker.newFeatureVector(null);
         LinearRankerTests.fillRandomWeights(v.scores);
         LinearRanker expectedRanker = new LinearRanker(expectedWeights);
@@ -57,24 +56,24 @@ public class LinearRankerParserTests extends LuceneTestCase {
     public void testBadJson() throws IOException {
         StoredFeatureSet set = LtrTestUtils.randomFeatureSet();
         LinearRankerParser parser = new LinearRankerParser();
-        expectThrows(IllegalArgumentException.class, () -> parser.parse(set, "{ \"hmm\": }", FEATURE_TYPE.NAMED));
+        expectThrows(IllegalArgumentException.class, () -> parser.parse(set, "{ \"hmm\": }"));
     }
 
     public void testBadStructure() throws IOException {
         StoredFeatureSet set = new StoredFeatureSet("test", singletonList(LtrTestUtils.randomFeature("feature")));
         LinearRankerParser parser = new LinearRankerParser();
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": {} }", FEATURE_TYPE.NAMED));
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": [] }", FEATURE_TYPE.NAMED));
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": null }", FEATURE_TYPE.NAMED));
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": \"hmm\" }", FEATURE_TYPE.NAMED));
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": \"1.2\" }", FEATURE_TYPE.NAMED));
-        expectThrows(ParsingException.class, () -> parser.parse(set, "[]", FEATURE_TYPE.NAMED));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": {} }"));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": [] }"));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": null }"));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": \"hmm\" }"));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"feature\": \"1.2\" }"));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "[]"));
     }
 
     public void testEmptyModelOK() throws IOException {
         StoredFeatureSet set = LtrTestUtils.randomFeatureSet();
         LinearRankerParser parser = new LinearRankerParser();
-        LinearRanker ranker = parser.parse(set, "{}", FEATURE_TYPE.NAMED);
+        LinearRanker ranker = parser.parse(set, "{}");
         DenseFeatureVector v = ranker.newFeatureVector(null);
         LinearRankerTests.fillRandomWeights(v.scores);
         assertEquals(0F, ranker.score(v), Math.ulp(0));
@@ -83,7 +82,7 @@ public class LinearRankerParserTests extends LuceneTestCase {
     public void testUnknownFeature() throws IOException {
         StoredFeatureSet set = new StoredFeatureSet("test", singletonList(LtrTestUtils.randomFeature("feature")));
         LinearRankerParser parser = new LinearRankerParser();
-        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"features\": 1.5 }", FEATURE_TYPE.NAMED));
+        expectThrows(ParsingException.class, () -> parser.parse(set, "{ \"features\": 1.5 }"));
     }
 
     public static String generateRandomModelString(FeatureSet set) throws IOException {

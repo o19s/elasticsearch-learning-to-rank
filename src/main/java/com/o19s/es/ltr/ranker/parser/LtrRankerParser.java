@@ -27,5 +27,5 @@ public interface LtrRankerParser {
     /**
      * Parse the model with the given FeatureSet
      */
-    LtrRanker parse(FeatureSet set, String model, FEATURE_TYPE type);
+    LtrRanker parse(FeatureSet set, String model);
 }

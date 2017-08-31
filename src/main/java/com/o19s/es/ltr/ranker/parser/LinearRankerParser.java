@@ -31,7 +31,7 @@ public class LinearRankerParser implements LtrRankerParser {
     public static String TYPE = "model/linear";
 
     @Override
-    public LinearRanker parse(FeatureSet set, String model, FEATURE_TYPE type) {
+    public LinearRanker parse(FeatureSet set, String model) {
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY, model)) {
             return parse(parser, set);
         } catch (IOException e) {

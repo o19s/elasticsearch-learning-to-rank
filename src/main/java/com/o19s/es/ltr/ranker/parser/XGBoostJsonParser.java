@@ -39,7 +39,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
     public static final String TYPE = "model/xgboost+json";
 
     @Override
-    public NaiveAdditiveDecisionTree parse(FeatureSet set, String model, FEATURE_TYPE type) {
+    public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
         List<Node> trees = new ArrayList<>();
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY, model)) {
             if (parser.nextToken() != XContentParser.Token.START_ARRAY) {

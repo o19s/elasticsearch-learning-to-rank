@@ -74,7 +74,7 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
     @Override
     public Object compile(String scriptName, String scriptSource, Map<String, String> params) {
         // XXX: does not support feature set.
-        return factory.getParser(RanklibModelParser.TYPE).parse(null, scriptSource, FEATURE_TYPE.ORDINAL);
+        return factory.getParser(LegacyRanklibModelParser.TYPE).parse(null, scriptSource);
     }
 
     @Override
