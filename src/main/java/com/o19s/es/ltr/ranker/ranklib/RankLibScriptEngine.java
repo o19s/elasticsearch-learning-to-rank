@@ -18,6 +18,7 @@ package com.o19s.es.ltr.ranker.ranklib;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
@@ -73,7 +74,7 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
     @Override
     public Object compile(String scriptName, String scriptSource, Map<String, String> params) {
         // XXX: does not support feature set.
-        return factory.getParser(RanklibModelParser.TYPE).parse(null, scriptSource);
+        return factory.getParser(LegacyRanklibModelParser.TYPE).parse(null, scriptSource);
     }
 
     @Override

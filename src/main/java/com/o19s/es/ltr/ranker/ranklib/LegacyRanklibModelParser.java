@@ -26,18 +26,18 @@ import com.o19s.es.ltr.ranker.ranklib.learning.RankerFactory;
  * Load a ranklib model from a script file, mostly a wrapper around the
  * existing script that complies with the {@link LtrRankerParser} interface
  *
- * This implementation makes use of named features instead of using ordinals
+ * This implementation uses ordinals instead of named features
  */
-public class RanklibModelParser implements LtrRankerParser {
-    public static final String TYPE = "model/ranklib+named";
+public class LegacyRanklibModelParser implements LtrRankerParser {
+    public static final String TYPE = "model/ranklib";
     private final RankerFactory factory;
 
-    public RanklibModelParser(RankerFactory factory) {
+    public LegacyRanklibModelParser(RankerFactory factory) {
         this.factory = factory;
     }
 
     @Override
     public LtrRanker parse(FeatureSet set, String model) {
-        return new RanklibRanker(factory.loadRankerFromString(model, set, FEATURE_TYPE.NAMED));
+        return new RanklibRanker(factory.loadRankerFromString(model, set, FEATURE_TYPE.ORDINAL));
     }
 }

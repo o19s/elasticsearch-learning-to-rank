@@ -16,9 +16,9 @@
  */
 package com.o19s.es.ltr.ranker.ranklib;
 
-import ciir.umass.edu.learning.DataPoint;
-import ciir.umass.edu.utilities.RankLibError;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.ranklib.learning.DataPoint;
+import com.o19s.es.ltr.ranker.ranklib.learning.RankLibError;
 
 import java.util.Arrays;
 

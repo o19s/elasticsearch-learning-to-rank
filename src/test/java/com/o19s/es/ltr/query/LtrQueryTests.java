@@ -16,14 +16,6 @@
  */
 package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.DataPoint;
-import ciir.umass.edu.learning.RANKER_TYPE;
-import ciir.umass.edu.learning.RankList;
-import ciir.umass.edu.learning.Ranker;
-import ciir.umass.edu.learning.RankerFactory;
-import ciir.umass.edu.learning.RankerTrainer;
-import ciir.umass.edu.metric.NDCGScorer;
-import ciir.umass.edu.utilities.MyThreadPool;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
@@ -31,6 +23,12 @@ import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.ranklib.DenseProgramaticDataPoint;
 import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
+import com.o19s.es.ltr.ranker.ranklib.learning.DataPoint;
+import com.o19s.es.ltr.ranker.ranklib.learning.FEATURE_TYPE;
+import com.o19s.es.ltr.ranker.ranklib.learning.RankList;
+import com.o19s.es.ltr.ranker.ranklib.learning.Ranker;
+import com.o19s.es.ltr.ranker.ranklib.learning.RankerFactory;
+import com.o19s.es.ltr.ranker.ranklib.utils.MyThreadPool;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
@@ -70,12 +68,16 @@ import org.apache.lucene.search.similarities.NormalizationH3;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.io.Streams;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,6 +87,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import static com.o19s.es.ltr.LtrTestUtils.readFileToString;
 
 /**
  * Created by doug on 12/24/16.
@@ -107,6 +111,8 @@ public class LtrQueryTests extends LuceneTestCase {
     private IndexReader indexReaderUnderTest;
     private Directory dirUnderTest;
     private Similarity similarity;
+
+    private Ranker ranker;
 
     // docs with doc ids array index
     private final String[] docs = new String[] { "how now brown cow",
@@ -146,6 +152,13 @@ public class LtrQueryTests extends LuceneTestCase {
         indexReaderUnderTest = indexWriterUnderTest.getReader();
         searcherUnderTest = newSearcher(indexReaderUnderTest);
         searcherUnderTest.setSimilarity(similarity);
+    }
+
+    @Before
+    public void setupRanker() throws IOException {
+        String modelStr = readFileToString("/models/linRegression.txt");
+        RankerFactory factory = new RankerFactory();
+        ranker = factory.loadRankerFromString(modelStr,null, FEATURE_TYPE.ORDINAL);
     }
 
     public Map<String, Map<Integer, Float>> getFeatureScores(List<PrebuiltFeature> features) throws IOException {
@@ -248,15 +261,8 @@ public class LtrQueryTests extends LuceneTestCase {
 
         // each RankList appears to correspond to a
         // query
-        RankerTrainer trainer = new RankerTrainer();
-        Ranker ranker = trainer.train(/*what type of model ot train*/RANKER_TYPE.LAMBDAMART,
-                                      /*The training data*/ samples,
-                                      /*which features to use*/new int[] {1,2}
-                                      /*how to score ranking*/, new NDCGScorer());
         float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
-
-
 
         // Ok now lets rerun that as a Lucene Query
 
@@ -270,22 +276,6 @@ public class LtrQueryTests extends LuceneTestCase {
 
         for (ScoreDoc scoreDoc: scoreDocs) {
             assertScoresMatch(features, scores, ltrQuery, scoreDoc);
-        }
-
-        // Try again with a model serialized
-
-        String modelAsStr = ranker.model();
-        RankerFactory rankerFactory = new RankerFactory();
-        Ranker rankerAgain = rankerFactory.loadRankerFromString(modelAsStr);
-        float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
-                (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
-
-        ltrQuery = toRankerQuery(features, rankerAgain);
-        topDocs = searcherUnderTest.search(ltrQuery, 10);
-        scoreDocs = topDocs.scoreDocs;
-        assert(scoreDocs.length == docs.length);
-        for (ScoreDoc scoreDoc: scoreDocs) {
-            assertScoresMatch(features, scoresAgain, ltrQuery, scoreDoc);
         }
     }
 
@@ -315,15 +305,6 @@ public class LtrQueryTests extends LuceneTestCase {
         LtrRanker ltrRanker = new RanklibRanker(ranker);
         PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, features));
         return RankerQuery.build(model);
-    }
-
-    public void testTrainModel() throws IOException {
-        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
-        String userQuery = "brown cow";
-        List<Query> features = Arrays.asList(
-                new TermQuery(new Term("field",  userQuery.split(" ")[0])),
-                new PhraseQuery("field", userQuery.split(" ")));
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features));
     }
 
     public void testExplainWithNames() throws IOException {
