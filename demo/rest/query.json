@@ -1,0 +1,20 @@
+{
+    "_source": ["original_title"],
+    "query": {
+        "match": {
+            "_all": "rambo"
+        }
+    },
+    "rescore": {
+        "query": {
+           "rescore_query": {
+             "sltr": {
+                "model": "example-model",
+                "params": {
+                    "query_string": "rambo"
+                }
+            }
+           }
+        }
+    }
+}

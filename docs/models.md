@@ -15,6 +15,7 @@ Generates a simple linear ranker. The format is a simple `json` object:
   "feature2" : 0.5,
   "feature3" : 0.1
 }
+```
 
 ## XGBoost
 Type: `model/xgboost+json`

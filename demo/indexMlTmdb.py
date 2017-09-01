@@ -36,9 +36,13 @@ def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tm
     elasticsearch.helpers.bulk(es, bulkDocs(movieDict))
 
 if __name__ == "__main__":
+    import configparser
     from elasticsearch import Elasticsearch
     from sys import argv
-    esUrl="http://localhost:9200"
+
+    config = configparser.ConfigParser()
+    config.read('settings.cfg')
+    esUrl=config['DEFAULT']['ESHost']
     if len(argv) > 1:
         esUrl = argv[1]
     es = Elasticsearch(esUrl, timeout=30)
