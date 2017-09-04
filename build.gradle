@@ -12,7 +12,7 @@ buildscript {
 }
 
 group = 'com.o19s'
-version = '1.0.0-RC1-es5.5.0'
+version = '1.0.0-es5.5.2'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
@@ -39,10 +39,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:5.5.0'
+  compile 'org.elasticsearch:elasticsearch:5.5.2'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:5.5.0'
+  testCompile 'org.elasticsearch.test:framework:5.5.2'
 }
 
 dependencyLicenses {
