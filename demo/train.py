@@ -4,7 +4,7 @@ from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
     # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgments_wfeatures.txt -save model.txt
-    cmd = "java -jar RankLib.jar -ranker %s -train %s -save %s -frate 1.0" % (whichModel, judgmentsWithFeaturesFile, modelOutput)
+    cmd = "java -jar RankLib-2.8.jar -ranker %s -train %s -save %s -frate 1.0" % (whichModel, judgmentsWithFeaturesFile, modelOutput)
     print("*********************************************************************")
     print("*********************************************************************")
     print("Running %s" % cmd)
