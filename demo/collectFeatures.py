@@ -46,8 +46,8 @@ def featureDictToList(ranklibLabeledFeatures):
 
 
 
-def logFeatures(es, judgmentsQid):
-    for qid, judgments in judgmentsQid.items():
+def logFeatures(es, judgmentsByQid):
+    for qid, judgments in judgmentsByQid.items():
         keywords = judgments[0].keywords
         docIds = [judgment.docId for judgment in judgments]
         logQuery['query']['bool']['must'][0]['terms']['_id'] = docIds
@@ -69,13 +69,18 @@ def logFeatures(es, judgmentsQid):
                 print("Missing movie %s" % judgment.docId)
 
 
+def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
+    with open(filename, 'w') as judgmentFile:
+        for qid, judgmentList in judgmentsWithFeatures.items():
+            for judgment in judgmentList:
+                judgmentFile.write(judgment.toRanklibFormat() + "\n")
+
+
 if __name__ == "__main__":
     from judgments import judgmentsFromFile, judgmentsByQid
     from elasticsearch import Elasticsearch
     es = Elasticsearch()
-    judgmentsQid = judgmentsByQid(judgmentsFromFile('sample_judgments.txt'))
-    logFeatures(es, judgmentsQid)
-    for qid, judgmentList in judgmentsQid.items():
-        for judgment in judgmentList:
-            print(judgment.toRanklibFormat())
+    judgmentsByQid = judgmentsByQid(judgmentsFromFile('sample_judgments.txt'))
+    logFeatures(es, judgmentsByQid)
+    buildFeaturesJudgmentsFile(judgmentsByQid, "sample_judgments_wfeatures.txt")
 
