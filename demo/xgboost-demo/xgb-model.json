@@ -1,0 +1,13 @@
+[  { "nodeid": 0, "depth": 0, "split": "tmdb_multi", "split_condition": 11.2009, "yes": 1, "no": 2, "missing": 1, "children": [
+    { "nodeid": 1, "depth": 1, "split": "tmdb_title", "split_condition": 2.20631, "yes": 3, "no": 4, "missing": 3, "children": [
+      { "nodeid": 3, "leaf": -0.03125 },
+      { "nodeid": 4, "leaf": -0.25 }
+    ]},
+    { "nodeid": 2, "leaf": 2.45 }
+  ]},  { "nodeid": 0, "depth": 0, "split": "tmdb_title", "split_condition": 7.56362, "yes": 1, "no": 2, "missing": 1, "children": [
+    { "nodeid": 1, "depth": 1, "split": "tmdb_multi", "split_condition": 11.2009, "yes": 3, "no": 4, "missing": 3, "children": [
+      { "nodeid": 3, "leaf": -0.0165441 },
+      { "nodeid": 4, "leaf": 0.04375 }
+    ]},
+    { "nodeid": 2, "leaf": 0.7 }
+  ]}]

@@ -36,10 +36,15 @@ def featureQueries(keywords):
 
 
 if __name__ == "__main__":
+    import configparser
     from sys import argv
     from elasticsearch import Elasticsearch
-    esUrl="http://localhost:9200"
-    es = Elasticsearch(timeout=1000)
+
+    config = configparser.ConfigParser()
+    config.read('settings.cfg')
+    esUrl=config['DEFAULT']['ESHost']
+
+    es = Elasticsearch(esUrl, timeout=1000)
     search = featureQueries(argv[1])
     model = "test_6"
     if len(argv) > 2:
