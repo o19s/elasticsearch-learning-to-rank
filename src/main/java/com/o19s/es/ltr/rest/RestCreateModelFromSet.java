@@ -19,14 +19,19 @@ package com.o19s.es.ltr.rest;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 
 import java.io.IOException;
@@ -67,7 +72,30 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
             builder.withoutVersion(store, request.param("name"), state.name, state.model);
         }
         builder.routing(routing);
-        return (channel) -> builder.execute(new RestStatusToXContentListener<>(channel, (r) -> r.getResponse().getLocation(routing)));
+        return (channel) -> builder.execute(ActionListener.wrap(
+                response -> new RestStatusToXContentListener<CreateModelFromSetAction.CreateModelFromSetResponse>(channel,
+                        (r) -> r.getResponse().getLocation(routing)).onResponse(response),
+                (e) -> {
+                    final Exception exc;
+                    final RestStatus status;
+                    if (ExceptionsHelper.unwrap(e, VersionConflictEngineException.class) != null) {
+                        exc = new IllegalArgumentException("Element of type [" + StoredLtrModel.TYPE +
+                                "] are not updatable, please create a new one instead.");
+                        exc.addSuppressed(e);
+                        status = RestStatus.METHOD_NOT_ALLOWED;
+                    } else {
+                        exc = e;
+                        status = ExceptionsHelper.status(exc);
+                    }
+
+                    try {
+                        channel.sendResponse(new BytesRestResponse(channel, status, exc));
+                    } catch (Exception inner) {
+                        inner.addSuppressed(e);
+                        logger.error("failed to send failure response", inner);
+                    }
+                }
+        ));
     }
 
     private static class ParserState {
