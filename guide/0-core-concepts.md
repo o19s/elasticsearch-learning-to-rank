@@ -1,7 +1,6 @@
 # Elasticsearch Learning to Rank Guidebook
 
 Welcome! You're here if you're interested in adding Learning to Rank capabilities to your Elasticsearch system. This guidebook is intended for Elasticsearch developers and data scientists. The guidebook has been prepared by the fine folks at [OpenSource Connections](http://opensourceconnections). Please [contact us](mailto:hello@o19s.com) or [create an issue](https://github.com/o19s/elasticsearch-learning-to-rank/issues) if you have any questions or feedback.
-
 This first section teaches you how a learning to rank system works. It shows you how Elasticsearch LTR fits into the bigger picture.
 
 # What is Learning to Rank? 

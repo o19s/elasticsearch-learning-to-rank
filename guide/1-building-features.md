@@ -142,6 +142,48 @@ Or filter by prefix in case you have many feature sets:
 GET _ltr/_featureset?prefix=mor
 ```
 
+### Validating features
+
+When adding features, wouldn't you like to sanity check that the features work as expected? Adding a "validation" block to your feature creation let's Elasticsearch LTR run the query before adding it. If you don't run this validation, you may find out only much later that the query, while valid JSON, was a malformed Elasticsearch query.
+
+To run validation, you simply specify test parameters and a test index to run: 
+
+```
+     "validation": {
+               "params": {
+                 "keywords": "rambo"
+               },
+               "index": "tmdb"
+           },
+```
+
+Place this alongside the feature list, as in this request:
+
+```
+"validation": {
+        "params": {
+            "keywords": "rambo"
+        },
+        "index": "tmdb"
+},
+ "features": [
+      {
+         "name": "title_query",
+         "params": [
+            "keywords"
+         ],
+         "template_language": "mustache",
+         "template": {
+            "query": {
+               "match": {
+                  "title": "{{keywords}}"
+               }
+            }
+         }
+      }
+   ]
+```
+
 ### Adding to an existing feature set
 
 As mentioned above, features are mustache-templated Elasticsearch queries. You can create features independently of feature sets. For example, if we want to create the `user_rating` feature, we could create it using the feature set append API, like below:
