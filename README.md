@@ -28,12 +28,7 @@ can be found [here](http://es-learn-to-rank.labs.o19s.com). For example, to inst
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-query-0.1.2-es5.4.0.zip`
 
-### Increase Max Script Size
-
-Models are stored using an Elasticsearch script plugin. Tree-based models can be large. So we recommend increasing the `script.max_size_in_bytes` setting. Don't worry, just because tree-based models are verbose, doesn't nescesarilly imply they'll be slow.
-
-`script.max_size_in_bytes: 10000000`
-
+(It's expected you'll confirm some security exceptions, you can pass `-b` to `elasticsearch-plugin` to automatically install)
 
 # Development
 
