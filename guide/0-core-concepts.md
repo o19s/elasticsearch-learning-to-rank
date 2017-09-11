@@ -2,9 +2,11 @@
 
 Welcome! You're here if you're interested in adding Learning to Rank capabilities to your Elasticsearch system. This guidebook is intended for Elasticsearch developers and data scientists. The guidebook has been prepared by the fine folks at [OpenSource Connections](http://opensourceconnections). Please [contact us](mailto:hello@o19s.com) or [create an issue](https://github.com/o19s/elasticsearch-learning-to-rank/issues) if you have any questions or feedback.
 
+This first section teaches you how a learning to rank system works. It shows you how Elasticsearch LTR fits into the bigger picture.
+
 # What is Learning to Rank? 
 
-*Learning to Rank* applies machine learning to search relevance ranking. How does relevance ranking differ from other machine learning problems? Regression is one classic machine learning problem. In *regression*, you're attempting to predict a variable (such as a stock price) as a function of known information (such as number of company employees, the company's revenue, etc). In these cases, you're building a function, say `f`, that can take what's known (`numEmployees`, `revenue`), and have `f` output an approximate stock price. 
+*Learning to Rank* (LTR) applies machine learning to search relevance ranking. How does relevance ranking differ from other machine learning problems? Regression is one classic machine learning problem. In *regression*, you're attempting to predict a variable (such as a stock price) as a function of known information (such as number of company employees, the company's revenue, etc). In these cases, you're building a function, say `f`, that can take what's known (`numEmployees`, `revenue`), and have `f` output an approximate stock price. 
 
 Classification is another machine learning problem. With classification, our function `f`, would classify our company into several categories. For example, profitable or not profitable. Or perhaps whether or not the company is evading taxes. Perhaps we want to guess the industry based on various variables known about a stealth startup.
 
