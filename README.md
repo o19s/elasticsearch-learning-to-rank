@@ -1,12 +1,26 @@
 [![CircleCI](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank.svg?style=svg)](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank)
 
-Rank Elasticsearch results using any xgboost or ranklib trained model. Models are trained using the scores of Elasicsearch queries as features. You train offline using [xgboost](https://github.com/dmlc/xgboost) or [ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/) and uploading models in their respective serialization formats.
+With this plugin you:
+
+- Store features (Elasticsearch query templates) in Elasticsearch 
+- Implement query primitives that go beyond the Elasticsearch Query DSL
+- Log features scores (relevance scores) for a set of documents to prime training
+- Upload an xgboost or ranklib ranking model to Elasticsearch
+- Rank search results using an xgboost or ranklib model
+
+What this plugin is NOT:
+
+- Learning to rank training in Elasticsearch, training is done offline with specialized tools like xgboost/ranklib using judgment lists + gathered features
+- Judgment list / click traffic tracking in Elasticsearch. You need to instrument your application/work with domain experts to arrived at search correctness data.
+
+For more background on machine learning in search, read [this blog article](http://opensourceconnections.com/blog/2017/08/03/search-as-machine-learning-prob/).
+
 
 # How the plugin works
 
-You create *feature stores* to back your model. Within the feature store, features are grouped inho feature sets. What are features in this context? Features are mustache templated Elasticsearch queries. For example a template that takes the search keywords as an argument. Several new Elasticsearch query primitives are introduced by the plugin to assist with feature development.
+You create *feature stores* to back your model. Within the feature store, features are grouped into feature sets. What are features in this context? Features are mustache templated Elasticsearch queries. For example a template that takes the search terms as an argument. Several new Elasticsearch query primitives are introduced by the plugin to assist with feature development.
 
-Feature sets can be logged either during a live user query or after-the-fact using the `sltr` query. With logged features and a judgment list (what docs are good/bad for a query), you can train a model offline. The model learns to generalize relevance ranking as a function of the features. 
+Feature sets can be logged either during a live user query or after-the-fact using the `sltr` query. You gather judgment lists (what docs are good/bad for a query) based on domain-specific factors. With logged features and judgment lists, you can train a model offline. The model learns to generalize the ranking expressed in the judgment list as a function of the features. 
 
 You store a model into the learning to rank plugin, associating it with the feature set used during training. The features from the feature set are copied into the model, and the model cannot be changed. The features within a model are also frozen. You search with this model using the `sltr` query.
 
