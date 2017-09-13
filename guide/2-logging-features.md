@@ -80,29 +80,32 @@ We'll use this as part of a larger boolean query. Combined with this filter is a
 }}
 ```
 
-You'll see future uses of `sltr` that apply a model. But for logging, this form will look familiar. Taken together, our full query filters plus `sltr` is:
+You'll see future uses of `sltr` that apply a model. 
+
+We want to use the `sltr` query above to log, but we don't want to influence the score. We need to sneak it into our query. The sneaky way to do this is to make it a filter. As `sltr` doesn't actually exclude any search results, it can be used this way to get Elasticsearch to log our feature values.
 
 ```
   "query": {
         "bool": {
-            "filter": [
+              "filter": [
                 {
                     "terms": {
                         "_id": ["7555", "1370", "1369"]
+                    
                     }
-                }
-            ],
-            "should": [                
-                {"sltr": {
-                    "_name": "logged_featureset",
-                    "featureset": "more_movie_features",
-                    "params": {
-                        "keywords": "rambo"
-                    }
+                },
+                {
+                    "sltr": {
+                        "_name": "logged_featureset",
+                        "featureset": "more_movie_features",
+                        "params": {
+                            "keywords": "rambo"
+                        }
                 }}
-                ]
-            }
+                
+            ]
     }
+  }
 ```
 
 You'll notice 3 hits are brought back. If you were to pry into the explain, you'd see the query is scored as a straight sum of the features in `more_movie_features`. We of course need more than just the total score, we need each feature query's value.
@@ -138,20 +141,21 @@ POST tmdb/_search
             "filter": [
                 {
                     "terms": {
-                            "_id": ["7555", "1370", "1369"]       
-                        }
-                }
-            ],
-            "should": [                
-                {"sltr": {
-                    "_name": "logged_featureset",
-                    "featureset": "more_movie_features",
-                    "params": {
-                        "keywords": "rambo"
+                        "_id": ["7555", "1370", "1369"]
+                    
                     }
+                },
+                {
+                    "sltr": {
+                        "_name": "logged_featureset",
+                        "featureset": "more_movie_features",
+                        "params": {
+                            "keywords": "rambo"
+                        }
                 }}
-                ]
-            }
+                
+            ]
+        }
     },
     "ext": {
         "ltr_log": {
@@ -191,7 +195,7 @@ And now each document contains a log entry:
     }
 ```
 
-We can use those values to flesh out our judgment list
+We can use those values to flesh out our judgment list with feature values.
 
 ## Logging values for a live feature set
 
@@ -311,16 +315,15 @@ PUT _ltr/_featureset/other_movie_features
 }
 ```
 
-We can log `other_movie_features` alongside a live production `more_movie_features` by simply appending it as a "should" clause on top of your baseline query. Give yous `sltr` a very low (or zero) boost so that it has no impact on your relevance.
+We can log `other_movie_features` alongside a live production `more_movie_features` by simply appending it as another filter, just like the first example above
 
 ```
 POST tmdb/_search
 {
   "query": {
       "bool": {
-          "should": [
+          "filter": [
               {"sltr": {
-                    "boost": 0.000001,
                     "_name": "logged_featureset",
                     "featureset": "other_movie_features",
                     "params": {
@@ -349,3 +352,5 @@ POST tmdb/_search
    }
 }
 ```
+
+Continue with as many feature sets as you care to log!
