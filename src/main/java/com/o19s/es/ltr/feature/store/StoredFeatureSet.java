@@ -71,10 +71,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
                 throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
             }
             if (state.features == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Field [features] is mandatory");
-            }
-            if (state.features.isEmpty()) {
-                throw new ParsingException(parser.getTokenLocation(), "At least one feature must be defined in [features]");
+                state.features = Collections.emptyList();
             }
             return new StoredFeatureSet(state.name, state.features);
         } catch (IllegalArgumentException iae) {

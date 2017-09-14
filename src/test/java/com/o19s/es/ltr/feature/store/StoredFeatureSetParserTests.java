@@ -108,19 +108,17 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     }
 
     public void testParseErrorOnMissingSet() throws IOException {
-        String missingName = "{ \"name\": \"my_set\"}";
-        assertThat(expectThrows(ParsingException.class,
-                () -> parse(missingName)).getMessage(),
-                equalTo("Field [features] is mandatory"));
+        String missingList = "{ \"name\": \"my_set\"}";
+        StoredFeatureSet set = parse(missingList);
+        assertEquals(0, set.size());
     }
 
     public void testParseErrorOnEmptySet() throws IOException {
-        String missingName = "{ \"name\": \"my_set\"," +
+        String missingList = "{ \"name\": \"my_set\"," +
                 "\"features\": []}";
 
-        assertThat(expectThrows(ParsingException.class,
-                () -> parse(missingName)).getMessage(),
-                equalTo("At least one feature must be defined in [features]"));
+        StoredFeatureSet set = parse(missingList);
+        assertEquals(0, set.size());
     }
 
     public void testParseErrorOnExtraField() throws IOException {
