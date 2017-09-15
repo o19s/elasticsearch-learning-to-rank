@@ -53,7 +53,8 @@ public class XGBoostJsonParser implements LtrRankerParser {
         float[] weights = new float[trees.size()];
         // Tree weights are already encoded in outputs
         Arrays.fill(weights, 1F);
-        return new NaiveAdditiveDecisionTree(trees.toArray(new Node[trees.size()]), weights, set.size());
+        return new NaiveAdditiveDecisionTree.BuildState(trees.toArray(new Node[trees.size()]), weights, set.size())
+                .build();
     }
 
     private static class SplitParserState {
