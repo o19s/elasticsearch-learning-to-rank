@@ -35,6 +35,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
@@ -192,7 +193,12 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             throw new IllegalArgumentException("Name mismatch, send request with [" + elt.name() + "] but [" + name + "] used in the URL");
         }
         if (request.method() == RestRequest.Method.POST && !elt.updatable()) {
-            throw new IllegalArgumentException("Element of type [" + elt.type() + "] are not updatable.");
+            try {
+                throw new IllegalArgumentException("Element of type [" + elt.type() + "] are not updatable, " +
+                        "please create a new one instead.");
+            } catch (IllegalArgumentException iae) {
+                return (channel) -> channel.sendResponse(new BytesRestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
+            }
         }
         FeatureStoreAction.FeatureStoreRequestBuilder builder = FeatureStoreAction.INSTANCE.newRequestBuilder(client);
         if (request.method() == RestRequest.Method.PUT) {
