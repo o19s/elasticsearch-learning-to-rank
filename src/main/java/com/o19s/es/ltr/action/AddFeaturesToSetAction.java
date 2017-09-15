@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.feature.store.StoredFeature;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
@@ -30,6 +31,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -62,6 +64,8 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
     public static class AddFeaturesToSetRequest extends ActionRequest {
         private String store;
         private String featureNameQuery;
+        private List<StoredFeature> features;
+        private boolean merge;
         private String featureSet;
         private String routing;
         @Override
@@ -70,8 +74,10 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
             if (store == null) {
                 arve = addValidationError("store must be set", null);
             }
-            if (featureNameQuery == null) {
-                arve = addValidationError("featureNameQuery must be set", arve);
+            if (featureNameQuery != null && features != null && !features.isEmpty()) {
+                arve = addValidationError("if featureNameQuery is set features cannot", arve);
+            } else if (featureNameQuery == null && (features == null || features.isEmpty())) {
+                arve = addValidationError("either featureNameQuery or features must be set", arve);
             }
             if (featureSet == null) {
                 arve = addValidationError("featureSet must be set", arve);
@@ -83,7 +89,11 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             store = in.readString();
-            featureNameQuery = in.readString();
+            features = in.readList(StoredFeature::new);
+            if (in.readBoolean()) {
+                featureNameQuery = in.readOptionalString();
+            }
+            merge = in.readBoolean();
             featureSet = in.readString();
             routing = in.readOptionalString();
         }
@@ -92,7 +102,11 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(store);
-            out.writeString(featureNameQuery);
+            out.writeOptionalString(featureNameQuery);
+            if (features != null) {
+                out.writeList(features);
+            }
+            out.writeBoolean(merge);
             out.writeString(featureSet);
             out.writeOptionalString(routing);
         }
@@ -127,6 +141,22 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
 
         public void setRouting(String routing) {
             this.routing = routing;
+        }
+
+        public List<StoredFeature> getFeatures() {
+            return features;
+        }
+
+        public void setFeatures(List<StoredFeature> features) {
+            this.features = features;
+        }
+
+        public boolean isMerge() {
+            return merge;
+        }
+
+        public void setMerge(boolean merge) {
+            this.merge = merge;
         }
     }
 
