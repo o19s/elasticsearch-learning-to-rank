@@ -100,13 +100,15 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private final String store;
         private final ActionListener<AddFeaturesToSetResponse> listener;
         private final String featureNamesQuery;
+        private final List<StoredFeature> features;
+        private final boolean merge;
         private final String featureSetName;
         private final String routing;
         private final AtomicReference<Exception> searchException = new AtomicReference<>();
         private final AtomicReference<Exception> getException = new AtomicReference<>();
         private final AtomicReference<StoredFeatureSet> setRef = new AtomicReference<>();
         private final AtomicReference<List<StoredFeature>> featuresRef = new AtomicReference<>();
-        private final CountDown countdown = new CountDown(2);
+        private final CountDown countdown;
         private final AtomicLong version = new AtomicLong(-1L);
         private final ClusterService clusterService;
         private final TransportSearchAction searchAction;
@@ -120,6 +122,17 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             this.listener = listener;
             this.featureSetName = request.getFeatureSet();
             this.featureNamesQuery = request.getFeatureNameQuery();
+            this.features = request.getFeatures();
+            if (featureNamesQuery != null) {
+                assert features == null || features.isEmpty();
+                // 2 async actions if we fetch features from store, one otherwize.
+                this.countdown = new CountDown(2);
+            } else {
+                assert features != null && !features.isEmpty();
+                // 1 async actions if we already have features.
+                this.countdown = new CountDown(1);
+            }
+            this.merge = request.isMerge();
             this.store = request.getStore();
             this.routing = request.getRouting();
             this.clusterService = clusterService;
@@ -129,9 +142,25 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         }
 
         private void start() {
+            if (featureNamesQuery != null) {
+                fetchFeaturesFromStore();
+            } else {
+                featuresRef.set(features);
+            }
+            GetRequest getRequest = new GetRequest(store)
+                    .type(IndexFeatureStore.ES_TYPE)
+                    .id(StorableElement.generateId(StoredFeatureSet.TYPE, featureSetName))
+                    .routing(routing);
+
+            getRequest.setParentTask(clusterService.localNode().getId(), task.getId());
+            getAction.execute(getRequest, wrap(this::onGetResponse, this::onGetFailure));
+        }
+
+        private void fetchFeaturesFromStore() {
             SearchRequest srequest = new SearchRequest(store);
             srequest.setParentTask(clusterService.localNode().getId(), task.getId());
             QueryBuilder nameQuery;
+
             if (featureNamesQuery.endsWith("*")) {
                 String parsed = featureNamesQuery.replaceAll("[*]+$", "");
                 if (parsed.isEmpty()) {
@@ -151,14 +180,6 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
             ActionFuture<SearchResponse> resp = searchAction.execute(srequest);
             searchAction.execute(srequest, wrap(this::onSearchResponse, this::onSearchFailure));
-
-            GetRequest getRequest = new GetRequest(store)
-                    .type(IndexFeatureStore.ES_TYPE)
-                    .id(StorableElement.generateId(StoredFeatureSet.TYPE, featureSetName))
-                    .routing(routing);
-
-            getRequest.setParentTask(clusterService.localNode().getId(), task.getId());
-            getAction.execute(getRequest, wrap(this::onGetResponse, this::onGetFailure));
         }
 
         private void onGetFailure(Exception e) {
@@ -224,7 +245,11 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private void finishRequest() throws Exception {
             assert setRef.get() != null && featuresRef.get() != null;
             StoredFeatureSet set = setRef.get();
-            set = set.append(featuresRef.get());
+            if (merge) {
+                set = set.merge(featuresRef.get());
+            } else {
+                set = set.append(featuresRef.get());
+            }
             updateSet(set);
         }
 

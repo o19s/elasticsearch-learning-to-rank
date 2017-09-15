@@ -142,6 +142,43 @@ A set can also be created/updated from existing features:
 
 Will create or update the `my_featureset` by collecting all features named with the prefix `my_feature`.
 
+Features can also be embedded in the body of the request:
+
+`POST /_ltr/_featureset/my_featureset/_addfeatures`
+
+```json
+{
+  "features" : [
+    {
+      "name": "my_feature",
+      "params": ["query_string"],
+      "template_language": "mustache",
+      "template" : {
+        "match": {
+          "field": "{{query_string}}"
+        }
+      }
+    },
+    {
+      "name": "my_feature2",
+      "params": ["query_string"],
+      "template_language": "mustache",
+      "template" : {
+        "match": {
+          "field2": "{{query_string}}"
+        }
+      }
+    }
+  ]
+}
+```
+
+By default features are appended and a failure is thrown if a feature is duplicated.
+You can force to the api endpoint to update exiting features within the set by adding the query param `merge=true` :
+
+`POST /_ltr/_featureset/my_featureset/_addfeatures?merge=true`
+
+
 ### Models
 
 `/_ltr/_model/model_name` supports `PUT`, `GET` and `DELETE` operations.

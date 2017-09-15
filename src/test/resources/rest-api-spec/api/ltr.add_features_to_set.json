@@ -3,7 +3,12 @@
     "methods" : ["POST"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
-      "paths": ["/_ltr/{store}/_featureset/{name}/_addfeatures/{query}","/_ltr/_featureset/{name}/_addfeatures/{query}"],
+      "paths": [
+        "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
+        "/_ltr/{store}/_featureset/{name}/_addfeatures",
+        "/_ltr/_featureset/{name}/_addfeatures/{query}",
+        "/_ltr/_featureset/{name}/_addfeatures"
+      ],
       "parts": {
         "store": {
           "type": "string",
@@ -17,7 +22,7 @@
         },
         "query": {
           "type": "string",
-          "required": true,
+          "required": false,
           "description": "The feature names query"
         }
       },
@@ -29,9 +34,16 @@
         "version": {
           "type" : "long",
           "description" : "Extra check to ensure that the model is created with this version of the set"
+        },
+        "merge": {
+          "type" : "boolean",
+          "description" : "Merge the list for features otherwise append only"
         }
       }
     },
-    "body": null
+    "body": {
+      "description" : "The feature",
+      "required": "false"
+    }
   }
 }
