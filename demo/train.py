@@ -1,10 +1,11 @@
 import os
-from features import kwDocFeatures, buildFeaturesJudgmentsFile
+from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
+from loadFeatures import initDefaultStore, loadFeatures
 
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
-    # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgements_wfeatures.txt -save model.txt
-    cmd = "java -jar RankLib.jar -ranker %s -train %s -save %s -frate 1.0" % (whichModel, judgmentsWithFeaturesFile, modelOutput)
+    # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgments_wfeatures.txt -save model.txt
+    cmd = "java -jar RankLib-2.8.jar -ranker %s -train %s -save %s -frate 1.0" % (whichModel, judgmentsWithFeaturesFile, modelOutput)
     print("*********************************************************************")
     print("*********************************************************************")
     print("Running %s" % cmd)
@@ -12,11 +13,30 @@ def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
     pass
 
 
-def saveModel(es, scriptName, modelFname):
+def saveModel(esHost, scriptName, featureSet, modelFname):
     """ Save the ranklib model in Elasticsearch """
+    import requests
+    import json
+    from urllib.parse import urljoin
+    modelPayload = {
+        "name": scriptName,
+        "model": {
+            "type": "model/ranklib",
+                "definition": {
+                }
+            }
+    }
+
     with open(modelFname) as modelFile:
         modelContent = modelFile.read()
-        es.put_script(lang='ranklib', id=scriptName, body={"script": modelContent})
+        path = "_ltr/_featureset/%s/_createmodel" % featureSet
+        fullPath = urljoin(esHost, path)
+        modelPayload['model']['definition'] = modelContent
+        print("POST %s" % fullPath)
+        resp = requests.post(fullPath, json.dumps(modelPayload))
+        print(resp.status_code)
+        if (resp.status_code >= 300):
+            print(resp.text)
 
 
 
@@ -32,14 +52,17 @@ if __name__ == "__main__":
     esUrl = config['DEFAULT']['ESHost']
 
     es = Elasticsearch(esUrl, timeout=1000)
+    # Load features into Elasticsearch
+    initDefaultStore(esUrl)
+    loadFeatures(esUrl)
     # Parse a judgments
-    judgements = judgmentsByQid(judgmentsFromFile(filename='sample_judgements.txt'))
+    movieJudgments = judgmentsByQid(judgmentsFromFile(filename='sample_judgments.txt'))
     # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
-    # output as "sample_judgements_wfeatures.txt"
-    kwDocFeatures(es, index='tmdb', searchType='movie', judgements=judgements)
-    buildFeaturesJudgmentsFile(judgements, filename='sample_judgements_wfeatures.txt')
+    # output as "sample_judgments_wfeatures.txt"
+    logFeatures(es, judgmentsByQid=movieJudgments)
+    buildFeaturesJudgmentsFile(movieJudgments, filename='sample_judgments_wfeatures.txt')
     # Train each ranklib model type
-    for modelType in [0,1,2,3,4,6,7,8,9]:
+    for modelType in [0,1,2,3,4,5,6,7,8,9]:
         # 0, MART
         # 1, RankNet
         # 2, RankBoost
@@ -50,5 +73,5 @@ if __name__ == "__main__":
         # 8, Random Forests
         # 9, Linear Regression
         print("*** Training %s " % modelType)
-        trainModel(judgmentsWithFeaturesFile='sample_judgements_wfeatures.txt', modelOutput='model.txt', whichModel=modelType)
-        saveModel(es, scriptName="test_%s" % modelType, modelFname='model.txt')
+        trainModel(judgmentsWithFeaturesFile='sample_judgments_wfeatures.txt', modelOutput='model.txt', whichModel=modelType)
+        saveModel(esHost=esUrl, scriptName="test_%s" % modelType, featureSet='movie_features', modelFname='model.txt')
