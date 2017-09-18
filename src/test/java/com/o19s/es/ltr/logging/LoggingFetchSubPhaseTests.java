@@ -41,7 +41,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
@@ -51,7 +50,6 @@ import org.elasticsearch.index.fielddata.plain.SortedNumericDVIndexFieldData;
 import org.elasticsearch.search.SearchHit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -215,9 +215,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
         @Override
         public void accept(int featureOrdinal, float score) {
-            if (currentLog.isEmpty()) {
-                rebuild();
-            }
             currentLog.get(featureOrdinal).put("value", score);
         }
 
