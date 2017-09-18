@@ -29,11 +29,14 @@ import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
+import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 
 import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import static org.apache.lucene.util.LuceneTestCase.random;
 
@@ -95,6 +98,26 @@ public class LtrTestUtils {
                 "wrapping it inside a " + WrapperQueryBuilder.class.getSimpleName() + ":\n" +
                 "\tnew WrapperQueryBuilder(sltrBuilder.toString())\n" +
                 "This will force elastic to initialize the feature loader properly");};
+    }
+
+    public static <T,R,E extends Exception> Function<T, R> wrapFuncion(CheckedFunction<T, R, E> f) {
+        return (p) -> {
+            try {
+                return f.apply(p);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    public static <R,E extends Exception> IntFunction<R> wrapIntFuncion(CheckedFunction<Integer, R, E> f) {
+        return (p) -> {
+            try {
+                return f.apply(p);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
     }
 
     public static FeatureStoreLoader wrapMemStore(MemStore store) {

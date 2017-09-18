@@ -53,14 +53,18 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         assertTestFeature(feature);
     }
 
-    public static String generateTestFeature() {
+    public static String generateTestFeature(String name) {
         return "{\n" +
-                    "\"name\": \"testFeature\",\n" +
-                    "\"params\": [\"param1\", \"param2\"],\n" +
-                    "\"template_language\": \"mustache\",\n" +
-                    "\"template\": \n" +
-                    new MatchQueryBuilder("match_field", "match_word").toString() +
-                    "\n}\n";
+                "\"name\": \""+name+"\",\n" +
+                "\"params\": [\"param1\", \"param2\"],\n" +
+                "\"template_language\": \"mustache\",\n" +
+                "\"template\": \n" +
+                new MatchQueryBuilder("match_field", "match_word").toString() +
+                "\n}\n";
+    }
+
+    public static String generateTestFeature() {
+        return generateTestFeature("testFeature");
     }
 
     public void assertTestFeature(StoredFeature feature) {
