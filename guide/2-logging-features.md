@@ -1,10 +1,10 @@
 # Logging Features
 
-Training a ranking model is done offline with a tool like xgboost or ranklib. To train, you need to log feature values. This is a major component of the learning to rank plugin: as users search, we log feature values from our feature sets so we can then train. Then we can discover models that work well to predict relevance with that set of features.
+To train a model, you need to log feature values. This is a major component of the learning to rank plugin: as users search, we log feature values from our feature sets so we can then train. Then we can discover models that work well to predict relevance with that set of features.
 
 ## Sltr Query
 
-The `sltr` query is the primary way models are evaluated. Secondarily, it's also used to execute feature queries and log feature values. It's this latter case we want to focus on here. Sometimes we'll just use an `sltr` query for logging only. We'll do this in a way that doesn't impact the score, but lets us fetch the query value.
+The `sltr` query is the primary way features are run and models are evaluated. When logging, we'll just use an `sltr` query for getting each value only. 
 
 Outside, `sltr`, the logging response itself is controlled by a search extension. This extension must refer back to the `sltr` query by either the query's name, or it's index in the list of rescore queries.
 
@@ -40,6 +40,8 @@ PUT _ltr/_featureset/more_movie_features
    ]
 }
 ``` 
+
+Let's see how to log this feature set in a couple common use cases.
 
 ## Logging 101 -- Logging basics with offline log capture
 
@@ -82,7 +84,7 @@ We'll use this as part of a larger boolean query. Combined with this filter is a
 
 You'll see future uses of `sltr` that apply a model. 
 
-We want to use the `sltr` query above to log, but we don't want to influence the score. We need to sneak it into our query. The sneaky way to do this is to make it a filter. As `sltr` doesn't actually exclude any search results, it can be used this way to get Elasticsearch to log our feature values.
+We want to use the `sltr` query above to log, but we don't want to influence the score. We need to sneak it into our query. The best way to do this is to make it a filter. As `sltr` doesn't actually exclude any search results, it can be used this way to get Elasticsearch to log our feature values.
 
 ```
   "query": {
@@ -108,7 +110,7 @@ We want to use the `sltr` query above to log, but we don't want to influence the
   }
 ```
 
-You'll notice 3 hits are brought back. If you were to pry into the explain, you'd see the query is scored as a straight sum of the features in `more_movie_features`. We of course need more than just the total score, we need each feature query's value.
+If you ran this, you'd notice 3 hits brought back. If you were to pry into the explain, you'd see the query is scored as a straight sum of the features in `more_movie_features`. We of course need more than just the total score, we need each feature query's value.
 
 This is what the LTR logging extension gives you. As a top-level entry in the body sent to Elasticsearch, it refers to an Elasticsearch query and injects computed fields into each document.
 
