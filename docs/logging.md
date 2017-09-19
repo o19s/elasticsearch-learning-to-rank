@@ -62,7 +62,7 @@ Example to output the feature scores for the feature set `my_feature_set` and fo
 }
 ```
 
-The log entries are appendend to a search hit field named `_ltrlog` with a sub field per log entry.
+The log entries are appended to a search hit field named `_ltrlog` with a sub field per log entry. Entries are listed in the same value they were added.
 
 ```json
 {
@@ -84,17 +84,41 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
         "_score": 1.3862944,
         "fields" : {
           "_ltrlog": [{
-            "log_entry1": {
-              "feature1": 1.232,
-              "feature2": 0,
-              "feature3": 2.324,
-              "feature4": 0.3234
-            },
-            "log_entry2": {
-              "feature1": 1.232,
-              "feature3": 2.324,
-              "feature4": 0.3234
-            }
+            "log_entry1": [
+              {
+                "name": "feature1",
+                "value": 1.232
+              },
+              {
+                "name": "feature2",
+                "value": 0
+              },
+              {
+                "name": "feature3",
+                "value": 2.324
+              },
+              {
+                "name": "feature4",
+                "value": 0.3234
+              }
+            ],
+            "log_entry2": [
+              {
+                "name": "feature1",
+                "value": 1.232
+              },
+              {
+                "name": "feature2",
+              },
+              {
+                "name": "feature3",
+                "value": 2.324
+              },
+              {
+                "name": "feature4",
+                "value": 0.3234
+              }
+            ]
           }]
         }
       },
@@ -103,18 +127,44 @@ The log entries are appendend to a search hit field named `_ltrlog` with a sub f
         "_type" : "my_type",
         "_id" : "4",
         "_score": 1.2324,
-        "fields" : {
+        "fields" : 
+        {
           "_ltrlog": [{
-            "log_entry1": {
-              "feature1": 1.112,
-              "feature2": 3.234,
-              "feature3": 0,
-              "feature4": 0
-            },
-            "log_entry2": {
-              "feature1": 1.112,
-              "feature2": 3.234
-            }
+
+            "log_entry1": [
+              {
+                "name": "feature1",
+                "value": 1.112
+              },
+              {
+                "name": "feature2",
+                "value": 3.234
+              },
+              {
+                "name": "feature3",
+                "value": 0
+              },
+              {
+                "name": "feature4",
+                "value": 0
+              }
+            ],
+            "log_entry2": [
+              {
+                "name": "feature1",
+                "value": 1.112
+              },
+              {
+                "name": "feature2",
+                "value": 3.234
+              },
+              {
+                "name": "feature3",
+              },
+              {
+                "name": "feature4",
+              }
+            ]
           }]
         }
       }

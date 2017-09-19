@@ -179,24 +179,43 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         private static final String FIELD_NAME = "_ltrlog";
         private final String name;
         private final FeatureSet set;
-        private final Map<String, Float> initialLog;
-        private Map<String, Float> currentLog;
+        private final boolean missingAsZero;
+
+        // [
+        //      {
+        //          "name": "featureName",
+        //          "value": 1.33
+        //      },
+        //      {
+        //          "name": "otherFeatureName",
+        //      }
+        // ]
+        private List<Map<String, Object>> currentLog;
+
 
         HitLogConsumer(String name, FeatureSet set, boolean missingAsZero) {
             this.name = name;
             this.set = set;
-            Map<String, Float> ini = new HashMap<>();
-            if (missingAsZero) {
-                for (int i = 0; i < set.size(); i++) {
-                    ini.put(set.feature(i).name(), 0F);
+            this.missingAsZero = missingAsZero;
+        }
+
+        private void rebuild() {
+            List<Map<String, Object>> ini = new ArrayList<Map<String, Object>>(set.size()) ;
+
+            for (int i = 0; i < set.size(); i++) {
+                Map<String, Object> defaultKeyVal = new HashMap<String, Object>();
+                defaultKeyVal.put("name", set.feature(i).name());
+                if (missingAsZero) {
+                    defaultKeyVal.put("value", 0.0F);
                 }
+                ini.add(i, defaultKeyVal);
             }
-            initialLog = Collections.unmodifiableMap(ini);
+            currentLog = ini;
         }
 
         @Override
         public void accept(int featureOrdinal, float score) {
-            currentLog.put(set.feature(featureOrdinal).name(), score);
+            currentLog.get(featureOrdinal).put("value", score);
         }
 
         void nextDoc(SearchHit hit) {
@@ -205,13 +224,13 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             }
             SearchHitField logs = hit.getFields()
                     .computeIfAbsent(FIELD_NAME,(k) -> newLogField());
-            Map<String, Map<String, Float>> entries = logs.getValue();
-            currentLog = new HashMap<>(initialLog);
+            Map<String, List<Map<String, Object>>> entries = logs.getValue();
+            rebuild();
             entries.put(name, currentLog);
         }
 
         SearchHitField newLogField() {
-            List<Object> logList = Collections.singletonList(new HashMap<String, Map<String, Float>>());
+            List<Object> logList = Collections.singletonList(new HashMap<String, List<Map<String, Object>>>());
             return new SearchHitField(FIELD_NAME, logList);
         }
     }
