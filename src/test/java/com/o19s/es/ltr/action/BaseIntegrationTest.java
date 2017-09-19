@@ -19,6 +19,7 @@ package com.o19s.es.ltr.action;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
@@ -26,6 +27,7 @@ import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Before;
@@ -65,8 +67,17 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
         createStore(IndexFeatureStore.DEFAULT_STORE);
     }
 
+    public FeatureStoreResponse addElement(StorableElement element,
+                                           FeatureValidation validation) throws ExecutionException, InterruptedException {
+        return addElement(element, validation, IndexFeatureStore.DEFAULT_STORE);
+    }
+
+    public FeatureStoreResponse addElement(StorableElement element, String store) throws ExecutionException, InterruptedException {
+        return addElement(element, null, store);
+    }
+
     public FeatureStoreResponse addElement(StorableElement element) throws ExecutionException, InterruptedException {
-        return addElement(element, IndexFeatureStore.DEFAULT_STORE);
+        return addElement(element, null, IndexFeatureStore.DEFAULT_STORE);
     }
 
     public <E extends StorableElement> E getElement(Class<E> clazz, String type, String name) throws IOException {
@@ -81,11 +92,14 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
         return getInstanceFromNode(LtrRankerParserFactory.class);
     }
 
-    public FeatureStoreResponse addElement(StorableElement element, String store) throws ExecutionException, InterruptedException {
+    public FeatureStoreResponse addElement(StorableElement element,
+                                           @Nullable FeatureValidation validation,
+                                           String store) throws ExecutionException, InterruptedException {
         FeatureStoreRequestBuilder builder = FeatureStoreAction.INSTANCE.newRequestBuilder(client());
         builder.request().setStorableElement(element);
         builder.request().setAction(FeatureStoreAction.FeatureStoreRequest.Action.CREATE);
         builder.request().setStore(store);
+        builder.request().setValidation(validation);
         FeatureStoreResponse response = builder.execute().get();
         assertEquals(1, response.getResponse().getVersion());
         assertEquals(IndexFeatureStore.ES_TYPE, response.getResponse().getType());

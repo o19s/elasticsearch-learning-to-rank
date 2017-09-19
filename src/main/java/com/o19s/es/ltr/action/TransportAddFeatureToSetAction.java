@@ -19,6 +19,7 @@ package com.o19s.es.ltr.action;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequest;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetResponse;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequest;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
@@ -114,6 +115,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private final TransportSearchAction searchAction;
         private final TransportGetAction getAction;
         private final TransportFeatureStoreAction featureStoreAction;
+        private final FeatureValidation validation;
 
         AsyncAction(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener,
                            ClusterService clusterService, TransportSearchAction searchAction, TransportGetAction getAction,
@@ -139,6 +141,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             this.searchAction = searchAction;
             this.getAction = getAction;
             this.featureStoreAction = featureStoreAction;
+            this.validation = request.getValidation();
         }
 
         private void start() {
@@ -283,7 +286,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             }
             frequest.setRouting(routing);
             frequest.setParentTask(clusterService.localNode().getId(), task.getId());
-
+            frequest.setValidation(validation);
             featureStoreAction.execute(frequest, wrap(
                     (r) -> listener.onResponse(new AddFeaturesToSetResponse(r.getResponse())),
                     listener::onFailure));

@@ -24,16 +24,22 @@ import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import com.o19s.es.ltr.query.ValidatingLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchAction;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.tasks.Task;
@@ -42,6 +48,8 @@ import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
 import java.util.Optional;
+
+import static org.elasticsearch.action.ActionListener.wrap;
 
 public class TransportFeatureStoreAction extends HandledTransportAction<FeatureStoreRequest, FeatureStoreResponse> {
     private final LtrRankerParserFactory factory;
@@ -74,23 +82,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
             throw new IllegalArgumentException("Store [" + request.getStore() + "] does not exist, please create it first.");
         }
         // some extra validation steps that require the parser factory
-        validate(request);
-        Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
-        try {
-            IndexRequest indexRequest = buildIndexRequest(task, request);
-            client.execute(IndexAction.INSTANCE, indexRequest, ActionListener.wrap(
-                    (r) -> {
-                        // Run and forget, log only if something bad happens
-                        // but don't wait for the action to be done nor set the parent task.
-                        clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(req, ActionListener.wrap(
-                                (r2) -> {},
-                                (e) -> logger.error("Failed to clear cache", e))));
-                        listener.onResponse(new FeatureStoreResponse(r));
-                    },
-                    listener::onFailure));
-        } catch(IOException ioe) {
-            listener.onFailure(ioe);
-        }
+        validateAndSave(request, task, listener);
     }
 
     private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) {
@@ -121,7 +113,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         return indexRequest;
     }
 
-    private void validate(FeatureStoreRequest request) {
+    private void validateAndSave(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
         if (request.getStorableElement() instanceof StoredLtrModel) {
             StoredLtrModel model = (StoredLtrModel) request.getStorableElement();
             try {
@@ -136,6 +128,51 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         } else if (request.getStorableElement() instanceof StoredFeature) {
             StoredFeature feature = (StoredFeature) request.getStorableElement();
             feature.optimize();
+        }
+        if (request.getValidation() != null) {
+            ValidatingLtrQueryBuilder ltrBuilder = new ValidatingLtrQueryBuilder(request.getStorableElement(),
+                    request.getValidation(), factory);
+            SearchRequestBuilder builder = SearchAction.INSTANCE.newRequestBuilder(client);
+            builder.setIndices(request.getValidation().getIndex());
+            builder.setQuery(ltrBuilder);
+            builder.setFrom(0);
+            builder.setSize(20);
+            builder.execute(wrap(onLtrValidation(request, task, listener),
+                    (e) -> listener.onFailure(new IllegalArgumentException("Cannot store element, validation failed.", e))));
+        } else {
+            store(request, task, listener);
+        }
+    }
+
+    public CheckedConsumer<SearchResponse, Exception> onLtrValidation(FeatureStoreRequest request,
+                                                                      Task task,
+                                                                      ActionListener<FeatureStoreResponse> listener) {
+        return (r) -> {
+            if (r.getFailedShards() > 0) {
+                ShardSearchFailure failure = r.getShardFailures()[0];
+                throw new IllegalArgumentException("Validating the element caused " + r.getFailedShards() +
+                        " shard failures, see root cause: " + failure.reason(), failure.getCause());
+            }
+            store(request, task, listener);
+        };
+    }
+
+    public void store(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
+        Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
+        try {
+            IndexRequest indexRequest = buildIndexRequest(task, request);
+            client.execute(IndexAction.INSTANCE, indexRequest, wrap(
+                    (r) -> {
+                        // Run and forget, log only if something bad happens
+                        // but don't wait for the action to be done nor set the parent task.
+                        clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(req, wrap(
+                                (r2) -> {},
+                                (e) -> logger.error("Failed to clear cache", e))));
+                        listener.onResponse(new FeatureStoreResponse(r));
+                    },
+                    listener::onFailure));
+        } catch(IOException ioe) {
+            listener.onFailure(ioe);
         }
     }
 }

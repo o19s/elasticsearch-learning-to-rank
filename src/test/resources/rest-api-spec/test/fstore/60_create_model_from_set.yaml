@@ -7,23 +7,25 @@
         ltr.create_featureset:
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
                     params: query_string
                     template:
                       match:
-                      field_test1: "{{query_string}}"
+                        field_test1: "{{query_string}}"
                   - name: feature2
                     params: query_string
                     template:
                       match:
-                      field_test2: "{{query_string}}"
+                        field_test2: "{{query_string}}"
 
   - do:
         ltr.create_model_from_set:
             name: my_featureset
             body:
+              model:
                 name: my_model
                 model:
                   type: model/linear
@@ -40,6 +42,7 @@
         ltr.create_model_from_set:
             name: my_featureset
             body:
+              model:
                 name: my_model
                 model:
                   type: model/linear
@@ -58,24 +61,26 @@
            store: mystore
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
                     params: query_string
                     template:
                       match:
-                      field_test1: "{{query_string}}"
+                        field_test1: "{{query_string}}"
                   - name: feature2
                     params: query_string
                     template:
                       match:
-                      field_test2: "{{query_string}}"
+                        field_test2: "{{query_string}}"
 
   - do:
         ltr.create_model_from_set:
             store: mystore
             name: my_featureset
             body:
+              model:
                 name: my_model
                 model:
                   type: model/linear
@@ -93,6 +98,7 @@
             store: mystore
             name: my_featureset
             body:
+              model:
                 name: my_model
                 model:
                   type: model/linear

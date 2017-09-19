@@ -69,7 +69,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final ParseField NAME = new ParseField("name");
     private static final ParseField PARAMS = new ParseField("params");
     private static final ParseField TEMPLATE_LANGUAGE = new ParseField("template_language");
-    private static final ParseField TEMPLATE = new ParseField("template");
+    public static final ParseField TEMPLATE = new ParseField("template");
 
     static {
         PARSER = new ObjectParser<>(TYPE, ParsingState::new);
