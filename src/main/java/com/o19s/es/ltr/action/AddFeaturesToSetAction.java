@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.action;
 
 import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
@@ -68,6 +69,8 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
         private boolean merge;
         private String featureSet;
         private String routing;
+        private FeatureValidation validation;
+
         @Override
         public ActionRequestValidationException validate() {
             ActionRequestValidationException arve = null;
@@ -96,6 +99,7 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
             merge = in.readBoolean();
             featureSet = in.readString();
             routing = in.readOptionalString();
+            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -109,6 +113,7 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
             out.writeBoolean(merge);
             out.writeString(featureSet);
             out.writeOptionalString(routing);
+            out.writeOptionalWriteable(validation);
         }
 
         public String getStore() {
@@ -157,6 +162,14 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
 
         public void setMerge(boolean merge) {
             this.merge = merge;
+        }
+
+        public FeatureValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
         }
     }
 

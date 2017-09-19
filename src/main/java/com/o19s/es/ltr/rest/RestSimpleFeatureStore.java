@@ -18,6 +18,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.FeatureStoreAction;
 import com.o19s.es.ltr.action.ListStoresAction;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
@@ -26,13 +27,11 @@ import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
@@ -45,14 +44,12 @@ import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableSet;
+import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
+import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -63,11 +60,6 @@ import static org.elasticsearch.rest.RestStatus.OK;
  * Simple CRUD operation for the feature store elements.
  */
 public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler {
-    private static final Set<String> SUPPORTED_TYPES = unmodifiableSet(new HashSet<>(asList(
-            StoredFeature.TYPE,
-            StoredFeatureSet.TYPE,
-            StoredLtrModel.TYPE)));
-
     private RestSimpleFeatureStore(Settings settings) {
         super(settings);
     }
@@ -165,7 +157,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
     RestChannelConsumer listStores(NodeClient client) {
         return (channel) -> ListStoresAction.INSTANCE.newRequestBuilder(client).execute(
-                new RestToXContentListener<ListStoresAction.ListStoresActionResponse>(channel));
+                new RestToXContentListener<>(channel));
     }
 
     RestChannelConsumer createIndex(NodeClient client, String indexName) {
@@ -185,9 +177,13 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             throw new IllegalArgumentException("Missing content or source param.");
         }
         String name = request.param("name");
-        Tuple<XContentType, BytesReference> content = request.contentOrSourceParam();
-        XContentParser parser = XContentFactory.xContent(content.v1()).createParser(NamedXContentRegistry.EMPTY, content.v2());
-        StorableElement elt = request.getXContentRegistry().parseNamedObject(StorableElement.class, type, parser, null);
+        StorableElementParserState parserState = new StorableElementParserState();
+        request.applyContentParser(parserState::parse);
+        StorableElement elt = parserState.element;
+        if (!type.equals(elt.type())) {
+            throw new IllegalArgumentException("Excepted a [" + type + "] but encountered [" + elt.type() + "]");
+        }
+
         // Validation happens here when parsing the stored element.
         if (!elt.name().equals(name)) {
             throw new IllegalArgumentException("Name mismatch, send request with [" + elt.name() + "] but [" + name + "] used in the URL");
@@ -209,6 +205,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         builder.request().setStorableElement(elt);
         builder.request().setRouting(routing);
         builder.request().setStore(indexName);
+        builder.request().setValidation(parserState.validation);
         return (channel) -> builder.execute(new RestStatusToXContentListener<FeatureStoreAction.FeatureStoreResponse>(channel,
                 (r) -> r.getResponse().getLocation(routing)));
     }
@@ -254,4 +251,44 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                 .execute(new RestStatusToXContentListener<>(channel));
     }
 
+    static class StorableElementParserState {
+        private StorableElement element;
+        private FeatureValidation validation;
+
+        private static ObjectParser<StorableElementParserState, Void> PARSER = new ObjectParser<>("storable_elements");
+
+        static {
+            PARSER.declareObject(StorableElementParserState::setElement,
+                    (parser, ctx) -> StoredFeature.parse(parser),
+                    new ParseField(StoredFeature.TYPE));
+            PARSER.declareObject(StorableElementParserState::setElement,
+                    (parser, ctx) -> StoredFeatureSet.parse(parser),
+                    new ParseField(StoredFeatureSet.TYPE));
+            PARSER.declareObject(StorableElementParserState::setElement,
+                    (parser, ctx) -> StoredLtrModel.parse(parser),
+                    new ParseField(StoredLtrModel.TYPE));
+            PARSER.declareObject((b, v) -> b.validation = v,
+                    (p, c) -> FeatureValidation.PARSER.apply(p, null),
+                    new ParseField("validation"));
+        }
+        public void parse(XContentParser parser) throws IOException {
+            PARSER.parse(parser, this, null);
+            if (element == null) {
+                throw new ParsingException(parser.getTokenLocation(), "Element of type [" + SUPPORTED_TYPES.stream().collect(joining(",")) +
+                        "] is mandatory.");
+            }
+        }
+
+        public void setElement(StorableElement element) {
+            if (this.element != null) {
+                throw new IllegalArgumentException("[" + element.type() + "] already set, only one element can be set at a time (" +
+                        SUPPORTED_TYPES.stream().collect(joining(",")) + ").");
+            }
+            this.element = element;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
+        }
+    }
 }

@@ -18,6 +18,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
@@ -52,17 +53,21 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
         if (request.hasParam("query")) {
             featureQuery = request.param("query");
         }
+        FeatureValidation validation = null;
         if (request.hasContentOrSourceParam()) {
-            if (featureQuery != null) {
-                throw new IllegalArgumentException("features must be provided as a query for the feature store " +
-                        "or directly in the body not both");
-            }
             FeaturesParserState featuresParser = new FeaturesParserState();
             request.applyContentParser(featuresParser::parse);
             features = featuresParser.features;
-        } else if (featureQuery == null) {
+            validation = featuresParser.validation;
+        }
+        if (featureQuery == null && (features == null || features.isEmpty())) {
             throw new IllegalArgumentException("features must be provided as a query for the feature store " +
                     "or in the body, none provided");
+        }
+
+        if (featureQuery != null && (features != null && !features.isEmpty())) {
+            throw new IllegalArgumentException("features must be provided as a query for the feature store " +
+                    "or directly in the body not both");
         }
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client);
@@ -72,17 +77,23 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
         builder.request().setRouting(routing);
         builder.request().setFeatures(features);
         builder.request().setMerge(merge);
+        builder.request().setValidation(validation);
         return (channel) -> builder.execute(new RestStatusToXContentListener<>(channel, (r) -> r.getResponse().getLocation(routing)));
     }
 
     static class FeaturesParserState {
         public static final ObjectParser<FeaturesParserState, Void> PARSER = new ObjectParser<>("features");
         private List<StoredFeature> features;
+        private FeatureValidation validation;
         static {
             PARSER.declareObjectArray(
                     FeaturesParserState::setFeatures,
                     (parser, context) -> StoredFeature.parse(parser),
                     new ParseField("features"));
+            PARSER.declareObject(
+                    FeaturesParserState::setValidation,
+                    FeatureValidation.PARSER::apply,
+                    new ParseField("validation"));
         }
 
         public void parse(XContentParser parser) throws IOException {
@@ -95,6 +106,14 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
 
         public void setFeatures(List<StoredFeature> features) {
             this.features = features;
+        }
+
+        public FeatureValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
         }
     }
 }
