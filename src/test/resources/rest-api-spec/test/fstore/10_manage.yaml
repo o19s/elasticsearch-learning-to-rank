@@ -81,3 +81,15 @@
   - match: { stores._default_.index: .ltrstore }
   - match: { stores.mystore.version: 1 }
   - match: { stores.mystore.index: .ltrstore_mystore }
+
+---
+"Create invalid custom stores":
+  - do:
+        catch: /A featurestore name cannot be based on the words \[feature\], \[featureset\] and \[model\]/
+        ltr.create_store:
+            store: feature
+
+  - do:
+        catch: /Invalid feature store name/
+        ltr.create_store:
+            store: mystore#15

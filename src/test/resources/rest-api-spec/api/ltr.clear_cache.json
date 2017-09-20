@@ -1,6 +1,6 @@
 {
   "ltr.clear_cache": {
-    "methods" : ["PUT"],
+    "methods" : ["POST"],
     "url": {
       "paths": ["/_ltr/_clearcache", "/_ltr/{store}/_clearcache"],
       "parts": {
