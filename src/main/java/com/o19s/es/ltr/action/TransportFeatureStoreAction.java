@@ -149,7 +149,6 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
      * @param task the parent task
      * @param listener the action listener to write to
      * @param onSuccess action ro run when the validation is successfull
-     * @return a runnable
      */
     private void validate(FeatureValidation validation,
                           StorableElement element,
