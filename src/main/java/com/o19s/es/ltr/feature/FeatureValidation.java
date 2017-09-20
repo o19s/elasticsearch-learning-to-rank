@@ -81,18 +81,14 @@ public class FeatureValidation implements Writeable, ToXContentObject {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         FeatureValidation that = (FeatureValidation) o;
-
-        if (!index.equals(that.index)) return false;
-        return params.equals(that.params);
+        return Objects.equals(index, that.index) &&
+                Objects.equals(params, that.params);
     }
 
     @Override
     public int hashCode() {
-        int result = index.hashCode();
-        result = 31 * result + params.hashCode();
-        return result;
+        return Objects.hash(index, params);
     }
 
     @Override
