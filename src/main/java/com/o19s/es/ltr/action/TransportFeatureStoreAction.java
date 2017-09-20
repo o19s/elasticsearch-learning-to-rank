@@ -82,12 +82,13 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         }
         // some synchronous pre-checks that require the parser factory
         precheck(request);
-        Runnable action = storeAction(request, task, listener);
         if (request.getValidation() != null) {
-            // Prepend validation if it was requested
-            action = validateAction(request.getValidation(), request.getStorableElement(), task, listener, action);
+            // validate and then store
+            validate(request.getValidation(), request.getStorableElement(), task, listener,
+                    () -> store(request, task, listener));
+        } else {
+            store(request, task, listener);
         }
-        action.run();
     }
 
     private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) {
@@ -149,55 +150,51 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
      * @param onSuccess action ro run when the validation is successfull
      * @return a runnable
      */
-    private Runnable validateAction(FeatureValidation validation,
-                                    StorableElement element,
-                                    Task task,
-                                    ActionListener<FeatureStoreResponse> listener,
-                                    Runnable onSuccess) {
-        return () -> {
-            ValidatingLtrQueryBuilder ltrBuilder = new ValidatingLtrQueryBuilder(element,
-                    validation, factory);
-            SearchRequestBuilder builder = SearchAction.INSTANCE.newRequestBuilder(client);
-            builder.setIndices(validation.getIndex());
-            builder.setQuery(ltrBuilder);
-            builder.setFrom(0);
-            builder.setSize(20);
-            builder.request().setParentTask(clusterService.localNode().getId(), task.getId());
-            builder.execute(wrap((r) -> {
-                    if (r.getFailedShards() > 0) {
-                        ShardSearchFailure failure = r.getShardFailures()[0];
-                        throw new IllegalArgumentException("Validating the element caused " + r.getFailedShards() +
-                                " shard failures, see root cause: " + failure.reason(), failure.getCause());
-                    }
-                    onSuccess.run();
-                },
-                (e) -> listener.onFailure(new IllegalArgumentException("Cannot store element, validation failed.", e))));
-        };
+    private void validate(FeatureValidation validation,
+                          StorableElement element,
+                          Task task,
+                          ActionListener<FeatureStoreResponse> listener,
+                          Runnable onSuccess) {
+        ValidatingLtrQueryBuilder ltrBuilder = new ValidatingLtrQueryBuilder(element,
+                validation, factory);
+        SearchRequestBuilder builder = SearchAction.INSTANCE.newRequestBuilder(client);
+        builder.setIndices(validation.getIndex());
+        builder.setQuery(ltrBuilder);
+        builder.setFrom(0);
+        builder.setSize(20);
+        builder.request().setParentTask(clusterService.localNode().getId(), task.getId());
+        builder.execute(wrap((r) -> {
+                if (r.getFailedShards() > 0) {
+                    ShardSearchFailure failure = r.getShardFailures()[0];
+                    throw new IllegalArgumentException("Validating the element caused " + r.getFailedShards() +
+                            " shard failures, see root cause: " + failure.reason(), failure.getCause());
+                }
+                onSuccess.run();
+            },
+            (e) -> listener.onFailure(new IllegalArgumentException("Cannot store element, validation failed.", e))));
     }
 
     /**
      * Prepare a Runnable to send an index request to store the element, invalidates the cache on success
      */
-    private Runnable storeAction(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
-        return () -> {
-            Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
+    private void store(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
+        Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
 
-            try {
-                IndexRequest indexRequest = buildIndexRequest(task, request);
-                client.execute(IndexAction.INSTANCE, indexRequest, wrap(
-                        (r) -> {
-                            // Run and forget, log only if something bad happens
-                            // but don't wait for the action to be done nor set the parent task.
-                            clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(req, wrap(
-                                    (r2) -> {
-                                    },
-                                    (e) -> logger.error("Failed to clear cache", e))));
-                            listener.onResponse(new FeatureStoreResponse(r));
-                        },
-                        listener::onFailure));
-            } catch (IOException ioe) {
-                listener.onFailure(ioe);
-            }
-        };
+        try {
+            IndexRequest indexRequest = buildIndexRequest(task, request);
+            client.execute(IndexAction.INSTANCE, indexRequest, wrap(
+                    (r) -> {
+                        // Run and forget, log only if something bad happens
+                        // but don't wait for the action to be done nor set the parent task.
+                        clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(req, wrap(
+                                (r2) -> {
+                                },
+                                (e) -> logger.error("Failed to clear cache", e))));
+                        listener.onResponse(new FeatureStoreResponse(r));
+                    },
+                    listener::onFailure));
+        } catch (IOException ioe) {
+            listener.onFailure(ioe);
+        }
     }
 }
