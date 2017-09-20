@@ -75,6 +75,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         throw new UnsupportedOperationException("attempt to execute a TransportFeatureStoreAction without a task");
     }
 
+    @Override
     protected void doExecute(Task task, FeatureStoreRequest request, ActionListener<FeatureStoreResponse> listener) {
         if (!clusterService.state().routingTable().hasIndex(request.getStore())) {
             // To prevent index auto creation
@@ -148,7 +149,6 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
      * @param task the parent task
      * @param listener the action listener to write to
      * @param onSuccess action ro run when the validation is successfull
-     * @return a runnable
      */
     private void validate(FeatureValidation validation,
                           StorableElement element,
