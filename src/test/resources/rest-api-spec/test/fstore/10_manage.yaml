@@ -31,6 +31,12 @@
   - is_true: ''
 
   - do:
+        ltr.get_store:
+            store: mystore
+
+  - match: { exists: true }
+
+  - do:
         ltr.delete_store:
             store: mystore
 
@@ -39,6 +45,13 @@
             index: .ltrstore_mystore
 
   - is_false: ''
+
+  - do:
+        catch: missing
+        ltr.get_store:
+            store: mystore
+
+  - match: { exists: false }
 
 ---
 "Get cache stats":
