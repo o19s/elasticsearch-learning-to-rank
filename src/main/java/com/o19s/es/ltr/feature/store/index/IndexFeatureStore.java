@@ -33,6 +33,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MetaDataCreateIndexService;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.Streams;
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 
@@ -66,6 +68,13 @@ public class IndexFeatureStore implements FeatureStore {
     public static final Logger LOGGER = ESLoggerFactory.getLogger(IndexFeatureStore.class);
 
     public static final String ES_TYPE = "store";
+
+    /**
+     * List of invalid for a feature store name:
+     * feature, features, featureSet, featureSets, feature_Set, feature_Sets,
+     * featureset, featuresets, feature_set, feature_sets, model, models
+     */
+    private static Pattern INVALID_NAMES = Pattern.compile("^(features?[*]?|feature_[sS]ets?|models?)$");
 
     private static final ObjectParser<ParserState, Void> SOURCE_PARSER;
     static {
@@ -259,5 +268,20 @@ public class IndexFeatureStore implements FeatureStore {
                         .loadFromSource(readResourceFile(indexName, ANALYSIS_FILE), XContentType.JSON)
                         .build())
                 .build();
+    }
+
+    /**
+     * Validate the feature store name.
+     * Must not bear an ambiguous name such as feature/featureset/model
+     * and be a valid indexName.
+     *
+     * @throws IllegalArgumentException if the name is invalid
+     */
+    public static void validateFeatureStoreName(String storeName) {
+        if (INVALID_NAMES.matcher(storeName).matches()) {
+            throw new IllegalArgumentException("A featurestore name cannot be based on the words [feature], [featureset] and [model]");
+        }
+        MetaDataCreateIndexService.validateIndexOrAliasName(storeName,
+                (name, error) -> new IllegalArgumentException("Invalid feature store name [" + name + "]: " + error));
     }
 }

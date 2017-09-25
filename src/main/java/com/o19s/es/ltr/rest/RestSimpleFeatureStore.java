@@ -158,6 +158,9 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.PUT) {
+                if (request.hasParam("store")) {
+                    IndexFeatureStore.validateFeatureStoreName(request.param("store"));
+                }
                 return createIndex(client, indexName);
             } else if (request.method() == RestRequest.Method.DELETE) {
                 return deleteIndex(client, indexName);
