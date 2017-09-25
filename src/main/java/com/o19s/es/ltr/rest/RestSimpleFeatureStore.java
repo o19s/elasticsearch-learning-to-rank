@@ -24,12 +24,14 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -39,8 +41,10 @@ import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
@@ -134,6 +138,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}", this);
         }
 
         /**
@@ -158,9 +163,29 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                 return deleteIndex(client, indexName);
             } else {
                 assert request.method() == RestRequest.Method.GET;
+                // XXX: ambiguous api
+                if (request.hasParam("store")) {
+                    return getStore(client, indexName);
+                }
                 return listStores(client);
             }
         }
+    }
+
+    RestChannelConsumer getStore(NodeClient client, String indexName) {
+        return (channel) -> client.admin().indices().prepareExists(indexName)
+                .execute(new RestBuilderListener<IndicesExistsResponse>(channel) {
+                    @Override
+                    public RestResponse buildResponse(IndicesExistsResponse indicesExistsResponse,
+                                                      XContentBuilder builder) throws Exception {
+                        builder.startObject()
+                                .field("exists", indicesExistsResponse.isExists())
+                                .endObject()
+                                .close();
+                        return new BytesRestResponse(indicesExistsResponse.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND,
+                                builder);
+                    }
+                });
     }
 
     RestChannelConsumer listStores(NodeClient client) {
