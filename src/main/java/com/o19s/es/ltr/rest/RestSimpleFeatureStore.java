@@ -25,12 +25,16 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -38,8 +42,10 @@ import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
@@ -126,6 +132,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}", this);
         }
 
         /**
@@ -145,14 +152,37 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.PUT) {
+                if (request.hasParam("store")) {
+                    IndexFeatureStore.validateFeatureStoreName(request.param("store"));
+                }
                 return createIndex(client, indexName);
             } else if (request.method() == RestRequest.Method.DELETE) {
                 return deleteIndex(client, indexName);
             } else {
                 assert request.method() == RestRequest.Method.GET;
+                // XXX: ambiguous api
+                if (request.hasParam("store")) {
+                    return getStore(client, indexName);
+                }
                 return listStores(client);
             }
         }
+    }
+
+    RestChannelConsumer getStore(NodeClient client, String indexName) {
+        return (channel) -> client.admin().indices().prepareExists(indexName)
+                .execute(new RestBuilderListener<IndicesExistsResponse>(channel) {
+                    @Override
+                    public RestResponse buildResponse(IndicesExistsResponse indicesExistsResponse,
+                                                      XContentBuilder builder) throws Exception {
+                        builder.startObject()
+                                .field("exists", indicesExistsResponse.isExists())
+                                .endObject()
+                                .close();
+                        return new BytesRestResponse(indicesExistsResponse.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND,
+                                builder);
+                    }
+                });
     }
 
     RestChannelConsumer listStores(NodeClient client) {

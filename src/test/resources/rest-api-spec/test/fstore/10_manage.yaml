@@ -31,6 +31,12 @@
   - is_true: ''
 
   - do:
+        ltr.get_store:
+            store: mystore
+
+  - match: { exists: true }
+
+  - do:
         ltr.delete_store:
             store: mystore
 
@@ -39,6 +45,13 @@
             index: .ltrstore_mystore
 
   - is_false: ''
+
+  - do:
+        catch: missing
+        ltr.get_store:
+            store: mystore
+
+  - match: { exists: false }
 
 ---
 "Get cache stats":
@@ -81,3 +94,15 @@
   - match: { stores._default_.index: .ltrstore }
   - match: { stores.mystore.version: 1 }
   - match: { stores.mystore.index: .ltrstore_mystore }
+
+---
+"Create invalid custom stores":
+  - do:
+        catch: /A featurestore name cannot be based on the words \[feature\], \[featureset\] and \[model\]/
+        ltr.create_store:
+            store: feature
+
+  - do:
+        catch: /Invalid feature store name/
+        ltr.create_store:
+            store: mystore#15

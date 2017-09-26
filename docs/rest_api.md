@@ -15,6 +15,8 @@ Initialize a custom store:
 PUT /_ltr/custom
 ```
 
+NOTE: the name of the store must be a valid index name and must not use the words `feature`, `featureset` or `model` to avoid confusion with the rest of the API.
+
 List feature stores:
 ```
 GET /_ltr
