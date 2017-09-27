@@ -41,6 +41,7 @@ import com.o19s.es.ltr.logging.LoggingFetchSubPhase;
 import com.o19s.es.ltr.logging.LoggingSearchExtBuilder;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
+import com.o19s.es.ltr.query.ValidatingLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
@@ -109,7 +110,10 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
                 new QuerySpec<>(StoredLtrQueryBuilder.NAME,
                         (input) -> new StoredLtrQueryBuilder(getFeatureStoreLoader(), input),
-                        (ctx) -> StoredLtrQueryBuilder.fromXContent(getFeatureStoreLoader(), ctx)));
+                        (ctx) -> StoredLtrQueryBuilder.fromXContent(getFeatureStoreLoader(), ctx)),
+                new QuerySpec<>(ValidatingLtrQueryBuilder.NAME,
+                        (input) -> new ValidatingLtrQueryBuilder(input, parserFactory),
+                        (ctx) -> ValidatingLtrQueryBuilder.fromXContent(ctx, parserFactory)));
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.Action;
@@ -68,6 +69,8 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
         private StorableElement storableElement;
         private Long updatedVersion;
         private String routing;
+
+        private FeatureValidation validation;
 
         public FeatureStoreRequest() {}
 
@@ -145,6 +148,15 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
             this.updatedVersion = updatedVersion;
         }
 
+        public FeatureValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
+        }
+
+
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
@@ -152,6 +164,7 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
             routing = in.readOptionalString();
             action = Action.values()[in.readVInt()];
             storableElement = in.readNamedWriteable(StorableElement.class);
+            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -161,6 +174,7 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
             out.writeOptionalString(routing);
             out.writeVInt(action.ordinal());
             out.writeNamedWriteable(storableElement);
+            out.writeOptionalWriteable(validation);
         }
 
         public enum Action {

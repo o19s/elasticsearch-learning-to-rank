@@ -75,12 +75,14 @@ and always use the `_ltr` API endpoints to update their contents.
 The format of a feature is :
 ```json
 {
-  "name": "my_feature",
-  "params": ["query_string"],
-  "template_language": "mustache",
-  "template" : {
-    "match": {
-      "field": "{{query_string}}"
+  "feature": {
+    "name": "my_feature",
+    "params": ["query_string"],
+    "template_language": "mustache",
+    "template" : {
+      "match": {
+        "field": "{{query_string}}"
+      }
     }
   }
 }
@@ -109,19 +111,21 @@ The output is exactly the same as the `_search` API.
 The format of a feature set is :
 ```json
 {
-  "name": "my_feature_set",
-  "features" : [
-    {
-      "name": "my_feature",
-      "params": ["query_string"],
-      "template_language": "mustache",
-      "template" : {
-        "match": {
-          "field": "{{query_string}}"
+  "featureset": {
+    "name": "my_feature_set",
+    "features" : [
+      {
+        "name": "my_feature",
+        "params": ["query_string"],
+        "template_language": "mustache",
+        "template" : {
+          "match": {
+            "field": "{{query_string}}"
+          }
         }
       }
-    }
-  ]
+    ]
+  }
 }
 ```
 
@@ -188,26 +192,28 @@ You can force to the api endpoint to update exiting features within the set by a
 The format of a model is:
 ```json
 {
-  "name" : "my_model",
-  "feature_set": { 
-    "name": "my_feature_set",
-    "features" : [
-      {
-        "name": "my_feature",
-        "params": ["query_string"],
-        "template_language": "mustache",
-        "template" : {
-          "match": {
-            "field": "{{query_string}}"
+  "model" : {
+    "name" : "my_model",
+    "feature_set": { 
+      "name": "my_feature_set",
+      "features" : [
+        {
+          "name": "my_feature",
+          "params": ["query_string"],
+          "template_language": "mustache",
+          "template" : {
+            "match": {
+              "field": "{{query_string}}"
+            }
           }
         }
+      ]
+    },
+    "model": {
+      "type": "model/linear",
+      "definition": {
+        "feature" : 0.3
       }
-    ]
-  },
-  "model": {
-    "type": "model/linear",
-    "definition": {
-      "feature" : 0.3
     }
   }
 }
@@ -242,13 +248,15 @@ A model can be created by using an existing feature set:
 `POST /_ltr/_featureset/my_featureset/_createmodel`
 ```json
 {
-  "name": "my_model_name",
   "model": {
-    "type": "model/linear",
-    "definition": {
-      "feature1" : 0.3,
-      "feature2" : 0.4,
-      "feature3" : 0.8
+    "name": "my_model_name",
+    "model": {
+      "type": "model/linear",
+      "definition": {
+        "feature1" : 0.3,
+        "feature2" : 0.4,
+        "feature3" : 0.8
+      }
     }
   }
 }
@@ -256,6 +264,48 @@ A model can be created by using an existing feature set:
 
 A `version` query param can be added to ensure that the set used to create the model is the version expected:
 `POST /_ltr/_featureset/my_featureset/_createmodel?version=23`
+
+## Validation
+
+When creating features, featuresets or models the plugin will only validate the formats it owns. This does not
+guarantee that the elements you create are valid elasticsearch queries.
+In order to avoid last minute surprises you can append a `validation` json field:
+```json
+{
+"validation": {
+  "params" : {
+    "query_string": "test query"
+  },
+  "index": "test_index"
+}
+}
+```
+
+Just before creating/updating the element in the feature it will perform a search request to make sure
+that all your feature queries are valid.
+Example to create a validated feature to the store:
+`PUT /_ltr/_feature/my_feature`
+
+```json
+{
+  "feature": {
+    "name": "my_feature",
+    "params": ["query_string"],
+    "template_language": "mustache",
+    "template" : {
+      "match": {
+        "field": "{{query_string}}"
+      }
+    }
+  },
+  "validation": {
+    "params": {
+      "query_string": "a test query"
+    },
+    "index": "test_index"
+  }
+}
+```
 
 # Caches
 The plugin uses an internal cache not to compile the models on every request.

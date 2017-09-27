@@ -7,6 +7,7 @@
         ltr.create_feature:
            name: my_feature1
            body:
+            feature:
               name: my_feature1
               params:
                  - query_string
@@ -18,6 +19,7 @@
         ltr.create_feature:
            name: my_feature2
            body:
+            feature:
               name: my_feature2
               params:
                  - query_string
@@ -29,6 +31,7 @@
         ltr.create_feature:
            name: another_feature
            body:
+            feature:
               name: another_feature
               params:
                  - query_string
@@ -97,6 +100,7 @@
            store: mystore
            name: another_feature
            body:
+            feature:
               name: another_feature
               params:
                  - query_string
@@ -127,17 +131,6 @@
 "Append/merge features to set on the default store with a list":
   - do:
         ltr.create_store: {}
-
-  - do:
-        ltr.create_feature:
-          name: another_feature
-          body:
-              name: another_feature
-              params:
-                - query_string
-              template:
-                match:
-                  field_test_other: "{{query_string}}"
 
   - do:
         ltr.add_features_to_set:

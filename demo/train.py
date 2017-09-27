@@ -19,19 +19,21 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
     import json
     from urllib.parse import urljoin
     modelPayload = {
-        "name": scriptName,
         "model": {
-            "type": "model/ranklib",
+            "name": scriptName,
+            "model": {
+                "type": "model/ranklib",
                 "definition": {
                 }
             }
+        }
     }
 
     with open(modelFname) as modelFile:
         modelContent = modelFile.read()
         path = "_ltr/_featureset/%s/_createmodel" % featureSet
         fullPath = urljoin(esHost, path)
-        modelPayload['model']['definition'] = modelContent
+        modelPayload['model']['model']['definition'] = modelContent
         print("POST %s" % fullPath)
         resp = requests.post(fullPath, json.dumps(modelPayload))
         print(resp.status_code)

@@ -7,6 +7,7 @@
         ltr.create_feature:
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string
@@ -29,6 +30,7 @@
         ltr.create_feature:
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string2
@@ -40,6 +42,7 @@
         ltr.update_feature:
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string2
@@ -96,6 +99,7 @@
            store: mystore
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string
@@ -120,6 +124,7 @@
            store: mystore
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string
@@ -132,6 +137,7 @@
            store: mystore
            name: my_feature
            body:
+            feature:
               name: my_feature
               params:
                  - query_string
