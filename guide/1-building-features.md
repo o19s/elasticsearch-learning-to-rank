@@ -166,6 +166,7 @@ Place this alongside the feature list, as in this request:
         },
         "index": "tmdb"
 },
+
  "features": [
       {
          "name": "title_query",
