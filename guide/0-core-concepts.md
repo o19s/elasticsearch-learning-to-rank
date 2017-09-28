@@ -1,17 +1,16 @@
 # Elasticsearch Learning to Rank Guidebook
 
-Welcome! You're here if you're interested in adding Learning to Rank capabilities to your Elasticsearch system. This guidebook is intended for Elasticsearch developers and data scientists. The guidebook has been prepared by the fine folks at [OpenSource Connections](http://opensourceconnections). Please [contact us](mailto:hello@o19s.com) or [create an issue](https://github.com/o19s/elasticsearch-learning-to-rank/issues) if you have any questions or feedback.
-This first section teaches you how a learning to rank system works. It shows you how Elasticsearch LTR fits into the bigger picture.
+Welcome! You're here if you're interested in adding machine learning ranking capabilities to your Elasticsearch system. This guidebook is intended for Elasticsearch developers and data scientists. The guidebook has been prepared by the fine folks at [OpenSource Connections](http://opensourceconnections). Please [contact us](mailto:hello@o19s.com) or [create an issue](https://github.com/o19s/elasticsearch-learning-to-rank/issues) if you have any questions or feedback.
 
 # What is Learning to Rank? 
 
 *Learning to Rank* (LTR) applies machine learning to search relevance ranking. How does relevance ranking differ from other machine learning problems? Regression is one classic machine learning problem. In *regression*, you're attempting to predict a variable (such as a stock price) as a function of known information (such as number of company employees, the company's revenue, etc). In these cases, you're building a function, say `f`, that can take what's known (`numEmployees`, `revenue`), and have `f` output an approximate stock price. 
 
-Classification is another machine learning problem. With classification, our function `f`, would classify our company into several categories. For example, profitable or not profitable. Or perhaps whether or not the company is evading taxes. Perhaps we want to guess the industry based on various variables known about a stealth startup.
+Classification is another machine learning problem. With classification, our function `f`, would classify our company into several categories. For example, profitable or not profitable. Or perhaps whether or not the company is evading taxes. 
 
-In Learning to Rank, the function, `f` we want to learn does not make a direct prediction. Rather it's used for ranking documents. We want a function `f` that comes as close as possible to our user's sense of the ideal ordering of documents dependent on a query. The value output by `f` itself has no meaning (it's not a stock price or a "category"). It's more a prediction of a users' sense of relative utility for a document given a query.
+In Learning to Rank, the function, `f` we want to learn does not make a direct prediction. Rather it's used for ranking documents. We want a function `f` that comes as close as possible to our user's sense of the ideal ordering of documents dependent on a query. The value output by `f` itself has no meaning (it's not a stock price or a category). It's more a prediction of a users' sense of the relative usefulnes of a document given a query.
 
-The content here summarizes this blog article [How is Search Different From Other Machine Learning Problems?](http://opensourceconnections.com/blog/2017/08/03/search-as-machine-learning-prob/)
+We'll briefly walk through the 10,000 meter view of Learning to Rank. For more information, we recommend blog articles [How is Search Different From Other Machine Learning Problems?](http://opensourceconnections.com/blog/2017/08/03/search-as-machine-learning-prob/) and [What is Learning to Rank?]().
 
 ## Judgments: expression of the ideal ordering
 
@@ -53,7 +52,7 @@ grade,keywords,movie
 
 A search system that approximates this ordering for the search query "Rambo", and all our other test queries, can said to be performing well. Metrics such as [NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain) and [ERR](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.4509&rep=rep1&type=pdf) evaluate a query's actual ordering vs the ideal judgment list.
 
-Our ranking function `f` needs to rank search results as close as possible to our judgment lists. We want to maximize quality metrics such as ERR or NDCG over the broadest number of queries in our training set. When we do this, we know we're building results listings that will be maximally useful to users.
+Our ranking function `f` needs to rank search results as close as possible to our judgment lists. We want to maximize quality metrics such as ERR or NDCG over the broadest number of queries in our training set. When we do this, with accurate judgments, we know we're building results listings that will be maximally useful to users.
 
 ## Selecting Features: the raw material of relevance
 
@@ -67,9 +66,9 @@ Features for movies, for example, might include:
 - The rating of the movie (`rating`)
 - How many keywords are used during search? (`numKeywords`)
 
-Our ranking function then becomes `f(titleScore, descScore, popularity, rating, numKeywords)`. We hope whatever method we use to create a ranking function can utilize these features to maximize the likelihood of search results being useful for users. For example, it seems intuitive in the "Rambo" use case that `titleScore` matters quite a bit. But on top movie "First Blood" probably only mentions the keyword Rambo in the description. So in this case `descScore` matters. Also `popularity`/`rating` might help determine which movies are "sequels" and which aren't. We might learn this feature doesn't work well in this regard, and introduce a new feature `isSequel` that our ranking function could use to make better ranking decisions. 
+Our ranking function then becomes `f(titleScore, descScore, popularity, rating, numKeywords)`. We hope whatever method we use to create a ranking function can utilize these features to maximize the likelihood of search results being useful for users. For example, it seems intuitive in the "Rambo" use case that `titleScore` matters quite a bit. But on top movie "First Blood" probably only mentions the keyword Rambo in the description. So in this case `descScore` matters. Also `popularity`/`rating` might help determine which movies are "sequels" and which are the originals. We might learn this feature doesn't work well in this regard, and introduce a new feature `isSequel` that our ranking function could use to make better ranking decisions. 
 
-Selecting and experimenting with features is a core piece of learning to rank. Good judgments with poor features that don't help suss out the patterns of what's relevant and what's not won't lead to a ranking function that can serve users. Just like any other machine learning problem: garbage in-garbage out!
+Selecting and experimenting with features is a core piece of learning to rank. Good judgments with poor features that don't help predict patterns in the predicted grades won't create a good ranking function. Just like any other machine learning problem: garbage in-garbage out!
 
 For more on the art of creating features for search, check out the book [Relevant Search](http://manning.com/books/relevant-search) by Doug Turnbull.
 
@@ -97,7 +96,7 @@ grade,keywords,movie,titleScore,descScore,popularity,...
 ...
 ```
 
-Many learning to rank models are familiar with a file format introduced by SVM Rank. Queries are given ids, and the actual document identifier can be removed for the training process. Features are labeled with ordinals starting at 1. For the above example, we'd have the file format:
+Many learning to rank models are familiar with a file format introduced by SVM Rank, an early learning to rank method. Queries are given ids, and the actual document identifier can be removed for the training process. Features in this file format are labeled with ordinals starting at 1. For the above example, we'd have the file format:
 
 ```
 4   qid:1   1:0.0   2:21.5  3:100,...
@@ -106,7 +105,9 @@ Many learning to rank models are familiar with a file format introduced by SVM R
 ...
 ```
 
-In actual systems, you might log these values after the fact, gathering them to annotate a judgment list with feature values. In others the judgment list might come from user analytics, so it may be logged as the user interacts with the search application.
+(Other systems use different formats for training systems)
+
+In actual systems, you might log these values after the fact, gathering them to annotate a judgment list with feature values. In others the judgment list might come from user analytics, so it may be logged as the user interacts with the search application. More on this when we cover [feature logging].
 
 
 ## Training a ranking function
@@ -119,13 +120,33 @@ Generally speaking there's a couple of families of models:
 - SVM based models (SVMRank): Less accurate, but cheap to train. See [SVMRank](https://www.cs.cornell.edu/people/tj/svm_light/svm_rank.html).
 - Linear models: Performing a basic linear regression over the judgment list. Tends to not be useful outside of toy examples. See [this blog article](http://opensourceconnections.com/blog/2017/04/01/learning-to-rank-linear-models/)
 
-Most practitioners have more experience working with one model typo over another. 
+Model selection can be as much about what a team has experience with, not just with what performs best.
 
 ## Testing: is our solution any good?
 
 Our judgment lists can't cover every user query our model will encounter out in the wild. So it's important to throw our model curveballs, to see how well it can "think for itself." Or as machine learning folks say: can the model generalize beyond the training data? A model that cannot generalize beyond training data is *overfit* to the training data, and not as useful.
 
 To avoid overfitting, you hide some of your judgment lists from the training process. You then use these to test your model. When evaluating models you'll hear about statistics such as "test NDCG" vs "training NDCG." The former reflects how your model will perform against scenarios it hasn't seen before. You hope as you train, your test search quality metrics continue to reflect high quality search. Further: after you deploy a model, you'll want to try out newer/more recent judgment lists to see if your model might be overfit to seasonal/temporal situations.
+
+## Where does this Plugin Fit In?
+
+We've mentioned a couple of activities you undertake when implementing learning to rank:
+
+1. Judgment List Development
+2. Feature Engineering
+3. Logging features into the judgment list to create a training set
+4. Training and testing models.
+
+How does Elasticsearch LTR fit into this process? 
+
+This plugin helps you develop search features, log features values when needed, and use trained models when searching. 
+
+The plugin does not help with judgment list creation. This is work you must do and can be very domain specific. Wikimedia Foundation wrote an article on how they arrive at judgment lists for people searching articles. Other domains such as e-commerce might be more conversion focused. Yet others might involve human relevance judges -- either experts at your company or mechanical turk.
+
+The plugin does not train or test models. This also happens offline in tools appropriatte to the task. Natively, the plugin works with XGboost and Ranklib libraries, common for training tree based models. These are very CPU intensive tasks taht you would not want running in your production Elasticsearch cluster.
+
+The rest of this guide is dedicated to walking you through how the plugin works. 
+
 
 ## Real World Concerns
 
@@ -137,4 +158,4 @@ Now that you're oriented, the rest of this guide builds on this context to point
 - How will you detect when/whether your model needs to be retrained?
 - How will you A/B test your model vs your current solution? What KPIs will determine success in your search system.
 
-Of course, please don't hesitate to seek out the services of [OpenSource Connections](http://opensourceconnections.com/services) as we work with organizations to explore these issues.
+Of course, please don't hesitate to seek out the services of [OpenSource Connections](http://opensourceconnections.com/services), sponsors of this plugin, as we work with organizations to explore these issues.

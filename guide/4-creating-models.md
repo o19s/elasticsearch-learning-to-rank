@@ -56,8 +56,6 @@ There's also a small example of how to train a model using XGboost [here](/demo/
 Many types of models simply output linear weights of each feature. The LTR model supports simple linear weights for each features, such as those learned from an SVM model or linear regression:
 
 
-
-
 ## Uploading a model
 
 Once you have a model, you'll want to use it for search. You'll need to upload it to Elasticsearch LTR. Models are uploaded specifying the following arguments
@@ -112,3 +110,4 @@ POST _ltr/_featureset/more_movie_features/_createmodel
 ```
 
 With a model uploaded to Elasticsearch, you're ready to search!
+

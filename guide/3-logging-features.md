@@ -4,7 +4,7 @@ To train a model, you need to log feature values. This is a major component of t
 
 ## Sltr Query
 
-The `sltr` query is the primary way features are run and models are evaluated. When logging, we'll just use an `sltr` query for getting each value only. 
+The `sltr` query is the primary way features are run and models are evaluated. When logging, we'll just use an `sltr` query for executing every feature-query to retrieve the score.
 
 Outside, `sltr`, the logging response itself is controlled by a search extension. This extension must refer back to the `sltr` query by either the query's name, or it's index in the list of rescore queries.
 
@@ -184,10 +184,12 @@ And now each document contains a log entry:
         "fields": {
             "_ltrlog": [
                 {
-                    "log_entry1": {
-                        "title_query": 9.510193,
-                        "body_query": 10.7808075
-                    }
+                    "log_entry1": [
+                        {"name": "title_query"
+                         "value": 9.510193},
+                        {"name": "body_query
+                         "value": 10.7808075}
+                    ]
                 }
             ]
         },
@@ -197,7 +199,11 @@ And now each document contains a log entry:
     }
 ```
 
-We can use those values to flesh out our judgment list with feature values.
+We can use those values to fill in a judgment list we created with feature values. In the case above, for the line that corresponds to document 1370 for keywords "Rambo" we could add
+
+```
+4   qid:1   1:9.510193  2:10.7808075
+```
 
 ## Logging values for a live feature set
 

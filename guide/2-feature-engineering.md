@@ -4,7 +4,7 @@ You've seen how to add features to feature sets. We want to show you how to addr
 
 ## Raw Term Statistics
 
-A lot of LTR literature discusses using raw term statistics. Such as the total term frequency for a term, the document frequency, and other statistics. Luckily, we've added an Elasticsearch query primitive, `match_explorer`, that extracts these statistics for you. In it's simplest form, `match_explorer` you specify a statistic you're interested in and a match you`d like to explore. For example:
+A lot of LTR literature discusses using raw term statistics. Such as the total term frequency for a term, the document frequency, and other statistics. Luckily, we've added an Elasticsearch query primitive, `match_explorer`, that extracts these statistics for you for a set of terms. In it's simplest form, `match_explorer` you specify a statistic you're interested in and a match you`d like to explore. For example:
 
 ```
 POST tmdb/_search
@@ -29,16 +29,16 @@ A large number of statistics are available. The `type` field can be prepended wi
 The statistics available include:
 
 - `raw_df` -- the direct document frequency for a term. So if rambo occurs in 3 movie titles, this is 3.
-- `classic_idf` -- the IDF calculation of the classic similarity `log((NUM_DOCS+1)/(docFreq+1)) + 1`.
+- `classic_idf` -- the IDF calculation of the classic similarity `log((NUM_DOCS+1)/(raw_df+1)) + 1`.
 - `raw_ttf` -- the total term frequency for the term across the index. So if rambo is mentioned a total of 100 times in the overview field, this would be 100.
 
-So to get stddev of classic_idf, you would write `stddev_classic_idf`. To get the minimum total term frequency, you'd write `min_raw_ttf`.
+Putting the operation and the statistic together, you can see some examples. To get stddev of classic_idf, you would write `stddev_classic_idf`. To get the minimum total term frequency, you'd write `min_raw_ttf`.
 
 Finally a special stat exists for just counting the number of search terms. That stat is `unique_terms_count`.
 
 ## Document-specific features.
 
-Another common case in Learning to Rank is features such as popularity or recency. Elasticsearch's `function_score` query has the functionality you need to pull this data out. You already saw an example when adding features in the last section:
+Another common case in Learning to Rank is features such as popularity or recency, tied only to teh document. Elasticsearch's `function_score` query has the functionality you need to pull this data out. You already saw an example when adding features in the last section:
 
 ```json
 {
@@ -54,6 +54,8 @@ Another common case in Learning to Rank is features such as popularity or recenc
     }
 }
 ```
+
+The score for this query corresponds to the value of the `vote_average` field.
 
 
 ## Your index may drift

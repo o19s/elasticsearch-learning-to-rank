@@ -1,11 +1,25 @@
 
 # Building Features in Elasticsearch Learning to Rank
 
-Feature development is one of the core activities of learning to rank work. This section covers the functionality built into the Elasticsearch Learning to Rank plugin to build & upload features with the plugin.
+In [core concepts](0-core-concepts.md), we mentioned a couple of activities you undertake when implementing learning to rank.
+
+1. Judgment List Development
+2. Feature Developing & Egnineering
+3. Logging features into the judgment list to create a training set
+4. Training and testing models.
+
+Creating a judgment list is an activity you undertake on your own, this plugin does not help gather user analytics or user feedback to create judgment lists. Tools like [Quepid](http://quepid.com) can be helpful when working with expert users.
+
+What the plugin CAN do
+
+
+ we mentioned working with features as one of the core activities of learning to rank work. 
+
+This section covers the functionality built into the Elasticsearch LTR plugin to build & upload features with the plugin.
 
 ## What is a feature in Elasticsearch Learning to Rank?
 
-Elasticsearch LTR features correspond to Elasticsearch queries. Elasticsearch queries contain the expressive needs for most feature development. 
+Elasticsearch LTR features correspond to Elasticsearch queries. The score of an Elasticsearch Query, when run using the user's search terms, are the values you use in your training set. 
 
 Obvious features might include traditional search queries, like a simple "match" query on title:
 
@@ -69,7 +83,9 @@ For now, we'll simply focus on typical keyword searches.
 
 ## Uploading and Naming Features
 
-Elasticsearch LTR gives you an interface for creating and manipulating features.
+Elasticsearch LTR gives you an interface for creating and manipulating features. Once created, then you can have access to a set of feature for logging. Logged features when combined with your judgment list, can be trained into a model. Finally, that model can then be uploaded to Elasticsearch LTR and executed as a search.
+
+Let's look how to work with sets of features.
 
 ### Initialize the Default Feature Store
 
@@ -104,23 +120,25 @@ You can create a feature set simply by using a PUT. To create it, you give a fea
 ```
 PUT _ltr/_featureset
 {
-   "name": "more_movie_features",
-   "features": [
-      {
-         "name": "title_query",
-         "params": [
-            "keywords"
-         ],
-         "template_language": "mustache",
-         "template": {
-            "query": {
-               "match": {
-                  "title": "{{keywords}}"
-               }
+   "featureset": {
+        "name": "more_movie_features",
+        "features": [
+            {
+                "name": "title_query",
+                "params": [
+                    "keywords"
+                ],
+                "template_language": "mustache",
+                "template": {
+                    "query": {
+                        "match": {
+                            "title": "{{keywords}}"
+                        }
+                    }
+                }
             }
-         }
-      }
-   ]
+        ]
+   }
 }
 ```
 
@@ -144,7 +162,7 @@ GET _ltr/_featureset?prefix=mor
 
 ### Validating features
 
-When adding features, wouldn't you like to sanity check that the features work as expected? Adding a "validation" block to your feature creation let's Elasticsearch LTR run the query before adding it. If you don't run this validation, you may find out only much later that the query, while valid JSON, was a malformed Elasticsearch query.
+When adding features, we recommend sanity checking that the features work as expected. Adding a "validation" block to your feature creation let's Elasticsearch LTR run the query before adding it. If you don't run this validation, you may find out only much later that the query, while valid JSON, was a malformed Elasticsearch query. You can imagine, batching dozens of features to log, only to have one of them fail in production, can be quite annoying!
 
 To run validation, you simply specify test parameters and a test index to run: 
 
@@ -157,37 +175,41 @@ To run validation, you simply specify test parameters and a test index to run:
            },
 ```
 
-Place this alongside the feature list, as in this request:
+Place this alongside the feature set. You'll see below we have a malformed `match` query. The example below should return an error that validation failed. An indicator you should take a closer look at the query.
 
 ```
-"validation": {
-        "params": {
-            "keywords": "rambo"
-        },
-        "index": "tmdb"
-},
-
- "features": [
-      {
-         "name": "title_query",
-         "params": [
-            "keywords"
-         ],
-         "template_language": "mustache",
-         "template": {
-            "query": {
-               "match": {
-                  "title": "{{keywords}}"
-               }
+{
+   "validation": {
+      "params": {
+         "keywords": "rambo"
+      },
+      "index": "tmdb"
+   },
+   "featureset": {
+        "name": "more_movie_features",
+        "features": [
+            {
+                "name": "title_query",
+                "params": [
+                    "keywords"
+                ],
+                "template_language": "mustache",
+                "template": {
+                    "query": {
+                        "mooch": {
+                            "title": "{{keywords}}"
+                        }
+                    }
+                }
             }
-         }
-      }
-   ]
+        ]
+   }
+}
 ```
 
 ### Adding to an existing feature set
 
-As mentioned above, features are mustache-templated Elasticsearch queries. You can create features independently of feature sets. For example, if we want to create the `user_rating` feature, we could create it using the feature set append API, like below:
+Of course you may not know upfront what features could be useful. You may wish to append a new feature later for logging and model evaluation. For example, creating the `user_rating` feature, we could create it using the feature set append API, like below:
 
 
 ```
@@ -212,6 +234,10 @@ POST /_ltr/_featureset/my_featureset/_addfeatures
   ]
 }
 ```
+
+### Feature Names are Unique in Feature Sets
+
+Because some model training libraries refer to features by name, Elasticsearch LTR enforces unique names for each features. In the example above, we could not add a new `user_rating` feature without creating an error.
 
 ### Feature Sets are Lists
 
