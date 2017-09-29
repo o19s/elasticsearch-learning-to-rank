@@ -1,0 +1,16 @@
+{
+  "ltr.delete_store": {
+    "methods" : ["DELETE"],
+    "url": {
+      "paths": ["/_ltr", "/_ltr/{store}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        }
+      }
+    },
+    "body": null
+  }
+}

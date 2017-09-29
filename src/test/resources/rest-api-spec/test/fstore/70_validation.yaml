@@ -1,0 +1,174 @@
+---
+"Validate feature":
+  - do:
+        ltr.create_store: {}
+  - do:
+        indices.create:
+          index: test_index
+
+  - do:
+        catch: /Cannot store element, validation failed/
+        ltr.create_feature:
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string
+              template:
+                broken_query:
+                  field_test: "{{query_string}}"
+            validation:
+              index: test_index
+              params:
+                query_string: test query
+
+---
+"Validate featureset":
+  - do:
+        ltr.create_store: {}
+  - do:
+        indices.create:
+          index: test_index
+
+  - do:
+        catch: /Cannot store element, validation failed/
+        ltr.create_featureset:
+           name: my_featureset
+           body:
+            featureset:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      broken_query:
+                      field_test: "{{query_string}}"
+            validation:
+              index: test_index
+              params:
+                query_string: test query
+
+---
+"Validate model":
+  - do:
+        ltr.create_store: {}
+  - do:
+        indices.create:
+          index: test_index
+
+  - do:
+        catch: /Cannot store element, validation failed/
+        ltr.create_model:
+           name: my_model
+           body:
+            model:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      broken_query:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+            validation:
+              index: test_index
+              params:
+                query_string: test query
+
+---
+"Validate on add features to set":
+  - do:
+        ltr.create_store: {}
+  - do:
+        indices.create:
+          index: test_index
+
+  - do:
+        ltr.create_feature:
+           name: my_feature1
+           body:
+            feature:
+              name: my_feature1
+              params:
+                 - query_string
+              template:
+                match:
+                  field_test1: "{{query_string}}"
+
+  - do:
+        ltr.create_feature:
+           name: my_feature2
+           body:
+            feature:
+              name: my_feature2
+              params:
+                 - query_string
+              template:
+                broken_query:
+                  field_test2: "{{query_string}}"
+
+  - do:
+        catch: /Cannot store element, validation failed/
+        ltr.add_features_to_set:
+            name: my_generated_set
+            query: my_feature*
+            body:
+              validation:
+                index: test_index
+                params:
+                  query_string: test query
+
+---
+"Validate on create model from set":
+  - do:
+        ltr.create_store: {}
+  - do:
+        indices.create:
+          index: test_index
+
+  - do:
+        ltr.create_featureset:
+           name: my_featureset
+           body:
+            featureset:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test1: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      broken_query:
+                        field_test2: "{{query_string}}"
+
+  - do:
+        catch: /Cannot store element, validation failed/
+        ltr.create_model_from_set:
+            name: my_featureset
+            body:
+              model:
+                name: my_model
+                model:
+                  type: model/linear
+                  definition:
+                    feature1: 1.3
+                    feature2: 0.3
+              validation:
+                index: test_index
+                params:
+                  query_string: test query

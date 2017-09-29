@@ -1,0 +1,16 @@
+{
+  "ltr.get_store": {
+    "methods" : ["GET"],
+    "url": {
+      "paths": ["/_ltr/{store}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": true,
+          "description": "The store name"
+        }
+      }
+    },
+    "body": null
+  }
+}

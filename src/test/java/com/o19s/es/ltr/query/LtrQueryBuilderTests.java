@@ -16,26 +16,29 @@
  */
 package com.o19s.es.ltr.query;
 
-import com.o19s.es.ltr.query.LtrQuery;
-import com.o19s.es.ltr.query.LtrQueryBuilder;
-import com.o19s.es.ltr.query.LtrQueryParserPlugin;
+import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.index.Index;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.elasticsearch.index.query.ScriptQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
 
 /**
  * Created by doug on 12/27/16.
@@ -46,7 +49,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         return Collections.singletonList(LtrQueryParserPlugin.class);
     }
 
-    static String simpleModel = "## LambdaMART\\n" +
+    private static final String simpleModel = "## LambdaMART\\n" +
             "## name:foo\\n" +
             "## No. of trees = 1\\n" +
             "## No. of leaves = 10\\n" +
@@ -124,10 +127,9 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
-        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
-        List<String> featureNames = query.getFeatureNames();
-        assertEquals(featureNames.get(0), "bar_query");
-        assertEquals(featureNames.get(1), "sham_query");
+        RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
+        assertEquals(query.getFeature(0).name(), "bar_query");
+        assertEquals(query.getFeature(1).name(), "sham_query");
 
     }
 
@@ -152,10 +154,9 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
         QueryShardContext context = createShardContext();
-        LtrQuery query = (LtrQuery)queryBuilder.toQuery(context);
-        List<String> featureNames = query.getFeatureNames();
-        assertNull(featureNames.get(0));
-        assertEquals(featureNames.get(1), "");
+        RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
+        assertNull(query.getFeature(0).name());
+        assertEquals(query.getFeature(1).name(), "");
 
     }
 
@@ -172,34 +173,63 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
 
     @Override
     protected LtrQueryBuilder doCreateTestQueryBuilder() {
-        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
-
-        String ltrQuery =       "{  " +
-                "   \"ltr\": {" +
-                "      \"model\": " + scriptSpec + "," +
-                "      \"features\": [        " +
-                "         {\"match\": {         " +
-                "            \"foo\": \"bar\"     " +
-                "         }},                   " +
-                "         {\"match\": {         " +
-                "            \"baz\": \"sham\"     " +
-                "         }}                   " +
-                "      ]                      " +
-                "   } " +
-                "}";
-        LtrQueryBuilder queryBuilder = null;
-        try {
-            queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
-        } catch (IOException e) {
-
-        }
-        return queryBuilder;
+        LtrQueryBuilder builder = new LtrQueryBuilder();
+        builder.features(Arrays.asList(
+                new MatchQueryBuilder("foo", "bar"),
+                new MatchQueryBuilder("baz", "sham")
+        ));
+        builder.rankerScript(new Script(ScriptType.INLINE, "ranklib",
+                // Remove escape sequences
+                simpleModel.replace("\\\"", "\"")
+                        .replace("\\n", "\n"),
+                Collections.emptyMap()));
+        return builder;
     }
 
+    /**
+     * This test ensures that queries that need to be rewritten have dedicated tests.
+     * These queries must override this method accordingly.
+     */
+    @Override
+    public void testMustRewrite() throws IOException {
+        Script script = new Script(ScriptType.INLINE, "ranklib", simpleModel, Collections.emptyMap());
+        List<QueryBuilder> features = new ArrayList<>();
+        boolean mustRewrite = false;
+        int idx = 0;
+        if (randomBoolean()) {
+            idx++;
+            features.add(new TermQueryBuilder("test", "test"));
+        }
+        if (randomBoolean()) {
+            mustRewrite = true;
+            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "terms query feature").toString()));
+        }
+        if (randomBoolean()) {
+            features.add(new TermQueryBuilder("test", "test"));
+        }
 
+        LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
+        QueryBuilder rewritten = builder.rewrite(createShardContext());
+        if (!mustRewrite && features.isEmpty()) {
+            // if it's empty we rewrite to match all
+            assertEquals(rewritten, new MatchAllQueryBuilder());
+        } else {
+            LtrQueryBuilder rewrite = (LtrQueryBuilder) rewritten;
+            if (mustRewrite) {
+                assertNotSame(rewrite, builder);
+                if (!builder.features().isEmpty()) {
+                    assertEquals(builder.features().size(), rewrite.features().size());
+                    assertSame(builder.rankerScript(), rewrite.rankerScript());
+                    assertEquals(new TermsQueryBuilder("foo", "terms query feature"), rewrite.features().get(idx));
+                }
+            } else {
+                assertSame(rewrite, builder);
+            }
+        }
+    }
 
     @Override
     protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
-        assertThat(query, instanceOf(LtrQuery.class));
+        assertThat(query, instanceOf(RankerQuery.class));
     }
 }

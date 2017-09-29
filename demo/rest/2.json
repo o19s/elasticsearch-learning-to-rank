@@ -1,0 +1,15 @@
+{
+  "feature": {
+    "name": "tmdb_multi",
+    "params": ["query_string"],
+    "template_language": "mustache",
+    "template" : {
+      "multi_match": {
+        "query": "{{query_string}}",
+        "type": "cross_fields",
+        "fields": ["overview", "genres.name", "title", "tagline", "belongs_to_collection.name", "cast.name", "directors.name"],
+        "tie_breaker": 1.0
+      }
+    }
+  }
+}

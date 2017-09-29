@@ -1,0 +1,10 @@
+{
+  "ltr.cache_stats": {
+    "methods" : ["GET"],
+    "url": {
+      "paths": ["/_ltr/_cachestats"],
+      "parts": {}
+    },
+    "body": null
+  }
+}
