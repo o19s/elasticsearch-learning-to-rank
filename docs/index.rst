@@ -21,7 +21,7 @@ Learning to Rank transforms search using machine learning. The Elasticsearch Lea
    :caption: Contents:
 
 
-The plugin and guide was built by the fine folks at `OpenSource Connections <http://opensourceconnections.com>`_. Please `contact us <mailto:hello@o19s.com>`_ or `create an issue <https://github.com/o19s/elasticsearch-learning-to-rank/issues>`_ if you have any questions or feedback.
+The plugin and guide was built by `OpenSource Connections <http://opensourceconnections.com>`_ in partnership with the Wikimedia Foundation and Snagajob. Please `contact OSC <mailto:hello@o19s.com>`_ or `create an issue <https://github.com/o19s/elasticsearch-learning-to-rank/issues>`_ if you have any questions or feedback.
 
 
 
