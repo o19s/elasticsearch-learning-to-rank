@@ -9,7 +9,7 @@ Sltr Query
 
 The :code:`sltr` query is the primary way features are run and models are evaluated. When logging, we'll just use an :code:`sltr` query for executing every feature-query to retrieve the scores of features.
 
-For the sake of discussing logging, let's say we created a feature set like so that works with the TMDB data set from the demo::
+For the sake of discussing logging, let's say we created a feature set like so that works with the TMDB data set from the `demo <https://github.com/o19s/elasticsearch-learning-to-rank/tree/master/demo>`_::
 
     PUT _ltr/_featureset/more_movie_features
     {
@@ -46,7 +46,7 @@ Next, let's see how to log this feature set in a couple common use cases.
 Joining feature values with a judgment list
 ==========================================
 
-Let's assume, in the simplest case, we have a judgment list already. We simply want to join feature values for each keyword/document pair to form a training set. For example, assume we have experts in our company, and they've arrived at this judgment list::
+Let's assume, in the simplest case, we have a judgment list already. We simply want to join feature values for each keyword/document pair to form a complete training set. For example, assume we have experts in our company, and they've arrived at this judgment list::
 
     grade,keywords,docId
     4,rambo,7555
@@ -66,11 +66,11 @@ We want to get feature values for all documents that have judgment for each sear
         ]
     }
 
-We'll use this as part of a larger boolean query. Combined with this filter is an `sltr` query that:
+We also need to point Elasticsearch LTR at the features to log. To do this we use the `sltr` Elasticsearch query, included with Elasticsearch LTR. We construct this query such that it:
 
-- Has a :code:`_name` (the Elasticsearch named queries feature)
+- Has a :code:`_name` (the Elasticsearch named queries feature) to refer to it
 - Refers to the featureset we created above :code:`more_movie_features`
-- Passes our search keywords "rambo"
+- Passes our search keywords "rambo" and whatever other parameters our features need
 
 .. code-block:: json
 
@@ -86,13 +86,13 @@ We'll use this as part of a larger boolean query. Combined with this filter is a
 
 .. note:: In :doc:`searching-with-your-model` you'll see us use `sltr` for executing a model. Here we're just using it as a hook to point Elasticsearch LTR at the feature set we want to log.
 
-You might be thinking, wait if we inject :code:`sltr` query into the Elasticsearch query, won't it influence the score? The sneaky trick is to inject it as a filter. Its a filter that doesn't actually filter anything, but injects our feature-logging only `sltr` query into our Elasticsearch query:
+You might be thinking, wait if we inject :code:`sltr` query into the Elasticsearch query, won't it influence the score? The sneaky trick is to inject it as a filter. As a filter that doesn't actually filter anything, but injects our feature-logging only :code:`sltr` query into our Elasticsearch query:
 
 .. code-block:: json
 
   {"query": {
         "bool": {
-              "filter": [
+                "filter": [
                 {
                     "terms": {
                         "_id": ["7555", "1370", "1369"]
@@ -114,7 +114,7 @@ You might be thinking, wait if we inject :code:`sltr` query into the Elasticsear
 
 Running this, you'll see the three hits you'd expect. The next step is to turn on feature logging, referring to the :code:`sltr` query we want to log.
 
-This is what the LTR logging extension gives you. It finds an Elasticsearch `sltr` query, pulls runs the feature set's queries, scores each document, then returns those as computed fields on each document:
+This is what the logging extension gives you. It finds an Elasticsearch `sltr` query, pulls runs the feature set's queries, scores each document, then returns those as computed fields on each document:
 
 .. code-block:: json
 
@@ -212,7 +212,7 @@ Rinse and repeat for all your queries.
 Logging values for a live feature set
 ========================================
 
-With the last section in mind, let's say you're running in production with a model being executed in an :code:`sltr` query. Something like::
+Let's say you're running in production with a model being executed in an :code:`sltr` query. We'll get more into model execution in :doc:`searching-with-your-model`. But for our purposes, a sneak peak, a live model might look something like::
 
     POST tmdb/_search
     {
@@ -235,8 +235,6 @@ With the last section in mind, let's say you're running in production with a mod
         }
     }
 
-In this query, your main "query" section (the match all query) is what we refer to as a "baseline query" -- a "good enough" query to promote reasonably relevant results to the top.
-
 Simply applying the correct logging spec to refer to the :code:`sltr` query does the trick to let us log feature values for our query::
 
     "ext": {
@@ -254,7 +252,7 @@ This will log features to the Elasticsearch response, giving you an ability to r
 Modifying an existing feature set and logging
 ================================================
 
-Feature sets can be appended to. As mentioned in the last chapter, if you want to incorporate a new feature, such as :code:`user_rating`, we can append that query to our featureset :code:`more_movie_features`:
+Feature sets can be appended to. As mentioned in :doc:`building-features`, you saw if you want to incorporate a new feature, such as :code:`user_rating`, we can append that query to our featureset :code:`more_movie_features`:
 
 .. code-block:: json
 
@@ -274,7 +272,7 @@ Feature sets can be appended to. As mentioned in the last chapter, if you want t
                             "match_all": {}
                         }
                     }
-            }
+                }
             }
         ]
     }
@@ -370,10 +368,12 @@ Continue with as many feature sets as you care to log!
 'Logging' serves multiple purposes
 ============================================
 
-With the tour done, it's worth point out how feature 'logging' serves multiple masters.
+With the tour done, it's worth point out real-life feature logging scenarios to think through.
 
-First, you might develop judgment lists from user analytics. You want to have the exact value of a feature at the precise time a user interaction happened. If they clicked, you want to know the recency, title score, and every other value at that exact moment. This way you can study later what correlated with relevance when training. To do this, you may build a large comprehensive featur set. Any model you end up training, however, would only refer to a subset to avoid high performance cost.
+First, you might develop judgment lists from user analytics. You want to have the exact value of a feature at the precise time a user interaction happened. If they clicked, you want to know the recency, title score, and every other value at that exact moment. This way you can study later what correlated with relevance when training. To do this, you may build a large comprehensive feature set for later experimentation.
 
-Second, you may simply want to keep your models up to date with a shifting index. Trends come and go, and models lose their effectiveness. You may have A/B testing in place, or monitoring business metrics, and you notice gradual degredation in model performance. In these cases, "logging" is used to retrain a model you're already relatively confident in. The features (or judgments) from the past may no longer apply to today's world.
+Second, you may simply want to keep your models up to date with a shifting index. Trends come and go, and models lose their effectiveness. You may have A/B testing in place, or monitoring business metrics, and you notice gradual degredation in model performance. In these cases, "logging" is used to retrain a model you're already relatively confident in.
 
 Third, there's the "logging" that happens in model development. You may have a judgment list, but want to iterate heavily with a local copy of Elasticsearch. You're heavily, experimenting with new features, scrapping and adding to feature sets. You of course are a bit out of sync with the live index, but you do your best to keep up. Once you've arrived at a set of model parameters that you're happy with, you can train with production data and confirm the performance is still satisfactory.
+
+Next up, let's briefly talk about training a model in :doc:`training-models` in tools outside Elasticsearch LTR.

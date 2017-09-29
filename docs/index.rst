@@ -3,10 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Elasticsearch Learning to Rank's documentation!
+Elasticsearch Learning to Rank: the documentation
 ==========================================================
 
-Learning to Rank transforms search using machine learning. The Elasticsearch Learning to Rank plugin (Elasticsearch LTR) enables you to train and use ranking models in your Elasticsearch system. 
+`Learning to Rank <http://opensourceconnections.com/blog/2017/02/24/what-is-learning-to-rank/>`_ uses machine learning to manipulate relevance ranking. The `Elasticsearch Learning to Rank plugin <http://github.com/o19s/elasticsearch-learning-to-rank>`_ (Elasticsearch LTR) enables you to train and use ranking models in your Elasticsearch search system. 
+
+Get started
+-------------------------------
+
+- Just want to jump in? Go straight to the `demo <https://github.com/o19s/elasticsearch-learning-to-rank/tree/master/demo>`_. 
+- Brand new to learning to rank? head to :doc:`core-concepts`. 
+- Familiar, but want to read the docs? Start with :doc:`fits-in`
+
+
+HEEELP!
+------------------------------
+
+The plugin and guide was built by the search relevance consultants at `OpenSource Connections <http://opensourceconnections.com>`_ in partnership with the Wikimedia Foundation and Snagajob Engineering. Please `contact OpenSource Connections <mailto:hello@o19s.com>`_ or `create an issue <https://github.com/o19s/elasticsearch-learning-to-rank/issues>`_ if you have any questions or feedback.
+
+
+Contents
+-------------------------------
 
 .. toctree::
    :maxdepth: 2
@@ -19,10 +36,6 @@ Learning to Rank transforms search using machine learning. The Elasticsearch Lea
    training-models
    searching-with-your-model
    :caption: Contents:
-
-
-The plugin and guide was built by the fine folks at `OpenSource Connections <http://opensourceconnections.com>`_. Please `contact us <mailto:hello@o19s.com>`_ or `create an issue <https://github.com/o19s/elasticsearch-learning-to-rank/issues>`_ if you have any questions or feedback.
-
 
 
 Indices and tables

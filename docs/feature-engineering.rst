@@ -7,7 +7,7 @@ You've seen how to add features to feature sets. We want to show you how to addr
 Getting Raw Term Statistics
 ======================
 
-A lot of LTR uses raw term statistics in training. For example, the total term frequency for a term, the document frequency, and other statistics. Luckily, we've added an Elasticsearch query primitive, :code:`match_explorer`, that extracts these statistics for you for a set of terms. In it's simplest form, :code:`match_explorer` you specify a statistic you're interested in and a match you'd like to explore. For example::
+Many learning to rank solutions use raw term statistics in training. For example, the total term frequency for a term, the document frequency, and other statistics. Luckily, Elasticsearch LTR comes with a query primitive, :code:`match_explorer`, that extracts these statistics for you for a set of terms. In it's simplest form, :code:`match_explorer` you specify a statistic you're interested in and a match you'd like to explore. For example::
 
     POST tmdb/_search
     {
@@ -65,3 +65,5 @@ Your index may drift
 =======================
 
 If you have an index that updates regularly, trends that held true today, may not hold true tomorrow! On an e-commerce store, sandals might be very popular in the summer, but impossible to find in the winter. Features that drive purchases for one time period, may not hold true for another. It's always a good idea to monitor your model's performance regularly, retrain as needed.
+
+Next up, we discuss the all-important task of logging features in :doc:`logging-features`.

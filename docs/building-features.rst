@@ -92,13 +92,13 @@ You can restart from scratch by deleting the default feature store::
 
 (WARNING this will blow everything away, use with caution!)
 
-In the examples below, we'll work with the default feature store.
+In the rest of this guide, we'll work with the default feature store.
 
 =========================
 Features and feature sets
 =========================
 
-Feature sets are where all the action is in Elasticsearch LTR. 
+Feature sets are where the action really happens in Elasticsearch LTR. 
 
 A *feature set* is a set of features that has been grouped together for logging & model evaluation. You'll refer to feature sets when you want to log multiple feature values for offline training. You'll also create a model from a feature set, copying the feature set into model.
 
@@ -112,7 +112,7 @@ You can create a feature set simply by using a PUT. To create it, you give a fea
 
     PUT _ltr/_featureset
     {
-    "featureset": {
+       "featureset": {
             "name": "more_movie_features",
             "features": [
                 {
@@ -130,7 +130,7 @@ You can create a feature set simply by using a PUT. To create it, you give a fea
                     }
                 }
             ]
-    }
+       }
     }
 
 =================
@@ -158,7 +158,7 @@ You can also delete a featureset to start over::
 Validating features
 ===================
 
-When adding features, we recommend sanity checking that the features work as expected. Adding a "validation" block to your feature creation let's Elasticsearch LTR run the query before adding it. If you don't run this validation, you may find out only much later that the query, while valid JSON, was a malformed Elasticsearch query. You can imagine, batching dozens of features to log, only to have one of them fail in production, can be quite annoying!
+When adding features, we recommend sanity checking that the features work as expected. Adding a "validation" block to your feature creation let's Elasticsearch LTR run the query before adding it. If you don't run this validation, you may find out only much later that the query, while valid JSON, was a malformed Elasticsearch query. You can imagine, batching dozens of features to log, only to have one of them fail in production can be quite annoying!
 
 To run validation, you simply specify test parameters and a test index to run:: 
 
@@ -169,7 +169,7 @@ To run validation, you simply specify test parameters and a test index to run::
         "index": "tmdb"
      },
 
-Place this alongside the feature set. You'll see below we have a malformed `match` query. The example below should return an error that validation failed. An indicator you should take a closer look at the query::
+Place this alongside the feature set. You'll see below we have a malformed :code:`match` query. The example below should return an error that validation failed. An indicator you should take a closer look at the query::
 
     {
        "validation": {
@@ -232,10 +232,13 @@ Of course you may not know upfront what features could be useful. You may wish t
 Feature Names are Unique
 ========================
 
-Because some model training libraries refer to features by name, Elasticsearch LTR enforces unique names for each features. In the example above, we could not add a new `user_rating` feature without creating an error. We recommend considering versioning features by name.
+Because some model training libraries refer to features by name, Elasticsearch LTR enforces unique names for each features. In the example above, we could not add a new `user_rating` feature without creating an error. 
 
 ==========================
 Feature Sets are Lists
 ==========================
 
 You'll notice we *appended* to the feature set. Feature sets perhaps ought to be really called "lists." Each feature has an ordinal (it's place in the list) in addition to a name. Some LTR training applications, such as Ranklib, refer to a feature by ordinal (the "1st" feature, the "2nd" feature). Others more conveniently refer to the name. So you may need both/either. You'll see that when features are logged, they give you a list of features back to preserve the ordinal.
+
+
+Next-up, we'll talk about some unique features the Elasticsearch LTR plugin allows with a few extra custom queries in :doc:`feature-engineering`.

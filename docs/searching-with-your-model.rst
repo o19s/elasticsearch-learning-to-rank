@@ -17,11 +17,11 @@ Now that you have a model, what can you do with it? As you saw in :doc:`logging-
 
 .. warning:: you almost certainly don't want to run `sltr` this way :)
 
-===================
-Rescore with `sltr`
-===================
+=========================
+Rescore top N with `sltr`
+=========================
 
-In reality you would never want to use the `sltr` query this way. Why? This model executes on *every result in your index*. These models are CPU intensive. You'll quickly make your Elasticsearch cluster crawl with the query above.
+In reality you would never want to use the :code:`sltr` query this way. Why? This model executes on *every result in your index*. These models are CPU intensive. You'll quickly make your Elasticsearch cluster crawl with the query above.
 
 More often, you'll execute your model on the top N of a baseline relevance query. You can do this using Elasticsearch's built in `rescore functionality<(https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-rescore.html). >`_::
 
@@ -55,8 +55,9 @@ Viola!
 Models! Filters! Even more!
 ===========================
 
-One advantage of having :code:`sltr` as just another Elasticsearch query is you can mix/match it with business logic and other. I want to invite you to think about other scenarios, such as
+One advantage of having :code:`sltr` as just another Elasticsearch query is you can mix/match it with business logic and other. We won't dive into these examples here, but we want to invite you to think creatively about scenarios, such as
 
-- Filtering out results based on business rules
-- Rescoring once for relevance (with `sltr`), and a second time for inventory
+- Filtering out results based on business rules, using Elasticsearch filters before applying the model
+- Chaining multiple rescores, perhaps with increasingly sophisticated models
+- Rescoring once for relevance (with `sltr`), and a second time for business concerns
 - Forcing "bad" but relevant content out of the rescore window by downboosting it in the baseline query

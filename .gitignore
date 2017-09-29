@@ -1,3 +1,5 @@
+docs/_build/
+
 .envrc
 venv
 sample_judgements_wfeatures.txt
