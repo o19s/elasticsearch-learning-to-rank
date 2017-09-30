@@ -1,33 +1,25 @@
 [![CircleCI](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank.svg?style=svg)](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank)
 
-With this plugin you:
-
-- Store features (Elasticsearch query templates) in Elasticsearch 
-- Implement query primitives that go beyond the Elasticsearch Query DSL
-- Log features scores (relevance scores) for a set of documents to prime training
-- Upload an xgboost or ranklib ranking model to Elasticsearch
-- Rank search results using an xgboost or ranklib model
-
 [Read the docs](http://elasticsearch-learning-to-rank.readthedocs.io) to learn more about this plugin and learning to rank!
 
+The Elasticsearch Learning to Rank plugin uses machine learning to control relevance ranking. It's powering search at places like Wikimedia Foundation and Snagajob!
 
-# How the plugin works
+# What this plugin does...
 
-You create *feature stores* to back your model. Within the feature store, features are grouped into feature sets. What are features in this context? Features are mustache templated Elasticsearch queries. For example a template that takes the search terms as an argument. Several new Elasticsearch query primitives are introduced by the plugin to assist with feature development.
+This plugin:
 
-Feature sets can be logged either during a live user query or after-the-fact using the `sltr` query. You gather judgment lists (what docs are good/bad for a query) based on domain-specific factors. With logged features and judgment lists, you can train a model offline. The model learns to generalize the ranking expressed in the judgment list as a function of the features. 
+- Allows you to store features (Elasticsearch query templates) in Elasticsearch 
+- Logs features scores (relevance scores) to create a training set for offline model development
+- Stores linear, xgboost, or ranklib ranking models in Elasticsearch that use features you've stored
+- Ranks search results using an xgboost or ranklib model
 
-You store a model into the learning to rank plugin, associating it with the feature set used during training. The features from the feature set are copied into the model, and the model cannot be changed. The features within a model are also frozen. You search with this model using the `sltr` query.
+## Where's the docs?
 
-Improve your model by improving features, retraining with new feature sets, and then creating new models.
+They're over at [Read the docs](http://elasticsearch-learning-to-rank.readthedocs.io). There's quite a bit of detailed information about learning to rank and the power behind this plugin.
 
-## Great, I want to jump in!
+## I want to jump in!
 
 If you want to just jump in, go straight to the demo. The demo uses Ranklib, a Java Learning to Rank library, to train models. Follow the directions in the [demo README](demo/README.md), edit code, and have fun!
-
-## I need more detailed documentation
-
-Learning to Rank can be tremendously powerful. However, building a real-life learning to rank system is non-trivial. We've developed [complete documentation](http://elasticsearch-learning-to-rank.readthedocs.io) with plenty of background on learning to rank.
 
 # Installing
 
@@ -52,7 +44,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
-./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-query-0.1.2-es5.4.0.zip
+./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-0.1.2-es5.4.0.zip
 ```
 
 # Who built this?
