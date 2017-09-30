@@ -6,7 +6,7 @@
 Elasticsearch Learning to Rank: the documentation
 ==========================================================
 
-`Learning to Rank <http://opensourceconnections.com/blog/2017/02/24/what-is-learning-to-rank/>`_ applies machine learning to  relevance ranking. The `Elasticsearch Learning to Rank plugin <http://github.com/o19s/elasticsearch-learning-to-rank>`_ (Elasticsearch LTR) gives you tools to train and use ranking models in Elasticsearch. 
+`Learning to Rank <http://opensourceconnections.com/blog/2017/02/24/what-is-learning-to-rank/>`_ applies machine learning to  relevance ranking. The `Elasticsearch Learning to Rank plugin <http://github.com/o19s/elasticsearch-learning-to-rank>`_ (Elasticsearch LTR) gives you tools to train and use ranking models in Elasticsearch. This plugin powers search at places like Wikimedia Foundation and Snagajob.
 
 Get started
 -------------------------------
