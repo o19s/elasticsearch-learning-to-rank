@@ -87,7 +87,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
             "</ensemble>";
 
     public void testCachedQueryParsing() throws IOException {
-        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
+        String scriptSpec = "{\"source\": \"" + simpleModel + "\"}";
 
         String ltrQuery =       "{  " +
                                 "   \"ltr\": {" +
@@ -106,7 +106,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     }
 
     public void testNamedFeatures() throws IOException {
-        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
+        String scriptSpec = "{\"source\": \"" + simpleModel + "\"}";
 
         String ltrQuery =       "{  " +
                 "   \"ltr\": {" +
@@ -134,7 +134,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     }
 
     public void testUnnamedFeatures() throws IOException {
-        String scriptSpec = "{\"inline\": \"" + simpleModel + "\"}";
+        String scriptSpec = "{\"source\": \"" + simpleModel + "\"}";
 
         String ltrQuery =       "{  " +
                 "   \"ltr\": {" +

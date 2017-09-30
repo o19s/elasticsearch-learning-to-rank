@@ -7,7 +7,7 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:5.5.2"
+    classpath "org.elasticsearch.gradle:build-tools:5.6.2"
   }
 }
 
@@ -18,11 +18,24 @@ apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'idea'
 
+// this is temporal and will be fixed in 6.0
+ext.projectSubstitutions = [:]
+
+// license of this project
+licenseFile = rootProject.file('LICENSE.txt')
+// copyright notices
+noticeFile = rootProject.file('NOTICE.txt')
+
 esplugin {
-  name 'ltr-query'
+  name 'ltr'
   description 'Learing to Rank Query w/ RankLib Models'
   classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
+  // license of this project
+  licenseFile = rootProject.file('LICENSE.txt')
+  // copyright notices
+  noticeFile = rootProject.file('NOTICE.txt')
 }
+
 
 // In this section you declare the dependencies for your production and test code
 // Note, the two dependencies are not really needed as the buildscript dependency gets them in already
@@ -39,15 +52,17 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:5.5.2'
+  compile 'org.elasticsearch:elasticsearch:5.6.2'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:5.5.2'
+  testCompile 'org.elasticsearch.test:framework:5.6.2'
 }
 
 dependencyLicenses {
   mapping from: /lucene-.*/, to: 'lucene'
   mapping from: /asm-.*/, to: 'asm'
+  mapping from: /Ranky-.*/, to: 'lucene'
+  mapping from: /compiler-.*/, to: 'lucene'
 }
 
 // Set to false to not use elasticsearch checkstyle rules
@@ -61,4 +76,4 @@ dependencyLicenses.enabled = false
 thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
-// licenseHeaders.enabled = false
+licenseHeaders.enabled = false
