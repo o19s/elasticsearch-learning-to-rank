@@ -1,0 +1,17 @@
+{
+  "ltr.create_store": {
+    "methods" : ["PUT"],
+    "url": {
+      "path": "/_ltr/{store}",
+      "paths": ["/_ltr", "/_ltr/{store}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        }
+      }
+    },
+    "body": null
+  }
+}

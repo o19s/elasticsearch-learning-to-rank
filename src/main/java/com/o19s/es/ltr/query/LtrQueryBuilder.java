@@ -17,8 +17,10 @@
 
 package com.o19s.es.ltr.query;
 
-import ciir.umass.edu.learning.Ranker;
-import org.apache.lucene.search.MatchAllDocsQuery;
+import com.o19s.es.ltr.feature.PrebuiltFeature;
+import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -27,38 +29,48 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryRewriteContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
     private static final ObjectParser<LtrQueryBuilder, QueryParseContext> PARSER;
+    private static final String DEFAULT_SCRIPT_LANG = "ranklib";
 
-    Script _rankLibScript;
-    List<QueryBuilder> _features;
+    private Script _rankLibScript;
+    private List<QueryBuilder> _features;
 
     static {
         PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
         declareStandardFields(PARSER);
         PARSER.declareObjectArray(
-                (ltr, features) -> ltr.features(features),
+                LtrQueryBuilder::features,
                 (parser, context) -> context.parseInnerQueryBuilder().get(),
                 new ParseField("features"));
         PARSER.declareField(
-                (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, "ranklib")),
+                (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, DEFAULT_SCRIPT_LANG)),
                 new ParseField("model"), ObjectParser.ValueType.OBJECT_OR_STRING);
     }
 
 
     public LtrQueryBuilder() {
+    }
+
+    public LtrQueryBuilder(Script _rankLibScript, List<QueryBuilder> features) {
+        this._rankLibScript = _rankLibScript;
+        this._features = features;
     }
 
     public LtrQueryBuilder(StreamInput in) throws IOException {
@@ -95,7 +107,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         builder.endArray();
     }
 
-    public static LtrQueryBuilder fromXContent(QueryParseContext parseContext) throws IOException {
+    public static Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
         final LtrQueryBuilder builder;
         try {
             builder = PARSER.apply(parseContext.parser(), parseContext);
@@ -106,25 +118,50 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
             throw new ParsingException(parseContext.parser().getTokenLocation(),
                     "[ltr] query requires a model, none specified");
         }
-        return builder;
+        return Optional.of(builder);
     }
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        if (_features == null || _rankLibScript == null) {
-            return new MatchAllDocsQuery();
+        List<PrebuiltFeature> features = new ArrayList<PrebuiltFeature>(_features.size());
+        for(QueryBuilder builder: _features) {
+            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
-        List<String> featureNames = new ArrayList<String>(_features.size());
-        List<Query> asLQueries = new ArrayList<Query>(_features.size());
-        for (QueryBuilder query : _features) {
-            asLQueries.add(query.toQuery(context));
-            featureNames.add(query.queryName());
-        }
+        features = Collections.unmodifiableList(features);
         // pull model out of script
-        RankLibScriptEngine.RankLibExecutableScript rankerScript =
-                (RankLibScriptEngine.RankLibExecutableScript)context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH);
+        LtrRanker ranker = (LtrRanker) context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH).run();
+        PrebuiltFeatureSet featureSet = new PrebuiltFeatureSet(queryName(), features);
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, featureSet);
+        return RankerQuery.build(model);
+    }
 
-        return new LtrQuery(asLQueries, (Ranker)rankerScript.run(), featureNames);
+    @Override
+    public QueryBuilder doRewrite(QueryRewriteContext ctx) throws IOException {
+        if (_features == null || _rankLibScript == null || _features.isEmpty()) {
+            return new MatchAllQueryBuilder();
+        }
+
+        List<QueryBuilder> newFeatures = null;
+        boolean changed = false;
+
+        int i = 0;
+        for (QueryBuilder qb : _features) {
+            QueryBuilder newQuery = QueryBuilder.rewriteQuery(qb, ctx);
+            changed |= newQuery != qb;
+            if (changed) {
+                if (newFeatures == null ) {
+                    newFeatures = new ArrayList<>(_features.size());
+                    newFeatures.addAll(_features.subList(0, i));
+                }
+                newFeatures.add(newQuery);
+            }
+            i++;
+        }
+        if (changed) {
+            assert newFeatures.size() == _features.size();
+            return new LtrQueryBuilder(_rankLibScript, newFeatures);
+        }
+        return this;
     }
 
     @Override
@@ -156,6 +193,4 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         _features = features;
         return this;
     }
-
-
 }

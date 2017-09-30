@@ -1,0 +1,12 @@
+{
+  "feature": {
+    "name": "tmdb_title",
+    "params": ["query_string"],
+    "template_language": "mustache",
+    "template" : {
+      "match": {
+        "title": "{{query_string}}"
+      }
+    }
+  }
+}

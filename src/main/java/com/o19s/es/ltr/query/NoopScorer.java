@@ -25,16 +25,21 @@ import java.io.IOException;
  * Created by doug on 2/3/17.
  */
 public class NoopScorer extends Scorer {
-    private DocIdSetIterator _noopIter;
+    private final DocIdSetIterator _noopIter;
     /**
      * Constructs a Scorer
      *
      * @param weight The scorers <code>Weight</code>.
      */
-    protected NoopScorer(Weight weight, int maxDocs) {
+    public NoopScorer(Weight weight, int maxDocs) {
         super(weight);
         _noopIter = DocIdSetIterator.all(maxDocs);
 
+    }
+
+    public NoopScorer(Weight weight, DocIdSetIterator iterator) {
+        super(weight);
+        _noopIter = iterator;
     }
 
     @Override

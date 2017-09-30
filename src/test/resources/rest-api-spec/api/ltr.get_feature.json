@@ -1,0 +1,22 @@
+{
+  "ltr.get_feature": {
+    "methods" : ["GET"],
+    "url": {
+      "path": "/_ltr/{store}/_feature/{name}",
+      "paths": ["/_ltr/_feature/{name}", "/_ltr/{store}/_feature/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The feature name"
+        }
+      }
+    },
+    "body": null
+  }
+}

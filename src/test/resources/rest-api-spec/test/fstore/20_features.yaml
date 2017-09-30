@@ -1,0 +1,190 @@
+---
+"CRUD operations test: feature on default store":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_feature:
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string
+              template:
+                match:
+                  field_test: "{{query_string}}"
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      feature-my_feature }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_feature:
+           name: my_feature
+
+  - match: { _source.name: my_feature }
+
+  - do:
+        catch: /version_conflict_engine_exception/
+        ltr.create_feature:
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string2
+              template:
+                match:
+                  field_test: "{{query_string2}}"
+
+  - do:
+        ltr.update_feature:
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string2
+              template:
+                match:
+                  field_test: "{{query_string2}}"
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      feature-my_feature }
+  - match: { _version: 2 }
+
+  - do:
+        ltr.get_feature:
+           name: my_feature
+
+  - match: { _source.feature.template.match.field_test: "{{query_string2}}" }
+
+  - do:
+        ltr.list_feature: {}
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+            prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+            prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
+        ltr.delete_feature:
+           name: my_feature
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_feature:
+           name: my_feature
+
+---
+"CRUD operations test: feature on custom store":
+  - do:
+        ltr.create_store:
+           store: mystore
+
+  - do:
+        ltr.create_feature:
+           store: mystore
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string
+              template:
+                match:
+                  field_test: "{{query_string}}"
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      feature-my_feature }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_feature:
+           store: mystore
+           name: my_feature
+
+  - match: { _source.name: my_feature }
+
+  - do:
+        catch: /version_conflict_engine_exception/
+        ltr.create_feature:
+           store: mystore
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string
+              template:
+                match:
+                  field_test: "{{query_string2}}"
+
+  - do:
+        ltr.update_feature:
+           store: mystore
+           name: my_feature
+           body:
+            feature:
+              name: my_feature
+              params:
+                 - query_string
+              template:
+                match:
+                  field_test: "{{query_string2}}"
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      feature-my_feature }
+  - match: { _version: 2 }
+
+  - do:
+        ltr.get_feature:
+           store: mystore
+           name: my_feature
+
+  - match: { _source.feature.template.match.field_test: "{{query_string2}}" }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+           prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_feature:
+           store: mystore
+           prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
+        ltr.delete_feature:
+           store: mystore
+           name: my_feature
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_feature:
+           store: mystore
+           name: my_feature

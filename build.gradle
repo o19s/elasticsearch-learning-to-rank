@@ -12,7 +12,7 @@ buildscript {
 }
 
 group = 'com.o19s'
-version = '0.1.2-es5.5.2'
+version = '1.0.0-RC1-es5.5.2'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
@@ -21,9 +21,8 @@ apply plugin: 'idea'
 esplugin {
   name 'ltr-query'
   description 'Learing to Rank Query w/ RankLib Models'
-  classname 'com.o19s.es.ltr.query.LtrQueryParserPlugin'
+  classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
 }
-
 
 // In this section you declare the dependencies for your production and test code
 // Note, the two dependencies are not really needed as the buildscript dependency gets them in already
@@ -33,10 +32,22 @@ repositories {
     mavenLocal()
     jcenter()
 }
+
 dependencies {
+  compile "org.apache.lucene:lucene-expressions:6.6.0"
+  compile 'org.antlr:antlr4-runtime:4.5.1-1'
+  compile 'org.ow2.asm:asm:5.0.4'
+  compile 'org.ow2.asm:asm-commons:5.0.4'
+  compile 'org.ow2.asm:asm-tree:5.0.4'
   compile 'org.elasticsearch:elasticsearch:5.5.2'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
+  compile "com.github.spullara.mustache.java:compiler:0.9.3"
   testCompile 'org.elasticsearch.test:framework:5.5.2'
+}
+
+dependencyLicenses {
+  mapping from: /lucene-.*/, to: 'lucene'
+  mapping from: /asm-.*/, to: 'asm'
 }
 
 // Set to false to not use elasticsearch checkstyle rules

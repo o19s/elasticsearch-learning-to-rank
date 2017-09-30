@@ -1,0 +1,22 @@
+{
+  "ltr.get_model": {
+    "methods" : ["GET"],
+    "url": {
+      "path": "/_ltr/{store}/_model/{name}",
+      "paths": ["/_ltr/_model/{name}", "/_ltr/{store}/_model/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The model name"
+        }
+      }
+    },
+    "body": null
+  }
+}

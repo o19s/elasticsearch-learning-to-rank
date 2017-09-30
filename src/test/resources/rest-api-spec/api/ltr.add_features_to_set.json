@@ -1,0 +1,49 @@
+{
+  "ltr.add_features_to_set": {
+    "methods" : ["POST"],
+    "url": {
+      "path": "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
+      "paths": [
+        "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
+        "/_ltr/{store}/_featureset/{name}/_addfeatures",
+        "/_ltr/_featureset/{name}/_addfeatures/{query}",
+        "/_ltr/_featureset/{name}/_addfeatures"
+      ],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
+        },
+        "query": {
+          "type": "string",
+          "required": false,
+          "description": "The feature names query"
+        }
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        },
+        "version": {
+          "type" : "long",
+          "description" : "Extra check to ensure that the model is created with this version of the set"
+        },
+        "merge": {
+          "type" : "boolean",
+          "description" : "Merge the list for features otherwise append only"
+        }
+      }
+    },
+    "body": {
+      "description" : "The feature",
+      "required": "false"
+    }
+  }
+}

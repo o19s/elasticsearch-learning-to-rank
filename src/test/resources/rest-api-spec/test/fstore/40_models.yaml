@@ -1,0 +1,198 @@
+---
+"CRUD operations test: model on default store":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.create_model:
+           name: my_model
+           body:
+            model:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      model-my_model }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_model:
+           name: my_model
+
+  - match: { _source.name: my_model }
+  - match: { _source.model.model.definition.feature1: 1.2 }
+
+  - do:
+        catch: /Element of type \[model\] are not updatable, please create a new one instead/
+        ltr.update_model:
+           name: my_model
+           body:
+            model:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+
+  - do:
+        ltr.list_model: {}
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+            prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+            prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
+        ltr.delete_model:
+           name: my_model
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_model:
+           name: my_model
+
+---
+"CRUD operations test: model on custom store":
+  - do:
+        ltr.create_store:
+            store: mystore
+
+  - do:
+        ltr.create_model:
+           store: mystore
+           name: my_model
+           body:
+            model:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      model-my_model }
+  - match: { _version: 1 }
+
+  - do:
+        ltr.get_model:
+           store: mystore
+           name: my_model
+
+  - match: { _source.name: my_model }
+  - match: { _source.model.model.definition.feature1: 1.2 }
+
+  - do:
+        catch: /Element of type \[model\] are not updatable, please create a new one instead./
+        ltr.update_model:
+           store: mystore
+           name: my_model
+           body:
+            model:
+              name: my_model
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+
+  - do:
+        ltr.list_model:
+           store: mystore
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+           store: mystore
+           prefix: my
+
+  - match: { hits.total: 1 }
+
+  - do:
+        ltr.list_model:
+           store: mystore
+           prefix: hop
+
+  - match: { hits.total: 0 }
+
+  - do:
+        ltr.delete_model:
+           store: mystore
+           name: my_model
+
+  - is_true: ''
+
+  - do:
+        catch: missing
+        ltr.get_model:
+           store: mystore
+           name: my_model
