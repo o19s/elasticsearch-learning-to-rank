@@ -1,7 +1,5 @@
 [![CircleCI](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank.svg?style=svg)](https://circleci.com/gh/o19s/elasticsearch-learning-to-rank)
 
-[Read the docs](http://elasticsearch-learning-to-rank.readthedocs.io) to learn more about this plugin and learning to rank!
-
 The Elasticsearch Learning to Rank plugin uses machine learning to control relevance ranking. It's powering search at places like Wikimedia Foundation and Snagajob!
 
 # What this plugin does...
