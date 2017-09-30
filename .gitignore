@@ -1,3 +1,4 @@
+# Build directory for read-the-docs
 /docs/_build/
 
 .envrc
