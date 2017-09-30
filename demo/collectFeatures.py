@@ -36,12 +36,13 @@ logQuery = {
 
 def featureDictToList(ranklibLabeledFeatures):
     rVal = [0.0] * len(ranklibLabeledFeatures)
-    for ranklibIdx, value in ranklibLabeledFeatures.items():
+    for idx, logEntry in enumerate(ranklibLabeledFeatures):
+        value = logEntry['value']
         try:
-            rVal[int(ranklibIdx) - 1] = value
+            rVal[idx - 1] = value
         except IndexError:
             import pdb; pdb.set_trace()
-            print("Out of range %s" % ranklibIdx)
+            print("Out of range %s" % idx)
     return rVal
 
 

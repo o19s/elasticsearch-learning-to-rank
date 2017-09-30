@@ -18,6 +18,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
@@ -37,14 +38,6 @@ import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import java.io.IOException;
 
 public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
-    private static final ObjectParser<ParserState, Void> PARSER;
-    static {
-        PARSER = new ObjectParser<>("model", ParserState::new);
-        PARSER.declareString(ParserState::setName, new ParseField("name"));
-        PARSER.declareObject(ParserState::setModel,
-                StoredLtrModel.LtrModelDefinition::parse,
-                new ParseField("model"));
-    }
 
     public RestCreateModelFromSet(Settings settings, RestController controller) {
         super(settings);
@@ -67,10 +60,11 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
         request.withContentOrSourceParamParserOrNull((p) -> ParserState.parse(p, state));
         CreateModelFromSetRequestBuilder builder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client);
         if (expectedVersion != null) {
-            builder.withVersion(store, request.param("name"), expectedVersion, state.name, state.model);
+            builder.withVersion(store, request.param("name"), expectedVersion, state.model.name, state.model.model);
         } else {
-            builder.withoutVersion(store, request.param("name"), state.name, state.model);
+            builder.withoutVersion(store, request.param("name"), state.model.name, state.model.model);
         }
+        builder.request().setValidation(state.validation);
         builder.routing(routing);
         return (channel) -> builder.execute(ActionListener.wrap(
                 response -> new RestStatusToXContentListener<CreateModelFromSetAction.CreateModelFromSetResponse>(channel,
@@ -99,21 +93,64 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
     }
 
     private static class ParserState {
-        String name;
-        StoredLtrModel.LtrModelDefinition model;
+        private static final ObjectParser<ParserState, Void> PARSER = new ObjectParser<>("create_model_from_set", ParserState::new);;
 
-        public void setName(String name) {
-            this.name = name;
+        static {
+            PARSER.declareObject(ParserState::setModel, Model.MODEL_PARSER::apply, new ParseField("model"));
+            PARSER.declareObject(ParserState::setValidation, FeatureValidation.PARSER::apply, new ParseField("validation"));
         }
 
-        public void setModel(StoredLtrModel.LtrModelDefinition model) {
+        private Model model;
+        private FeatureValidation validation;
+
+        public Model getModel() {
+            return model;
+        }
+
+        public void setModel(Model model) {
             this.model = model;
+        }
+
+        public FeatureValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
         }
 
         public static void parse(XContentParser parser, ParserState value) throws IOException {
             PARSER.parse(parser, value, null);
-            if (value.name == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Missing required value [name]");
+            if (value.model == null) {
+                throw new ParsingException(parser.getTokenLocation(), "Missing required value [model]");
+            }
+        }
+
+        private static class Model {
+            private static final ObjectParser<Model, Void> MODEL_PARSER = new ObjectParser<>("model", Model::new);;
+            static {
+                MODEL_PARSER.declareString(Model::setName, new ParseField("name"));
+                MODEL_PARSER.declareObject(Model::setModel,
+                        StoredLtrModel.LtrModelDefinition::parse,
+                        new ParseField("model"));
+            }
+
+            String name;
+            StoredLtrModel.LtrModelDefinition model;
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public void setModel(StoredLtrModel.LtrModelDefinition model) {
+                this.model = model;
+            }
+
+            public static void parse(XContentParser parser, Model value) throws IOException {
+                MODEL_PARSER.parse(parser, value, null);
+                if (value.name == null) {
+                    throw new ParsingException(parser.getTokenLocation(), "Missing required value [name]");
+                }
             }
         }
     }

@@ -7,6 +7,7 @@
         ltr.create_featureset:
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
@@ -30,6 +31,7 @@
         ltr.create_featureset:
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
@@ -47,6 +49,7 @@
         ltr.update_featureset:
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
@@ -109,6 +112,7 @@
            store: mystore
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
@@ -134,6 +138,7 @@
            store: mystore
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1
@@ -152,6 +157,7 @@
            store: mystore
            name: my_featureset
            body:
+            featureset:
               name: my_featureset
               features:
                   - name: feature1

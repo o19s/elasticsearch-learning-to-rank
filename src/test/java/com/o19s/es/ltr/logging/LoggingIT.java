@@ -195,41 +195,51 @@ public class LoggingIT extends BaseIntegrationTest {
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {
         for (SearchHit hit: resp.getHits()) {
             assertTrue(hit.getFields().containsKey("_ltrlog"));
-            Map<String, Map<String, Float>> logs = hit.getFields().get("_ltrlog").getValue();
+            Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
             assertTrue(logs.containsKey("first_log"));
             assertTrue(logs.containsKey("second_log"));
 
-            Map<String, Float> log1 = logs.get("first_log");
-            Map<String, Float> log2 = logs.get("second_log");
+            List<Map<String, Object>> log1 = logs.get("first_log");
+            List<Map<String, Object>> log2 = logs.get("second_log");
             Doc d = docs.get(hit.getId());
             if (d.field1.equals("found")) {
-                assertTrue(log1.containsKey("text_feature1"));
-                assertTrue(log2.containsKey("text_feature1"));
-                assertTrue(log1.get("text_feature1") > 0F);
-                assertTrue(log2.get("text_feature1") > 0F);
-                assertFalse(log1.containsKey("text_feature2"));
-                assertTrue(log2.containsKey("text_feature2"));
-                assertEquals(0F, log2.get("text_feature2"), 0F);
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertTrue((Float)log1.get(0).get("value") > 0F);
+                assertTrue((Float)log2.get(0).get("value") > 0F);
+
+                assertEquals(log1.get(1).get("name"), "text_feature2");
+                assertFalse(log1.get(1).containsKey("value"));
+
+                assertEquals(log2.get(1).get("name"), "text_feature2");
+                assertEquals(log2.get(1).get("value"), 0F);
+
             } else {
-                assertTrue(log1.containsKey("text_feature2"));
-                assertTrue(log2.containsKey("text_feature2"));
-                assertTrue(log1.get("text_feature2") > 0F);
-                assertTrue(log2.get("text_feature2") > 0F);
-                assertFalse(log1.containsKey("text_feature1"));
-                assertTrue(log2.containsKey("text_feature1"));
-                assertEquals(0F, log2.get("text_feature1"), 0F);
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertTrue((Float)log1.get(1).get("value") > 0F);
+                assertTrue((Float)log2.get(1).get("value") > 0F);
+
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertEquals(0F, (Float)log2.get(0).get("value"), 0F);
             }
             float score = (float) Math.log1p((d.scorefield1 * FACTOR) + 1);
-            assertTrue(log1.containsKey("numeric_feature1"));
-            assertTrue(log2.containsKey("numeric_feature1"));
+            assertEquals(log1.get(2).get("name"), "numeric_feature1");
+            assertEquals(log2.get(2).get("name"), "numeric_feature1");
 
-            assertEquals(score, log1.get("numeric_feature1"), Math.ulp(score));
-            assertEquals(score, log2.get("numeric_feature1"), Math.ulp(score));
+            assertEquals(score, (Float)log1.get(2).get("value"), Math.ulp(score));
+            assertEquals(score, (Float)log2.get(2).get("value"), Math.ulp(score));
 
-            assertTrue(log1.containsKey("derived_feature"));
-            assertTrue(log2.containsKey("derived_feature"));
-            assertEquals(100.0, log1.get("derived_feature"), Math.ulp(100.0));
-            assertEquals(100.0, log2.get("derived_feature"), Math.ulp(100.0));
+            assertEquals(log1.get(3).get("name"), "derived_feature");
+            assertEquals(log2.get(3).get("name"), "derived_feature");
+
+            assertEquals(100.0, (Float)log1.get(3).get("value"), Math.ulp(100.0));
+            assertEquals(100.0, (Float) log2.get(3).get("value"), Math.ulp(100.0));
+
         }
     }
 

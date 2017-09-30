@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
@@ -96,6 +97,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
         private String modelName;
         private StoredLtrModel.LtrModelDefinition definition;
         private String routing;
+        private FeatureValidation validation;
 
         public CreateModelFromSetRequest() {
         }
@@ -127,6 +129,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             modelName = in.readString();
             definition = new StoredLtrModel.LtrModelDefinition(in);
             routing = in.readOptionalString();
+            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -138,6 +141,7 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
             out.writeString(modelName);
             definition.writeTo(out);
             out.writeOptionalString(routing);
+            out.writeOptionalWriteable(validation);
         }
 
         public String getStore() {
@@ -166,6 +170,14 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
 
         public void setRouting(String routing) {
             this.routing = routing;
+        }
+
+        public FeatureValidation getValidation() {
+            return validation;
+        }
+
+        public void setValidation(FeatureValidation validation) {
+            this.validation = validation;
         }
     }
 

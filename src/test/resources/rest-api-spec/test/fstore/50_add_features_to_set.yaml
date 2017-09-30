@@ -1,5 +1,5 @@
 ---
-"Append features to set on the default store":
+"Append/merge features to set on the default store with a query":
   - do:
         ltr.create_store: {}
 
@@ -7,6 +7,7 @@
         ltr.create_feature:
            name: my_feature1
            body:
+            feature:
               name: my_feature1
               params:
                  - query_string
@@ -18,6 +19,7 @@
         ltr.create_feature:
            name: my_feature2
            body:
+            feature:
               name: my_feature2
               params:
                  - query_string
@@ -29,6 +31,7 @@
         ltr.create_feature:
            name: another_feature
            body:
+            feature:
               name: another_feature
               params:
                  - query_string
@@ -69,11 +72,25 @@
   - do:
         catch: /Feature \[another_feature\] defined twice in this set/
         ltr.add_features_to_set:
-            name: my_generated_set
+            name:  my_generated_set
             query: another_feature
 
+  - do:
+        ltr.add_features_to_set:
+            name: my_generated_set
+            merge: true
+            query: another_feature
+  - do:
+         ltr.get_featureset:
+             name: my_generated_set
+
+  - match: { _index: .ltrstore }
+  - match: { _id:  featureset-my_generated_set }
+  - match: { _version: 3 }
+  - length: { _source.featureset.features: 3 }
+
 ---
-"Append features to set on custom store":
+"Append features to set on custom store with a query":
   - do:
         ltr.create_store:
            store: mystore
@@ -83,6 +100,7 @@
            store: mystore
            name: another_feature
            body:
+            feature:
               name: another_feature
               params:
                  - query_string
@@ -98,6 +116,130 @@
            store: mystore
            name: my_generated_set
            query: another_feature
+
+  - match: { _index:   .ltrstore_mystore }
+  - match: { _id:      featureset-my_generated_set }
+  - match: { _version: 1 }
+
+  - do:
+         ltr.get_featureset:
+             store: mystore
+             name: my_generated_set
+
+  - length: { _source.featureset.features: 1 }
+---
+"Append/merge features to set on the default store with a list":
+  - do:
+        ltr.create_store: {}
+
+  - do:
+        ltr.add_features_to_set:
+            name: my_generated_set
+            body:
+              features:
+                - name: my_feature1
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test1: "{{query_string}}"
+                - name: my_feature2
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test2: "{{query_string}}"
+
+  - match: { _index:   .ltrstore }
+  - match: { _id:      featureset-my_generated_set }
+  - match: { _version: 1 }
+
+  - do:
+         ltr.get_featureset:
+             name: my_generated_set
+
+  - length: { _source.featureset.features: 2 }
+
+  - do:
+        ltr.add_features_to_set:
+            name: my_generated_set
+            body:
+              features:
+                - name: another_feature
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test_other: "{{query_string}}"
+
+  - do:
+         ltr.get_featureset:
+             name: my_generated_set
+
+  - match: { _index: .ltrstore }
+  - match: { _id:  featureset-my_generated_set }
+  - match: { _version: 2 }
+  - length: { _source.featureset.features: 3 }
+
+  - do:
+        catch: /Feature \[another_feature\] defined twice in this set/
+        ltr.add_features_to_set:
+            name: my_generated_set
+            body:
+              features:
+                - name: another_feature
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test_other: "{{query_string}}"
+
+  - do:
+        ltr.add_features_to_set:
+            name: my_generated_set
+            merge: true
+            body:
+              features:
+                - name: another_feature
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test_other: "{{query_string}}"
+                - name: feature3
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test_other: "{{query_string}}"
+
+  - do:
+         ltr.get_featureset:
+             name: my_generated_set
+
+  - match: { _index: .ltrstore }
+  - match: { _id:  featureset-my_generated_set }
+  - match: { _version: 3 }
+  - length: { _source.featureset.features: 4 }
+
+---
+"Append features to set on custom store":
+  - do:
+        ltr.create_store:
+           store: mystore
+
+  - do:
+        ltr.add_features_to_set:
+           store: mystore
+           name: my_generated_set
+           body:
+              features:
+                - name: another_feature
+                  params:
+                    - query_string
+                  template:
+                    match:
+                      field_test_other: "{{query_string}}"
 
   - match: { _index:   .ltrstore_mystore }
   - match: { _id:      featureset-my_generated_set }

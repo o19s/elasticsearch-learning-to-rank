@@ -94,6 +94,7 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
         FeatureStoreRequest featureStoreRequest = new FeatureStoreRequest(request.getStore(), model, FeatureStoreRequest.Action.CREATE);
         featureStoreRequest.setRouting(request.getRouting());
         featureStoreRequest.setParentTask(clusterService.localNode().getId(), parentTask.getId());
+        featureStoreRequest.setValidation(request.getValidation());
         featureStoreAction.execute(featureStoreRequest, ActionListener.wrap(
                 (r) -> listener.onResponse(new CreateModelFromSetResponse(r.getResponse())),
                 listener::onFailure));

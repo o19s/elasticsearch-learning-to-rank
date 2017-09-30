@@ -172,6 +172,36 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         return new StoredFeatureSet(name, newFeatures);
     }
 
+    /**
+     * Generate a new set by merging features with this set, feature with same names are updated new features are appended.
+     * Ordinals of existing features are kept.
+     *
+     * @param mergedFeatures the list of features to merge
+     * @return the new set
+     * @throws IllegalArgumentException if the resulting size of the set exceed MAX_FEATURES
+     */
+    public StoredFeatureSet merge(List<StoredFeature> mergedFeatures) {
+        int merged = (int) mergedFeatures.stream()
+                .map(StoredFeature::name)
+                .filter(this::hasFeature)
+                .count();
+
+        if (size() + (mergedFeatures.size() - merged) > MAX_FEATURES) {
+            throw new IllegalArgumentException("The resulting feature set would be too large");
+        }
+        List<StoredFeature> newFeatures = new ArrayList<>(this.features.size() + mergedFeatures.size() - merged);
+        newFeatures.addAll(this.features);
+        for (StoredFeature f : mergedFeatures) {
+            if (hasFeature(f.name())) {
+                newFeatures.set(featureOrdinal(f.name()), f);
+            } else {
+                newFeatures.add(f);
+            }
+        }
+        assert newFeatures.size() <= MAX_FEATURES;
+        return new StoredFeatureSet(name, newFeatures);
+    }
+
     @Override
     public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());

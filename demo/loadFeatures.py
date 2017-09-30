@@ -24,8 +24,10 @@ def eachFeature():
 
 def loadFeatures(esHost, featureSetName='movie_features'):
     featureSet = {
-        "name": featureSetName,
-        "features": [feature for feature in eachFeature()]
+        "featureset": {
+            "name": featureSetName,
+            "features": [feature for feature in eachFeature()]
+        }
     }
     path = "_ltr/_featureset/%s" % featureSetName
     fullPath = urljoin(esHost, path)
