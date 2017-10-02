@@ -162,6 +162,8 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         builder.setQuery(ltrBuilder);
         builder.setFrom(0);
         builder.setSize(20);
+        // Bail out early and don't score the whole index.
+        builder.setTerminateAfter(1000);
         builder.request().setParentTask(clusterService.localNode().getId(), task.getId());
         builder.execute(wrap((r) -> {
                 if (r.getFailedShards() > 0) {
