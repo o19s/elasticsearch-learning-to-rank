@@ -19,7 +19,7 @@ apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'idea'
 
 esplugin {
-  name 'ltr-query'
+  name 'ltr'
   description 'Learing to Rank Query w/ RankLib Models'
   classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
 }
