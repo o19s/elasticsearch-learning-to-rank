@@ -23,7 +23,7 @@ Rescore top N with `sltr`
 
 In reality you would never want to use the :code:`sltr` query this way. Why? This model executes on *every result in your index*. These models are CPU intensive. You'll quickly make your Elasticsearch cluster crawl with the query above.
 
-More often, you'll execute your model on the top N of a baseline relevance query. You can do this using Elasticsearch's built in `rescore functionality<(https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-rescore.html). >`_::
+More often, you'll execute your model on the top N of a baseline relevance query. You can do this using Elasticsearch's built in `rescore functionality <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-rescore.html>`_::
 
     POST tmdb/_search
     {
