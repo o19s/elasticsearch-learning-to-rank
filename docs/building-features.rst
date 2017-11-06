@@ -204,7 +204,7 @@ Of course you may not know upfront what features could be useful. You may wish t
 
     POST /_ltr/_featureset/my_featureset/_addfeatures
     {
-        "features": [
+        "features": [{
             "name": "user_rating",
             "params": [],
             "template_language": "mustache",
@@ -218,7 +218,7 @@ Of course you may not know upfront what features could be useful. You may wish t
                     }
                 }
             }
-        ]
+        }]
     }
 
 
