@@ -107,10 +107,10 @@ A *feature set* is a set of features that has been grouped together for logging 
 Create a feature set 
 ====================
 
-You can create a feature set simply by using a PUT. To create it, you give a feature set a name and optionally a list of features::
+You can create a feature set simply by using a POST. To create it, you give a feature set a name and optionally a list of features::
 
 
-    PUT _ltr/_featureset
+    POST _ltr/_featureset
     {
        "featureset": {
             "name": "more_movie_features",
