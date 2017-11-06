@@ -122,10 +122,8 @@ You can create a feature set simply by using a PUT. To create it, you give a fea
                     ],
                     "template_language": "mustache",
                     "template": {
-                        "query": {
-                            "match": {
-                                "title": "{{keywords}}"
-                            }
+                        "match": {
+                            "title": "{{keywords}}"
                         }
                     }
                 }
@@ -188,10 +186,8 @@ Place this alongside the feature set. You'll see below we have a malformed :code
                     ],
                     "template_language": "mustache",
                     "template": {
-                        "query": {
-                            "mooch": {
-                                "title": "{{keywords}}"
-                            }
+                        "mooch": {
+                            "title": "{{keywords}}"
                         }
                     }
                 }
@@ -213,16 +209,14 @@ Of course you may not know upfront what features could be useful. You may wish t
             "params": [],
             "template_language": "mustache",
             "template" : {
-                "query": {
-                    "function_score": {
-                        "functions": {
-                            "field": "vote_average"
-                        },
-                        "query": {
-                            "match_all": {}
-                        }
+                "function_score": {
+                    "functions": {
+                        "field": "vote_average"
+                    },
+                    "query": {
+                        "match_all": {}
                     }
-               }
+                }
             }
         ]
     }
