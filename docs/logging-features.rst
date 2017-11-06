@@ -24,7 +24,7 @@ For the sake of discussing logging, let's say we created a feature set like so t
                     "match": {
                         "overview": "{{keywords}}"
                     }
-                }            
+                }
             },
             {
                 "name": "title_query",
@@ -263,14 +263,12 @@ Feature sets can be appended to. As mentioned in :doc:`building-features`, you s
             "params": [],
             "template_language": "mustache",
             "template" : {
-                "query": {
-                    "function_score": {
-                        "functions": {
-                            "field": "vote_average"
-                        },
-                        "query": {
-                            "match_all": {}
-                        }
+                "function_score": {
+                    "functions": {
+                        "field": "vote_average"
+                    },
+                    "query": {
+                        "match_all": {}
                     }
                 }
             }
@@ -303,14 +301,12 @@ You might create a completely new feature set for experimental purposes. For exa
     "features": [
         {
             "name": "cast_query",
-            "params": [
-                "keywords"
-                ],
-                "template": {
+            "params": [ "keywords" ],
+            "template": {
                 "match": {
                     "cast.name": "{{keywords}}"
                 }
-            }            
+            }
         },
         {
             "name": "genre_query",
