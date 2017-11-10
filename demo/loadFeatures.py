@@ -5,38 +5,50 @@ from urllib.parse import urljoin
 def getFeature(ftrId):
     return json.loads(open('%s.json' % ftrId).read())
 
-def eachFeature():
+def eachFeature(loadFeatures):
     try:
         ftrId = 1
         while True:
             parsedJson = getFeature(ftrId)
-            template = parsedJson['query']
-            featureSpec = {
-                "name": "%s" % ftrId,
-                "params": ["keywords"],
-                "template": template
-            }
-            yield featureSpec
+            if loadFeatures is None or ftrId in loadFeatures:
+                template = parsedJson['query']
+                featureSpec = {
+                    "name": "%s" % ftrId,
+                    "params": ["keywords"],
+                    "template": template
+                }
+                yield featureSpec
             ftrId += 1
     except IOError:
         pass
 
-
-def loadFeatures(esHost, featureSetName='movie_features'):
-    featureSet = {
-        "featureset": {
-            "name": featureSetName,
-            "features": [feature for feature in eachFeature()]
-        }
-    }
-    path = "_ltr/_featureset/%s" % featureSetName
+def POST(esHost, path, body):
     fullPath = urljoin(esHost, path)
     print("POST %s" % fullPath)
-    print(json.dumps(featureSet, indent=2))
-    resp = requests.post(fullPath, json.dumps(featureSet))
+    print(json.dumps(body, indent=2))
+    resp = requests.post(fullPath, json.dumps(body))
     print("%s" % resp.status_code)
     print("%s" % resp.text)
 
+
+
+def loadFeatures(esHost, featureSetName='movie_features', loadFeatures=None):
+    featureSet = {
+        "featureset": {
+            "name": featureSetName,
+            "features": [feature for feature in eachFeature(loadFeatures)]
+        }
+    }
+    path = "_ltr/_featureset/%s" % featureSetName
+    POST(esHost, path, featureSet)
+
+
+def appendFeatures(esHost, featureSetName='movie_features', loadFeatures=None):
+    body = {
+        "features": [feature for feature in eachFeature(loadFeatures)]
+    }
+    path = "_ltr/_featureset/%s/_addfeatures" % featureSetName
+    POST(esHost, path, body)
 
 
 def initDefaultStore(esHost):

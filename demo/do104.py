@@ -1,6 +1,6 @@
 import os
 from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
-from loadFeatures import initDefaultStore, loadFeatures
+from loadFeatures import initDefaultStore, loadFeatures, appendFeatures
 
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
@@ -42,21 +42,9 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
 
 
 
-
-
-if __name__ == "__main__":
-    import configparser
-    from elasticsearch import Elasticsearch
-    from judgments import judgmentsFromFile, judgmentsByQid
-
-    config = configparser.ConfigParser()
-    config.read('settings.cfg')
-    esUrl = config['DEFAULT']['ESHost']
-
-    es = Elasticsearch(esUrl, timeout=1000)
-    # Load features into Elasticsearch
-    initDefaultStore(esUrl)
-    loadFeatures(esUrl)
+def buildAModel(useFeatures=[], fName='model.txt'):
+    with open('features.txt', 'w') as f:
+        f.write("\n".join([str(ftr) for ftr in useFeatures]))
     # Parse a judgments
     movieJudgments = judgmentsByQid(judgmentsFromFile(filename='sample_judgments.txt'))
     # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
@@ -75,5 +63,33 @@ if __name__ == "__main__":
         # 8, Random Forests
         # 9, Linear Regression
         print("*** Training %s " % modelType)
-        trainModel(judgmentsWithFeaturesFile='sample_judgments_wfeatures.txt', modelOutput='model.txt', whichModel=modelType)
-        saveModel(esHost=esUrl, scriptName="test_%s" % modelType, featureSet='movie_features', modelFname='model.txt')
+        trainModel(judgmentsWithFeaturesFile='sample_judgments_wfeatures.txt', modelOutput=fName, whichModel=modelType)
+        saveModel(esHost=esUrl, scriptName="test_%s" % modelType, featureSet='movie_features', modelFname=fName)
+
+
+
+
+if __name__ == "__main__":
+    import configparser
+    from elasticsearch import Elasticsearch
+    from judgments import judgmentsFromFile, judgmentsByQid
+
+    config = configparser.ConfigParser()
+    config.read('settings.cfg')
+    esUrl = config['DEFAULT']['ESHost']
+
+    es = Elasticsearch(esUrl, timeout=1000)
+    # Load features into Elasticsearch
+    initDefaultStore(esUrl)
+    loadFeatures(esUrl, loadFeatures=[1,2])
+    appendFeatures(esUrl, loadFeatures=[3])
+
+    buildAModel(useFeatures=[1,3], fName='orig_model.txt')
+
+    es = Elasticsearch(esUrl, timeout=1000)
+    # Load features into Elasticsearch
+    initDefaultStore(esUrl)
+    loadFeatures(esUrl, loadFeatures=[1,2])
+    appendFeatures(esUrl, loadFeatures=[4])
+
+    saveModel(esHost=esUrl, scriptName="test_6", featureSet='movie_features', modelFname='orig_model.txt')

@@ -1,0 +1,16 @@
+{
+"query": {
+ "function_score": {
+              "functions": [
+                {
+                  "field_value_factor": {
+                    "field": "user_rating",
+                    "missing": 0
+                  }
+                }
+              ],
+              "query": {
+                "match_all": {}
+              }
+            }
+}}
