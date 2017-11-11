@@ -20,11 +20,16 @@ baseQuery = {
 
 def ltrQuery(keywords, modelName):
     import json
-    baseQuery['rescore']['query']['rescore_query']['sltr']['model'] = model
+    baseQuery['rescore']['query']['rescore_query']['sltr']['model'] = modelName
     baseQuery['query']['match']['_all'] = keywords
     baseQuery['rescore']['query']['rescore_query']['sltr']['params']['keywords'] = keywords
     print("%s" % json.dumps(baseQuery))
     return baseQuery
+
+def search(es, model, keyword):
+    results = es.search(index='tmdb', doc_type='movie', body=ltrQuery(keyword, model))
+    for result in results['hits']['hits']:
+             print(result['_source']['title'])
 
 
 if __name__ == "__main__":
@@ -40,7 +45,5 @@ if __name__ == "__main__":
     model = "test_6"
     if len(argv) > 2:
         model = argv[2]
-    results = es.search(index='tmdb', doc_type='movie', body=ltrQuery(argv[1], model))
-    for result in results['hits']['hits']:
-             print(result['_source']['title'])
+    search(es, model, keyword=argv[1])
 

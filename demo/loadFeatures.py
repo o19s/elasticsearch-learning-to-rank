@@ -5,22 +5,16 @@ from urllib.parse import urljoin
 def getFeature(ftrId):
     return json.loads(open('%s.json' % ftrId).read())
 
-def eachFeature(loadFeatures):
-    try:
-        ftrId = 1
-        while True:
-            parsedJson = getFeature(ftrId)
-            if loadFeatures is None or ftrId in loadFeatures:
-                template = parsedJson['query']
-                featureSpec = {
-                    "name": "%s" % ftrId,
-                    "params": ["keywords"],
-                    "template": template
-                }
-                yield featureSpec
-            ftrId += 1
-    except IOError:
-        pass
+def eachFeature(loadFeatureNames):
+    for featureName in loadFeatureNames:
+        parsedJson = getFeature(featureName)
+        template = parsedJson['query']
+        featureSpec = {
+            "name": "%s" % featureName,
+            "params": ["keywords"],
+            "template": template
+        }
+        yield featureSpec
 
 def POST(esHost, path, body):
     fullPath = urljoin(esHost, path)

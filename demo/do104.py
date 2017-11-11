@@ -1,6 +1,8 @@
 import os
 from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
 from loadFeatures import initDefaultStore, loadFeatures, appendFeatures
+from search import search
+import random
 
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
@@ -44,7 +46,7 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
 
 def buildAModel(useFeatures=[], fName='model.txt'):
     with open('features.txt', 'w') as f:
-        f.write("\n".join([str(ftr) for ftr in useFeatures]))
+        f.write("\n".join([str(ftrOrd+1) for ftrOrd, ftr in enumerate(useFeatures)]))
     # Parse a judgments
     movieJudgments = judgmentsByQid(judgmentsFromFile(filename='sample_judgments.txt'))
     # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
@@ -67,11 +69,24 @@ def buildAModel(useFeatures=[], fName='model.txt'):
         saveModel(esHost=esUrl, scriptName="test_%s" % modelType, featureSet='movie_features', modelFname=fName)
 
 
+def pickFeatures(availableFeatures):
+    otherFeatures = []
+    initialFeatures = random.sample(availableFeatures, random.randint(1,3))
+    for ftr in availableFeatures:
+        add = random.randint(0,1)
+        if add == 1 and ftr not in initialFeatures:
+            otherFeatures.append(ftr)
+
+    print("Initial %s" % initialFeatures)
+    print("Other %s" % otherFeatures)
+    return initialFeatures, otherFeatures
+
 
 
 if __name__ == "__main__":
     import configparser
     from elasticsearch import Elasticsearch
+    from sys import exit
     from judgments import judgmentsFromFile, judgmentsByQid
 
     config = configparser.ConfigParser()
@@ -79,17 +94,40 @@ if __name__ == "__main__":
     esUrl = config['DEFAULT']['ESHost']
 
     es = Elasticsearch(esUrl, timeout=1000)
+
+    availableFeatures = ['titleScore', 'overviewScore', 'taglineScore', 'userRating']
+
+    for i in range(0,100):
+        # Load features into Elasticsearch
+        initDefaultStore(esUrl)
+
+        initialFeatures, otherFeatures = pickFeatures(availableFeatures)
+        loadFeatures(esUrl, loadFeatures=initialFeatures)
+        appendFeatures(esUrl, loadFeatures=otherFeatures)
+
+        allUsedFeatures = initialFeatures + otherFeatures
+        trainFeatures = random.sample(allUsedFeatures, random.randint(1,3))
+
+        buildAModel(useFeatures=trainFeatures, fName='orig_model.txt')
+        search(es, model='test_6', keyword='rambo foo')
+        exit()
+
+
+
     # Load features into Elasticsearch
     initDefaultStore(esUrl)
-    loadFeatures(esUrl, loadFeatures=[1,2])
-    appendFeatures(esUrl, loadFeatures=[3])
 
-    buildAModel(useFeatures=[1,3], fName='orig_model.txt')
+    otherFeatures = []
+    initialFeatures = random.sample(range(4),random.randint(1,3))
+    for i in range(4):
+        add = random.randint(0,1)
+        if add == 1 and i not in initialFeatures:
+            otherFeatures.append(i)
 
-    es = Elasticsearch(esUrl, timeout=1000)
-    # Load features into Elasticsearch
-    initDefaultStore(esUrl)
-    loadFeatures(esUrl, loadFeatures=[1,2])
-    appendFeatures(esUrl, loadFeatures=[4])
+    print("Initial %s" % initialFeatures)
+    print("Other %s" % otherFeatures)
+
+    loadFeatures(esUrl, loadFeatures=initialFeatures)
+    appendFeatures(esUrl, loadFeatures=otherFeatures)
 
     saveModel(esHost=esUrl, scriptName="test_6", featureSet='movie_features', modelFname='orig_model.txt')
