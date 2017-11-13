@@ -58,7 +58,7 @@ setup:
             name: my_featureset
             body:
               model:
-                name: my_small_lambda_model
+                name: single_feature_ranklib_model
                 model:
                   type: model/ranklib
                   definition: |
@@ -70,28 +70,51 @@ setup:
                               ## Stop early = 100
 
                               <ensemble>
-                              	<tree id="1" weight="0.1">
-                              		<split>
-                                        <feature> 1 </feature>
-                                        <threshold> 1.0 </threshold>
-                                        <split pos="left">
-                                  			<output> -2.0 </output>
-                                  		</split>
-                                        <split pos="right">
-                                            <output> 2.0 </output>
-                                        </split>
-                              		</split>
-                              	</tree>
+                                <tree id="1" weight="0.1">
+                                  <split>
+                                    <feature> 1 </feature>
+                                    <threshold> 1.0 </threshold>
+                                    <split pos="left">
+                                      <output> -2.0 </output>
+                                    </split>
+                                    <split pos="right">
+                                     <output> 2.0 </output>
+                                    </split>
+                                  </split>
+                                </tree>
                               </ensemble>
+
+
+  - do:
+        ltr.create_model_from_set:
+            name: my_featureset
+            body:
+              model:
+                name: single_feature_linear_model
+                model:
+                  type: model/linear
+                  definition:
+                    feature1: 1.3
+
 
   - do:
       indices.refresh: {}
 
 ---
-"search works with linear model":
+"single feature ranklib model":
   - do:
       search:
         index: test
-        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "my_small_lambda_model"  } } }
+        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "single_feature_ranklib_model"  } } }
+
+  - length:   { hits.hits: 2  }
+
+
+---
+"single feature linear model":
+  - do:
+      search:
+        index: test
+        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "single_feature_linear_model"  } } }
 
   - length:   { hits.hits: 2  }

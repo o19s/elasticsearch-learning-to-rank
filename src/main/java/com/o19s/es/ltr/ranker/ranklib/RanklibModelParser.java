@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.ranker.ranklib;
 
+import ciir.umass.edu.learning.Ranker;
 import ciir.umass.edu.learning.RankerFactory;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
@@ -35,6 +36,11 @@ public class RanklibModelParser implements LtrRankerParser {
 
     @Override
     public LtrRanker parse(FeatureSet set, String model) {
-        return new RanklibRanker(factory.loadRankerFromString(model));
+        Ranker ranklibRanker = factory.loadRankerFromString(model);
+        int numFeatures = ranklibRanker.getFeatures().length;
+        if (set != null) {
+            numFeatures = set.size();
+        }
+        return new RanklibRanker(ranklibRanker, numFeatures);
     }
 }
