@@ -1,0 +1,97 @@
+---
+setup:
+  - do:
+      indices.create:
+          index:  test
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     1
+        body:   { "field1": "v1", "field2": "v2", "field3": "some text", "user_rating": 5.2  }
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     2
+        body:   { "field1": "v1 aoeu", "field2": " ua u v2", "field3": "foo bar text", "user_rating": 0.0  }
+
+  - do:
+          ltr.create_store: {}
+
+  - do:
+        ltr.create_featureset:
+           name: my_featureset
+           body:
+            featureset:
+              name: my_featureset
+              features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field1: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field2: "{{query_string}}"
+
+  - do:
+        ltr.add_features_to_set:
+           name: my_featureset
+           body:
+              features:
+                - name: user_rating
+                  params: query_string
+                  template:  {"function_score": { "functions": [ {"field_value_factor": { "field": "user_rating" } }], "query": {"match_all": {}}}}
+
+# Model only uses a single feature... although feature set has multiple
+
+  - do:
+      indices.refresh: {}
+
+  - do:
+        ltr.create_model_from_set:
+            name: my_featureset
+            body:
+              model:
+                name: my_small_lambda_model
+                model:
+                  type: model/ranklib
+                  definition: |
+                              ## LambdaMART
+                              ## No. of trees = 1
+                              ## No. of leaves = 1
+                              ## No. of threshold candidates = 256
+                              ## Learning rate = 0.1
+                              ## Stop early = 100
+
+                              <ensemble>
+                              	<tree id="1" weight="0.1">
+                              		<split>
+                                        <feature> 1 </feature>
+                                        <threshold> 1.0 </threshold>
+                                        <split pos="left">
+                                  			<output> -2.0 </output>
+                                  		</split>
+                                        <split pos="right">
+                                            <output> 2.0 </output>
+                                        </split>
+                              		</split>
+                              	</tree>
+                              </ensemble>
+
+  - do:
+      indices.refresh: {}
+
+---
+"search works with linear model":
+  - do:
+      search:
+        index: test
+        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "my_small_lambda_model"  } } }
+
+  - length:   { hits.hits: 2  }
