@@ -110,7 +110,6 @@ if __name__ == "__main__":
 
         buildAModel(useFeatures=trainFeatures, fName='orig_model.txt')
         search(es, model='test_6', keyword='rambo foo')
-        exit()
 
 
 

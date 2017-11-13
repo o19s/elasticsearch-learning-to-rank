@@ -27,22 +27,24 @@ def POST(esHost, path, body):
 
 
 def loadFeatures(esHost, featureSetName='movie_features', loadFeatures=None):
-    featureSet = {
-        "featureset": {
-            "name": featureSetName,
-            "features": [feature for feature in eachFeature(loadFeatures)]
+    if loadFeatures and len(loadFeatures) > 0:
+        featureSet = {
+            "featureset": {
+                "name": featureSetName,
+                "features": [feature for feature in eachFeature(loadFeatures)]
+            }
         }
-    }
-    path = "_ltr/_featureset/%s" % featureSetName
-    POST(esHost, path, featureSet)
+        path = "_ltr/_featureset/%s" % featureSetName
+        POST(esHost, path, featureSet)
 
 
 def appendFeatures(esHost, featureSetName='movie_features', loadFeatures=None):
-    body = {
-        "features": [feature for feature in eachFeature(loadFeatures)]
-    }
-    path = "_ltr/_featureset/%s/_addfeatures" % featureSetName
-    POST(esHost, path, body)
+    if loadFeatures and len(loadFeatures) > 0:
+        body = {
+            "features": [feature for feature in eachFeature(loadFeatures)]
+        }
+        path = "_ltr/_featureset/%s/_addfeatures" % featureSetName
+        POST(esHost, path, body)
 
 
 def initDefaultStore(esHost):
