@@ -44,6 +44,7 @@ import org.apache.lucene.misc.SweetSpotSimilarity;
 import org.apache.lucene.queries.BlendedTermQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -71,6 +72,8 @@ import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
+import org.elasticsearch.common.lucene.search.function.WeightFactorFunction;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -93,6 +96,17 @@ import java.util.stream.Collectors;
 public class LtrQueryTests extends LuceneTestCase {
     // Number of ULPs allowed when checking scores equality
     private static final int SCORE_NB_ULP_PREC = 1;
+
+
+    private int[] range(int start, int stop)
+    {
+        int[] result = new int[stop-start];
+
+        for(int i=0;i<stop-start;i++)
+            result[i] = start+i;
+
+        return result;
+    }
 
     private Field newField(String name, String value, Store stored) {
         FieldType tagsFieldType = new FieldType();
@@ -235,7 +249,7 @@ public class LtrQueryTests extends LuceneTestCase {
         }
     }
 
-    public void checkModelWithFeatures(List<PrebuiltFeature> features) throws IOException {
+    public void checkModelWithFeatures(List<PrebuiltFeature> features, int[] modelFeatures) throws IOException {
         // Each RankList needed for training corresponds to one query,
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<>();
@@ -246,12 +260,17 @@ public class LtrQueryTests extends LuceneTestCase {
                 new Float[] {3.0f, 2.0f, 4.0f, 0.0f}));
         samples.add(rl);
 
+        int[] featuresToUse = modelFeatures;
+        if (featuresToUse == null) {
+            featuresToUse = range(1, features.size() + 1);
+        }
+
         // each RankList appears to correspond to a
         // query
         RankerTrainer trainer = new RankerTrainer();
         Ranker ranker = trainer.train(/*what type of model ot train*/RANKER_TYPE.LAMBDAMART,
-                                      /*The training data*/ samples,
-                                      /*which features to use*/new int[] {1,2}
+                                      /*The training data*/ samples
+                                      /*which features to use*/, featuresToUse
                                       /*how to score ranking*/, new NDCGScorer());
         float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
@@ -312,19 +331,45 @@ public class LtrQueryTests extends LuceneTestCase {
     }
 
     private RankerQuery toRankerQuery(List<PrebuiltFeature> features, Ranker ranker) {
-        LtrRanker ltrRanker = new RanklibRanker(ranker);
+        LtrRanker ltrRanker = new RanklibRanker(ranker, features.size());
         PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, features));
         return RankerQuery.build(model);
     }
 
     public void testTrainModel() throws IOException {
-        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
         String userQuery = "brown cow";
         List<Query> features = Arrays.asList(
                 new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                 new PhraseQuery("field", userQuery.split(" ")));
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features));
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null);
     }
+
+    public void testSubsetFeaturesFuncScore() throws IOException {
+        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
+        String userQuery = "brown cow";
+
+        Query baseQuery = new MatchAllDocsQuery();
+
+        List<Query> features = Arrays.asList(
+                new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                new PhraseQuery("field", userQuery.split(" ")),
+                new FunctionScoreQuery(baseQuery, new WeightFactorFunction(1.0f))  );
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1});
+    }
+
+    public void testSubsetFeaturesTermQ() throws IOException {
+        //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
+        String userQuery = "brown cow";
+
+        Query baseQuery = new MatchAllDocsQuery();
+
+        List<Query> features = Arrays.asList(
+                new TermQuery(new Term("field",  userQuery.split(" ")[0])),
+                new PhraseQuery("field", userQuery.split(" ")),
+                new PhraseQuery(1, "field", userQuery.split(" ") ));
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1});
+    }
+
 
     public void testExplainWithNames() throws IOException {
         //     public LambdaMART(List<RankList> samples, int[] features, MetricScorer scorer) {
@@ -332,7 +377,7 @@ public class LtrQueryTests extends LuceneTestCase {
         List<PrebuiltFeature> features = Arrays.asList(
                 new PrebuiltFeature("funky_term_q", new TermQuery(new Term("field",  userQuery.split(" ")[0]))),
                 new PrebuiltFeature("funky_phrase_q", new PhraseQuery("field", userQuery.split(" "))));
-        checkModelWithFeatures(features);
+        checkModelWithFeatures(features, null);
     }
 
     public void testOnRewrittenQueries() throws IOException {
@@ -343,7 +388,7 @@ public class LtrQueryTests extends LuceneTestCase {
         Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
         List<Query> features = Arrays.asList(new TermQuery(new Term("field",  userQuery.split(" ")[0])), blended);
 
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features));
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null);
     }
 
     private List<PrebuiltFeature> toPrebuildFeatureWithNoName(List<Query> features) {
@@ -362,7 +407,7 @@ public class LtrQueryTests extends LuceneTestCase {
                 new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
                 new PrebuiltFeature(null, blended));
 
-        checkModelWithFeatures(features);
+        checkModelWithFeatures(features, null);
     }
 
     @After

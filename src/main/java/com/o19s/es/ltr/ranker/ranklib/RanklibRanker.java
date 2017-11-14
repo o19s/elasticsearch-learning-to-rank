@@ -21,9 +21,11 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 
 public class RanklibRanker implements LtrRanker {
     private final Ranker ranker;
+    private final int featureSetSize;
 
-    public RanklibRanker(Ranker ranker) {
+    public RanklibRanker(Ranker ranker, int featureSetSize) {
         this.ranker = ranker;
+        this.featureSetSize = featureSetSize;
     }
 
     /**
@@ -53,7 +55,7 @@ public class RanklibRanker implements LtrRanker {
             return vector;
         }
         // ranklib models are 1-based
-        return new DenseProgramaticDataPoint(ranker.getFeatures().length+1);
+        return new DenseProgramaticDataPoint(featureSetSize);
     }
 
     /**
