@@ -25,7 +25,7 @@ See the full list of [prebuilt versions](http://es-learn-to-rank.labs.o19s.com).
 
 To install, you'd run a command such as:
 
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-1.0.0-RC1-es5.6.2.zip`
+`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-1.0.0-RC2-es5.6.4.zip`
 
 (It's expected you'll confirm some security exceptions, you can pass `-b` to `elasticsearch-plugin` to automatically install)
 
@@ -44,7 +44,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
-./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-0.1.2-es5.4.0.zip
+./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-1.0.0-RC2-es5.6.4.zip
 ```
 
 # Who built this?
