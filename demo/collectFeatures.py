@@ -1,3 +1,4 @@
+import json
 
 logQuery = {
     "size": 100,
@@ -39,9 +40,8 @@ def featureDictToList(ranklibLabeledFeatures):
     for idx, logEntry in enumerate(ranklibLabeledFeatures):
         value = logEntry['value']
         try:
-            rVal[idx - 1] = value
+            rVal[idx] = value
         except IndexError:
-            import pdb; pdb.set_trace()
             print("Out of range %s" % idx)
     return rVal
 
@@ -53,6 +53,8 @@ def logFeatures(es, judgmentsByQid):
         docIds = [judgment.docId for judgment in judgments]
         logQuery['query']['bool']['must'][0]['terms']['_id'] = docIds
         logQuery['query']['bool']['should'][0]['sltr']['params']['keywords'] = keywords
+        print("POST")
+        print(json.dumps(logQuery, indent=2))
         res = es.search(index='tmdb', body=logQuery)
         # Add feature back to each judgment
         featuresPerDoc = {}
