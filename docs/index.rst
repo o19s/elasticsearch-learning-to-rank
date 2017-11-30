@@ -45,6 +45,7 @@ Contents
    logging-features
    training-models
    searching-with-your-model
+   advanced-functionality
    :caption: Contents:
 
 
