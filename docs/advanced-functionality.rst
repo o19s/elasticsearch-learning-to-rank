@@ -81,3 +81,26 @@ Then the same API in this guide applies to this feature store, for example to cr
 And of course you can delete a featureset::
 
     DELETE _ltr/wikipedia/_featureset
+
+=============================
+Model Caching
+=============================
+
+The plugin uses an internal cache for compiled models.
+
+Clear the cache for a feature store to force models to be recompiled::
+
+    POST /_ltr/_clearcache
+
+Get cluster wide cache statistics for this store::
+
+    GET /_ltr/_cachestats
+
+Characteristics of the internal cache can be controlled with these node settings::
+
+    # limit cache usage to 12 megabytes (defaults to 10mb or max_heap/10 if lower)
+    ltr.caches.max_mem: 12mb
+    # Evict cache entries 10 minutes after insertion (defaults to 1hour, set to 0 to disable)
+    ltr.caches.expire_after_write: 10m
+    # Evict cache entries 10 minutes after access (defaults to 1hour, set to 0 to disable)
+    ltr.caches.expire_after_access: 10m
