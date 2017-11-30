@@ -56,8 +56,8 @@ Simple linear models
 Many types of models simply output linear weights of each feature such as linear SVM. The LTR model supports simple linear weights for each features, such as those learned from an SVM model or linear regression::
 
     {
-        "titleScore" : 0.3,
-        "bodyScore" : 0.5,
+        "title_query" : 0.3,
+        "body_query" : 0.5,
         "recency" : 0.1
     }
 
@@ -123,13 +123,74 @@ Or a simple linear model::
                 "type": "model/linear",
                 "definition": "
                                 {
-                                    \"titleScore\" : 0.3,
-                                    \"bodyScore\" : 0.5,
+                                    \"title_query\" : 0.3,
+                                    \"body_query\" : 0.5,
                                     \"recency\" : 0.1
                                 }
                             "
             }
         }
     }
+
+
+===================
+Models aren't "owned by" featuresets
+===================
+
+Though models are created in reference to a feature set, it's important to note after creation models are *top level* entities. For example, to fetch a model back, you use GET::
+
+    GET _ltr/_model/my_linear_model
+
+Similarly, to delete::
+
+    DELETE _ltr/_model/my_linear_model
+
+The associated features are *copied into* the model. This is for your safety: modifying the feature set or deleting the feature set after model creation doesn't have an impact on a model in production. For example, if we delete the feature set above::
+
+    DELETE _ltr/_featureset/more_movie_features
+
+We can still access and search with "my_linear_model". The following still accesses the model and it's associated features::
+
+    GET _ltr/_model/my_linear_model
+
+You can expect a response that includes the features used to create the model (compare this with the more_movie_features in :doc:`logging-features`)::
+
+    {
+    "_index": ".ltrstore",
+    "_type": "store",
+    "_id": "model-my_linear_model",
+    "_version": 1,
+    "found": true,
+    "_source": {
+        "name": "my_linear_model",
+        "type": "model",
+        "model": {
+            "name": "my_linear_model",
+            "feature_set": {
+                "name": "more_movie_features",
+                "features": [
+                {
+                    "name": "body_query",
+                    "params": [
+                        "keywords"
+                        ],
+                     "template": {
+                        "match": {
+                            "overview": "{{keywords}}"
+                        }
+                    }
+                },
+                {
+                    "name": "title_query",
+                    "params": [
+                        "keywords"
+                    ],
+                    "template": {
+                        "match": {
+                            "title": "{{keywords}}"
+                        }
+                    }
+                }
+        ]}}}
 
 With a model uploaded to Elasticsearch, you're ready to search! Head to :doc:`searching-with-your-model` to see put model into action.
