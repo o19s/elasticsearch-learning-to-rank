@@ -145,6 +145,8 @@ Similarly, to delete::
 
     DELETE _ltr/_model/my_linear_model
 
+This of course means model names are globally unique across all feature sets.
+
 The associated features are *copied into* the model. This is for your safety: modifying the feature set or deleting the feature set after model creation doesn't have an impact on a model in production. For example, if we delete the feature set above::
 
     DELETE _ltr/_featureset/more_movie_features
