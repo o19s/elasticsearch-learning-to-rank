@@ -1,7 +1,7 @@
 Advanced Functionality
 ***********************
 
-Most people can safely operate within the confines of the guide, this section documents some additional functionality you may find useful after you're comfortable with the primary capabilities.
+This section documents some additional functionality you may find useful after you're comfortable with the primary capabilities of Elasticsearch LTR.
 
 =============================
 Reusable Features
