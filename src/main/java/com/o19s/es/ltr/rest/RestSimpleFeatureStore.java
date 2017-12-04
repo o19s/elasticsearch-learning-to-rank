@@ -129,6 +129,8 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             super(settings);
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
@@ -156,6 +158,11 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                     IndexFeatureStore.validateFeatureStoreName(request.param("store"));
                 }
                 return createIndex(client, indexName);
+            } else if (request.method() == RestRequest.Method.POST ) {
+                if (request.hasParam("store")) {
+                    IndexFeatureStore.validateFeatureStoreName(request.param("store"));
+                }
+                throw new IllegalArgumentException("Updating a feature store is not yet supported.");
             } else if (request.method() == RestRequest.Method.DELETE) {
                 return deleteIndex(client, indexName);
             } else {
