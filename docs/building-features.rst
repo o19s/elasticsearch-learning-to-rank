@@ -110,7 +110,7 @@ Create a feature set
 You can create a feature set simply by using a POST. To create it, you give a feature set a name and optionally a list of features::
 
 
-    POST _ltr/_featureset
+    POST _ltr/_featureset/more_movie_features
     {
        "featureset": {
             "name": "more_movie_features",
