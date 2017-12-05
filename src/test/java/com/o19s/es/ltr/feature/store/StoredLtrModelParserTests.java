@@ -16,9 +16,13 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
+import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.io.IOException;
+
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -26,12 +30,9 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import java.io.IOException;
-
-import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
-import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 
 public class StoredLtrModelParserTests extends LuceneTestCase {
     private LtrRanker ranker;
@@ -121,6 +122,35 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
             equalTo("Field [name] is mandatory"));
     }
 
+    public void testParseWithExternalName() throws IOException {
+        String modelString = "{\n" +
+                " \"feature_set\":" +
+                StoredFeatureSetParserTests.generateRandomFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\"\n"+
+                " }" +
+                "}";
+        StoredLtrModel model = parse(modelString, "myModel");
+        assertEquals("myModel", model.name());
+    }
+
+    public void testParseWithInconsistentName() throws IOException {
+        String modelString = "{\n" +
+                " \"name\": \"myModel\"," +
+                " \"feature_set\":" +
+                StoredFeatureSetParserTests.generateRandomFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\"\n"+
+                " }" +
+                "}";
+        assertThat(expectThrows(ParsingException.class, () -> parse(modelString, "myModel2")).getMessage(),
+                equalTo("Invalid [name], expected [myModel2] but got [myModel]"));
+    }
+
     public void testParseFailureOnMissingModel() throws IOException {
         String modelString = "{\n" +
                 " \"name\":\"my_model\",\n" +
@@ -159,7 +189,11 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 containsString("bogusField"));
     }
 
-    private StoredLtrModel parse(String missingName) throws IOException {
-        return StoredLtrModel.parse(jsonXContent.createParser(EMPTY, missingName));
+    private StoredLtrModel parse(String jsonString) throws IOException {
+        return parse(jsonString, null);
+    }
+
+    private StoredLtrModel parse(String jsonString, String name) throws IOException {
+        return StoredLtrModel.parse(jsonXContent.createParser(EMPTY, jsonString), name);
     }
 }

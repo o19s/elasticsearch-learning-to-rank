@@ -16,15 +16,15 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.feature.store.CompiledLtrModel;
-import com.o19s.es.ltr.feature.store.FeatureStore;
-import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.util.IOUtils;
@@ -34,6 +34,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaDataCreateIndexService;
+import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.Streams;
@@ -47,14 +48,15 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-
-import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.FeatureStore;
+import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureSet;
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 
 public class IndexFeatureStore implements FeatureStore {
     public static final int VERSION = 1;
@@ -79,11 +81,14 @@ public class IndexFeatureStore implements FeatureStore {
     private static final ObjectParser<ParserState, Void> SOURCE_PARSER;
     static {
         SOURCE_PARSER = new ObjectParser<>("", true, ParserState::new);
-        SOURCE_PARSER.declareField(ParserState::setElement, StoredFeature::parse,
+        SOURCE_PARSER.declareField(ParserState::setElement,
+                (CheckedFunction<XContentParser, StoredFeature, IOException>) StoredFeature::parse,
                 new ParseField(StoredFeature.TYPE), ObjectParser.ValueType.OBJECT);
-        SOURCE_PARSER.declareField(ParserState::setElement, StoredFeatureSet::parse,
+        SOURCE_PARSER.declareField(ParserState::setElement,
+                (CheckedFunction<XContentParser, StoredFeatureSet, IOException>) StoredFeatureSet::parse,
                 new ParseField(StoredFeatureSet.TYPE), ObjectParser.ValueType.OBJECT);
-        SOURCE_PARSER.declareField(ParserState::setElement, StoredLtrModel::parse,
+        SOURCE_PARSER.declareField(ParserState::setElement,
+                (CheckedFunction<XContentParser, StoredLtrModel, IOException>) StoredLtrModel::parse,
                 new ParseField(StoredLtrModel.TYPE), ObjectParser.ValueType.OBJECT);
     }
 

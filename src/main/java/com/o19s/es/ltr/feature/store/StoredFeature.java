@@ -16,9 +16,18 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.template.mustache.MustacheUtils;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -42,17 +51,9 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptType;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.template.mustache.MustacheUtils;
 
 public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
@@ -142,11 +143,13 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     }
 
     public static StoredFeature parse(XContentParser parser) {
+        return parse(parser, null);
+    }
+
+    public static StoredFeature parse(XContentParser parser, String name) {
         try {
             ParsingState state = PARSER.apply(parser, null);
-            if (state.name == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
-            }
+            state.resolveName(parser, name);
             if (state.queryParams == null) {
                 state.queryParams = Collections.emptyList();
             }
@@ -154,11 +157,11 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
                 throw new ParsingException(parser.getTokenLocation(), "Field [template] is mandatory");
             }
             if (state.template instanceof String) {
-                return new StoredFeature(state.name, Collections.unmodifiableList(state.queryParams),
+                return new StoredFeature(state.getName(), Collections.unmodifiableList(state.queryParams),
                         state.templateLanguage, (String) state.template);
             } else {
                 assert state.template instanceof XContentBuilder;
-                return new StoredFeature(state.name, Collections.unmodifiableList(state.queryParams),
+                return new StoredFeature(state.getName(), Collections.unmodifiableList(state.queryParams),
                         state.templateLanguage, (XContentBuilder) state.template);
             }
         } catch (IllegalArgumentException iae) {
@@ -282,15 +285,10 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         return result;
     }
 
-    private static class ParsingState {
-        private String name;
+    private static class ParsingState extends StorableElementParserState {
         private List<String> queryParams;
         private String templateLanguage = DEFAULT_TEMPLATE_LANGUAGE;
         private Object template;
-
-        public void setName(String name) {
-            this.name = name;
-        }
 
         void setQueryParams(List<String> queryParams) {
             this.queryParams = queryParams;

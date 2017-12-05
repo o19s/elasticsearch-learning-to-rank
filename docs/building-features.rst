@@ -113,7 +113,6 @@ You can create a feature set simply by using a POST. To create it, you give a fe
     POST _ltr/_featureset/more_movie_features
     {
        "featureset": {
-            "name": "more_movie_features",
             "features": [
                 {
                     "name": "title_query",
@@ -177,7 +176,6 @@ Place this alongside the feature set. You'll see below we have a malformed :code
          "index": "tmdb"
         },
         "featureset": {
-            "name": "more_movie_features",
             "features": [
                 {
                     "name": "title_query",
