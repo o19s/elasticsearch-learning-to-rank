@@ -16,21 +16,6 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-
 import static org.apache.lucene.util.TestUtil.randomRealisticUnicodeString;
 import static org.apache.lucene.util.TestUtil.randomSimpleString;
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
@@ -40,6 +25,21 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 
 public class StoredFeatureSetParserTests extends LuceneTestCase {
 
@@ -107,6 +107,25 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
                 equalTo("Field [name] is mandatory"));
     }
 
+    public void testParseWithExternalName() throws IOException {
+        String missingName = "{" +
+                "\"features\": [\n" +
+                StoredFeatureParserTests.generateTestFeature() +
+                "]}";
+        StoredFeatureSet set = parse(missingName, "my_set");
+        assertEquals("my_set", set.name());
+    }
+
+    public void testParseWithInconsistentExternalName() throws IOException {
+        String set = "{\"name\" : \"my_set\",\n" +
+                "\"features\": [\n" +
+                StoredFeatureParserTests.generateTestFeature() +
+                "]}";
+        assertThat(expectThrows(ParsingException.class,
+                () -> parse(set, "my_set2")).getMessage(),
+                equalTo("Invalid [name], expected [my_set2] but got [my_set]"));
+    }
+
     public void testParseErrorOnMissingSet() throws IOException {
         String missingList = "{ \"name\": \"my_set\"}";
         StoredFeatureSet set = parse(missingList);
@@ -134,6 +153,10 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
 
     private static StoredFeatureSet parse(String missingName) throws IOException {
         return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY, missingName));
+    }
+
+    private static StoredFeatureSet parse(String missingName, String defaultName) throws IOException {
+        return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY, missingName), defaultName);
     }
 
     public static StoredFeature buildRandomFeature() throws IOException {

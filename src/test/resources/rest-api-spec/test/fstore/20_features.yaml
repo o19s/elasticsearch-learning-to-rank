@@ -8,7 +8,6 @@
            name: my_feature
            body:
             feature:
-              name: my_feature
               params:
                  - query_string
               template:
@@ -31,7 +30,6 @@
            name: my_feature
            body:
             feature:
-              name: my_feature
               params:
                  - query_string2
               template:
@@ -43,7 +41,6 @@
            name: my_feature
            body:
             feature:
-              name: my_feature
               params:
                  - query_string2
               template:
@@ -100,7 +97,6 @@
            name: my_feature
            body:
             feature:
-              name: my_feature
               params:
                  - query_string
               template:
@@ -125,7 +121,6 @@
            name: my_feature
            body:
             feature:
-              name: my_feature
               params:
                  - query_string
               template:

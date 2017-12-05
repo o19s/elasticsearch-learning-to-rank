@@ -16,10 +16,11 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
+
+import java.io.IOException;
+import java.util.Objects;
+
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -30,10 +31,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
-import java.io.IOException;
-import java.util.Objects;
-
-import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 
 public class StoredLtrModel implements StorableElement {
     public static final String TYPE = "model";
@@ -89,18 +90,20 @@ public class StoredLtrModel implements StorableElement {
     }
 
     public static StoredLtrModel parse(XContentParser parser) {
+        return parse(parser, null);
+    }
+
+    public static StoredLtrModel parse(XContentParser parser, String name) {
         try {
             ParsingState state = PARSER.apply(parser, null);
-            if (state.name == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
-            }
+            state.resolveName(parser, name);
             if (state.featureSet == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Field [feature_set] is mandatory");
             }
             if (state.rankingModel == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Field [model] is mandatory");
             }
-            return new StoredLtrModel(state.name, state.featureSet, state.rankingModel);
+            return new StoredLtrModel(state.getName(), state.featureSet, state.rankingModel);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -192,14 +195,9 @@ public class StoredLtrModel implements StorableElement {
         return result;
     }
 
-    private static class ParsingState {
-        String name;
+    private static class ParsingState extends StorableElementParserState {
         StoredFeatureSet featureSet;
         LtrModelDefinition rankingModel;
-
-        void setName(String name) {
-            this.name = name;
-        }
 
         void setFeatureSet(StoredFeatureSet featureSet) {
             this.featureSet = featureSet;
