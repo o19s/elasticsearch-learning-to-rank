@@ -16,8 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 public interface StorableElement extends ToXContent, NamedWriteable {
     String name();
@@ -45,5 +47,27 @@ public interface StorableElement extends ToXContent, NamedWriteable {
     @Override
     default String getWriteableName() {
         return type();
+    }
+
+    abstract class StorableElementParserState {
+        private String name;
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        void resolveName(XContentParser parser, String name) {
+            if (this.name == null && name != null) {
+                this.name = name;
+            } else if ( this.name == null /* && name == null */) {
+                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
+            } else if ( /* this.name != null && */ name != null && !this.name.equals(name)) {
+                throw new ParsingException(parser.getTokenLocation(), "Invalid [name], expected ["+name+"] but got [" + this.name+"]");
+            }
+        }
     }
 }

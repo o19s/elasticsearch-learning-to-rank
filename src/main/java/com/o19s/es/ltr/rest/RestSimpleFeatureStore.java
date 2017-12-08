@@ -16,14 +16,19 @@
 
 package com.o19s.es.ltr.rest;
 
-import com.o19s.es.ltr.action.FeatureStoreAction;
-import com.o19s.es.ltr.action.ListStoresAction;
-import com.o19s.es.ltr.feature.FeatureValidation;
-import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
+import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
+import static java.util.stream.Collectors.joining;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
+import static org.elasticsearch.rest.RestStatus.OK;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -32,9 +37,7 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -49,18 +52,14 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
-import java.io.IOException;
-import java.util.List;
-
-import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
-import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
-import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
-import static java.util.stream.Collectors.joining;
-import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
-import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
-import static org.elasticsearch.rest.RestStatus.OK;
+import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.ListStoresAction;
+import com.o19s.es.ltr.feature.FeatureValidation;
+import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureSet;
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 
 /**
  * Simple CRUD operation for the feature store elements.
@@ -214,7 +213,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             throw new IllegalArgumentException("Missing content or source param.");
         }
         String name = request.param("name");
-        StorableElementParserState parserState = new StorableElementParserState();
+        AutoDetectParser parserState = new AutoDetectParser(name);
         request.applyContentParser(parserState::parse);
         StorableElement elt = parserState.element;
         if (!type.equals(elt.type())) {
@@ -288,28 +287,33 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                 .execute(new RestStatusToXContentListener<>(channel));
     }
 
-    static class StorableElementParserState {
+    static class AutoDetectParser {
+        private String expectedName;
         private StorableElement element;
         private FeatureValidation validation;
 
-        private static ObjectParser<StorableElementParserState, Void> PARSER = new ObjectParser<>("storable_elements");
+        private static ObjectParser<AutoDetectParser, String> PARSER = new ObjectParser<>("storable_elements");
 
         static {
-            PARSER.declareObject(StorableElementParserState::setElement,
-                    (parser, ctx) -> StoredFeature.parse(parser),
+            PARSER.declareObject(AutoDetectParser::setElement,
+                    (parser, ctx) -> StoredFeature.parse(parser, ctx),
                     new ParseField(StoredFeature.TYPE));
-            PARSER.declareObject(StorableElementParserState::setElement,
-                    (parser, ctx) -> StoredFeatureSet.parse(parser),
+            PARSER.declareObject(AutoDetectParser::setElement,
+                    (parser, ctx) -> StoredFeatureSet.parse(parser, ctx),
                     new ParseField(StoredFeatureSet.TYPE));
-            PARSER.declareObject(StorableElementParserState::setElement,
-                    (parser, ctx) -> StoredLtrModel.parse(parser),
+            PARSER.declareObject(AutoDetectParser::setElement,
+                    (parser, ctx) -> StoredLtrModel.parse(parser, ctx),
                     new ParseField(StoredLtrModel.TYPE));
             PARSER.declareObject((b, v) -> b.validation = v,
                     (p, c) -> FeatureValidation.PARSER.apply(p, null),
                     new ParseField("validation"));
         }
+
+        AutoDetectParser(String name) {
+            this.expectedName = name;
+        }
         public void parse(XContentParser parser) throws IOException {
-            PARSER.parse(parser, this, null);
+            PARSER.parse(parser, this, expectedName);
             if (element == null) {
                 throw new ParsingException(parser.getTokenLocation(), "Element of type [" + SUPPORTED_TYPES.stream().collect(joining(",")) +
                         "] is mandatory.");
