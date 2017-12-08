@@ -16,19 +16,6 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
 import static org.hamcrest.Matchers.allOf;
@@ -37,6 +24,20 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.hamcrest.CoreMatchers;
 
 public class StoredFeatureParserTests extends LuceneTestCase {
     static final ToXContent.Params NOT_PRETTY;
@@ -114,6 +115,30 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "}";
         assertThat(expectThrows(ParsingException.class, () -> parse(featureString)).getMessage(),
                 equalTo("Field [name] is mandatory"));
+    }
+
+    public void testParseWithExternalName() throws IOException {
+        String featureString = "{\n" +
+                "\"params\":[\"param1\",\"param2\"]," +
+                "\"template_language\":\"mustache\",\n" +
+                "\"template\": \n" +
+                new MatchQueryBuilder("match_field", "match_word").toString() +
+                "}";
+        StoredFeature set = parse(featureString, "my_feature");
+        assertEquals("my_feature", set.name());
+    }
+
+    public void testParseWithInconsistentExternalName() throws IOException {
+        String featureString = "{\n" +
+                "\"name\": \"testFeature\",\n" +
+                "\"params\":[\"param1\",\"param2\"]," +
+                "\"template_language\":\"mustache\",\n" +
+                "\"template\": \n" +
+                new MatchQueryBuilder("match_field", "match_word").toString() +
+                "}";
+        assertThat(expectThrows(ParsingException.class,
+                () -> parse(featureString, "testFeature2")).getMessage(),
+                CoreMatchers.equalTo("Invalid [name], expected [testFeature2] but got [testFeature]"));
     }
 
     public void testParseErrorOnBadTemplate() throws IOException {
@@ -223,6 +248,9 @@ public class StoredFeatureParserTests extends LuceneTestCase {
     }
 
     static StoredFeature parse(String featureString) throws IOException {
-        return StoredFeature.parse(jsonXContent.createParser(EMPTY, featureString));
+        return parse(featureString, null);
+    }
+    static StoredFeature parse(String featureString, String defaultName) throws IOException {
+        return StoredFeature.parse(jsonXContent.createParser(EMPTY, featureString), defaultName);
     }
 }

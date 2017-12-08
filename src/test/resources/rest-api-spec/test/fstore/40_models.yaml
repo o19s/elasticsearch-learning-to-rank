@@ -8,7 +8,6 @@
            name: my_model
            body:
             model:
-              name: my_model
               feature_set:
                 name: my_set
                 features:
@@ -45,7 +44,6 @@
            name: my_model
            body:
             model:
-              name: my_model
               feature_set:
                 name: my_set
                 features:
@@ -105,7 +103,6 @@
            name: my_model
            body:
             model:
-              name: my_model
               feature_set:
                 name: my_set
                 features:
@@ -144,7 +141,6 @@
            name: my_model
            body:
             model:
-              name: my_model
               feature_set:
                 name: my_set
                 features:

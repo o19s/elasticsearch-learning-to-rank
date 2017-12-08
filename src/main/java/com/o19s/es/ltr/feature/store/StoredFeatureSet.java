@@ -16,8 +16,19 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.RandomAccess;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -30,18 +41,8 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryShardContext;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.RandomAccess;
-
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 
 public class StoredFeatureSet implements FeatureSet, Accountable, StorableElement {
     public static final int MAX_FEATURES = 10000;
@@ -65,15 +66,16 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     public static StoredFeatureSet parse(XContentParser parser) {
+        return parse(parser, null);
+    }
+    public static StoredFeatureSet parse(XContentParser parser, String name) {
         try {
             ParsingState state = PARSER.apply(parser, null);
-            if (state.name == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
-            }
+            state.resolveName(parser, name);
             if (state.features == null) {
                 state.features = Collections.emptyList();
             }
-            return new StoredFeatureSet(state.name, state.features);
+            return new StoredFeatureSet(state.getName(), state.features);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -265,13 +267,8 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         return result;
     }
 
-    private static class ParsingState {
-        private String name;
+    private static class ParsingState extends StorableElementParserState {
         private List<StoredFeature> features;
-
-        public void setName(String name) {
-            this.name = name;
-        }
 
         public void setFeatures(List<StoredFeature> features) {
             this.features = features;

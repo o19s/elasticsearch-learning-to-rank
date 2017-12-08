@@ -15,7 +15,6 @@ For example, perhaps a query on the title field is important to many of your fea
     {
         "feature":
         {
-            "name": "titleSearch",
             "params": [
             "keywords"
             ],
@@ -57,10 +56,9 @@ Should your Elasticsearch cluster back multiple properties, you can use all the 
 
 Then the same API in this guide applies to this feature store, for example to create a feature set::
 
-    POST _ltr/wikipedia/_featureset
+    POST _ltr/wikipedia/_featureset/attempt_1
     {
        "featureset": {
-            "name": "attempt_1",
             "features": [
                 {
                     "name": "title_query",
@@ -80,7 +78,7 @@ Then the same API in this guide applies to this feature store, for example to cr
 
 And of course you can delete a featureset::
 
-    DELETE _ltr/wikipedia/_featureset
+    DELETE _ltr/wikipedia/_featureset/attempt_1
 
 =============================
 Model Caching
