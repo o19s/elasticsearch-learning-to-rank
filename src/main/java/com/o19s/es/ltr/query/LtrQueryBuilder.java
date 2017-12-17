@@ -26,14 +26,17 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.Rewriteable;
+import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 
@@ -42,28 +45,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public static final String NAME = "ltr";
-    private static final ObjectParser<LtrQueryBuilder, QueryParseContext> PARSER;
+    private static final ObjectParser<LtrQueryBuilder, Void> PARSER;
     private static final String DEFAULT_SCRIPT_LANG = "ranklib";
-
-    private Script _rankLibScript;
-    private List<QueryBuilder> _features;
 
     static {
         PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
         declareStandardFields(PARSER);
         PARSER.declareObjectArray(
                 LtrQueryBuilder::features,
-                (parser, context) -> context.parseInnerQueryBuilder().get(),
+                (parser, context) -> parseInnerQueryBuilder(parser),
                 new ParseField("features"));
         PARSER.declareField(
                 (parser, ltr, context) -> ltr.rankerScript(Script.parse(parser, DEFAULT_SCRIPT_LANG)),
                 new ParseField("model"), ObjectParser.ValueType.OBJECT_OR_STRING);
     }
 
+    private Script _rankLibScript;
+    private List<QueryBuilder> _features;
 
     public LtrQueryBuilder() {
     }
@@ -77,6 +78,54 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         super(in);
         _features = readQueries(in);
         _rankLibScript = new Script(in);
+    }
+
+    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
+    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
+        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
+        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
+    }
+
+    private static void writeQueries(StreamOutput out, List<? extends QueryBuilder> queries) throws IOException {
+        out.writeVInt(queries.size());
+        for (QueryBuilder query : queries) {
+            out.writeNamedWriteable(query);
+        }
+    }
+
+    private static List<QueryBuilder> readQueries(StreamInput in) throws IOException {
+        int size = in.readVInt();
+        List<QueryBuilder> queries = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            queries.add(in.readNamedWriteable(QueryBuilder.class));
+        }
+        return queries;
+    }
+
+    private static void doXArrayContent(String field, List<QueryBuilder> clauses, XContentBuilder builder, Params params)
+            throws IOException {
+        if (clauses.isEmpty()) {
+            return;
+        }
+        builder.startArray(field);
+        for (QueryBuilder clause : clauses) {
+            clause.toXContent(builder, params);
+        }
+        builder.endArray();
+    }
+
+    public static LtrQueryBuilder fromXContent(XContentParser parser) throws IOException {
+        final LtrQueryBuilder builder;
+        try {
+            builder = PARSER.apply(parser, null);
+        } catch (IllegalArgumentException e) {
+            throw new ParsingException(parser.getTokenLocation(), e.getMessage(), e);
+        }
+        if (builder._rankLibScript == null) {
+            throw new ParsingException(parser.getTokenLocation(),
+                    "[ltr] query requires a model, none specified");
+        }
+        return builder;
     }
 
     @Override
@@ -95,41 +144,19 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         builder.endObject();
     }
 
-    private static void doXArrayContent(String field, List<QueryBuilder> clauses, XContentBuilder builder, Params params)
-            throws IOException {
-        if (clauses.isEmpty()) {
-            return;
-        }
-        builder.startArray(field);
-        for (QueryBuilder clause : clauses) {
-            clause.toXContent(builder, params);
-        }
-        builder.endArray();
-    }
-
-    public static Optional<LtrQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
-        final LtrQueryBuilder builder;
-        try {
-            builder = PARSER.apply(parseContext.parser(), parseContext);
-        } catch (IllegalArgumentException e) {
-            throw new ParsingException(parseContext.parser().getTokenLocation(), e.getMessage(), e);
-        }
-        if (builder._rankLibScript == null) {
-            throw new ParsingException(parseContext.parser().getTokenLocation(),
-                    "[ltr] query requires a model, none specified");
-        }
-        return Optional.of(builder);
-    }
-
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<PrebuiltFeature>(_features.size());
-        for(QueryBuilder builder: _features) {
+        for (QueryBuilder builder : _features) {
             features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }
         features = Collections.unmodifiableList(features);
-        // pull model out of script
-        LtrRanker ranker = (LtrRanker) context.getExecutableScript(_rankLibScript, ScriptContext.Standard.SEARCH).run();
+
+        ExecutableScript.Factory factory = context.getScriptService().compile(_rankLibScript, new ScriptContext<>(
+                "executable", ExecutableScript.Factory.class));
+        ExecutableScript executableScript = factory.newInstance(null);
+        LtrRanker ranker = (LtrRanker) executableScript.run();
+
         PrebuiltFeatureSet featureSet = new PrebuiltFeatureSet(queryName(), features);
         PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, featureSet);
         return RankerQuery.build(model);
@@ -146,10 +173,10 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
         int i = 0;
         for (QueryBuilder qb : _features) {
-            QueryBuilder newQuery = QueryBuilder.rewriteQuery(qb, ctx);
+            QueryBuilder newQuery = Rewriteable.rewrite(qb, ctx);
             changed |= newQuery != qb;
             if (changed) {
-                if (newFeatures == null ) {
+                if (newFeatures == null) {
                     newFeatures = new ArrayList<>(_features.size());
                     newFeatures.addAll(_features.subList(0, i));
                 }
@@ -183,12 +210,16 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public final Script rankerScript() {
         return _rankLibScript;
     }
+
     public final LtrQueryBuilder rankerScript(Script rankLibModel) {
-         _rankLibScript = rankLibModel;
-         return this;
+        _rankLibScript = rankLibModel;
+        return this;
     }
 
-    public List<QueryBuilder> features() {return _features;}
+    public List<QueryBuilder> features() {
+        return _features;
+    }
+
     public final LtrQueryBuilder features(List<QueryBuilder> features) {
         _features = features;
         return this;

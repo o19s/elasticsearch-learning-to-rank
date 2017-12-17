@@ -28,7 +28,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
-import org.elasticsearch.common.lucene.search.function.FiltersFunctionScoreQuery;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -61,7 +61,7 @@ public class LoggingIT extends BaseIntegrationTest {
                 new FunctionScoreQueryBuilder(QueryBuilders.matchAllQuery(), new FieldValueFactorFunctionBuilder("scorefield1")
                         .factor(FACTOR)
                         .modifier(FieldValueFactorFunction.Modifier.LN2P)
-                        .missing(0F)).scoreMode(FiltersFunctionScoreQuery.ScoreMode.MULTIPLY).toString()));
+                        .missing(0F)).scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY).toString()));
         features.add(new StoredFeature("derived_feature", Collections.singletonList("query"), "derived_expression",
                 "100"));
 
