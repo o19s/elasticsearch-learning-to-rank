@@ -55,10 +55,13 @@ import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
@@ -67,6 +70,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
@@ -75,7 +80,10 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.watcher.ResourceWatcherService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -187,6 +195,19 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 Caches.LTR_CACHE_MEM_SETTING,
                 Caches.LTR_CACHE_EXPIRE_AFTER_READ,
                 Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
+    }
+
+    @Override
+    public Collection<Object> createComponents(Client client,
+                                               ClusterService clusterService,
+                                               ThreadPool threadPool,
+                                               ResourceWatcherService resourceWatcherService,
+                                               ScriptService scriptService,
+                                               NamedXContentRegistry xContentRegistry,
+                                               Environment environment,
+                                               NodeEnvironment nodeEnvironment,
+                                               NamedWriteableRegistry namedWriteableRegistry) {
+        return asList(caches, parserFactory);
     }
 
     protected FeatureStoreLoader getFeatureStoreLoader() {
