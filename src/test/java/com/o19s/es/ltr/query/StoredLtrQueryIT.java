@@ -34,7 +34,7 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.rescore.QueryRescoreMode;
-import org.elasticsearch.search.rescore.RescoreBuilder;
+import org.elasticsearch.search.rescore.QueryRescorerBuilder;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 
@@ -85,9 +85,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         params.put("query", negativeScore ? "bonjour" : "hello");
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
-                .setRescorer(RescoreBuilder
-                        .queryRescorer(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
-                                .modelName("my_model").params(params).toString()))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).toString()))
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));

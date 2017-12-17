@@ -19,6 +19,8 @@ package com.o19s.es.ltr.feature.store;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
+import static org.elasticsearch.index.query.Rewriteable.rewrite;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -43,9 +45,9 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
+import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
@@ -204,17 +206,16 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         assert !DEFAULT_TEMPLATE_LANGUAGE.equals(templateLanguage);
         // XXX: we hope that in most case users will use mustache that is embedded in the plugin
         // compiling the template from the script engine may hit a circuit breaker
-        ExecutableScript script = context.getExecutableScript(new Script(ScriptType.INLINE,
-                templateLanguage, template, params), ScriptContext.Standard.SEARCH);
+        ExecutableScript script = context.getScriptService().compile(new Script(ScriptType.INLINE,
+                templateLanguage, template, params), new ScriptContext<>("search", ExecutableScript.class));
         Object source = script.run();
 
         try {
             XContentParser parser = createParser(source, context.getXContentRegistry());
-            QueryParseContext parserContext = context.newParseContext(parser);
-            QueryBuilder queryBuilder = parserContext.parseInnerQueryBuilder().orElseThrow(
-                    () -> new ParsingException(parser.getTokenLocation(), "ltr inner query cannot be empty"));
+            QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
+
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return QueryBuilder.rewriteQuery(queryBuilder, context).toQuery(context);
+            return Rewriteable.rewrite(queryBuilder, context).toQuery(context);
         } catch (IOException|ParsingException|IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
             throw new QueryShardException(context, "Cannot create query while parsing feature [" + name +"]", e);
