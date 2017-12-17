@@ -27,26 +27,19 @@ import static org.hamcrest.Matchers.lessThan;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.hamcrest.CoreMatchers;
 
 public class StoredFeatureParserTests extends LuceneTestCase {
-    static final ToXContent.Params NOT_PRETTY;
-    static {
-        Map<String, String> params = new HashMap<>();
-        params.put("pretty", "false");
-        NOT_PRETTY = new ToXContent.MapParams(params);
-    }
-
     public void testParseFeatureAsJson() throws IOException {
         String featureString = generateTestFeature();
 
@@ -72,18 +65,19 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         assertEquals("testFeature", feature.name());
         assertArrayEquals(Arrays.asList("param1", "param2").toArray(), feature.queryParams().toArray());
         assertEquals("mustache", feature.templateLanguage());
-        assertEquals(new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY), feature.template());
+        assertEquals(writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")),
+                feature.template());
         assertFalse(feature.templateAsString());
     }
 
-
     public void testParseFeatureAsString() throws IOException {
+
         String featureString = "{\n" +
                 "\"name\": \"testFeature\",\n" +
                 "\"params\": [\"param1\", \"param2\"],\n" +
                 "\"template_language\": \"mustache\",\n" +
                 "\"template\": \"" +
-                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY)
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word"))
                         .replace("\"", "\\\"") +
                 "\"\n}\n";
 
@@ -92,7 +86,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         assertEquals("testFeature", feature.name());
         assertArrayEquals(Arrays.asList("param1", "param2").toArray(), feature.queryParams().toArray());
         assertEquals("mustache", feature.templateLanguage());
-        assertEquals(new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY),
+        assertEquals(writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")),
                 feature.template());
         assertTrue(feature.templateAsString());
     }
@@ -111,7 +105,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         assertThat(expectThrows(ParsingException.class, () -> parse(featureString)).getMessage(),
                 equalTo("Field [name] is mandatory"));
@@ -122,7 +116,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         StoredFeature set = parse(featureString, "my_feature");
         assertEquals("my_feature", set.name());
@@ -134,7 +128,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         assertThat(expectThrows(ParsingException.class,
                 () -> parse(featureString, "testFeature2")).getMessage(),
@@ -169,7 +163,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"template_language\":\"mustache\",\n" +
                 "\n\"bogusField\":\"oops\"," +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         assertThat(expectThrows(ParsingException.class, () -> parse(featureString)).getMessage(),
                 containsString("bogusField"));
@@ -180,7 +174,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"name\":\"testFeature\"," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         StoredFeature feat = parse(featureString);
         assertTrue(feat.queryParams().isEmpty());
@@ -192,7 +186,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\": \n" +
-                new MatchQueryBuilder("match_field", "match_word").toString() +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word")) +
                 "}";
         StoredFeature feat = parse(featureString);
         assertTrue(feat.queryParams().isEmpty());
@@ -204,7 +198,8 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\":\"" +
-                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY).replace("\"", "\\\"") +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word"))
+                        .replace("\"", "\\\"") +
                 "\"}";
         StoredFeature feature = parse(featureString);
         long approxSize = featureString.length()*Character.BYTES;
@@ -229,7 +224,8 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"mustache\",\n" +
                 "\"template\":\"" +
-                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY).replace("\"", "\\\"") +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word"))
+                        .replace("\"", "\\\"") +
                 "\"}";
         StoredFeature feature = parse(featureString);
         assertThat(feature.optimize(), instanceOf(PrecompiledTemplateFeature.class));
@@ -241,7 +237,8 @@ public class StoredFeatureParserTests extends LuceneTestCase {
                 "\"params\":[\"param1\",\"param2\"]," +
                 "\"template_language\":\"third_party_template_engine\",\n" +
                 "\"template\":\"" +
-                new MatchQueryBuilder("match_field", "match_word").toString(NOT_PRETTY).replace("\"", "\\\"") +
+                writeAsNonFormattedString(new MatchQueryBuilder("match_field", "match_word"))
+                        .replace("\"", "\\\"") +
                 "\"}";
         StoredFeature feature = parse(featureString);
         assertSame(feature, feature.optimize());
@@ -250,7 +247,12 @@ public class StoredFeatureParserTests extends LuceneTestCase {
     static StoredFeature parse(String featureString) throws IOException {
         return parse(featureString, null);
     }
+
     static StoredFeature parse(String featureString, String defaultName) throws IOException {
         return StoredFeature.parse(jsonXContent.createParser(EMPTY, featureString), defaultName);
+    }
+
+    private String writeAsNonFormattedString(AbstractQueryBuilder<?> builder) {
+        return Strings.toString(builder, false, false);
     }
 }

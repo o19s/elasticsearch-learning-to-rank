@@ -27,18 +27,18 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * sltr query, build a ltr query based on a stored model.
@@ -49,16 +49,6 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField FEATURESET_NAME = new ParseField("featureset");
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
-
-    /**
-     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(QueryShardContext)}
-     */
-    private final transient FeatureStoreLoader storeLoader;
-    private String modelName;
-    private String featureSetName;
-    private String storeName;
-    private Map<String, Object> params;
-
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
 
     static {
@@ -71,9 +61,19 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         declareStandardFields(PARSER);
     }
 
+    /**
+     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(QueryShardContext)}
+     */
+    private final transient FeatureStoreLoader storeLoader;
+    private String modelName;
+    private String featureSetName;
+    private String storeName;
+    private Map<String, Object> params;
+
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader) {
         this.storeLoader = storeLoader;
     }
+
 
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader, StreamInput input) throws IOException {
         super(input);
@@ -84,21 +84,18 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         storeName = input.readOptionalString();
     }
 
-    @Override
-    protected void doWriteTo(StreamOutput out) throws IOException {
-        out.writeOptionalString(modelName);
-        out.writeOptionalString(featureSetName);
-        out.writeMap(params);
-        out.writeOptionalString(storeName);
+    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
+    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
+        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
+        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
     }
 
-    public static Optional<StoredLtrQueryBuilder> fromXContent(FeatureStoreLoader storeLoader,
-                                                               QueryParseContext context) throws IOException {
+    public static StoredLtrQueryBuilder fromXContent(FeatureStoreLoader storeLoader,
+                                                     XContentParser parser) throws IOException {
         storeLoader = Objects.requireNonNull(storeLoader);
-        XContentParser parser = context.parser();
-        final StoredLtrQueryBuilder builder =  new StoredLtrQueryBuilder(storeLoader);
+        final StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(storeLoader);
         try {
-            PARSER.parse(context.parser(), builder, null);
+            PARSER.parse(parser, builder, null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
@@ -108,7 +105,15 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         if (builder.params() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + PARAMS + "] is mandatory.");
         }
-        return Optional.of(builder);
+        return builder;
+    }
+
+    @Override
+    protected void doWriteTo(StreamOutput out) throws IOException {
+        out.writeOptionalString(modelName);
+        out.writeOptionalString(featureSetName);
+        out.writeMap(params);
+        out.writeOptionalString(storeName);
     }
 
     @Override

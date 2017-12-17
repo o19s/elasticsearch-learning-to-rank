@@ -385,7 +385,7 @@ public class LtrQueryTests extends LuceneTestCase {
 
         Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
 
-        Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
+        Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
         List<Query> features = Arrays.asList(new TermQuery(new Term("field",  userQuery.split(" ")[0])), blended);
 
         checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null);
@@ -402,7 +402,7 @@ public class LtrQueryTests extends LuceneTestCase {
 
         Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
 
-        Query blended = BlendedTermQuery.booleanBlendedQuery(termsToBlend, false);
+        Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
         List<PrebuiltFeature> features = Arrays.asList(
                 new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
                 new PrebuiltFeature(null, blended));

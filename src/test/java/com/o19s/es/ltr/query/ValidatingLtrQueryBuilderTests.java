@@ -24,7 +24,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.plugins.Plugin;
@@ -68,22 +68,22 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     @Override
     protected ValidatingLtrQueryBuilder doCreateTestQueryBuilder() {
         StorableElement element;
-        Function<String, StoredFeature> buildFeature = (n) ->  new StoredFeature(n,
+        Function<String, StoredFeature> buildFeature = (n) -> new StoredFeature(n,
                 asList("query_string"), "mustache",
                 QueryBuilders.matchQuery("test", "{{query_string}}").toString());
         BiFunction<Integer, String, StoredFeatureSet> buildFeatureSet = (i, name) -> new StoredFeatureSet(name, IntStream.range(0, i)
-                .mapToObj((idx) -> buildFeature.apply("feature"+idx))
+                .mapToObj((idx) -> buildFeature.apply("feature" + idx))
                 .collect(Collectors.toList()));
         Function<String, StoredLtrModel> buildModel = (name) -> new StoredLtrModel(name,
                 buildFeatureSet.apply(5, "the_feature_set"),
                 "model/linear",
                 IntStream.range(0, 5)
-                        .mapToObj((i) -> "\"feature"+i+"\": " + random().nextFloat())
+                        .mapToObj((i) -> "\"feature" + i + "\": " + random().nextFloat())
                         .collect(joining(",", "{", "}")),
                 true);
 
         int type = randomInt(2);
-        switch(type) {
+        switch (type) {
             case 0:
                 element = buildFeature.apply("feature");
                 break;
@@ -115,7 +115,7 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     @Override
     protected void doAssertLuceneQuery(ValidatingLtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
         if (StoredFeature.TYPE.equals(queryBuilder.getElement().type())) {
-            assertThat(query, instanceOf(BooleanQuery.class));
+            assertThat(query, instanceOf(MatchNoDocsQuery.class));
         } else if (StoredFeatureSet.TYPE.equals(queryBuilder.getElement().type())) {
             assertThat(query, instanceOf(RankerQuery.class));
             RankerQuery q = (RankerQuery) query;
@@ -123,7 +123,7 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
         } else if (StoredLtrModel.TYPE.equals(queryBuilder.getElement().type())) {
             assertThat(query, instanceOf(RankerQuery.class));
             RankerQuery q = (RankerQuery) query;
-            assertEquals(((StoredLtrModel)queryBuilder.getElement()).featureSet().name(), q.featureSet().name());
+            assertEquals(((StoredLtrModel) queryBuilder.getElement()).featureSet().name(), q.featureSet().name());
         } else {
             throw new AssertionError("Invalid storable element type : " + queryBuilder.getElement().type());
         }

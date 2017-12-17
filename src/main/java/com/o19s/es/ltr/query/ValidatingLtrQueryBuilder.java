@@ -33,18 +33,18 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -59,8 +59,8 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             StoredLtrModel.TYPE)));
 
     public static final String NAME = "validating_ltr_query";
-    private static ObjectParser<ValidatingLtrQueryBuilder, QueryParseContext> PARSER = new ObjectParser<>(NAME);
     private static final ParseField VALIDATION = new ParseField("validation");
+    private static ObjectParser<ValidatingLtrQueryBuilder, XContentParser> PARSER = new ObjectParser<>(NAME);
 
     static {
         BiConsumer<ValidatingLtrQueryBuilder, StorableElement> setElem = (b, v) -> {
@@ -86,10 +86,9 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         declareStandardFields(PARSER);
     }
 
+    private final transient LtrRankerParserFactory factory;
     private StorableElement element;
     private FeatureValidation validation;
-    private final transient LtrRankerParserFactory factory;
-
     private ValidatingLtrQueryBuilder(LtrRankerParserFactory factory) {
         this.factory = factory;
     }
@@ -106,7 +105,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         // our NamedWriteable to the context.
         String type = input.readString();
         final Reader<StorableElement> reader;
-        switch(type) {
+        switch (type) {
             case StoredFeature.TYPE:
                 reader = StoredFeature::new;
                 break;
@@ -116,11 +115,37 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             case StoredLtrModel.TYPE:
                 reader = StoredLtrModel::new;
                 break;
-            default: throw new IOException("Unsupported storable element [" + type + "]");
+            default:
+                throw new IOException("Unsupported storable element [" + type + "]");
         }
         this.element = reader.read(input);
         this.validation = new FeatureValidation(input);
         this.factory = factory;
+    }
+
+    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
+    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
+        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
+        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
+    }
+
+    public static ValidatingLtrQueryBuilder fromXContent(XContentParser parser,
+                                                         LtrRankerParserFactory factory) throws IOException {
+        try {
+            ValidatingLtrQueryBuilder builder = new ValidatingLtrQueryBuilder(factory);
+            PARSER.parse(parser, builder, null);
+            if (builder.element == null) {
+                throw new ParsingException(parser.getTokenLocation(), "Element of type [" + SUPPORTED_TYPES.stream().collect(joining(",")) +
+                        "] is mandatory.");
+            }
+            if (builder.validation == null) {
+                throw new ParsingException(parser.getTokenLocation(), "Expected field [" + VALIDATION.getPreferredName() + "]");
+            }
+
+            return builder;
+        } catch (IllegalArgumentException iae) {
+            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
+        }
     }
 
     @Override
@@ -139,45 +164,25 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         builder.endObject();
     }
 
-    public static Optional<ValidatingLtrQueryBuilder> fromXContent(QueryParseContext context,
-                                                                   LtrRankerParserFactory factory) throws IOException {
-        XContentParser parser = context.parser();
-        try {
-            ValidatingLtrQueryBuilder builder = new ValidatingLtrQueryBuilder(factory);
-            PARSER.parse(parser, builder, context);
-            if (builder.element == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Element of type [" + SUPPORTED_TYPES.stream().collect(joining(",")) +
-                    "] is mandatory.");
-            }
-            if (builder.validation == null) {
-                throw new ParsingException(parser.getTokenLocation(), "Expected field [" + VALIDATION.getPreferredName() + "]");
-            }
-
-            return Optional.of(builder);
-        } catch (IllegalArgumentException iae) {
-            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
-        }
-    }
-
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
         if (StoredFeature.TYPE.equals(element.type())) {
-            Feature feature = ((StoredFeature)element).optimize();
+            Feature feature = ((StoredFeature) element).optimize();
             if (feature instanceof PrecompiledExpressionFeature) {
                 // Derived features cannot be tested alone
                 return new MatchAllDocsQuery();
             }
             return feature.doToQuery(context, null, validation.getParams());
         } else if (StoredFeatureSet.TYPE.equals(element.type())) {
-            FeatureSet set = ((StoredFeatureSet)element).optimize();
+            FeatureSet set = ((StoredFeatureSet) element).optimize();
             LinearRanker ranker = new LinearRanker(new float[set.size()]);
             CompiledLtrModel model = new CompiledLtrModel("validation", set, ranker);
             return RankerQuery.build(model, context, validation.getParams());
         } else if (StoredLtrModel.TYPE.equals(element.type())) {
-            CompiledLtrModel model = ((StoredLtrModel)element).compile(factory);
+            CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);
             return RankerQuery.build(model, context, validation.getParams());
         } else {
-            throw new QueryShardException(context, "Unknown element type [" + element.type() + "]" );
+            throw new QueryShardException(context, "Unknown element type [" + element.type() + "]");
         }
     }
 

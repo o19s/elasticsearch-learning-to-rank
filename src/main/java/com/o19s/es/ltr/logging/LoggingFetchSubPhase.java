@@ -28,13 +28,13 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.fetch.FetchPhaseExecutionException;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
-import org.elasticsearch.search.rescore.RescoreSearchContext;
+import org.elasticsearch.search.rescore.RescoreContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,12 +140,12 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
     }
 
     private Tuple<RankerQuery, HitLogConsumer> extractRescore(LoggingSearchExtBuilder.LogSpec logSpec,
-                                                              List<RescoreSearchContext> contexts) {
+                                                              List<RescoreContext> contexts) {
         if (logSpec.getRescoreIndex() >= contexts.size()) {
             throw new IllegalArgumentException("rescore index [" + logSpec.getRescoreIndex()+"] is out of bounds, only " +
                     "[" + contexts.size() + "] rescore context(s) are available");
         }
-        RescoreSearchContext context = contexts.get(logSpec.getRescoreIndex());
+        RescoreContext context = contexts.get(logSpec.getRescoreIndex());
         if (!(context instanceof QueryRescorer.QueryRescoreContext)) {
             throw new IllegalArgumentException("Expected a [QueryRescoreContext] but found a " +
                     "[" + context.getClass().getSimpleName() + "] " +
@@ -222,16 +222,16 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             if (hit.fieldsOrNull() == null) {
                 hit.fields(new HashMap<>());
             }
-            SearchHitField logs = hit.getFields()
+            DocumentField logs = hit.getFields()
                     .computeIfAbsent(FIELD_NAME,(k) -> newLogField());
             Map<String, List<Map<String, Object>>> entries = logs.getValue();
             rebuild();
             entries.put(name, currentLog);
         }
 
-        SearchHitField newLogField() {
+        DocumentField newLogField() {
             List<Object> logList = Collections.singletonList(new HashMap<String, List<Map<String, Object>>>());
-            return new SearchHitField(FIELD_NAME, logList);
+            return new DocumentField(FIELD_NAME, logList);
         }
     }
 }
