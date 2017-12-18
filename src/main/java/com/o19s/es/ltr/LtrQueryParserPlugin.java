@@ -42,6 +42,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
@@ -165,6 +166,13 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                                                NamedXContentRegistry xContentRegistry) {
+        clusterService.addListener(event -> {
+            for (Index i : event.indicesDeleted()) {
+                if (IndexFeatureStore.isIndexStore(i.getName())) {
+                    caches.evict(i.getName());
+                }
+            }
+        });
         return asList(caches, parserFactory);
     }
 

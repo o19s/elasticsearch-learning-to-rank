@@ -101,3 +101,58 @@
         catch: /Invalid feature store name/
         ltr.create_store:
             store: mystore#15
+
+---
+"Cache invalidation":
+  - do:
+        ltr.create_store:
+          store: custom
+
+  - do:
+        ltr.create_model:
+           store: custom
+           name: my_model
+           body:
+            model:
+              feature_set:
+                name: my_set
+                features:
+                  - name: feature1
+                    params: query_string
+                    template:
+                      match:
+                        field_test: "{{query_string}}"
+                  - name: feature2
+                    params: query_string
+                    template:
+                      match:
+                        field_test2: "{{query_string}}"
+              model:
+                type: model/linear
+                definition:
+                    feature1: 1.2
+                    feature2: 0.2
+
+  - do:
+      indices.create:
+          index:  test
+
+  - do:
+      search:
+        index: test
+        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "my_model", "store": "custom" } } }
+
+  - do:
+      ltr.cache_stats: {}
+
+  - gt: { all.total.ram: 0 }
+
+  - do:
+      indices.delete:
+          index: .ltrstore_custom
+
+  - do:
+        ltr.cache_stats: {}
+
+  - match : { all.total.ram: 0 }
+
