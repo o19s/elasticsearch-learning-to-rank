@@ -21,12 +21,12 @@ import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -53,7 +53,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     static {
         PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
-        declareStandardFields(PARSER);
+        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
         PARSER.declareObjectArray(
                 LtrQueryBuilder::features,
                 (parser, context) -> parseInnerQueryBuilder(parser),
@@ -76,30 +76,8 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     public LtrQueryBuilder(StreamInput in) throws IOException {
         super(in);
-        _features = readQueries(in);
+        _features = AbstractQueryBuilderUtils.readQueries(in);
         _rankLibScript = new Script(in);
-    }
-
-    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
-    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
-        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
-        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
-    }
-
-    private static void writeQueries(StreamOutput out, List<? extends QueryBuilder> queries) throws IOException {
-        out.writeVInt(queries.size());
-        for (QueryBuilder query : queries) {
-            out.writeNamedWriteable(query);
-        }
-    }
-
-    private static List<QueryBuilder> readQueries(StreamInput in) throws IOException {
-        int size = in.readVInt();
-        List<QueryBuilder> queries = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            queries.add(in.readNamedWriteable(QueryBuilder.class));
-        }
-        return queries;
     }
 
     private static void doXArrayContent(String field, List<QueryBuilder> clauses, XContentBuilder builder, Params params)
@@ -131,7 +109,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     @Override
     protected void doWriteTo(StreamOutput out) throws IOException {
         // only the superclass has state
-        writeQueries(out, _features);
+        AbstractQueryBuilderUtils.writeQueries(out, _features);
         _rankLibScript.writeTo(out);
     }
 

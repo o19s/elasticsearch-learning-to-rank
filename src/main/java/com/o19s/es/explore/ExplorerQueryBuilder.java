@@ -15,13 +15,13 @@
 
 package com.o19s.es.explore;
 
+import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -47,7 +47,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
                 QUERY_NAME
         );
         PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
-        declareStandardFields(PARSER);
+        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
     }
 
     private QueryBuilder query;
@@ -63,18 +63,10 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         type = in.readString();
     }
 
-    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
-    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
-        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
-        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
-    }
-
-    // TODO jettro: Had to remove the optionals
     public static ExplorerQueryBuilder fromXContent(XContentParser parser) throws IOException {
         final ExplorerQueryBuilder builder;
 
         try {
-            // TODO jettro: Providing null feels a bit stupid, actual type is void, not sure what to do here.
             builder = PARSER.parse(parser, null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
