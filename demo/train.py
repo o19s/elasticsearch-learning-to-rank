@@ -35,7 +35,8 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
         fullPath = urljoin(esHost, path)
         modelPayload['model']['model']['definition'] = modelContent
         print("POST %s" % fullPath)
-        resp = requests.post(fullPath, json.dumps(modelPayload))
+        head = {'Content-Type': 'application/json'}
+        resp = requests.post(fullPath, data=json.dumps(modelPayload), headers=head)
         print(resp.status_code)
         if (resp.status_code >= 300):
             print(resp.text)

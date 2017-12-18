@@ -33,7 +33,8 @@ def loadFeatures(esHost, featureSetName='movie_features'):
     fullPath = urljoin(esHost, path)
     print("POST %s" % fullPath)
     print(json.dumps(featureSet, indent=2))
-    resp = requests.post(fullPath, json.dumps(featureSet))
+    head = {'Content-Type': 'application/json'}
+    resp = requests.post(fullPath, data=json.dumps(featureSet), headers=head)
     print("%s" % resp.status_code)
     print("%s" % resp.text)
 
