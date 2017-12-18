@@ -27,18 +27,17 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 
@@ -60,7 +59,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
 
     public static final String NAME = "validating_ltr_query";
     private static final ParseField VALIDATION = new ParseField("validation");
-    private static ObjectParser<ValidatingLtrQueryBuilder, XContentParser> PARSER = new ObjectParser<>(NAME);
+    private static ObjectParser<ValidatingLtrQueryBuilder, Void> PARSER = new ObjectParser<>(NAME);
 
     static {
         BiConsumer<ValidatingLtrQueryBuilder, StorableElement> setElem = (b, v) -> {
@@ -83,7 +82,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         PARSER.declareObject((b, v) -> b.validation = v,
                 (p, c) -> FeatureValidation.PARSER.apply(p, null),
                 new ParseField("validation"));
-        declareStandardFields(PARSER);
+        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
     }
 
     private final transient LtrRankerParserFactory factory;
@@ -121,12 +120,6 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         this.element = reader.read(input);
         this.validation = new FeatureValidation(input);
         this.factory = factory;
-    }
-
-    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
-    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
-        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
-        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
     }
 
     public static ValidatingLtrQueryBuilder fromXContent(XContentParser parser,

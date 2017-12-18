@@ -22,17 +22,16 @@ import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.AbstractObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
@@ -58,7 +57,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
         PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map,
                 PARAMS, ObjectParser.ValueType.OBJECT);
-        declareStandardFields(PARSER);
+        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
     }
 
     /**
@@ -82,12 +81,6 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         featureSetName = input.readOptionalString();
         params = input.readMap();
         storeName = input.readOptionalString();
-    }
-
-    // TODO jettro: This is a copy from the method in AbstractQueryBuilder, is not accessible to subclasses in other package
-    private static void declareStandardFields(AbstractObjectParser<? extends QueryBuilder, ?> parser) {
-        parser.declareFloat(QueryBuilder::boost, AbstractQueryBuilder.BOOST_FIELD);
-        parser.declareString(QueryBuilder::queryName, AbstractQueryBuilder.NAME_FIELD);
     }
 
     public static StoredLtrQueryBuilder fromXContent(FeatureStoreLoader storeLoader,
