@@ -6,7 +6,7 @@ The Elasticsearch Learning to Rank plugin uses machine learning to improve searc
 
 This plugin:
 
-- Allows you to store features (Elasticsearch query templates) in Elasticsearch 
+- Allows you to store features (Elasticsearch query templates) in Elasticsearch
 - Logs features scores (relevance scores) to create a training set for offline model development
 - Stores linear, xgboost, or ranklib ranking models in Elasticsearch that use features you've stored
 - Ranks search results using a stored model
@@ -29,6 +29,8 @@ To install, you'd run a command such as:
 
 (It's expected you'll confirm some security exceptions, you can pass `-b` to `elasticsearch-plugin` to automatically install)
 
+If you already are running Elasticsearch, don't forget to restart!
+
 # Development
 
 Notes if you want to dig into the code or build for a version there's no build for.
@@ -48,7 +50,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ```
 
 # Who built this?
-- [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com). 
+- [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
 - Significant contributions by [Wikimedia Foundation](https://wikimediafoundation.org/wiki/Home), [Snagajob Engineering](https://engineering.snagajob.com/), and [Bonsai](https://bonsai.io/)
 
 ## Other Acknowledgments & Stuff To Read
