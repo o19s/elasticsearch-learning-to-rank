@@ -81,7 +81,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         createModelFromSetRequestBuilder.get();
         buildIndex();
         Map<String, Object> params = new HashMap<>();
-        boolean negativeScore = random().nextBoolean();
+
+        boolean negativeScore = false;
         params.put("query", negativeScore ? "bonjour" : "hello");
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
@@ -99,6 +100,27 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         } else {
             assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(10.0f));
         }
+
+        negativeScore = true;
+        params.put("query", negativeScore ? "bonjour" : "hello");
+        sb = client().prepareSearch("test_index")
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
+
+        sr = sb.get();
+        assertEquals(1, sr.getHits().getTotalHits());
+
+        if(negativeScore) {
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-10.0f));
+        } else {
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(10.0f));
+        }
+
+
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
