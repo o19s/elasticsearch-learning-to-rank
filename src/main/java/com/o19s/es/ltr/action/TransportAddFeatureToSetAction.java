@@ -169,7 +169,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                 if (parsed.isEmpty()) {
                     nameQuery = QueryBuilders.matchAllQuery();
                 } else {
-                    nameQuery = QueryBuilders.matchQuery("name.prefix", parsed);
+                    nameQuery = QueryBuilders.matchPhrasePrefixQuery("name", parsed);
                 }
             } else {
                 nameQuery = QueryBuilders.matchQuery("name", featureNamesQuery);
