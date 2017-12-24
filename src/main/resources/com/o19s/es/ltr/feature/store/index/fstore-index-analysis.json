@@ -1,30 +1,3 @@
 {
-  "analysis": {
-    "analyzer": {
-      "name_prefix": {
-        "tokenizer": "keyword",
-        "filter": [
-          "prefix"
-        ]
-      },
-      "name_prefix_search": {
-        "tokenizer": "keyword",
-        "filter": [
-          "limit_512"
-        ]
-      }
-    },
-    "filter": {
-      "prefix": {
-        "type": "edge_ngram",
-        "min_gram": 1,
-        "max_gram": 512
-      },
-      "limit_512": {
-        "type": "length",
-        "min": 1,
-        "max": 512
-      }
-    }
-  }
+
 }

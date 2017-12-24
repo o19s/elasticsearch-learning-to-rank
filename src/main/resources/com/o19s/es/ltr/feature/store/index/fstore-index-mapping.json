@@ -3,14 +3,7 @@
   "properties": {
     "name": {
       "type": "text",
-      "analyzer": "keyword",
-      "fields": {
-        "prefix": {
-          "type": "text",
-          "analyzer": "name_prefix",
-          "search_analyzer": "name_prefix_search"
-        }
-      }
+      "analyzer": "keyword"
     },
     "type": {
       "type": "keyword"
