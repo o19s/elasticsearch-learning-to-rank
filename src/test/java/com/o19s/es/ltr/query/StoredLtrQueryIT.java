@@ -16,6 +16,21 @@
  */
 package com.o19s.es.ltr.query;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
+import org.elasticsearch.search.rescore.QueryRescoreMode;
+import org.elasticsearch.search.rescore.QueryRescorerBuilder;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
+
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
@@ -28,20 +43,6 @@ import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequest
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.WrapperQueryBuilder;
-import org.elasticsearch.search.rescore.QueryRescoreMode;
-import org.elasticsearch.search.rescore.QueryRescorerBuilder;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matchers;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by doug on 12/29/16.
@@ -95,10 +96,10 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         SearchResponse sr = sb.get();
         assertEquals(1, sr.getHits().getTotalHits());
 
-        if(negativeScore) {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-10.0f));
+        if (negativeScore) {
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
         } else {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(10.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
         }
 
         negativeScore = true;
@@ -115,9 +116,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertEquals(1, sr.getHits().getTotalHits());
 
         if(negativeScore) {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-10.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
         } else {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(10.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
         }
 
 

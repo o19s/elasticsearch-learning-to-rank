@@ -21,8 +21,6 @@ import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
 import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
 import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchPhrasePrefixQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchPhraseQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
@@ -294,7 +292,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         int size = request.paramAsInt("size", 20);
         BoolQueryBuilder qb = boolQuery().filter(termQuery("type", type));
         if (prefix != null && !prefix.isEmpty()) {
-            qb.must(matchPhrasePrefixQuery("name", prefix));
+            qb.must(matchQuery("name.prefix", prefix));
         }
         return (channel) -> client.prepareSearch(indexName)
                 .setTypes(IndexFeatureStore.ES_TYPE)
