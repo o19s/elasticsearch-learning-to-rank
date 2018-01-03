@@ -59,7 +59,7 @@ import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 
 public class IndexFeatureStore implements FeatureStore {
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     public static final Setting<Integer> STORE_VERSION_PROP = Setting.intSetting("index.ltrstore_version",
             VERSION, -1, Integer.MAX_VALUE, Setting.Property.IndexScope);
     public static final String DEFAULT_STORE = ".ltrstore";
@@ -266,7 +266,7 @@ public class IndexFeatureStore implements FeatureStore {
     private static Settings storeIndexSettings(String indexName) {
         return Settings.builder()
                 .put(IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
-                .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-1")
+                .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-2")
                 .put(STORE_VERSION_PROP.getKey(), VERSION)
                 .put(IndexMetaData.SETTING_PRIORITY, Integer.MAX_VALUE)
                 .put(Settings.builder()
