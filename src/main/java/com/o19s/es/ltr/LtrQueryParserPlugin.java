@@ -55,6 +55,7 @@ import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.analysis.AbstractTokenFilterFactory;
 import org.elasticsearch.index.analysis.TokenFilterFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
@@ -220,6 +221,13 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                                Environment environment,
                                                NodeEnvironment nodeEnvironment,
                                                NamedWriteableRegistry namedWriteableRegistry) {
+        clusterService.addListener(event -> {
+            for (Index i : event.indicesDeleted()) {
+                if (IndexFeatureStore.isIndexStore(i.getName())) {
+                    caches.evict(i.getName());
+                }
+            }
+        });
         return asList(caches, parserFactory);
     }
 
