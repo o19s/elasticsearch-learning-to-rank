@@ -29,8 +29,10 @@ import static org.elasticsearch.rest.RestStatus.OK;
 import java.io.IOException;
 import java.util.List;
 
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
@@ -52,6 +54,7 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
+import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
 import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.FeatureValidation;
@@ -267,8 +270,35 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         String name = request.param("name");
         String id = generateId(type, name);
         String routing = request.param("routing");
-        return (channel) ->  client.prepareDelete(indexName, ES_TYPE, id).setRouting(routing)
-                .execute(new RestStatusToXContentListener<>(channel, (r) -> r.getLocation(routing)));
+        return (channel) ->  {
+            RestStatusToXContentListener<DeleteResponse> restR = new RestStatusToXContentListener<>(channel, (r) -> r.getLocation(routing));
+            client.prepareDelete(indexName, ES_TYPE, id)
+                    .setRouting(routing)
+                    .execute(ActionListener.wrap((deleteResponse) -> {
+                            // wrap the response so we can send another request to clear the cache
+                            // usually we send only one transport request from the rest layer
+                            // it's still unclear which direction we should take (thick or thin REST layer?)
+                            ClearCachesAction.RequestBuilder clearCache = ClearCachesAction.INSTANCE.newRequestBuilder(client);
+                            switch (type) {
+                            case StoredFeature.TYPE:
+                                clearCache.request().clearFeature(indexName, name);
+                                break;
+                            case StoredFeatureSet.TYPE:
+                                clearCache.request().clearFeatureSet(indexName, name);
+                                break;
+                            case StoredLtrModel.TYPE:
+                                clearCache.request().clearModel(indexName, name);
+                                break;
+                            }
+                            clearCache.execute(ActionListener.wrap(
+                                    (r) -> restR.onResponse(deleteResponse),
+                                    // Is it good to fail the whole request if cache invalidation failed?
+                                    restR::onFailure
+                            ));
+                        },
+                        restR::onFailure
+                    ));
+        };
     }
 
     RestChannelConsumer get(NodeClient client, String type, String indexName, RestRequest request) {
