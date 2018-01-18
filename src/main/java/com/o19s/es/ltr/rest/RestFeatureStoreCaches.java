@@ -53,6 +53,11 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
     }
 
     @Override
+    public String getName() {
+        return "Provides clear cached for stores";
+    }
+
+    @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);

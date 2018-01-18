@@ -82,9 +82,9 @@ public class ExplorerQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
         if(isCollectionScoped()) {
-            final Weight subWeight = searcher.createWeight(query, true);
+            final Weight subWeight = searcher.createWeight(query, true, boost);
 
             ClassicSimilarity sim = new ClassicSimilarity();
 
@@ -167,7 +167,8 @@ public class ExplorerQuery extends Query {
                 constantScore = 0.0f;
             }
 
-            return new ConstantScoreWeight(ExplorerQuery.this) {
+            return new ConstantScoreWeight(ExplorerQuery.this, constantScore) {
+
                 @Override
                 public Explanation explain(LeafReaderContext context, int doc) throws IOException {
                     Scorer scorer = scorer(context);
@@ -189,11 +190,13 @@ public class ExplorerQuery extends Query {
     }
 
     protected class ExplorerWeight extends Weight {
+        private static final float DEFAULT_WEIGHT = 1f;
         protected final Weight weight;
 
+        // TODO jettro: Why is needsScores not used?
         protected ExplorerWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
             super(ExplorerQuery.this);
-            weight = searcher.createWeight(query, true);
+            weight = searcher.createWeight(query, true, DEFAULT_WEIGHT);
         }
 
         @Override
@@ -214,16 +217,6 @@ public class ExplorerQuery extends Query {
                 }
             }
             return Explanation.noMatch("no matching term");
-        }
-
-        @Override
-        public float getValueForNormalization() throws IOException {
-            return 1.0f;
-        }
-
-        @Override
-        public void normalize(float norm, float boost) {
-
         }
 
         @Override

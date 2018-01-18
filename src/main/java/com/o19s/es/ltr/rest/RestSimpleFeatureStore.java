@@ -98,6 +98,11 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         }
 
         @Override
+        public String getName() {
+            return "Add or update a feature";
+        }
+
+        @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.DELETE) {
@@ -121,6 +126,11 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         }
 
         @Override
+        public String getName() {
+            return "Obtain ltr store";
+        }
+
+        @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
             return search(client, type, indexName(request), request);
         }
@@ -137,6 +147,11 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
             controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}", this);
+        }
+
+        @Override
+        public String getName() {
+            return "Manage the ltr store";
         }
 
         /**

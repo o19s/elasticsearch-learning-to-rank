@@ -15,6 +15,7 @@
 
 package com.o19s.es.explore;
 
+import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -26,43 +27,58 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
-public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuilder> implements NamedWriteable{
+public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuilder> implements NamedWriteable {
     public static final String NAME = "match_explorer";
 
     private static final ParseField QUERY_NAME = new ParseField("query");
     private static final ParseField TYPE_NAME = new ParseField("type");
-
-    private QueryBuilder query;
-    private String type;
-
-    private static final ObjectParser<ExplorerQueryBuilder, QueryParseContext> PARSER;
+    private static final ObjectParser<ExplorerQueryBuilder, Void> PARSER;
 
     static {
         PARSER = new ObjectParser<>(NAME, ExplorerQueryBuilder::new);
         PARSER.declareObject(
                 ExplorerQueryBuilder::query,
-                (parser, context) -> context.parseInnerQueryBuilder().get(),
+                (parser, context) -> parseInnerQueryBuilder(parser),
                 QUERY_NAME
         );
         PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
-        declareStandardFields(PARSER);
+        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
     }
 
+    private QueryBuilder query;
+    private String type;
 
     public ExplorerQueryBuilder() {
     }
+
 
     public ExplorerQueryBuilder(StreamInput in) throws IOException {
         super(in);
         query = in.readNamedWriteable(QueryBuilder.class);
         type = in.readString();
+    }
+
+    public static ExplorerQueryBuilder fromXContent(XContentParser parser) throws IOException {
+        final ExplorerQueryBuilder builder;
+
+        try {
+            builder = PARSER.parse(parser, null);
+        } catch (IllegalArgumentException iae) {
+            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
+        }
+
+        if (builder.query == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Field [" + QUERY_NAME + "] is mandatory.");
+        }
+        if (builder.statsType() == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
+        }
+        return builder;
     }
 
     @Override
@@ -78,25 +94,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         builder.field(QUERY_NAME.getPreferredName(), query);
         builder.field(TYPE_NAME.getPreferredName(), type);
         builder.endObject();
-    }
-
-    public static Optional<ExplorerQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
-        XContentParser parser = context.parser();
-        final ExplorerQueryBuilder builder;
-
-        try {
-            builder = PARSER.parse(context.parser(), context);
-        } catch (IllegalArgumentException iae) {
-            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
-        }
-
-        if (builder.query == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Field [" + QUERY_NAME + "] is mandatory.");
-        }
-        if (builder.statsType() == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
-        }
-        return Optional.of(builder);
     }
 
     @Override
@@ -123,6 +120,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     public QueryBuilder query() {
         return query;
     }
+
     public ExplorerQueryBuilder query(QueryBuilder query) {
         this.query = query;
         return this;
@@ -131,6 +129,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     public String statsType() {
         return type;
     }
+
     public ExplorerQueryBuilder statsType(String type) {
         this.type = type;
         return this;

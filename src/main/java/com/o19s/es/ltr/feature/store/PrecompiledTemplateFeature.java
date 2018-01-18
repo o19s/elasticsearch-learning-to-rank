@@ -27,9 +27,9 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
+import org.elasticsearch.index.query.Rewriteable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
 
 public class PrecompiledTemplateFeature implements Feature, Accountable {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
@@ -91,11 +92,9 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
         String query = MustacheUtils.execute(template, params);
         try {
             XContentParser parser = XContentFactory.xContent(query).createParser(context.getXContentRegistry(), query);
-            QueryParseContext parserContext = context.newParseContext(parser);
-            QueryBuilder queryBuilder = parserContext.parseInnerQueryBuilder().orElseThrow(
-                    () -> new ParsingException(parser.getTokenLocation(), "ltr inner query cannot be empty"));
+            QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return QueryBuilder.rewriteQuery(queryBuilder, context).toQuery(context);
+            return Rewriteable.rewrite(queryBuilder, context).toQuery(context);
         } catch (IOException |ParsingException|IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
             throw new QueryShardException(context, "Cannot create query while parsing feature [" + name +"]", e);

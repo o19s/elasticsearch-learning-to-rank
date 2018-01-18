@@ -200,9 +200,10 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
     }
 
     public Query buildFunctionScore() {
+        FieldValueFactorFunction fieldValueFactorFunction = new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
+                new SortedNumericDVIndexFieldData(new Index("test", "123"),
+                        "score", FLOAT));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
-                new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
-                        new SortedNumericDVIndexFieldData(new Index("test", "123"),
-                                "score", FLOAT)), 0F, CombineFunction.MULTIPLY, Float.MAX_VALUE);
+                fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }
 }

@@ -75,8 +75,8 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        return query.createWeight(searcher, needsScores);
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+        return query.createWeight(searcher, needsScores, boost);
     }
 
     @Override

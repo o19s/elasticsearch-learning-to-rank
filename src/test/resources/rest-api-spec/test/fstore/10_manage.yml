@@ -82,9 +82,9 @@
   - do:
         ltr.list_stores: {}
 
-  - match: { stores._default_.version: 1 }
+  - match: { stores._default_.version: 2 }
   - match: { stores._default_.index: .ltrstore }
-  - match: { stores.mystore.version: 1 }
+  - match: { stores.mystore.version: 2 }
   - match: { stores.mystore.index: .ltrstore_mystore }
 
 ---
