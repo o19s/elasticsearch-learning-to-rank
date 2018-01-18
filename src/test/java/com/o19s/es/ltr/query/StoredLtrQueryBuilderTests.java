@@ -32,6 +32,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
@@ -136,14 +137,15 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         Query featureQuery = ite.next();
         QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
         QueryShardContext qcontext = createShardContext();
-        Query expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+
+        Query expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
         assertTrue(ite.hasNext());
         featureQuery = ite.next();
         builder = new MatchQueryBuilder("field2", queryBuilder.params().get("query_string"));
         qcontext = createShardContext();
-        expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+        expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
         assertTrue(ite.hasNext());
@@ -154,7 +156,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                 .modifier(FieldValueFactorFunction.Modifier.LN2P)
                 .missing(0F));
         qcontext = createShardContext();
-        expected = QueryBuilder.rewriteQuery(builder, qcontext).toQuery(qcontext);
+        expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
         assertThat(rquery.ranker(), instanceOf(LinearRanker.class));

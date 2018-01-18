@@ -16,13 +16,11 @@
 
 package com.o19s.es.ltr.action;
 
-import com.o19s.es.ltr.LtrQueryParserPlugin;
-import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
-import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
-import com.o19s.es.ltr.feature.FeatureValidation;
-import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -32,10 +30,13 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Before;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.ExecutionException;
+import com.o19s.es.ltr.LtrQueryParserPlugin;
+import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
+import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
+import com.o19s.es.ltr.feature.FeatureValidation;
+import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     @Override

@@ -166,10 +166,10 @@ public class RankerQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
         if (!needsScores) {
             // If scores are not needed simply return a constant score on all docs
-            return new ConstantScoreWeight(this) {
+            return new ConstantScoreWeight(this, boost) {
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
@@ -178,7 +178,7 @@ public class RankerQuery extends Query {
         }
         List<Weight> weights = new ArrayList<>(queries.size());
         for (Query q : queries) {
-            weights.add(searcher.createWeight(q, needsScores));
+            weights.add(searcher.createWeight(q, needsScores, boost));
         }
         return new RankerWeight(weights);
     }
@@ -227,31 +227,6 @@ public class RankerQuery extends Query {
             }
             float modelScore = ranker.score(d);
             return Explanation.match(modelScore, " LtrModel: " + ranker.name() + " using features:", subs);
-        }
-
-        @Override
-        public float getValueForNormalization() throws IOException {
-            // disabled in future lucene version, see #normalize(float, float)
-            return 1F;
-        }
-
-        @Override
-        public void normalize(float norm, float boost) {
-            // Ignore top-level boost & norm
-            // We must make sure that the scores from the sub scorers
-            // are not affected by parent queries because rankers using thresholds
-            // may produce inconsistent results.
-            // It breaks lucene contract but in general this query is meant
-            // to be used as the top level query of a rescore query where
-            // resulting score can still be controlled with the rescore_weight param.
-            // One possibility would be to store the boost value and apply it
-            // on the resulting score.
-            // Logging feature scores may be impossible when feature queries
-            // are run and logged individually (_msearch approach) and the similatity
-            // used is affected by queryNorm (ClassicSimilarity)
-            for (Weight w : weights) {
-                w.normalize(1F, 1F);
-            }
         }
 
         @Override

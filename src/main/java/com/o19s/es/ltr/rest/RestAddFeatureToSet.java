@@ -43,6 +43,11 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
     }
 
     @Override
+    public String getName() {
+        return "Add a feature to the set of features";
+    }
+
+    @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         String store = indexName(request);
         String setName = request.param("name");

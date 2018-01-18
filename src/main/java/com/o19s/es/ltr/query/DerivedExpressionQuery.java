@@ -48,10 +48,10 @@ public class DerivedExpressionQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
         if (!needsScores) {
             // If scores are not needed simply return a constant score on all docs
-            return new ConstantScoreWeight(this) {
+            return new ConstantScoreWeight(this, boost) {
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
@@ -96,11 +96,6 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
-        public float getValueForNormalization() throws IOException {
-            return 1.0f;
-        }
-
-        @Override
         public Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
             Bindings bindings = new Bindings(){
                 @Override
@@ -131,10 +126,6 @@ public class DerivedExpressionQuery extends Query {
             return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText);
         }
 
-        @Override
-        public void normalize(float norm, float boost) {
-            // No-op
-        }
     }
 
     static class DValScorer extends Scorer {
@@ -203,6 +194,29 @@ public class DerivedExpressionQuery extends Query {
         @Override
         public boolean needsScores() {
             return true;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            FVDoubleValuesSource that = (FVDoubleValuesSource) o;
+            return ordinal == that.ordinal &&
+                    Objects.equals(vectorSupplier, that.vectorSupplier);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(ordinal, vectorSupplier);
+        }
+
+        @Override
+        public String toString() {
+            return "FVDoubleValuesSource{" +
+                    "ordinal=" + ordinal +
+                    ", vectorSupplier=" + vectorSupplier +
+                    '}';
         }
     }
 }

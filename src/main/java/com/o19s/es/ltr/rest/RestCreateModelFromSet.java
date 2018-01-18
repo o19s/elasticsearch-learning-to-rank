@@ -46,6 +46,11 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
     }
 
     @Override
+    public String getName() {
+        return "Create initial models for features";
+    }
+
+    @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         String store = indexName(request);
         Long expectedVersion = null;
