@@ -46,7 +46,7 @@ This runs the tasks in the `esplugin` gradle plugin that builds, tests, generate
 ### 2. Install with `./bin/elasticsearch-plugin`
 
 ```
-./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-1.0.0-RC2-es5.6.4.zip
+./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-<LTR-VER>-es<ES-VER>.zip
 ```
 
 # Who built this?
