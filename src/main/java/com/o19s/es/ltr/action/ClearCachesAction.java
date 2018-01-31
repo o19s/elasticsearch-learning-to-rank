@@ -37,7 +37,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 
 public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodesRequest,
         ClearCachesAction.ClearCachesNodesResponse, ClearCachesAction.RequestBuilder> {
-    public static final String NAME = "ltr:caches";
+    public static final String NAME = "cluster:admin/ltr/caches";
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
     private ClearCachesAction() {

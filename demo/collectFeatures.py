@@ -81,7 +81,7 @@ def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
 
 if __name__ == "__main__":
     from judgments import judgmentsFromFile, judgmentsByQid
-    from elasticsearch import Elasticsearch
+    from utils import Elasticsearch
     es = Elasticsearch()
     judgmentsByQid = judgmentsByQid(judgmentsFromFile('sample_judgments.txt'))
     logFeatures(es, judgmentsByQid)

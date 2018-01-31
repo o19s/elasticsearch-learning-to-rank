@@ -39,7 +39,7 @@ import java.util.Map;
 
 public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodesRequest,
         CachesStatsAction.CachesStatsNodesResponse, CachesStatsAction.CacheStatsRequestBuilder> {
-    public static final String NAME = "ltr:caches/stats";
+    public static final String NAME = "cluster:admin/ltr/caches/stats";
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
     protected CachesStatsAction() {
