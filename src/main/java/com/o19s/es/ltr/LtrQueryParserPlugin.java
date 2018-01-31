@@ -171,11 +171,17 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
         return unmodifiableList(asList(
                 new ActionHandler<>(FeatureStoreAction.INSTANCE, TransportFeatureStoreAction.class),
+                new ActionHandler<>(FeatureStoreAction.BC_INSTANCE, TransportFeatureStoreAction.BC.class),
                 new ActionHandler<>(CachesStatsAction.INSTANCE, TransportCacheStatsAction.class),
+                new ActionHandler<>(CachesStatsAction.BC_INSTANCE, TransportCacheStatsAction.BC.class),
                 new ActionHandler<>(ClearCachesAction.INSTANCE, TransportClearCachesAction.class),
+                new ActionHandler<>(ClearCachesAction.BC_INSTANCE, TransportClearCachesAction.BC.class),
                 new ActionHandler<>(AddFeaturesToSetAction.INSTANCE, TransportAddFeatureToSetAction.class),
+                new ActionHandler<>(AddFeaturesToSetAction.BC_INSTANCE, TransportAddFeatureToSetAction.BC.class),
                 new ActionHandler<>(CreateModelFromSetAction.INSTANCE, TransportCreateModelFromSetAction.class),
-                new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class)));
+                new ActionHandler<>(CreateModelFromSetAction.BC_INSTANCE, TransportCreateModelFromSetAction.BC.class),
+                new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class),
+                new ActionHandler<>(ListStoresAction.BC_INSTANCE, TransportListStoresAction.BC.class)));
     }
 
     @Override

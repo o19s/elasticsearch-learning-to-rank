@@ -1,6 +1,8 @@
 import json
 import requests
+from utils import ES_AUTH, ES_HOST
 from urllib.parse import urljoin
+
 
 def getFeature(ftrId):
     return json.loads(open('%s.json' % ftrId).read())
@@ -22,7 +24,7 @@ def eachFeature():
         pass
 
 
-def loadFeatures(esHost, featureSetName='movie_features'):
+def loadFeatures(featureSetName='movie_features'):
     featureSet = {
         "featureset": {
             "name": featureSetName,
@@ -30,30 +32,30 @@ def loadFeatures(esHost, featureSetName='movie_features'):
         }
     }
     path = "_ltr/_featureset/%s" % featureSetName
-    fullPath = urljoin(esHost, path)
+    fullPath = urljoin(ES_HOST, path)
     print("POST %s" % fullPath)
     print(json.dumps(featureSet, indent=2))
     head = {'Content-Type': 'application/json'}
-    resp = requests.post(fullPath, data=json.dumps(featureSet), headers=head)
+    resp = requests.post(fullPath, data=json.dumps(featureSet), headers=head, auth=ES_AUTH)
     print("%s" % resp.status_code)
     print("%s" % resp.text)
 
 
 
-def initDefaultStore(esHost):
-    path = urljoin(esHost, '_ltr')
+def initDefaultStore():
+    path = urljoin(ES_HOST, '_ltr')
     print("DELETE %s" % path)
-    resp = requests.delete(path)
+    resp = requests.delete(path, auth=ES_AUTH)
     print("%s" % resp.status_code)
     print("PUT %s" % path)
-    resp = requests.put(path)
+    resp = requests.put(path, auth=ES_AUTH)
     print("%s" % resp.status_code)
 
 
 
 if __name__ == "__main__":
     from time import sleep
-    esHost='http://localhost:9200'
-    initDefaultStore(esHost)
+    from utils import ES_HOST
+    initDefaultStore(ES_HOST)
     sleep(1)
-    loadFeatures(esHost)
+    loadFeatures(ES_HOST)
