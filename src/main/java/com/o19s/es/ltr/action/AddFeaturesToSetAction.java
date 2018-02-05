@@ -39,7 +39,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFeaturesToSetRequest,
         AddFeaturesToSetAction.AddFeaturesToSetResponse, AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder> {
     public static final AddFeaturesToSetAction INSTANCE = new AddFeaturesToSetAction();
-    public static final String NAME = "indices:data/write/ltr/store/add-features-to-set";
+    public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
     protected AddFeaturesToSetAction() {
         super(NAME);

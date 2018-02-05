@@ -39,7 +39,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 
 public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRequest,
         FeatureStoreAction.FeatureStoreResponse, FeatureStoreAction.FeatureStoreRequestBuilder> {
-    public static final String NAME = "indices:data/write/ltr/featurestore/data";
+    public static final String NAME = "cluster:admin/ltr/featurestore/data";
     public static final FeatureStoreAction INSTANCE = new FeatureStoreAction();
 
     protected FeatureStoreAction() {
