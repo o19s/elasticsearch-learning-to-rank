@@ -25,6 +25,7 @@ Pre-built versions can be found `here <http://es-learn-to-rank.labs.o19s.com/>`_
 
 (It's expected you'll confirm some security exceptions, you can pass -b to elasticsearch-plugin to automatically install)
 
+Are you using `x-pack security <https://www.elastic.co/products/x-pack/security>`_ in your cluster? we got you covered, check :doc:`x-pack` for specific configuration details.
 
 HEEELP!
 ------------------------------
