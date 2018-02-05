@@ -1,6 +1,7 @@
 # Build directory for read-the-docs
 /docs/_build/
 
+*.patch
 .envrc
 venv
 sample_judgements_wfeatures.txt
