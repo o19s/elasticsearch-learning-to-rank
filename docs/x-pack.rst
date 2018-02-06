@@ -74,3 +74,12 @@ two users, ltr_admin and ltr_user. The commands to set the roles are:
 After this two steps, your plugin will be fully functional in your x-pack protected cluster.
 
 For more in deep information on how to define roles, we recommend you to check the elastic `x-pack api documentation <https://www.elastic.co/guide/en/x-pack/6.1/defining-roles.html>`_.
+
+
+=====================================================
+Considerations
+=====================================================
+
+The read access to models via the sltr query is not strictly gated by x-pack. The access will only be checked if the model needs
+to be loaded, however If the model is already in the cache for that node no checks will be performed. This will generally not have
+a major security impact, however is important to take into account in case is important for your use case.
