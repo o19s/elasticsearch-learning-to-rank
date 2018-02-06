@@ -1,7 +1,7 @@
 import os
 from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
 from loadFeatures import initDefaultStore, loadFeatures
-
+from utils import Elasticsearch, ES_HOST, ES_AUTH
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
     # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgments_wfeatures.txt -save model.txt
@@ -18,7 +18,6 @@ def saveModel(scriptName, featureSet, modelFname):
     import requests
     import json
     from urllib.parse import urljoin
-    from utils import ES_AUTH, ES_HOST
 
     modelPayload = {
         "model": {
@@ -49,7 +48,6 @@ def saveModel(scriptName, featureSet, modelFname):
 
 if __name__ == "__main__":
     import configparser
-    from utils import Elasticsearch, ES_HOST
     from judgments import judgmentsFromFile, judgmentsByQid
 
     es = Elasticsearch(timeout=1000)

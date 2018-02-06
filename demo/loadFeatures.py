@@ -55,7 +55,6 @@ def initDefaultStore():
 
 if __name__ == "__main__":
     from time import sleep
-    from utils import ES_HOST
-    initDefaultStore(ES_HOST)
+    initDefaultStore()
     sleep(1)
-    loadFeatures(ES_HOST)
+    loadFeatures()

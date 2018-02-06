@@ -1,6 +1,10 @@
 # Build directory for read-the-docs
 /docs/_build/
 
+*.patch
+demo/*.jar
+demo/utils.pyc
+
 .envrc
 venv
 sample_judgements_wfeatures.txt
