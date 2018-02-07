@@ -1,5 +1,5 @@
-Configuring X-Pack (Security)
-***********************
+On XPack Support (Security)
+*****************************
 
 X-Pack is the collection of extensions provided by elastic to enhance the capabilities of the Elastic Stack with things
 such as reporting, monitoring and also security. If you installed x-pack your cluster will now be protected with the
@@ -23,13 +23,13 @@ To create the two roles, you can do it with this commands,
 
     POST /_xpack/security/role/ltr_admin
     {
-        "cluster": [ "ltr" ],
-        "indices": [
-            {
-                "names": [ ".ltrstore*" ],
-                "privileges": [ "all" ],
-            }
-        ]
+      "cluster": [ "ltr" ],
+      "indices": [
+        {
+            "names": [ ".ltrstore*" ],
+            "privileges": [ "all" ],
+        }
+      ]
     }
 
     POST /_xpack/security/role/ltr_query

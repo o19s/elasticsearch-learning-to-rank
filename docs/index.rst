@@ -46,6 +46,7 @@ Contents
    logging-features
    training-models
    searching-with-your-model
+   x-pack
    advanced-functionality
    :caption: Contents:
 
