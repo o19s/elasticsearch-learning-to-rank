@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRequest,
         ListStoresAction.ListStoresActionResponse,ListStoresAction.ListStoresActionRequestBuilder> {
-    public static final String NAME = "ltr:featurestore/list";
+    public static final String NAME = "cluster:admin/ltr/featurestore/list";
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
     private ListStoresAction() {
