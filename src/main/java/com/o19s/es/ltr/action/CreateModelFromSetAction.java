@@ -37,7 +37,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 
 public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.CreateModelFromSetRequest,
         CreateModelFromSetAction.CreateModelFromSetResponse, CreateModelFromSetAction.CreateModelFromSetRequestBuilder> {
-    public static final String NAME = "ltr:store/create-model-from-set";
+    public static final String NAME = "cluster:admin/ltr/store/create-model-from-set";
     public static final CreateModelFromSetAction INSTANCE = new CreateModelFromSetAction();
 
     protected CreateModelFromSetAction() {

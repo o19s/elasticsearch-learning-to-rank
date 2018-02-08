@@ -5,7 +5,7 @@ def enrich(movie):
     if 'title' in movie:
         movie['title_sent'] = 'SENTINEL_BEGIN ' + movie['title']
 
-def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tmdb', esUrl='http://localhost:9200'):
+def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tmdb'):
     import elasticsearch.helpers
     settings = {
         "settings": {
@@ -36,15 +36,9 @@ def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tm
     elasticsearch.helpers.bulk(es, bulkDocs(movieDict))
 
 if __name__ == "__main__":
-    import configparser
-    from elasticsearch import Elasticsearch
+    from utils import Elasticsearch
     from sys import argv
 
-    config = configparser.ConfigParser()
-    config.read('settings.cfg')
-    esUrl=config['DEFAULT']['ESHost']
-    if len(argv) > 1:
-        esUrl = argv[1]
-    es = Elasticsearch(esUrl, timeout=30)
+    es = Elasticsearch(timeout=30)
     movieDict = json.loads(open('tmdb.json').read())
-    reindex(es, movieDict=movieDict, esUrl=esUrl)
+    reindex(es, movieDict=movieDict)

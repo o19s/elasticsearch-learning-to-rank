@@ -12,7 +12,7 @@ buildscript {
 }
 
 group = 'com.o19s'
-version = '1.0.0-es5.6.6'
+version = '1.0.1-es5.6.6'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
