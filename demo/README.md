@@ -8,6 +8,18 @@ This demo requires
 
 - Python 3+
 - Python `elasticsearch` and `requests` libraries
+- Python `elasticsearch_xpack` libraries if xpack support is necessary
+
+## An aside: X Pack
+
+Using the LTR plugin with xpack requires configuring appropriate roles. These
+can be setup automatically by `prepare_xpack.py` which takes a username and
+will prompt for a password.  After this is run `settings.cfg` must be edited to
+uncomment the ESUser and ESPassword properties.
+
+```
+python prepare_xpack.py <xpack admin username>
+```
 
 ## Download the TMDB Data & Ranklib Jar
 

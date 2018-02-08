@@ -1,7 +1,7 @@
 import os
 from collectFeatures import logFeatures, buildFeaturesJudgmentsFile
 from loadFeatures import initDefaultStore, loadFeatures
-
+from utils import Elasticsearch, ES_HOST, ES_AUTH
 
 def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
     # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgments_wfeatures.txt -save model.txt
@@ -13,11 +13,12 @@ def trainModel(judgmentsWithFeaturesFile, modelOutput, whichModel=6):
     pass
 
 
-def saveModel(esHost, scriptName, featureSet, modelFname):
+def saveModel(scriptName, featureSet, modelFname):
     """ Save the ranklib model in Elasticsearch """
     import requests
     import json
     from urllib.parse import urljoin
+
     modelPayload = {
         "model": {
             "name": scriptName,
@@ -32,11 +33,11 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
     with open(modelFname) as modelFile:
         modelContent = modelFile.read()
         path = "_ltr/_featureset/%s/_createmodel" % featureSet
-        fullPath = urljoin(esHost, path)
+        fullPath = urljoin(ES_HOST, path)
         modelPayload['model']['model']['definition'] = modelContent
         print("POST %s" % fullPath)
         head = {'Content-Type': 'application/json'}
-        resp = requests.post(fullPath, data=json.dumps(modelPayload), headers=head)
+        resp = requests.post(fullPath, data=json.dumps(modelPayload), headers=head, auth=ES_AUTH)
         print(resp.status_code)
         if (resp.status_code >= 300):
             print(resp.text)
@@ -47,17 +48,12 @@ def saveModel(esHost, scriptName, featureSet, modelFname):
 
 if __name__ == "__main__":
     import configparser
-    from elasticsearch import Elasticsearch
     from judgments import judgmentsFromFile, judgmentsByQid
 
-    config = configparser.ConfigParser()
-    config.read('settings.cfg')
-    esUrl = config['DEFAULT']['ESHost']
-
-    es = Elasticsearch(esUrl, timeout=1000)
+    es = Elasticsearch(timeout=1000)
     # Load features into Elasticsearch
-    initDefaultStore(esUrl)
-    loadFeatures(esUrl)
+    initDefaultStore()
+    loadFeatures()
     # Parse a judgments
     movieJudgments = judgmentsByQid(judgmentsFromFile(filename='sample_judgments.txt'))
     # Use proposed Elasticsearch queries (1.json.jinja ... N.json.jinja) to generate a training set
@@ -77,4 +73,4 @@ if __name__ == "__main__":
         # 9, Linear Regression
         print("*** Training %s " % modelType)
         trainModel(judgmentsWithFeaturesFile='sample_judgments_wfeatures.txt', modelOutput='model.txt', whichModel=modelType)
-        saveModel(esHost=esUrl, scriptName="test_%s" % modelType, featureSet='movie_features', modelFname='model.txt')
+        saveModel(scriptName="test_%s" % modelType, featureSet='movie_features', modelFname='model.txt')
