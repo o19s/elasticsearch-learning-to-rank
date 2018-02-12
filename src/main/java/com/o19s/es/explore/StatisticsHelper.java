@@ -76,7 +76,7 @@ public class StatisticsHelper {
         float temp = 0.0f;
         for(float a : data)
             temp += (a-mean)*(a-mean);
-        return temp/(data.size()-1);
+        return temp/data.size();
     }
 
     public float getStdDev() {
