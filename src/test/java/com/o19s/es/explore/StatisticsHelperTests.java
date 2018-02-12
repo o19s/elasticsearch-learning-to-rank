@@ -32,7 +32,19 @@ public class StatisticsHelperTests extends LuceneTestCase {
         assertEquals(10.0f, stats.getMax(), 0.0f);
         assertEquals(-5.0f, stats.getMin(), 0.0f);
         assertEquals(2.5f, stats.getMean(), 0.0f);
-        assertEquals(6.45, stats.getStdDev(), 0.009f);
-        assertEquals(41.66f, stats.getVariance(), 0.009f);
+        assertEquals(5.59f, stats.getStdDev(), 0.009f);
+        assertEquals(31.25f, stats.getVariance(), 0.009f);
+    }
+
+    public void testSingleElement() throws Exception {
+        StatisticsHelper stats = new StatisticsHelper();
+
+        stats.add(42.0f);
+
+        assertEquals(42.0f, stats.getMax(), 0.0f);
+        assertEquals(42.0f, stats.getMin(), 0.0f);
+        assertEquals(42.0f, stats.getMean(), 0.0f);
+        assertEquals(0.0f, stats.getStdDev(), 0.0f);
+        assertEquals(0.0f, stats.getVariance(), 0.0f);
     }
 }
