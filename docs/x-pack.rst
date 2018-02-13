@@ -18,8 +18,7 @@ and one to run the queries.
 For this configuration, we supose you already have identified, and created two users, one for running queries and one for doing administrative tasks. If you
 need help to create the users, we recommend you to check the `x-pack api documentation for user management <https://www.elastic.co/guide/en/elasticsearch/reference/6.1/security-api-users.html>`_.
 
-
-To create the two roles, you can do it with this commands,
+To create two roles, you can do it with these commands::
 
     POST /_xpack/security/role/ltr_admin
     {
@@ -43,11 +42,9 @@ To create the two roles, you can do it with this commands,
         ]
     }
 
-the first one will allow the users to perform all the operations while the last one will only allow for read operations.
+the first one will allow the users to perform all the operations while the last one will only allow read operations.
 
-Once the roles are defined, the last step will be to attach this roles to existing users, for this documentation we will suppose
-two users, ltr_admin and ltr_user. The commands to set the roles are:
-
+Once the roles are defined, the last step will be to attach this roles to existing users, for this documentation we will suppose two users, ltr_admin and ltr_user. The commands to set the roles are::
 
     POST /_xpack/security/role_mapping/ltr_admins
     {
