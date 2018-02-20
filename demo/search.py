@@ -30,17 +30,13 @@ def ltrQuery(keywords, modelName):
 if __name__ == "__main__":
     import configparser
     from sys import argv
-    from elasticsearch import Elasticsearch
+    from utils import Elasticsearch
 
-    config = configparser.ConfigParser()
-    config.read('settings.cfg')
-    esUrl=config['DEFAULT']['ESHost']
-
-    es = Elasticsearch(esUrl, timeout=1000)
+    es = Elasticsearch(timeout=1000)
     model = "test_6"
     if len(argv) > 2:
         model = argv[2]
     results = es.search(index='tmdb', doc_type='movie', body=ltrQuery(argv[1], model))
     for result in results['hits']['hits']:
-             print(result['_source']['title'])
+        print(result['_source']['title'])
 
