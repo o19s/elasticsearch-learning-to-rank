@@ -158,7 +158,9 @@ public class LtrQueryTests extends LuceneTestCase {
 
 
         indexReaderUnderTest = indexWriterUnderTest.getReader();
-        searcherUnderTest = newSearcher(indexReaderUnderTest);
+        // don't use newSearcher it may use an executor service and do not
+        // support parallel collector
+        searcherUnderTest = new IndexSearcher(indexReaderUnderTest);
         searcherUnderTest.setSimilarity(similarity);
     }
 

@@ -19,14 +19,16 @@ package com.o19s.es.ltr.ranker.dectree;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.ranker.BulkLtrRanker;
+import com.o19s.es.ltr.ranker.DenseFeatureMatrix;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
-import org.apache.logging.log4j.LogManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,6 +43,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
@@ -50,6 +53,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.AllOf.allOf;
 
+@LuceneTestCase.SuppressSysoutChecks(bugUrl = "")
 public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
@@ -69,28 +73,78 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
+    public void testBulk() {
+        SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
+        NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
+                100, 1000,
+                5, 50, counts);
+        DenseFeatureVector vector = ranker.newFeatureVector(null);
+        int nPass = TestUtil.nextInt(random(), 10, 8916);
+        DenseFeatureMatrix matrix = ranker.newMatrix(null, nPass);
+        float[] expectedScores = new float[nPass];
+        for (int i = 0; i < nPass; i++) {
+            vector = ranker.newFeatureVector(vector);
+            LinearRankerTests.fillRandomWeights(vector.scores);
+            System.arraycopy(vector.scores, 0, matrix.scores[i], 0, vector.scores.length);
+            expectedScores[i] = ranker.score(vector);
+        }
+
+        ranker.bulkScore(matrix, 0, nPass, (i, s) -> assertEquals(expectedScores[i], s, Math.ulp(expectedScores[i])));
+    }
+
     public void testPerfAndRobustness() {
         SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
         NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
                 100, 1000,
                 5, 50, counts);
 
-        DenseFeatureVector vector = ranker.newFeatureVector(null);
-        int nPass = TestUtil.nextInt(random(), 10, 8916);
-        LinearRankerTests.fillRandomWeights(vector.scores);
-        ranker.score(vector); // warmup
-
-        long time = -System.currentTimeMillis();
-        for (int i = 0; i < nPass; i++) {
-            vector = ranker.newFeatureVector(vector);
+        IntStream.range(5, 10).forEach( (nPass) -> {
+            nPass *= 100;
+            //int nPass = TestUtil.nextInt(random(), 10, 8916);
+            DenseFeatureVector vector = ranker.newFeatureVector(null);
             LinearRankerTests.fillRandomWeights(vector.scores);
-            ranker.score(vector);
-        }
-        time += System.currentTimeMillis();
-        LOG.info("Scored {} docs with {} trees/{} features within {}ms ({} ms/doc), " +
-                        "{} nodes ({} splits & {} leaves) ",
-                nPass, counts.trees.get(), ranker.size(), time, (float) time / (float) nPass,
-                counts.nodes.get(), counts.splits.get(), counts.leaves.get());
+            ranker.score(vector); // warmup
+            DenseFeatureMatrix matrix = ranker.newMatrix(null, nPass);
+            for (int i = 0; i < nPass; i++) {
+                LinearRankerTests.fillRandomWeights(matrix.scores[i]);
+            }
+            int suitePass = 10;
+            long totTime = 0;
+            ranker.score(vector); // warmup
+            for(int s = 0; s < suitePass; s++) {
+                long time = -System.currentTimeMillis();
+                for (int i = 0; i < nPass; i++) {
+                    vector = ranker.newFeatureVector(vector);
+                    System.arraycopy(matrix.scores[i], 0, vector.scores, 0, vector.scores.length);
+                    ranker.score(vector);
+                }
+                time += System.currentTimeMillis();
+                totTime += time;
+            }
+            long time = totTime/suitePass;
+            LOG.info("{} docs, {} trees/{} features [NBULK] {}ms ({} ms/doc), " +
+                            "{} nodes ({} splits & {} leaves) ",
+                    nPass, counts.trees.get(), ranker.size(), time, (float) time / (float) nPass,
+                    counts.nodes.get(), counts.splits.get(), counts.leaves.get());
+
+            ranker.bulkScore(matrix, 0, nPass, (i, s) -> {
+            }); // warmup
+
+            totTime = 0;
+            BulkLtrRanker.BulkScoreConsumer consumer = (i, sc) -> {};
+            for(int s = 0; s < suitePass; s++) {
+
+                time = -System.currentTimeMillis();
+                ranker.bulkScore(matrix, 0, nPass, consumer);
+                time += System.currentTimeMillis();
+                totTime += time;
+            }
+            time = totTime/suitePass;
+            LOG.info("{} docs, {} trees/{} features [WBULK] {}ms ({} ms/doc), " +
+                            "{} nodes ({} splits & {} leaves) ",
+                    nPass, counts.trees.get(), ranker.size(), time, (float) time / (float) nPass,
+                    counts.nodes.get(), counts.splits.get(), counts.leaves.get());
+        });
     }
 
     public void testRamSize() {

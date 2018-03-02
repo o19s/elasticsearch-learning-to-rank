@@ -40,6 +40,7 @@ import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.logging.LoggingFetchSubPhase;
 import com.o19s.es.ltr.logging.LoggingSearchExtBuilder;
 import com.o19s.es.ltr.query.LtrQueryBuilder;
+import com.o19s.es.ltr.query.Normalizer;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.query.ValidatingLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
@@ -47,6 +48,7 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
+import com.o19s.es.ltr.rescore.LtrRescoreBuilder;
 import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
@@ -121,7 +123,6 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<QuerySpec<?>> getQueries() {
-
         return asList(
                 new QuerySpec<>(ExplorerQueryBuilder.NAME, ExplorerQueryBuilder::new, ExplorerQueryBuilder::fromXContent),
                 new QuerySpec<>(LtrQueryBuilder.NAME, LtrQueryBuilder::new, LtrQueryBuilder::fromXContent),
@@ -131,6 +132,11 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new QuerySpec<>(ValidatingLtrQueryBuilder.NAME,
                         (input) -> new ValidatingLtrQueryBuilder(input, parserFactory),
                         (ctx) -> ValidatingLtrQueryBuilder.fromXContent(ctx, parserFactory)));
+    }
+
+    @Override
+    public List<RescorerSpec<?>> getRescorers() {
+        return singletonList(new RescorerSpec<>(LtrRescoreBuilder.NAME, LtrRescoreBuilder::new, LtrRescoreBuilder::parse));
     }
 
     @Override
@@ -175,11 +181,14 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<Entry> getNamedWriteables() {
-        return unmodifiableList(asList(
+        List<Entry> entries = new ArrayList<>();
+        entries.addAll(asList(
                 new Entry(StorableElement.class, StoredFeature.TYPE, StoredFeature::new),
                 new Entry(StorableElement.class, StoredFeatureSet.TYPE, StoredFeatureSet::new),
                 new Entry(StorableElement.class, StoredLtrModel.TYPE, StoredLtrModel::new)
         ));
+        entries.addAll(Normalizer.getNamedWriteables());
+        return unmodifiableList(entries);
     }
 
     @Override
@@ -190,7 +199,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<NamedXContentRegistry.Entry> getNamedXContent() {
-        return unmodifiableList(asList(
+        List<NamedXContentRegistry.Entry> entries = new ArrayList<>();
+        entries.addAll(asList(
                 new NamedXContentRegistry.Entry(StorableElement.class,
                         new ParseField(StoredFeature.TYPE),
                         (CheckedFunction<XContentParser, StorableElement, IOException>) StoredFeature::parse),
@@ -201,6 +211,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                         new ParseField(StoredLtrModel.TYPE),
                         (CheckedFunction<XContentParser, StorableElement, IOException>) StoredLtrModel::parse)
         ));
+        entries.addAll(Normalizer.getNamedXContent());
+        return unmodifiableList(entries);
     }
 
     @Override
