@@ -1,0 +1,84 @@
+---
+setup:
+  - do:
+      ltr.create_store: {}
+
+  - do:
+      ltr.create_model:
+        name: my_model
+        body:
+          model:
+            feature_set:
+              name: my_set
+              features:
+                - name: feature1
+                  params: query_string
+                  template:
+                    match:
+                      field1: "{{query_string}}"
+                - name: feature2
+                  params: query_string
+                  template:
+                    match:
+                      field2: "{{query_string}}"
+            model:
+              type: model/linear
+              definition:
+                feature1: 1.2
+                feature2: 0.2
+
+  - do:
+      indices.create:
+          index:  test
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     1
+        body:   { "field1": "hello montpellier", "field2": "bonjour montpellier" }
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     2
+        body:   { "field1": "hello paris", "field2": "bonjour paris"  }
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     3
+        body:   { "field1": "hello toulouse", "field2": "bonjour toulouse" }
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     4
+        body:   { "field1": "hello marseille", "field2": "bonjour marseille" }
+
+  - do:
+      indices.refresh: {}
+
+---
+"use ltr rescore":
+  - do:
+      search:
+        index: test
+        body:
+          query: { match: { "field1": "hello" } }
+          rescore:
+            - window_size: 2
+              ltr_rescore:
+                 ltr_query: { sltr: { params: {"query_string": "montpellier"}, model: "my_model"  } }
+                 query_normalizer: { interval: { from: 0, to: 1, normalizer: { minmax: { min: 0, max: 10 } } } }
+                 rescore_query_normalizer: { interval: { from: 1, to: 2, normalizer: { saturation: { k: 0.5, a: 1 } } } }
+                 score_mode: "replace"
+                 query_weight: 1
+                 rescore_query_weight: 1
+                 scoring_batch_size: 10
+
+  - length:   { hits.hits: 4  }
+  - match:   { hits.hits.0._id: "1" }

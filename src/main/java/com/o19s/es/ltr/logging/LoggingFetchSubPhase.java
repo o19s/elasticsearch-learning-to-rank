@@ -19,6 +19,7 @@ package com.o19s.es.ltr.logging;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.RankerQuery;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
+import com.o19s.es.ltr.rescore.LtrRescorer;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -144,9 +145,18 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                     "[" + contexts.size() + "] rescore context(s) are available");
         }
         RescoreContext context = contexts.get(logSpec.getRescoreIndex());
-        if (!(context instanceof QueryRescorer.QueryRescoreContext)) {
-            throw new IllegalArgumentException("Expected a [QueryRescoreContext] but found a " +
+        if (!(context instanceof QueryRescorer.QueryRescoreContext || context instanceof LtrRescorer.LtrRescoreContext)) {
+            throw new IllegalArgumentException("Expected a [QueryRescoreContext] or [LtrRescoreContext] but found a " +
                     "[" + context.getClass().getSimpleName() + "] " +
+                    "at index [" + logSpec.getRescoreIndex() + "]");
+        }
+        if (context instanceof LtrRescorer.LtrRescoreContext &&
+                ((LtrRescorer.LtrRescoreContext) context).getQuery() instanceof RankerQuery
+        ) {
+            return toLogger(logSpec, (RankerQuery) ((LtrRescorer.LtrRescoreContext) context).getQuery());
+        } else if (context instanceof LtrRescorer.LtrRescoreContext) {
+            throw new IllegalArgumentException("Expected a [sltr] query but found a " +
+                    "[" + ((LtrRescorer.LtrRescoreContext) context).getQuery().getClass().getSimpleName() + "] " +
                     "at index [" + logSpec.getRescoreIndex() + "]");
         }
         QueryRescorer.QueryRescoreContext qrescore = (QueryRescorer.QueryRescoreContext) context;

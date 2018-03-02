@@ -39,6 +39,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.elasticsearch.common.CheckedFunction;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -122,6 +123,10 @@ public class RankerQuery extends Query {
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    public LtrRanker getRanker() {
+        return ranker;
+    }
+
     @Override
     public boolean equals(Object obj) {
         // This query should never be cached
@@ -201,7 +206,7 @@ public class RankerQuery extends Query {
         return new RankerWeight(this, weights, ltrRankerWrapper, features);
     }
 
-    public static class RankerWeight extends Weight {
+    public static class RankerWeight extends Weight implements CheckedFunction<LeafReaderContext, List<Scorer>, IOException> {
         private final List<Weight> weights;
         private final FVLtrRankerWrapper ranker;
         private final FeatureSet features;
@@ -254,20 +259,35 @@ public class RankerQuery extends Query {
 
         @Override
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
-            List<Scorer> scorers = new ArrayList<>(weights.size());
             DisiPriorityQueue disiPriorityQueue = new DisiPriorityQueue(weights.size());
-            for (Weight weight : weights) {
-                Scorer scorer = weight.scorer(context);
-                if (scorer == null) {
-                    scorer = new NoopScorer(this, DocIdSetIterator.empty());
-                }
-                scorers.add(scorer);
-                disiPriorityQueue.add(new DisiWrapper(scorer));
-            }
+            List<Scorer> scorers = buildScorers(context, true);
+            scorers.stream().map(DisiWrapper::new)
+                    .forEach(disiPriorityQueue::add);
 
             DisjunctionDISI rankerIterator = new DisjunctionDISI(
                     DocIdSetIterator.all(context.reader().maxDoc()), disiPriorityQueue);
             return new RankerScorer(scorers, rankerIterator, ranker);
+        }
+
+        @Override
+        public List<Scorer> apply(LeafReaderContext context) throws IOException {
+            return buildScorers(context, false);
+        }
+
+        private List<Scorer> buildScorers(LeafReaderContext context, boolean nullAsNoop) throws IOException {
+            List<Scorer> scorers = new ArrayList<>(weights.size());
+            for (Weight weight : weights) {
+                Scorer scorer = weight.scorer(context);
+                if ( nullAsNoop && scorer == null ) {
+                    scorer = new NoopScorer(weight, DocIdSetIterator.empty());
+                }
+                scorers.add(scorer);
+            }
+            return scorers;
+        }
+
+        public MutableSupplier<LtrRanker.FeatureVector> getFeatureVectorSupplier() {
+            return this.ranker.vectorSupplier;
         }
 
         class RankerScorer extends Scorer {
@@ -310,11 +330,6 @@ public class RankerQuery extends Query {
                 }
                 return ranker.score(fv);
             }
-
-//            @Override
-//            public int freq() throws IOException {
-//                return scorers.size();
-//            }
 
             @Override
             public DocIdSetIterator iterator() {
@@ -412,6 +427,50 @@ public class RankerQuery extends Query {
         @Override
         public int hashCode() {
             return Objects.hash(wrapped, vectorSupplier);
+        }
+    }
+
+    public static class ElasticProfilerWeightWrapper extends Query {
+        private final RankerQuery query;
+        private RankerWeight weight;
+
+        public static ElasticProfilerWeightWrapper wrap(RankerQuery query) {
+            return new ElasticProfilerWeightWrapper(query);
+        }
+
+        ElasticProfilerWeightWrapper(RankerQuery query) {
+            this.query = Objects.requireNonNull(query);
+        }
+
+        @Override
+        public String toString(String field) {
+            return query.toString(field);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ElasticProfilerWeightWrapper that = (ElasticProfilerWeightWrapper) o;
+            return Objects.equals(query, that.query);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(query);
+        }
+
+        @Override
+        public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+            Weight weight = query.createWeight(searcher, needsScores, boost);
+            if (weight instanceof RankerQuery.RankerWeight) {
+                this.weight = ((RankerWeight) weight);
+            }
+            return weight;
+        }
+
+        public RankerWeight getWeight() {
+            return weight;
         }
     }
 }

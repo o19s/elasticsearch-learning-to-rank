@@ -135,7 +135,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         if (storeName != null) {
             builder.field(STORE_NAME.getPreferredName(), storeName);
         }
-        if (this.params != null && !this.params.isEmpty()) {
+        if (this.params != null) {
             builder.field(PARAMS.getPreferredName(), this.params);
         }
         if (this.activeFeatures != null && !this.activeFeatures.isEmpty()) {
