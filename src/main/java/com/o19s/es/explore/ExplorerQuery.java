@@ -183,6 +183,12 @@ public class ExplorerQuery extends Query {
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, constantScore, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
+
+                @Override
+                public boolean isCacheable(LeafReaderContext ctx) {
+                    return true;
+                }
+
             };
         } else {
             return new ExplorerQuery.ExplorerWeight(searcher, needsScores);
@@ -217,6 +223,11 @@ public class ExplorerQuery extends Query {
                 }
             }
             return Explanation.noMatch("no matching term");
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return true;
         }
 
         @Override

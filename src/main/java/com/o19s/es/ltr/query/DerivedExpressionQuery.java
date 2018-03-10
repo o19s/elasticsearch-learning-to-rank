@@ -53,9 +53,16 @@ public class DerivedExpressionQuery extends Query {
             // If scores are not needed simply return a constant score on all docs
             return new ConstantScoreWeight(this, boost) {
                 @Override
+                public boolean isCacheable(LeafReaderContext ctx) {
+                    return true;
+                }
+
+                @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
                 }
+
+
             };
         }
 
@@ -126,6 +133,10 @@ public class DerivedExpressionQuery extends Query {
             return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText);
         }
 
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return false;
+        }
     }
 
     static class DValScorer extends Scorer {
@@ -152,10 +163,10 @@ public class DerivedExpressionQuery extends Query {
         /**
          * Returns the freq of this Scorer on the current document
          */
-        @Override
-        public int freq() throws IOException {
-            return 1;
-        }
+//        @Override
+//        public int freq() throws IOException {
+//            return 1;
+//        }
 
         @Override
         public DocIdSetIterator iterator() {
@@ -197,6 +208,11 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
+        public DoubleValuesSource rewrite(IndexSearcher reader) throws IOException {
+            return this;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -217,6 +233,11 @@ public class DerivedExpressionQuery extends Query {
                     "ordinal=" + ordinal +
                     ", vectorSupplier=" + vectorSupplier +
                     '}';
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return false;
         }
     }
 }

@@ -53,11 +53,6 @@ public class NoopScorer extends Scorer {
     }
 
     @Override
-    public int freq() throws IOException {
-        return 0;
-    }
-
-    @Override
     public DocIdSetIterator iterator() {
         return _noopIter;
     }
