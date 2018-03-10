@@ -174,6 +174,11 @@ public class RankerQuery extends Query {
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
                 }
+
+                @Override
+                public boolean isCacheable(LeafReaderContext ctx) {
+                    return true;
+                }
             };
         }
         List<Weight> weights = new ArrayList<>(queries.size());
@@ -185,6 +190,13 @@ public class RankerQuery extends Query {
 
     public class RankerWeight extends Weight {
         private final List<Weight> weights;
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            // Only cachable if model doesn't change?
+            // I *think* it should be the case it should be true
+            return true;
+        }
 
         RankerWeight(List<Weight> weights) {
             super(RankerQuery.this);
@@ -294,10 +306,10 @@ public class RankerQuery extends Query {
                 return ranker.score(fv);
             }
 
-            @Override
-            public int freq() throws IOException {
-                return scorers.size();
-            }
+//            @Override
+//            public int freq() throws IOException {
+//                return scorers.size();
+//            }
 
             @Override
             public DocIdSetIterator iterator() {
