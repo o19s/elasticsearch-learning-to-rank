@@ -18,6 +18,7 @@ package com.o19s.es.explore;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 import java.io.IOException;
 
@@ -78,10 +79,6 @@ public class ExplorerScorer extends Scorer {
         return subScorer.docID();
     }
 
-    @Override
-    public int freq() throws IOException {
-        return subScorer.freq();
-    }
 
     @Override
     public DocIdSetIterator iterator() {
