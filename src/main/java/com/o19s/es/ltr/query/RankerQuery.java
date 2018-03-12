@@ -193,8 +193,10 @@ public class RankerQuery extends Query {
 
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {
-            // Only cachable if model doesn't change?
-            // I *think* it should be the case it should be true
+            for (Weight w : weights) {
+                if (w.isCacheable(ctx) == false)
+                    return false;
+            }
             return true;
         }
 
