@@ -19,6 +19,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -83,16 +85,17 @@ public class ExplorerQuery extends Query {
 
     @Override
     public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+        if (!needsScores) {
+            return searcher.createWeight(query, false, boost);
+        }
+        final Weight subWeight = searcher.createWeight(query, true, boost);
+        Set<Term> terms = new HashSet<>();
+        subWeight.extractTerms(terms);
         if(isCollectionScoped()) {
-            final Weight subWeight = searcher.createWeight(query, true, boost);
-
             ClassicSimilarity sim = new ClassicSimilarity();
-
-            Set<Term> terms = new HashSet<>();
             StatisticsHelper df_stats = new StatisticsHelper();
             StatisticsHelper idf_stats = new StatisticsHelper();
             StatisticsHelper ttf_stats = new StatisticsHelper();
-            subWeight.extractTerms(terms);
 
             for(Term term : terms) {
                 TermContext ctx = TermContext.build(searcher.getTopReaderContext(), term);
@@ -190,19 +193,29 @@ public class ExplorerQuery extends Query {
                 }
 
             };
-        } else {
-            return new ExplorerQuery.ExplorerWeight(searcher, needsScores);
+        } else if (type.endsWith("_raw_tf")) {
+            // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
+            BooleanQuery.Builder qb = new BooleanQuery.Builder();
+            for (Term t : terms) {
+                qb.add(new BooleanClause(new PostingsExplorerQuery(t, PostingsExplorerQuery.Type.TF), BooleanClause.Occur.SHOULD));
+            }
+            // FIXME: completely refactor this class and stop accepting a random query but a list of terms directly
+            // rewriting at this point is wrong, additionally we certainly build the TermContext twice for every terms
+            // problem is that we rely on extractTerms which happen too late in the process
+            Query q = qb.build().rewrite(searcher.getIndexReader());
+            return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, true, boost), type);
         }
+        throw new IllegalArgumentException( "Unknown ExplorerQuery type [" + type + "]" );
     }
 
-    protected class ExplorerWeight extends Weight {
-        private static final float DEFAULT_WEIGHT = 1f;
+    static class ExplorerWeight extends Weight {
         protected final Weight weight;
+        private final String type;
 
-        // TODO jettro: Why is needsScores not used?
-        protected ExplorerWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-            super(ExplorerQuery.this);
-            weight = searcher.createWeight(query, true, DEFAULT_WEIGHT);
+        ExplorerWeight(Query q, Weight subWeight, String type) throws IOException {
+            super(q);
+            weight = subWeight;
+            this.type = type;
         }
 
         @Override
@@ -233,7 +246,7 @@ public class ExplorerQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Scorer subscorer = weight.scorer(context);
-            return new ExplorerScorer(weight, context, type, subscorer);
+            return new ExplorerScorer(weight, type, subscorer);
         }
     }
 
