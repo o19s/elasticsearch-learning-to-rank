@@ -1,6 +1,6 @@
 machine:
   java:
-    version: oraclejdk9
+    version: openjdk9
 
 test:
   override:
