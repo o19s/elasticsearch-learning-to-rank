@@ -1,7 +1,11 @@
-machine:
-  java:
-    version: openjdk9
+version: 2
 
-test:
-  override:
-    - ./gradlew clean check
+jobs:
+    build:
+        docker:
+          - image: circleci/openjdk:9-jdk-browsers
+
+    
+    steps:
+      - checkout
+      - ./gradlew clean check
