@@ -1,11 +1,8 @@
 version: 2
-
 jobs:
     build:
         docker:
           - image: circleci/openjdk:9-jdk-browsers
-
-    
     steps:
       - checkout
-      - ./gradlew clean check
+      - run: ./gradlew clean check
