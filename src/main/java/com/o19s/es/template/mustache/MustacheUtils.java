@@ -44,8 +44,8 @@ public class MustacheUtils {
         }
     }
 
-    public static String execute(Mustache template, Map<String, Object> params) {
-        final StringWriter writer = new StringWriter();
+    public static String execute(Mustache template, Map<String, Object> params, int approxLength) {
+        final StringWriter writer = new StringWriter(approxLength);
         try {
             // no need to guard with the SecurityManager we only have Maps here so no reflection
             // will be performed.

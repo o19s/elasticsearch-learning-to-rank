@@ -32,6 +32,7 @@ import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.Rewriteable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -81,15 +82,23 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
 
     @Override
     public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
-        List<String> missingParams = queryParams.stream()
-                .filter((x) -> params == null || !params.containsKey(x))
-                .collect(Collectors.toList());
+        int size = 0;
+        List<String> missingParams = new ArrayList<>(1);
+        for (String param : queryParams) {
+            Object value = params != null ? params.get(param) : null;
+            if (value == null) {
+                missingParams.add(param);
+            } else {
+                size += value instanceof String ? ((String) value).length() : 10;
+            }
+        }
+
         if (!missingParams.isEmpty()) {
             String names = missingParams.stream().collect(Collectors.joining(","));
             throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
 
-        String query = MustacheUtils.execute(template, params);
+        String query = MustacheUtils.execute(template, params, size + this.templateString.length());
         try {
             XContentParser parser = XContentFactory.xContent(query).createParser(context.getXContentRegistry(), query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
