@@ -176,6 +176,8 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
                 return PrecompiledTemplateFeature.compile(this);
             case PrecompiledExpressionFeature.TEMPLATE_LANGUAGE:
                 return PrecompiledExpressionFeature.compile(this);
+            case OptimizedMatchFeature.TEMPLATE_LANGUAGE:
+                return OptimizedMatchFeature.build(this.name, this.template);
             default:
                 return this;
         }

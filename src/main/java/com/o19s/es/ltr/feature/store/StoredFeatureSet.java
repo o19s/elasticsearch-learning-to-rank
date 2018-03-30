@@ -209,6 +209,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
         for(Feature feature : features) {
             queries.add(feature.doToQuery(context, this, params));
         }
+        context.getCachedTokenStreams().close();
         return queries;
     }
 

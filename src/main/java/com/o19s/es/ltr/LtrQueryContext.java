@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr;
 
+import com.o19s.es.ltr.feature.store.CachedTokenStreams;
 import org.elasticsearch.index.query.QueryShardContext;
 
 /**
@@ -23,6 +24,7 @@ import org.elasticsearch.index.query.QueryShardContext;
  */
 public class LtrQueryContext {
     private final QueryShardContext queryShardContext;
+    private final CachedTokenStreams cachedTokenStreams = new CachedTokenStreams();
 
     public LtrQueryContext(QueryShardContext context) {
         this.queryShardContext = context;
@@ -30,5 +32,9 @@ public class LtrQueryContext {
 
     public QueryShardContext getQueryShardContext() {
         return queryShardContext;
+    }
+
+    public CachedTokenStreams getCachedTokenStreams() {
+        return cachedTokenStreams;
     }
 }

@@ -30,11 +30,13 @@ setup:
               features:
                   - name: feature1
                     params: query_string
+                    template_language: optimized_match
                     template:
                       match:
                         field1: "{{query_string}}"
                   - name: feature2
                     params: query_string
+                    template_language: optimized_match
                     template:
                       match:
                         field2: "{{query_string}}"
