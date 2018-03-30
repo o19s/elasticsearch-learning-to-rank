@@ -21,19 +21,15 @@ import com.github.mustachejava.MustacheException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
-import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.common.io.FastStringReader;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 
 import java.io.StringWriter;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Map;
 
 public class MustacheUtils {
     public static final String TEMPLATE_LANGUAGE = "mustache";
     private static final Logger logger = ESLoggerFactory.getLogger(MustacheUtils.class);
-    private static final SpecialPermission SPECIAL_PERMS = new SpecialPermission();
     /**
      * We store templates internally always as json
      */
@@ -51,15 +47,9 @@ public class MustacheUtils {
     public static String execute(Mustache template, Map<String, Object> params) {
         final StringWriter writer = new StringWriter();
         try {
-            // crazy reflection here
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                sm.checkPermission(SPECIAL_PERMS);
-            }
-            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                template.execute(writer, params);
-                return null;
-            });
+            // no need to guard with the SecurityManager we only have Maps here so no reflection
+            // will be performed.
+            template.execute(writer, params);
         } catch (Exception e) {
             logger.error((Supplier<?>) () -> new ParameterizedMessage("Error running {}", template), e);
             throw new IllegalArgumentException("Error running " + template, e);
