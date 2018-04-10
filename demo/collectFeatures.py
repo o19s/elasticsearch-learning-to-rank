@@ -4,7 +4,7 @@ logQuery = {
     "size": 100,
     "query": {
         "bool": {
-            "must": [
+            "filter": [
                 {
                     "terms": {
                         "_id": ["7555"]
@@ -51,7 +51,7 @@ def logFeatures(es, judgmentsByQid):
     for qid, judgments in judgmentsByQid.items():
         keywords = judgments[0].keywords
         docIds = [judgment.docId for judgment in judgments]
-        logQuery['query']['bool']['must'][0]['terms']['_id'] = docIds
+        logQuery['query']['bool']['filter'][0]['terms']['_id'] = docIds
         logQuery['query']['bool']['should'][0]['sltr']['params']['keywords'] = keywords
         print("POST")
         print(json.dumps(logQuery, indent=2))
