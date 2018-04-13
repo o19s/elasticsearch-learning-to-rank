@@ -34,6 +34,9 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -92,7 +95,7 @@ public class DerivedExpressionQuery extends Query {
         return "fv_query:"+field;
     }
 
-    public class FVWeight extends FeatureVectorWeight {
+    public class FVWeight extends Weight {
         protected FVWeight(Query query) {
             super(query);
         }
@@ -103,22 +106,13 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
-            Bindings bindings = new Bindings(){
-                @Override
-                public DoubleValuesSource getDoubleValuesSource(String name) {
-                    return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
-                }
-            };
+        public Scorer scorer(LeafReaderContext context) throws IOException {
 
             DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
-            DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
-            DoubleValues values = src.getValues(context, null);
 
-            return new DValScorer(this, iterator, values);
+            return new DValScorer(this, iterator, expression, features);
         }
 
-        @Override
         public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException {
             Bindings bindings = new Bindings(){
                 @Override
@@ -134,6 +128,11 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
+        public Explanation explain(LeafReaderContext context, int doc) {
+            return Explanation.noMatch("Explain not supported this way");
+        }
+
+        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return false;
         }
@@ -141,12 +140,17 @@ public class DerivedExpressionQuery extends Query {
 
     static class DValScorer extends Scorer {
         private final DocIdSetIterator iterator;
-        private final DoubleValues values;
+        private final FeatureSet features;
+        private final Expression expression;
+        private DoubleValues values;
+        private final List<ChildScorer> children;
 
-        DValScorer(Weight weight, DocIdSetIterator iterator, DoubleValues values) {
+        DValScorer(Weight weight, DocIdSetIterator iterator, Expression expression, FeatureSet features) {
             super(weight);
             this.iterator = iterator;
-            this.values = values;
+            this.features = features;
+            this.expression = expression;
+            children = Collections.singletonList(new ChildScorer(this, "DValScorer"));
         }
 
         @Override
@@ -156,8 +160,23 @@ public class DerivedExpressionQuery extends Query {
 
         @Override
         public float score() throws IOException {
+            if (values == null) {
+                throw new IllegalStateException("This scorer must used as part of the RankerQuery");
+            }
             values.advanceExact(docID());
             return (float) values.doubleValue();
+        }
+
+        void initFeatureVectorSupplier(LeafReaderContext context,Supplier<LtrRanker.FeatureVector> vectorSupplier)
+                throws IOException {
+            Bindings bindings = new Bindings(){
+                @Override
+                public DoubleValuesSource getDoubleValuesSource(String name) {
+                    return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
+                }
+            };
+            DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
+            values = src.getValues(context, null);
         }
 
         /**
@@ -172,15 +191,20 @@ public class DerivedExpressionQuery extends Query {
         public DocIdSetIterator iterator() {
             return iterator;
         }
+
+        @Override
+        public Collection<ChildScorer> getChildren() {
+            return children;
+        }
     }
 
     static class FVDoubleValuesSource extends DoubleValuesSource {
         private final int ordinal;
-        private final Supplier<LtrRanker.FeatureVector> vectorSupplier;
+        private Supplier<LtrRanker.FeatureVector> vectorSupplier;
 
         FVDoubleValuesSource(Supplier<LtrRanker.FeatureVector> vectorSupplier, int ordinal) {
-            this.vectorSupplier = vectorSupplier;
             this.ordinal = ordinal;
+            this.vectorSupplier = vectorSupplier;
         }
 
         @Override

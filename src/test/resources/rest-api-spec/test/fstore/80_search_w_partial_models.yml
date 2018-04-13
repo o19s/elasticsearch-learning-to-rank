@@ -38,6 +38,10 @@ setup:
                     template:
                       match:
                         field2: "{{query_string}}"
+                  - name: feature3
+                    template:
+                      feature1 + feature2
+                    template_language: derived_expression
 
   - do:
         ltr.add_features_to_set:
@@ -105,10 +109,10 @@ setup:
   - do:
       search:
         index: test
-        body: { query: { "sltr": { "params": {"query_string": "rambo"}, "model": "single_feature_ranklib_model"  } } }
+        body: { profile: true, query: { "sltr": { "params": {"query_string": "rambo"}, "model": "single_feature_ranklib_model"  } } }
 
   - length:   { hits.hits: 2  }
-
+  - match:    { profile.shards.0.searches.0.query.0.type: RankerQuery}
 
 ---
 "single feature linear model":

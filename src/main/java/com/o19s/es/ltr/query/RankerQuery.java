@@ -39,6 +39,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -222,11 +223,7 @@ public class RankerQuery extends Query {
             for (Weight weight : weights) {
                 ordinal++;
                 final Explanation explain;
-                if (weight instanceof FeatureVectorWeight) {
-                    explain = ((FeatureVectorWeight)weight).explain(context, d, doc);
-                } else {
-                    explain = weight.explain(context, doc);
-                }
+                explain = weight.explain(context, doc);
                 String featureString = "Feature " + Integer.toString(ordinal);
                 if (features.feature(ordinal).name() != null) {
                     featureString += "(" + features.feature(ordinal).name() + ")";
@@ -250,13 +247,21 @@ public class RankerQuery extends Query {
             MutableSupplier<LtrRanker.FeatureVector> vectorSupplier = new MutableSupplier<>();
             for (Weight weight : weights) {
                 Scorer scorer;
-                if (weight instanceof FeatureVectorWeight) {
-                    scorer = ((FeatureVectorWeight)weight).scorer(context, vectorSupplier);
-                } else {
-                    scorer = weight.scorer(context);
-                }
+                scorer = weight.scorer(context);
                 if (scorer == null) {
                     scorer = new NoopScorer(this, DocIdSetIterator.empty());
+                }
+                if (scorer instanceof DerivedExpressionQuery.DValScorer) {
+                    ((DerivedExpressionQuery.DValScorer)scorer).initFeatureVectorSupplier(context, vectorSupplier);
+                } else {
+                    // XXX: ugly to work with the elastic profiler
+                    Collection<Scorer.ChildScorer> children = scorer.getChildren();
+                    if (children != null && children.size() == 1) {
+                        Scorer scorer1 = children.iterator().next().child;
+                        if (scorer1 instanceof DerivedExpressionQuery.DValScorer) {
+                            ((DerivedExpressionQuery.DValScorer)scorer1).initFeatureVectorSupplier(context, vectorSupplier);
+                        }
+                    }
                 }
                 scorers.add(scorer);
                 subIterators.add(scorer.iterator());
