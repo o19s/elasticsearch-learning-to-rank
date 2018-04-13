@@ -50,6 +50,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
     private final Mustache template;
     private final String templateString;
     private final Collection<String> queryParams;
+    private QueryBuilder builderCache;
 
     private PrecompiledTemplateFeature(String name, Mustache template, String templateString, Collection<String> queryParams) {
         this.name = name;
@@ -82,6 +83,14 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
 
     @Override
     public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
+        if (builderCache != null) {
+            try {
+                return builderCache.toQuery(context.getQueryShardContext());
+            } catch (IOException e) {
+                throw new QueryShardException(context.getQueryShardContext(), "Cannot create query from on feature [" + name +"]", e);
+            }
+        }
+
         int size = 0;
         List<String> missingParams = new ArrayList<>(1);
         for (String param : queryParams) {
@@ -103,6 +112,11 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
             XContentParser parser = XContentFactory.xContent(query)
                     .createParser(context.getQueryShardContext().getXContentRegistry(), query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
+            if (queryParams.isEmpty()) {
+                // Query independant feature
+                // XXX: this assumes QueryBuilders#toQuery is threadsafe
+                builderCache = queryBuilder;
+            }
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
             return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
         } catch (IOException |ParsingException|IllegalArgumentException e) {
