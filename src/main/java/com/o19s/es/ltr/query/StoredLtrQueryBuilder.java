@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
@@ -132,9 +133,10 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
         FeatureStore store = storeLoader.load(indexName, context.getClient());
+        LtrQueryContext ltrQueryContext = new LtrQueryContext(context);
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
-            return RankerQuery.build(model, context, params);
+            return RankerQuery.build(model, ltrQueryContext, params);
         } else {
             assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
@@ -142,7 +144,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             Arrays.fill(weitghs, 1F);
             LinearRanker ranker = new LinearRanker(weitghs);
             CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
-            return RankerQuery.build(model, context, params);
+            return RankerQuery.build(model, ltrQueryContext, params);
         }
     }
 

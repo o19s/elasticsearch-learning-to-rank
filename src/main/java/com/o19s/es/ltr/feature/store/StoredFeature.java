@@ -16,20 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
-import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
-import static org.elasticsearch.index.query.Rewriteable.rewrite;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
+import com.o19s.es.ltr.LtrQueryContext;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.template.mustache.MustacheUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -45,7 +35,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.script.ExecutableScript;
@@ -53,9 +42,18 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptType;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.template.mustache.MustacheUtils;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
 
 public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
@@ -193,7 +191,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
+    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
                 .filter((x) -> params == null || !params.containsKey(x))
                 .collect(Collectors.toList());
@@ -207,19 +205,19 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         // XXX: we hope that in most case users will use mustache that is embedded in the plugin
         // compiling the template from the script engine may hit a circuit breaker
         // TODO: verify that this actually works, it does not feel right
-        ExecutableScript script = context.getScriptService().compile(new Script(ScriptType.INLINE,
+        ExecutableScript script = context.getQueryShardContext().getScriptService().compile(new Script(ScriptType.INLINE,
                 templateLanguage, template, params), new ScriptContext<>("search", ExecutableScript.class));
         Object source = script.run();
 
         try {
-            XContentParser parser = createParser(source, context.getXContentRegistry());
+            XContentParser parser = createParser(source, context.getQueryShardContext().getXContentRegistry());
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
 
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return Rewriteable.rewrite(queryBuilder, context).toQuery(context);
+            return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
         } catch (IOException|ParsingException|IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
-            throw new QueryShardException(context, "Cannot create query while parsing feature [" + name +"]", e);
+            throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name +"]", e);
         }
     }
 

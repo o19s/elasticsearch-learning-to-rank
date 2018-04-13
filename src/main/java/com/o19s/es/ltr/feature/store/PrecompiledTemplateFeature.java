@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.github.mustachejava.Mustache;
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.template.mustache.MustacheUtils;
@@ -27,7 +28,6 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.Rewriteable;
 
@@ -81,7 +81,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
+    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         int size = 0;
         List<String> missingParams = new ArrayList<>(1);
         for (String param : queryParams) {
@@ -100,13 +100,14 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
 
         String query = MustacheUtils.execute(template, params, size + this.templateString.length());
         try {
-            XContentParser parser = XContentFactory.xContent(query).createParser(context.getXContentRegistry(), query);
+            XContentParser parser = XContentFactory.xContent(query)
+                    .createParser(context.getQueryShardContext().getXContentRegistry(), query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return Rewriteable.rewrite(queryBuilder, context).toQuery(context);
+            return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
         } catch (IOException |ParsingException|IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
-            throw new QueryShardException(context, "Cannot create query while parsing feature [" + name +"]", e);
+            throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name +"]", e);
         }
     }
 

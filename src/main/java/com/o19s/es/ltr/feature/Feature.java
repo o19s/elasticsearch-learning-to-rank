@@ -16,8 +16,8 @@
 
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.Map;
 
@@ -33,7 +33,7 @@ public interface Feature {
     /**
      * Transform this feature into a lucene query
      */
-    Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params);
+    Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params);
 
     /**
      * Optional optimization step

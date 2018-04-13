@@ -16,12 +16,12 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class OptimizedFeatureSet implements FeatureSet, Accountable {
     }
 
     @Override
-    public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
+    public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());
         for(Feature feature : features) {
             queries.add(feature.doToQuery(context, this, params));

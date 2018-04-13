@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
@@ -35,7 +36,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,17 +84,17 @@ public class RankerQuery extends Query {
      * @param params the query params
      * @return the lucene query
      */
-    public static RankerQuery build(LtrModel model, QueryShardContext context, Map<String, Object> params) {
+    public static RankerQuery build(LtrModel model, LtrQueryContext context, Map<String, Object> params) {
         return build(model.ranker(), model.featureSet(), context, params);
     }
 
-    private static RankerQuery build(LtrRanker ranker, FeatureSet features, QueryShardContext context, Map<String, Object> params) {
+    private static RankerQuery build(LtrRanker ranker, FeatureSet features, LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, ranker);
     }
 
     public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,
-                                            QueryShardContext context, Map<String, Object> params) {
+                                            LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, new LogLtrRanker(consumer, features.size()));
     }

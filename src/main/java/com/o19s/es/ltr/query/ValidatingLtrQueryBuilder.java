@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.FeatureValidation;
@@ -158,7 +159,8 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
     }
 
     @Override
-    protected Query doToQuery(QueryShardContext context) throws IOException {
+    protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
+        LtrQueryContext context = new LtrQueryContext(queryShardContext);
         if (StoredFeature.TYPE.equals(element.type())) {
             Feature feature = ((StoredFeature) element).optimize();
             if (feature instanceof PrecompiledExpressionFeature) {
@@ -175,7 +177,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);
             return RankerQuery.build(model, context, validation.getParams());
         } else {
-            throw new QueryShardException(context, "Unknown element type [" + element.type() + "]");
+            throw new QueryShardException(queryShardContext, "Unknown element type [" + element.type() + "]");
         }
     }
 
