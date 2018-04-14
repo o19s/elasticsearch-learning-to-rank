@@ -147,7 +147,6 @@ Finally the full request::
                     {
                         "terms": {
                             "_id": ["7555", "1370", "1369"]
-                        
                         }
                     },
                     {
@@ -158,7 +157,6 @@ Finally the full request::
                                 "keywords": "rambo"
                             }
                     }}
-                    
                 ]
             }
         },
@@ -329,15 +327,13 @@ We can log `other_movie_features` alongside a live production `more_movie_featur
     "query": {
         "bool": {
             "filter": [
-                {"sltr": {
-                        "_name": "logged_featureset",
-                        "featureset": "other_movie_features",
-                        "params": {
-                            "keywords": "rambo"
-                        }
-                    }}
-            ],
-            "must": [
+                { "sltr": {
+                    "_name": "logged_featureset",
+                    "featureset": "other_movie_features",
+                    "params": {
+                        "keywords": "rambo"
+                    }
+		}},
                 {"match": {
                     "_all": "rambo"
                 }}
