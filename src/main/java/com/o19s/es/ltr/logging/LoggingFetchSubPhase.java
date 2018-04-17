@@ -48,14 +48,14 @@ import java.util.Optional;
 
 public class LoggingFetchSubPhase implements FetchSubPhase {
     @Override
-    public void hitsExecute(SearchContext context, SearchHit[] hits) {
+    public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
         LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
         if (ext == null) {
             return;
         }
 
         // Use a boolean query with all the models to log
-        // This way reuse existing code to advance through multiple scorers/iterators
+        // This way we reuse existing code to advance through multiple scorers/iterators
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         List<HitLogConsumer> loggers = new ArrayList<>();
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
@@ -71,15 +71,14 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             loggers.add(query.v2());
         });
 
-
         try {
             doLog(builder.build(), loggers, context.searcher(), hits);
-        } catch (IOException e) {
+        } catch (LtrLoggingException e) {
             throw new FetchPhaseExecutionException(context, e.getMessage(), e);
         }
     }
 
-    void doLog(BooleanQuery query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
+    void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
         // Reorder hits by id so we can scan all the docs belonging to the same
         // segment by reusing the same scorer.
         SearchHit[] reordered = new SearchHit[hits.length];
@@ -131,7 +130,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         if (q == null) {
             throw new IllegalArgumentException("No query named [" + logSpec.getNamedQuery() + "] found");
         }
-        final RankerQuery query;
         return toLogger(logSpec, inspectQuery(q)
                 .orElseThrow(() -> new IllegalArgumentException("Query named [" + logSpec.getNamedQuery() +
                     "] must be a [sltr] query [" +
@@ -167,7 +165,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         return Optional.empty();
     }
 
-    Tuple<RankerQuery, HitLogConsumer> toLogger(LoggingSearchExtBuilder.LogSpec logSpec, RankerQuery query) {
+    private Tuple<RankerQuery, HitLogConsumer> toLogger(LoggingSearchExtBuilder.LogSpec logSpec, RankerQuery query) {
         HitLogConsumer consumer = new HitLogConsumer(logSpec.getLoggerName(), query.featureSet(), logSpec.isMissingAsZero());
         // Use a null ranker, we don't care about the final score here so don't spend time on it.
         query = query.toLoggerQuery(consumer, true);
@@ -191,6 +189,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         //      }
         // ]
         private List<Map<String, Object>> currentLog;
+        private SearchHit currentHit;
 
 
         HitLogConsumer(String name, FeatureSet set, boolean missingAsZero) {
@@ -200,10 +199,10 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         private void rebuild() {
-            List<Map<String, Object>> ini = new ArrayList<Map<String, Object>>(set.size()) ;
+            List<Map<String, Object>> ini = new ArrayList<>(set.size()) ;
 
             for (int i = 0; i < set.size(); i++) {
-                Map<String, Object> defaultKeyVal = new HashMap<String, Object>();
+                Map<String, Object> defaultKeyVal = new HashMap<>();
                 defaultKeyVal.put("name", set.feature(i).name());
                 if (missingAsZero) {
                     defaultKeyVal.put("value", 0.0F);
@@ -215,6 +214,13 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
         @Override
         public void accept(int featureOrdinal, float score) {
+            assert currentLog != null;
+            assert currentHit != null;
+            if (Float.isNaN(score)) {
+                // NOTE: should we fail on Float#isInfinite() as well?
+                throw new LtrLoggingException("Feature [" + set.feature(featureOrdinal).name() +"] produced a NaN value " +
+                        "for doc [" + currentHit.getId() + "]" );
+            }
             currentLog.get(featureOrdinal).put("value", score);
         }
 
@@ -226,6 +232,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                     .computeIfAbsent(FIELD_NAME,(k) -> newLogField());
             Map<String, List<Map<String, Object>>> entries = logs.getValue();
             rebuild();
+            currentHit = hit;
             entries.put(name, currentLog);
         }
 
