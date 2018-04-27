@@ -87,8 +87,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         createModelFromSetRequestBuilder.get();
         buildIndex();
         Map<String, Object> params = new HashMap<>();
-        boolean negativeScore = false;
-        params.put("query", negativeScore ? "bonjour" : "hello");
+        params.put("query", "hello");
         params.put("dependent_feature", new HashMap<>());
         params.put("extra_multiplier_ltr", 100.0d);
         SearchRequestBuilder sb = client().prepareSearch("test_index")
@@ -190,7 +189,18 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
             assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
         }
 
+        // Test profiling
+        sb = client().prepareSearch("test_index")
+                .setProfile(true)
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
 
+        sr = sb.get();
+        assertThat(sr.getProfileResults().isEmpty(), Matchers.equalTo(false));
         //we use only feature4 score and ignore other scores
         params.put("query", "hello");
         sb = client().prepareSearch("test_index")
