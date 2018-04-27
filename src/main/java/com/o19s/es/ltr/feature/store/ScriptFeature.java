@@ -3,13 +3,14 @@ package com.o19s.es.ltr.feature.store;
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.query.FeatureVectorWeight;
+import com.o19s.es.ltr.query.LtrRewritableQuery;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
@@ -88,7 +89,7 @@ public class ScriptFeature implements Feature {
                 .filter((x) -> !params.containsKey(x))
                 .collect(Collectors.toList());
         if (!missingParams.isEmpty()) {
-            String names = missingParams.stream().collect(Collectors.joining(","));
+            String names = String.join(",", missingParams);
             throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
 
@@ -105,43 +106,41 @@ public class ScriptFeature implements Feature {
             }
         }
 
+
+        FeatureSupplier supplier = new FeatureSupplier(featureSet);
         Map<String, Object> nparams = new HashMap<>();
-        FeatureSupplier featureSupplier = new FeatureSupplier(featureSet);
         nparams.putAll(baseScriptParams);
         nparams.putAll(queryTimeParams);
         nparams.putAll(extraQueryTimeParams);
-        nparams.put(FEATURE_VECTOR, featureSupplier);
-
-        ScoreScript.Factory scoreScript = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
-        return new LtrScript(new ScriptScoreFunction(script, scoreScript.newFactory(nparams,
-                context.getQueryShardContext().lookup())), featureSupplier);
+        nparams.put(FEATURE_VECTOR, supplier);
+        Script script = new Script(this.script.getType(), this.script.getLang(),
+            this.script.getIdOrCode(), this.script.getOptions(), nparams);
+        ScoreScript.Factory factoryFactory  = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
+        ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getQueryShardContext().lookup());
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory);
+        return new LtrScript(function, supplier);
     }
 
-    static class LtrScript extends Query {
-        private final ScriptScoreFunction scoreFunction;
-        private final FeatureSupplier featureSupplier;
+    static class LtrScript extends Query implements LtrRewritableQuery {
+        private final ScriptScoreFunction function;
+        private final FeatureSupplier supplier;
+        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier) {
+            this.function = function;
+            this.supplier = supplier;
+        }
 
+        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         @Override
         public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            LtrScript ltrScript = (LtrScript) o;
-            return Objects.equals(scoreFunction, ltrScript.scoreFunction) &&
-                    Objects.equals(featureSupplier, ltrScript.featureSupplier);
+            if (this == o) return true;
+            LtrScript ol = (LtrScript) o;
+            return sameClassAs(o)
+                    && Objects.equals(function, ol.function);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(scoreFunction, featureSupplier);
-        }
-
-        LtrScript(ScriptScoreFunction scoreFunction, FeatureSupplier featureSupplier) {
-            this.scoreFunction = scoreFunction;
-            this.featureSupplier = featureSupplier;
+            return Objects.hash(classHash(), function);
         }
 
         @Override
@@ -149,62 +148,64 @@ public class ScriptFeature implements Feature {
             return "LtrScript:" + field;
         }
 
-
         @Override
         public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-            return new LtrScriptWeight(this);
+            if (!needsScores) {
+                return new MatchAllDocsQuery().createWeight(searcher, false, 1F);
+            }
+            return new LtrScriptWeight(this, this.function);
         }
 
-
-        class LtrScriptWeight extends FeatureVectorWeight {
-
-            protected LtrScriptWeight(Query query) {
-                super(query);
-            }
-
-            @Override
-            public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException {
-                LtrScript.this.featureSupplier.set(() -> vector);
-                Scorer scorer = this.scorer(context, () -> vector);
-                int newDoc = scorer.iterator().advance(doc);
-                if (newDoc == doc) {
-                    return Explanation.match(scorer.score(), "weight(" + this.getQuery() + " in doc " + newDoc + ")");
-                }
-                return Explanation.noMatch("no matching term");
-            }
-
-            @Override
-            public Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
-                LtrScript.this.featureSupplier.set(vectorSupplier);
-                LeafScoreFunction leafScoreFunction = scoreFunction.getLeafScoreFunction(context);
-                DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
-                return new Scorer(this) {
-                    @Override
-                    public int docID() {
-                        return iterator.docID();
-                    }
-
-                    @Override
-                    public float score() throws IOException {
-                        return (float) leafScoreFunction.score(iterator.docID(), 0F);
-                    }
-
-                    @Override
-                    public DocIdSetIterator iterator() {
-                        return iterator;
-                    }
-                };
-            }
-
-            @Override
-            public void extractTerms(Set<Term> terms) {
-            }
-
-            @Override
-            public boolean isCacheable(LeafReaderContext ctx) {
-                return false;
-            }
+        @Override
+        public Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
+            supplier.set(vectorSupplier);
+            return this;
         }
     }
 
+    static class LtrScriptWeight extends Weight {
+        private final ScriptScoreFunction function;
+
+        LtrScriptWeight(Query query, ScriptScoreFunction function) {
+            super(query);
+            this.function = function;
+        }
+
+        @Override
+        public Explanation explain(LeafReaderContext context, int doc) throws IOException {
+            return function.getLeafScoreFunction(context).explainScore(doc, Explanation.noMatch("none"));
+        }
+
+        @Override
+        public Scorer scorer(LeafReaderContext context) throws IOException {
+            LeafScoreFunction leafScoreFunction = function.getLeafScoreFunction(context);
+            DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
+            return new Scorer(this) {
+                @Override
+                public int docID() {
+                    return iterator.docID();
+                }
+
+                @Override
+                public float score() throws IOException {
+                    return (float) leafScoreFunction.score(iterator.docID(), 0F);
+                }
+
+                @Override
+                public DocIdSetIterator iterator() {
+                    return iterator;
+                }
+            };
+        }
+
+        @Override
+        public void extractTerms(Set<Term> terms) {
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            // Never ever cache this query, its parent query is mutable
+            return false;
+        }
+    }
 }

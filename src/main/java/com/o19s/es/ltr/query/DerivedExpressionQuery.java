@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class DerivedExpressionQuery extends Query {
+public class DerivedExpressionQuery extends Query implements LtrRewritableQuery {
     private final FeatureSet features;
     private final Expression expression;
     private final Map<String, Double> queryParamValues;
@@ -50,29 +50,6 @@ public class DerivedExpressionQuery extends Query {
         this.queryParamValues = queryParamValues;
     }
 
-    @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        if (!needsScores) {
-            // If scores are not needed simply return a constant score on all docs
-            return new ConstantScoreWeight(this, boost) {
-                @Override
-                public boolean isCacheable(LeafReaderContext ctx) {
-                    return true;
-                }
-
-                @Override
-                public Scorer scorer(LeafReaderContext context) throws IOException {
-                    return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
-                }
-
-
-            };
-        }
-
-        return new FVWeight(this);
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -88,18 +65,83 @@ public class DerivedExpressionQuery extends Query {
     }
 
     @Override
+    public Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSuppler) {
+        return new FVDerivedExpressionQuery(this, vectorSuppler);
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(expression, features, queryParamValues);
     }
 
     @Override
     public String toString(String field) {
-        return "fv_query:" + field;
+        return (field != null ? field : "") + ":fv_query(" + expression.sourceText + ")";
     }
 
-    public class FVWeight extends FeatureVectorWeight {
-        protected FVWeight(Query query) {
-            super(query);
+    static final class FVDerivedExpressionQuery extends Query {
+        private final DerivedExpressionQuery query;
+        private final Supplier<LtrRanker.FeatureVector> fvSupplier;
+
+        FVDerivedExpressionQuery(DerivedExpressionQuery query, Supplier<LtrRanker.FeatureVector> fvSupplier) {
+            this.query = query;
+            this.fvSupplier = fvSupplier;
+        }
+
+        @Override
+        public String toString(String field) {
+            return query.toString();
+        }
+
+        @Override
+        public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+            if (!needsScores) {
+                // If scores are not needed simply return a constant score on all docs
+                return new ConstantScoreWeight(this.query, boost) {
+                    @Override
+                    public boolean isCacheable(LeafReaderContext ctx) {
+                        return true;
+                    }
+
+                    @Override
+                    public Scorer scorer(LeafReaderContext context) throws IOException {
+                        return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
+                    }
+                };
+            }
+
+            return new FVWeight(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            assert false;
+            // Should not be called as it is likely an indication that it'll be cached but should not...
+            return sameClassAs(obj) &&
+                    Objects.equals(this.query, ((FVDerivedExpressionQuery)obj).query) &&
+                    Objects.equals(this.fvSupplier, ((FVDerivedExpressionQuery)obj).fvSupplier);
+        }
+
+        @Override
+        public int hashCode() {
+            assert false;
+            // Should not be called as it is likely an indication that it'll be cached but should not...
+            return Objects.hash(classHash(), query, fvSupplier);
+        }
+    }
+
+    static class FVWeight extends Weight {
+        private final FeatureSet features;
+        private final Expression expression;
+        private final Supplier<LtrRanker.FeatureVector> vectorSupplier;
+        private final Map<String, Double> queryParamValues;
+
+        FVWeight(FVDerivedExpressionQuery query) {
+            super(query.query);
+            features = query.query.features;
+            expression = query.query.expression;
+            queryParamValues = query.query.queryParamValues;
+            vectorSupplier = query.fvSupplier;
         }
 
         @Override
@@ -108,8 +150,8 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
-            Bindings bindings = new Bindings() {
+        public Scorer scorer(LeafReaderContext context) throws IOException {
+            Bindings bindings = new Bindings(){
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
                     Double queryParamValue  = queryParamValues.get(name);
@@ -128,15 +170,11 @@ public class DerivedExpressionQuery extends Query {
         }
 
         @Override
-        public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException {
-            Bindings bindings = new Bindings() {
+        public Explanation explain(LeafReaderContext context, int doc) throws IOException {
+            Bindings bindings = new Bindings(){
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
-                    Double queryParamValue  = queryParamValues.get(name);
-                    if (queryParamValue != null) {
-                        return DoubleValuesSource.constant(queryParamValue);
-                    }
-                    return new FVDoubleValuesSource(() -> vector, features.featureOrdinal(name));
+                    return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
                 }
             };
 
@@ -173,13 +211,6 @@ public class DerivedExpressionQuery extends Query {
             return (float) values.doubleValue();
         }
 
-        /**
-         * Returns the freq of this Scorer on the current document
-         */
-//        @Override
-//        public int freq() throws IOException {
-//            return 1;
-//        }
         @Override
         public DocIdSetIterator iterator() {
             return iterator;
@@ -239,7 +270,6 @@ public class DerivedExpressionQuery extends Query {
 
         @Override
         public int hashCode() {
-
             return Objects.hash(ordinal, vectorSupplier);
         }
 
