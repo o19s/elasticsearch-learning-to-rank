@@ -16,13 +16,15 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
+import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
@@ -36,6 +38,9 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,6 +53,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public static final ParseField FEATURESET_NAME = new ParseField("featureset");
     public static final ParseField STORE_NAME = new ParseField("store");
     public static final ParseField PARAMS = new ParseField("params");
+    public static final ParseField ACTIVE_FEATURES = new ParseField("active_features");
     private static final ObjectParser<StoredLtrQueryBuilder, Void> PARSER;
 
     static {
@@ -55,8 +61,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         PARSER.declareString(StoredLtrQueryBuilder::modelName, MODEL_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::featureSetName, FEATURESET_NAME);
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
-        PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map,
-                PARAMS, ObjectParser.ValueType.OBJECT);
+        PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map, PARAMS, ObjectParser.ValueType.OBJECT);
+        PARSER.declareStringArray(StoredLtrQueryBuilder::activeFeatures, ACTIVE_FEATURES);
         AbstractQueryBuilderUtils.declareStandardFields(PARSER);
     }
 
@@ -68,6 +74,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     private String featureSetName;
     private String storeName;
     private Map<String, Object> params;
+    private List<String> activeFeatures;
 
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader) {
         this.storeLoader = storeLoader;
@@ -80,6 +87,10 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         modelName = input.readOptionalString();
         featureSetName = input.readOptionalString();
         params = input.readMap();
+        if (input.getVersion().onOrAfter(Version.V_6_2_4)) {
+            String[] activeFeat = input.readOptionalStringArray();
+            activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);
+        }
         storeName = input.readOptionalString();
     }
 
@@ -106,6 +117,9 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalString(modelName);
         out.writeOptionalString(featureSetName);
         out.writeMap(params);
+        if (out.getVersion().onOrAfter(Version.V_6_2_4)) {
+            out.writeOptionalStringArray(activeFeatures != null ? activeFeatures.toArray(new String[0]) : null);
+        }
         out.writeOptionalString(storeName);
     }
 
@@ -124,6 +138,9 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         if (this.params != null && !this.params.isEmpty()) {
             builder.field(PARAMS.getPreferredName(), this.params);
         }
+        if (this.activeFeatures != null && !this.activeFeatures.isEmpty()) {
+            builder.field(ACTIVE_FEATURES.getPreferredName(), this.activeFeatures);
+        }
         printBoostAndQueryName(builder);
         builder.endObject();
     }
@@ -132,9 +149,11 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
         FeatureStore store = storeLoader.load(indexName, context.getClient());
+        LtrQueryContext ltrQueryContext = new LtrQueryContext(context,
+                activeFeatures == null ? Collections.emptySet() : new HashSet<>(activeFeatures));
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
-            return RankerQuery.build(model, context, params);
+            return RankerQuery.build(model, ltrQueryContext, params);
         } else {
             assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
@@ -142,7 +161,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             Arrays.fill(weitghs, 1F);
             LinearRanker ranker = new LinearRanker(weitghs);
             CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
-            return RankerQuery.build(model, context, params);
+            return RankerQuery.build(model, ltrQueryContext, params);
         }
     }
 
@@ -151,12 +170,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         return Objects.equals(modelName, other.modelName) &&
                 Objects.equals(featureSetName, other.featureSetName) &&
                 Objects.equals(storeName, other.storeName) &&
-                Objects.equals(params, other.params);
+                Objects.equals(params, other.params) &&
+                Objects.equals(activeFeatures, other.activeFeatures);
     }
 
     @Override
     protected int doHashCode() {
-        return Objects.hash(modelName, featureSetName, storeName, params);
+        return Objects.hash(modelName, featureSetName, storeName, params, activeFeatures);
     }
 
     @Override
@@ -199,4 +219,14 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         this.params = Objects.requireNonNull(params);
         return this;
     }
+
+    public List<String> activeFeatures() {
+        return activeFeatures;
+    }
+
+    public StoredLtrQueryBuilder activeFeatures(List<String> activeFeatures) {
+        this.activeFeatures = Objects.requireNonNull(activeFeatures);
+        return this;
+    }
+
 }
