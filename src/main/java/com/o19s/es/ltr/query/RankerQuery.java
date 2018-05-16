@@ -88,17 +88,8 @@ public class RankerQuery extends Query {
     }
 
     private static RankerQuery build(LtrRanker ranker, FeatureSet features, LtrQueryContext context, Map<String, Object> params) {
-        validateActiveFeatures(features, context);
         List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, ranker);
-    }
-
-    private static void validateActiveFeatures(FeatureSet features, LtrQueryContext context) {
-        for (String featureName : context.getActiveFeatures()) {
-            if (!features.hasFeature(featureName)) {
-                throw new IllegalArgumentException("Feature : [" + featureName + "] " + "does not exist");
-            }
-        }
     }
 
     public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,

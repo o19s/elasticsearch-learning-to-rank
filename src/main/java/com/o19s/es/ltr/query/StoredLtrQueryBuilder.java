@@ -145,6 +145,14 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         builder.endObject();
     }
 
+    private static void validateActiveFeatures(FeatureSet features, LtrQueryContext context) {
+        for (String featureName : context.getActiveFeatures()) {
+            if (!features.hasFeature(featureName)) {
+                throw new IllegalArgumentException("Feature : [" + featureName + "] " + "does not exist");
+            }
+        }
+    }
+
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
@@ -153,6 +161,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
                 activeFeatures == null ? Collections.emptySet() : new HashSet<>(activeFeatures));
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
+            validateActiveFeatures(model.featureSet(), ltrQueryContext);
             return RankerQuery.build(model, ltrQueryContext, params);
         } else {
             assert featureSetName != null;
@@ -161,6 +170,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             Arrays.fill(weitghs, 1F);
             LinearRanker ranker = new LinearRanker(weitghs);
             CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
+            validateActiveFeatures(model.featureSet(), ltrQueryContext);
             return RankerQuery.build(model, ltrQueryContext, params);
         }
     }

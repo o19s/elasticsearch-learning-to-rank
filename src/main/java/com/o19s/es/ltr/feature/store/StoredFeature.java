@@ -198,7 +198,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
                 .filter((x) -> params == null || !params.containsKey(x))
                 .collect(Collectors.toList());
 
-        if (context.isFeatureActive(name) && !missingParams.isEmpty()) {
+        if (!missingParams.isEmpty()) {
             String names = missingParams.stream().collect(Collectors.joining(","));
             throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
         }
@@ -215,9 +215,6 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         try {
             XContentParser parser = createParser(source, context.getQueryShardContext().getXContentRegistry());
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
-            if (!context.isFeatureActive(name)) {
-                return new MatchNoDocsQuery("This query will not be used for scoring");
-            }
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
             return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
         } catch (IOException | ParsingException | IllegalArgumentException e) {
