@@ -138,7 +138,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         builder.modelName("model1");
         builder.activeFeatures(Arrays.asList("non_existent_feature"));
         assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
-                equalTo("Feature : [non_existent_feature] does not exist"));
+                equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
     }
 
     public void testSerDe() throws IOException {

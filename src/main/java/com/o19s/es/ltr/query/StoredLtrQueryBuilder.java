@@ -148,7 +148,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     private static void validateActiveFeatures(FeatureSet features, LtrQueryContext context) {
         for (String featureName : context.getActiveFeatures()) {
             if (!features.hasFeature(featureName)) {
-                throw new IllegalArgumentException("Feature : [" + featureName + "] " + "does not exist");
+                throw new IllegalArgumentException("Feature: [" + featureName + "] " + "provided in active_features does not exist");
             }
         }
     }
