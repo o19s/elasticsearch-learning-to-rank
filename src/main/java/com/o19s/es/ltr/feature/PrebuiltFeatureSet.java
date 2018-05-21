@@ -16,14 +16,15 @@
 
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 public class PrebuiltFeatureSet implements FeatureSet {
@@ -44,7 +45,7 @@ public class PrebuiltFeatureSet implements FeatureSet {
      * Parse and build lucene queries
      */
     @Override
-    public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
+    public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
         return features;
     }
 

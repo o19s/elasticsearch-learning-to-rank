@@ -17,9 +17,11 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.github.mustachejava.Mustache;
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.template.mustache.MustacheUtils;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -27,7 +29,6 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.Rewriteable;
 
@@ -71,7 +72,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
                 queryParams.stream()
                         .mapToLong(x -> (Character.BYTES * x.length()) +
                                 NUM_BYTES_OBJECT_REF + NUM_BYTES_OBJECT_HEADER + NUM_BYTES_ARRAY_HEADER).sum() +
-                (((Character.BYTES * templateString.length()) + NUM_BYTES_ARRAY_HEADER)*2);
+                (((Character.BYTES * templateString.length()) + NUM_BYTES_ARRAY_HEADER) * 2);
     }
 
     @Override
@@ -80,7 +81,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
+    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
                 .filter((x) -> params == null || !params.containsKey(x))
                 .collect(Collectors.toList());
@@ -91,25 +92,34 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
 
         String query = MustacheUtils.execute(template, params);
         try {
-            XContentParser parser = XContentFactory.xContent(query).createParser(context.getXContentRegistry(), query);
+            XContentParser parser = XContentFactory.xContent(query)
+                    .createParser(context.getQueryShardContext().getXContentRegistry(), query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return Rewriteable.rewrite(queryBuilder, context).toQuery(context);
-        } catch (IOException |ParsingException|IllegalArgumentException e) {
+            return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
+        } catch (IOException | ParsingException | IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
-            throw new QueryShardException(context, "Cannot create query while parsing feature [" + name +"]", e);
+            throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name + "]", e);
         }
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         PrecompiledTemplateFeature that = (PrecompiledTemplateFeature) o;
 
-        if (!name.equals(that.name)) return false;
-        if (!templateString.equals(that.templateString)) return false;
+        if (!name.equals(that.name)) {
+            return false;
+        }
+        if (!templateString.equals(that.templateString)) {
+            return false;
+        }
         return queryParams.equals(that.queryParams);
     }
 

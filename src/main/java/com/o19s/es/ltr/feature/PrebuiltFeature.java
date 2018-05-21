@@ -16,16 +16,17 @@
 
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A prebuilt featured query, needed by query builders
@@ -46,7 +47,7 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
+    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         return query;
     }
 

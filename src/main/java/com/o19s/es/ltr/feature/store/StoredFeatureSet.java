@@ -16,19 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.RandomAccess;
-
+import com.o19s.es.ltr.LtrQueryContext;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -39,10 +30,19 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.query.QueryShardContext;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.RandomAccess;
+
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
 
 public class StoredFeatureSet implements FeatureSet, Accountable, StorableElement {
     public static final int MAX_FEATURES = 10000;
@@ -68,6 +68,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     public static StoredFeatureSet parse(XContentParser parser) {
         return parse(parser, null);
     }
+
     public static StoredFeatureSet parse(XContentParser parser, String name) {
         try {
             ParsingState state = PARSER.apply(parser, null);
@@ -103,7 +104,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     public FeatureSet optimize() {
         List<Feature> optimizedFeatures = new ArrayList<>(this.features.size());
         boolean optimized = false;
-        for (StoredFeature feature: this.features) {
+        for (StoredFeature feature : this.features) {
             Feature optimizedFeature = feature.optimize();
             optimized |= optimizedFeature != feature;
             optimizedFeatures.add(optimizedFeature);
@@ -158,10 +159,11 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
      * Generates a new StoredFeatureSet by adding extra features.
      * The name is kept, features provided here are added at the end
      * of existing features.
+     *
      * @param features new features to append
      * @return a new StoredFeatureSet
      * @throws IllegalArgumentException if the resulting size of the set exceed MAX_FEATURES
-     * or if uniqueness of feature names is not met.
+     *                                  or if uniqueness of feature names is not met.
      */
     public StoredFeatureSet append(List<StoredFeature> features) {
         int nFeature = features.size() + this.features.size();
@@ -205,10 +207,14 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     @Override
-    public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
+    public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());
-        for(Feature feature : features) {
-            queries.add(feature.doToQuery(context, this, params));
+        for (Feature feature : features) {
+            if (context.isFeatureActive(feature.name())) {
+                queries.add(feature.doToQuery(context, this, params));
+            } else {
+                queries.add(new MatchNoDocsQuery("Feature " + feature.name() + " deactivated"));
+            }
         }
         return queries;
     }
@@ -251,12 +257,18 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StoredFeatureSet)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof StoredFeatureSet)) {
+            return false;
+        }
 
         StoredFeatureSet that = (StoredFeatureSet) o;
 
-        if (!name.equals(that.name)) return false;
+        if (!name.equals(that.name)) {
+            return false;
+        }
         return features.equals(that.features);
     }
 

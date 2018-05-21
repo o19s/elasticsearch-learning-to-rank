@@ -2,7 +2,7 @@ This folder contains some helper files for interacting with the REST API to mana
 
 ## Initialize the feature store
 ```
-curl -XPUT http://localhost:9200/_ltr`
+curl -XPUT http://localhost:9200/_ltr
 ```
 
 ## Add features to the store
