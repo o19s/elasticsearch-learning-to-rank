@@ -26,8 +26,13 @@ import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.io.stream.ByteBufferStreamInput;
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -46,8 +51,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -89,7 +96,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                         .missing(0F)).toString());
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         store.add(set);
-        LtrRanker ranker = new LinearRanker(new float[]{0.1F, 0.2F, 0.3F});
+        LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
         CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
@@ -124,6 +131,51 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
                 equalTo("Missing required param(s): [query_string]"));
 
+    }
+
+    public void testInvalidActiveFeatures() {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+        builder.modelName("model1");
+        builder.activeFeatures(Arrays.asList("non_existent_feature"));
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+                equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
+    }
+
+    public void testSerDe() throws IOException {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+        builder.activeFeatures(Arrays.asList("match1"));
+        BytesStreamOutput out = new BytesStreamOutput();
+        builder.writeTo(out);
+        out.close();
+
+        StreamInput input = ByteBufferStreamInput.wrap(out.bytes().toBytesRef().bytes);
+        StoredLtrQueryBuilder builderFromInputStream = new StoredLtrQueryBuilder(
+                LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store), input);
+        List<String> expected = Arrays.asList("match1");
+        assertEquals(expected, builderFromInputStream.activeFeatures());
+    }
+
+    public void testDoToQueryWhenFeatureEnabled() throws IOException {
+        assertQueryClass(FunctionScoreQuery.class, false);
+    }
+
+    public void testDoToQueryWhenFeatureDisabled() throws IOException {
+        assertQueryClass(MatchNoDocsQuery.class, true);
+    }
+
+    private void assertQueryClass(Class<? extends Object> clazz, boolean setActiveFeature) throws IOException {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+        builder.modelName("model1");
+        Map<String, Object> params = new HashMap<>();
+        params.put("query_string", "a wonderful query");
+        builder.params(params);
+        if (setActiveFeature) {
+            builder.activeFeatures(Arrays.asList("match1", "match2"));
+        }
+
+        RankerQuery rankerQuery = builder.doToQuery(createShardContext());
+        List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
+        assertEquals(clazz, queries.get(2).getClass());
     }
 
     @Override

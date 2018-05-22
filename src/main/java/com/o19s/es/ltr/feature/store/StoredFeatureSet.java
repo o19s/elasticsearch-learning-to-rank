@@ -29,6 +29,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.RandomAccess;
 
+import com.o19s.es.ltr.LtrQueryContext;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -39,7 +43,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
@@ -103,7 +106,7 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     public FeatureSet optimize() {
         List<Feature> optimizedFeatures = new ArrayList<>(this.features.size());
         boolean optimized = false;
-        for (StoredFeature feature: this.features) {
+        for (StoredFeature feature : this.features) {
             Feature optimizedFeature = feature.optimize();
             optimized |= optimizedFeature != feature;
             optimizedFeatures.add(optimizedFeature);
@@ -158,10 +161,11 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
      * Generates a new StoredFeatureSet by adding extra features.
      * The name is kept, features provided here are added at the end
      * of existing features.
+     *
      * @param features new features to append
      * @return a new StoredFeatureSet
      * @throws IllegalArgumentException if the resulting size of the set exceed MAX_FEATURES
-     * or if uniqueness of feature names is not met.
+     *                                  or if uniqueness of feature names is not met.
      */
     public StoredFeatureSet append(List<StoredFeature> features) {
         int nFeature = features.size() + this.features.size();
@@ -205,10 +209,14 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     @Override
-    public List<Query> toQueries(QueryShardContext context, Map<String, Object> params) {
+    public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = new ArrayList<>(features.size());
-        for(Feature feature : features) {
-            queries.add(feature.doToQuery(context, this, params));
+        for (Feature feature : features) {
+            if (context.isFeatureActive(feature.name())) {
+                queries.add(feature.doToQuery(context, this, params));
+            } else {
+                queries.add(new MatchNoDocsQuery("Feature " + feature.name() + " deactivated"));
+            }
         }
         return queries;
     }
@@ -251,12 +259,18 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StoredFeatureSet)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof StoredFeatureSet)) {
+            return false;
+        }
 
         StoredFeatureSet that = (StoredFeatureSet) o;
 
-        if (!name.equals(that.name)) return false;
+        if (!name.equals(that.name)) {
+            return false;
+        }
         return features.equals(that.features);
     }
 

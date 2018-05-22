@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.DerivedExpressionQuery;
@@ -24,10 +25,10 @@ import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.elasticsearch.index.query.QueryShardContext;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 
@@ -63,7 +64,7 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
     }
 
     @Override
-    public Query doToQuery(QueryShardContext context, FeatureSet set, Map<String, Object> params) {
+    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         return new DerivedExpressionQuery(set, expression);
     }
 

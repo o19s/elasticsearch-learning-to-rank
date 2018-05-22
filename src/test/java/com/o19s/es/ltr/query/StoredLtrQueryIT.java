@@ -16,6 +16,7 @@
  */
 package com.o19s.es.ltr.query;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +53,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
     private static final String SIMPLE_MODEL = "{" +
             "\"feature1\": 1," +
             "\"feature2\": -1," +
-            "\"feature3\": 10" +
+            "\"feature3\": 10," +
+            "\"feature4\": 1" +
             "}";
 
 
@@ -63,6 +65,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 QueryBuilders.matchQuery("field2", "{{query}}").toString()));
         addElement(new StoredFeature("feature3", Collections.singletonList("query"), "derived_expression",
                 "(feature1 - feature2) > 0 ? 1 : -1"));
+        addElement(new StoredFeature("feature4", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field1", "{{query}}").toString()));
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
@@ -74,6 +78,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.execute().get();
 
         builder.request().setFeatureNameQuery("feature3");
+        builder.execute().get();
+
+        builder.request().setFeatureNameQuery("feature4");
         long version = builder.get().getResponse().getVersion();
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
@@ -122,6 +129,20 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         }
 
 
+        //we use only feature4 score and ignore other scores
+        params.put("query", "hello");
+        sb = client().prepareSearch("test_index")
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).activeFeatures(Arrays.asList("feature4")).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
+
+        sr = sb.get();
+        assertEquals(1, sr.getHits().getTotalHits());
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.0f));
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(1.0f));
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();

@@ -51,6 +51,38 @@ Here we execute a query that limits the result set to documents that match "ramb
 
 Viola!
 
+====================================================================
+Scoring on a subset of features with `sltr` (added in 1.0.1-es6.2.4)
+====================================================================
+
+Sometimes you might want to execute your query on a subset of the features rather than use all the ones specified in the model. In this case the features not specified in :code:`active_features` list will not be scored upon. They will be marked as missing.
+You only need to specify the :code:`params` applicable to the :code:`active_features`. If you request a feature name that is not a part of the feature set assigned to that model the query will throw an error.
+
+    POST tmdb/_search
+    {
+        "query": {
+            "match": {
+                "_all": "rambo"
+            }
+        },
+        "rescore": {
+            "window_size": 1000,
+            "query": {
+                "rescore_query": {
+                    "sltr": {
+                        "params": {
+                            "keywords": "rambo"
+                        },
+                        "model": "my_model",
+                        "active_features": ["title_query"]
+                    }
+                }
+            }
+    }
+}
+
+Here we apply our model over the top 1000 results but only for the selected features which in this case is title_query
+
 ===========================
 Models! Filters! Even more!
 ===========================
