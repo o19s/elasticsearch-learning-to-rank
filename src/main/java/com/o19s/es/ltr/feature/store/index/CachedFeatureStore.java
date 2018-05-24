@@ -20,7 +20,7 @@ import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
-import org.elasticsearch.common.cache.Cache;
+import com.o19s.es.ltr.feature.store.index.cache.Cache;
 
 import java.io.IOException;
 
