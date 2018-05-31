@@ -26,36 +26,47 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 
 public class PrecompiledExpressionFeature implements Feature, Accountable {
+
     public static final String TEMPLATE_LANGUAGE = "derived_expression";
 
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(PrecompiledExpressionFeature.class);
 
     private final String name;
     private final Expression expression;
+    private final Set<String> expressionVariables;
+    private Collection<String> queryParams;
 
-    private PrecompiledExpressionFeature(String name, Expression expression) {
+    private PrecompiledExpressionFeature(String name, Expression expression, Collection<String> queryParams) {
         this.name = name;
         this.expression = expression;
+        this.queryParams = queryParams;
+        this.expressionVariables = new HashSet<>(Arrays.asList(this.expression.variables));
     }
 
     public static PrecompiledExpressionFeature compile(StoredFeature feature) {
         assert TEMPLATE_LANGUAGE.equals(feature.templateLanguage());
         Expression expr = (Expression) Scripting.compile(feature.template());
-        return new PrecompiledExpressionFeature(feature.name(), expr);
+        return new PrecompiledExpressionFeature(feature.name(), expr, feature.queryParams());
     }
 
     @Override
     public long ramBytesUsed() {
         return BASE_RAM_USED +
                 (Character.BYTES * name.length()) + NUM_BYTES_ARRAY_HEADER +
-                (((Character.BYTES * expression.sourceText.length()) + NUM_BYTES_ARRAY_HEADER)*2);
+                (((Character.BYTES * expression.sourceText.length()) + NUM_BYTES_ARRAY_HEADER) * 2);
     }
 
     @Override
@@ -65,13 +76,41 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
 
     @Override
     public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
-        return new DerivedExpressionQuery(set, expression);
+        List<String> missingParams = queryParams.stream()
+                .filter((x) -> params == null || !params.containsKey(x))
+                .collect(Collectors.toList());
+        if (!missingParams.isEmpty()) {
+            String names = missingParams.stream().collect(Collectors.joining(","));
+            throw new IllegalArgumentException("Missing required param(s): [" + names + "]");
+        }
+
+        Map<String, Double> queryParamValues = getQueryParamValues(params);
+        return new DerivedExpressionQuery(set, expression, queryParamValues);
+    }
+
+    /* if a param is an expression variable then we need to use it as a `variable` in lucene expression exposed via Bindings */
+    private Map<String, Double> getQueryParamValues(Map<String, Object> params) {
+        Map<String, Double> queryParamValues = new HashMap<>();
+        for (String param : queryParams) {
+            if (expressionVariables.contains(param)) {
+                try {
+                    queryParamValues.put(param, (Double) params.get(param));
+                } catch (ClassCastException classCastException) {
+                    throw new IllegalArgumentException("parameter: " + param + " expected to be of type Double");
+                }
+            }
+        }
+        return queryParamValues;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         PrecompiledExpressionFeature that = (PrecompiledExpressionFeature) o;
 
@@ -86,8 +125,8 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
 
     @Override
     public void validate(FeatureSet set) {
-        for(String var : expression.variables) {
-            if(!set.hasFeature(var)) {
+        for (String var : expression.variables) {
+            if (!set.hasFeature(var) && !queryParams.contains(var)) {
                 throw new IllegalArgumentException("Derived feature [" + this.name + "] refers " +
                         "to unknown feature: [" + var + "]");
             }
