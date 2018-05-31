@@ -54,7 +54,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
             "\"feature1\": 1," +
             "\"feature2\": -1," +
             "\"feature3\": 10," +
-            "\"feature4\": 1" +
+            "\"feature4\": 1," +
+            "\"feature5\": 1" +
             "}";
 
 
@@ -67,6 +68,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 "(feature1 - feature2) > 0 ? 1 : -1"));
         addElement(new StoredFeature("feature4", Collections.singletonList("query"), "mustache",
                 QueryBuilders.matchQuery("field1", "{{query}}").toString()));
+        addElement(new StoredFeature("feature5", Collections.singletonList("multiplier"), "derived_expression",
+                "(feature1 - feature2) > 0 ? feature1 * multiplier:  feature2 * multiplier"));
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
@@ -81,6 +84,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.execute().get();
 
         builder.request().setFeatureNameQuery("feature4");
+        builder.execute().get();
+
+        builder.request().setFeatureNameQuery("feature5");
         long version = builder.get().getResponse().getVersion();
 
         CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
@@ -92,6 +98,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         boolean negativeScore = false;
         params.put("query", negativeScore ? "bonjour" : "hello");
+        params.put("multiplier", negativeScore ? Integer.parseInt("-1") : 1.0);
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
@@ -111,6 +118,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
 
         negativeScore = true;
         params.put("query", negativeScore ? "bonjour" : "hello");
+        params.put("multiplier", negativeScore ? -1 : 1.0);
         sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
@@ -143,6 +151,36 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertEquals(1, sr.getHits().getTotalHits());
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.0f));
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(1.0f));
+
+        //we use feature 5 with query time positive int multiplier passed to feature5
+        params.put("query", "hello");
+        params.put("multiplier", Integer.parseInt("100"));
+        sb = client().prepareSearch("test_index")
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).activeFeatures(Arrays.asList("feature1", "feature2", "feature5")).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
+        sr=sb.get();
+        assertEquals(1, sr.getHits().getTotalHits());
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(28.0f));
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(30.0f));
+
+        //we use feature 5 with query time negative double multiplier passed to feature5
+        params.put("query", "hello");
+        params.put("multiplier", Double.parseDouble("-100.55"));
+        sb = client().prepareSearch("test_index")
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).activeFeatures(Arrays.asList("feature1", "feature2", "feature5")).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
+        sr=sb.get();
+        assertEquals(1, sr.getHits().getTotalHits());
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-28.0f));
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(-30.0f));
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();

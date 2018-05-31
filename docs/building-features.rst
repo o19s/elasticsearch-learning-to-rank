@@ -67,6 +67,12 @@ You'll notice the :code:`{{keywords}}`, :code:`{{users_lat}}`, and :code:`{{user
 
 For now, we'll simply focus on typical keyword searches.
 
+=================
+Derived Features
+=================
+
+Features that build on top of other features are called derived features.  These can be expressed as `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. They are recognized by :code:`"template_language": "derived_expression"`. Besides these can also take in query time variables of type `Number <https://docs.oracle.com/javase/8/docs/api/java/lang/Number.html>`_ as explained in :ref:`create-feature-set`.
+
 =============================
 Uploading and Naming Features
 =============================
@@ -102,6 +108,7 @@ Feature sets are where the action really happens in Elasticsearch LTR.
 
 A *feature set* is a set of features that has been grouped together for logging & model evaluation. You'll refer to feature sets when you want to log multiple feature values for offline training. You'll also create a model from a feature set, copying the feature set into model.
 
+.. _create-feature-set:
 
 ====================
 Create a feature set 
@@ -125,6 +132,14 @@ You can create a feature set simply by using a POST. To create it, you give a fe
                             "title": "{{keywords}}"
                         }
                     }
+                },
+                {
+                    "name": "title_query_boost",
+                    "params": [
+                        "some_multiplier"
+                    ],
+                    "template_language": "derived_expressions",
+                    "template": "title_query * some_multiplier"
                 }
             ]
        }
