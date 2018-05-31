@@ -24,15 +24,20 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.query.DerivedExpressionQuery;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -95,6 +100,60 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
         assertThat(expectThrows(ParsingException.class,
                 () -> parse(set)).getMessage(),
                 containsString("feature names must be unique in a set"));
+    }
+
+    public void testExpressionMissingQueryParameter() throws IOException {
+        FeatureSet optimizedFeatureSet = getFeatureSet();
+        assertThat(optimizedFeatureSet.feature(0), instanceOf(PrecompiledExpressionFeature.class));
+        assertThat(expectThrows(IllegalArgumentException.class,
+                () -> optimizedFeatureSet.feature(0).doToQuery(null, optimizedFeatureSet, new HashMap<>())).getMessage(),
+        containsString("Missing required param(s): [param1]"));
+    }
+
+    public void testExpressionInvalidQueryParameter() throws IOException {
+        FeatureSet optimizedFeatureSet = getFeatureSet();
+        assertThat(optimizedFeatureSet.feature(0), instanceOf(PrecompiledExpressionFeature.class));
+        Map<String, Object> params = new HashMap<>();
+        params.put("param1", "NaN");
+        assertThat(expectThrows(IllegalArgumentException.class,
+                () -> optimizedFeatureSet.feature(0).doToQuery(null, optimizedFeatureSet, params)).getMessage(),
+                containsString("parameter: param1 expected to be of type Double"));
+    }
+
+    public void testExpressionIntegerQueryParameter() throws IOException {
+        assertDerivedExpressionQuery(Integer.parseInt("10"));
+    }
+
+    public void testExpressionDoubleQueryParameter() throws IOException {
+        assertDerivedExpressionQuery(Double.parseDouble("10.10"));
+    }
+
+    public void testExpressionShortQueryParameter() throws IOException {
+        assertDerivedExpressionQuery(Short.parseShort("10"));
+    }
+
+    private void assertDerivedExpressionQuery(Object param) throws IOException {
+        FeatureSet optimizedFeatureSet = getFeatureSet();
+        assertThat(optimizedFeatureSet.feature(0), instanceOf(PrecompiledExpressionFeature.class));
+        Map<String, Object> params = new HashMap<>();
+        params.put("param1", param);
+        assertThat(optimizedFeatureSet.feature(0).doToQuery(null, optimizedFeatureSet, params), instanceOf(DerivedExpressionQuery.class));
+    }
+
+
+    private FeatureSet getFeatureSet() throws IOException {
+        String featureString = "{\n" +
+                "\"name\":\"testFeature\"," +
+                "\"params\":[\"param1\"]," +
+                "\"template_language\":\"derived_expression\",\n" +
+                "\"template\":\"log10(param1)" +
+                "\"}";
+        String set = "{\"name\" : \"my_set\",\n" +
+                "\"features\": [\n" +
+                featureString +
+                "]}";
+        StoredFeatureSet featureSet = parse(set);
+        return featureSet.optimize();
     }
 
     public void testParseErrorOnMissingName() throws IOException {
