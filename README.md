@@ -31,6 +31,7 @@ To install, you'd run a command such as:
 
 If you already are running Elasticsearch, don't forget to restart!
 
+=======
 ## Know issues
 As any other piece of software, this plugin is not exempt from issues. Please read the [known issues](KNOWN_ISSUES.md) to learn about the current issues that we are aware of. This file might include workarounds to mitigate them when possible.
 

@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.store.PrecompiledExpressionFeature;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
@@ -34,6 +35,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -41,10 +43,12 @@ import java.util.function.Supplier;
 public class DerivedExpressionQuery extends Query {
     private final FeatureSet features;
     private final Expression expression;
+    private final Map<String, Double> queryParamValues;
 
-    public DerivedExpressionQuery(FeatureSet features, Expression expr) {
+    public DerivedExpressionQuery(FeatureSet features, Expression expr, Map<String, Double> queryParamValues) {
         this.features = features;
         this.expression = expr;
+        this.queryParamValues = queryParamValues;
     }
 
     @Override
@@ -89,7 +93,7 @@ public class DerivedExpressionQuery extends Query {
 
     @Override
     public String toString(String field) {
-        return "fv_query:"+field;
+        return "fv_query:" + field;
     }
 
     public class FVWeight extends FeatureVectorWeight {
@@ -104,9 +108,13 @@ public class DerivedExpressionQuery extends Query {
 
         @Override
         public Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
-            Bindings bindings = new Bindings(){
+            Bindings bindings = new Bindings() {
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
+                    Double queryParamValue  = queryParamValues.get(name);
+                    if (queryParamValue != null) {
+                        return DoubleValuesSource.constant(queryParamValue);
+                    }
                     return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
                 }
             };
@@ -120,9 +128,13 @@ public class DerivedExpressionQuery extends Query {
 
         @Override
         public Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException {
-            Bindings bindings = new Bindings(){
+            Bindings bindings = new Bindings() {
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(String name) {
+                    Double queryParamValue  = queryParamValues.get(name);
+                    if (queryParamValue != null) {
+                        return DoubleValuesSource.constant(queryParamValue);
+                    }
                     return new FVDoubleValuesSource(() -> vector, features.featureOrdinal(name));
                 }
             };
@@ -167,7 +179,6 @@ public class DerivedExpressionQuery extends Query {
 //        public int freq() throws IOException {
 //            return 1;
 //        }
-
         @Override
         public DocIdSetIterator iterator() {
             return iterator;
@@ -214,8 +225,12 @@ public class DerivedExpressionQuery extends Query {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             FVDoubleValuesSource that = (FVDoubleValuesSource) o;
             return ordinal == that.ordinal &&
                     Objects.equals(vectorSupplier, that.vectorSupplier);
