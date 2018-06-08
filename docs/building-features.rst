@@ -63,7 +63,7 @@ Similar to how you would develop queries like these to manually improve search r
 Features are Mustache Templated Elasticsearch Queries
 =====================================================
 
-You'll notice the :code:`{{keywords}}`, :code:`{{users_lat}}`, and :code:`{{users_lon}}` above. This syntax is the mustache templating system used in other parts of Elasticsearch. This lets you inject various query or user-specific variables into the search template. Perhaps information about the user for personalization? Or the location of the searcher's phone? 
+You'll notice the :code:`{{keywords}}`, :code:`{{users_lat}}`, and :code:`{{users_lon}}` above. This syntax is the mustache templating system used in other parts of `Elasticsearch <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-template.html>`_. This lets you inject various query or user-specific variables into the search template. Perhaps information about the user for personalization? Or the location of the searcher's phone?
 
 For now, we'll simply focus on typical keyword searches.
 
