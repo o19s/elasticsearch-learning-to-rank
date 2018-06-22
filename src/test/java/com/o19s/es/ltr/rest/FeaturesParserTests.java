@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.rest;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 
@@ -34,7 +35,8 @@ public class FeaturesParserTests extends LuceneTestCase {
         String featuresArray = IntStream.range(0, nFeat)
                 .mapToObj((i) -> generateTestFeature("feat" + i))
                 .collect(Collectors.joining(","));
-        XContentParser parser = jsonXContent.createParser(NamedXContentRegistry.EMPTY, "{\"features\":[" + featuresArray + "]}");
+        XContentParser parser = jsonXContent.createParser(NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE, "{\"features\":[" + featuresArray + "]}");
         fparser.parse(parser);
         assertEquals(nFeat, fparser.getFeatures().size());
         assertEquals("feat0", fparser.getFeatures().get(0).name());

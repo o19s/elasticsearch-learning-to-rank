@@ -24,6 +24,7 @@ import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.junit.Assert;
@@ -44,7 +45,7 @@ public class LinearRankerParserTests extends LuceneTestCase {
             builder.field(set.feature(i).name(), weight);
         }
         builder.endObject();
-        String json = builder.bytes().utf8ToString();
+        String json = Strings.toString(builder);
         LinearRankerParser parser = new LinearRankerParser();
         LinearRanker ranker = parser.parse(set, json);
         DenseFeatureVector v = ranker.newFeatureVector(null);
@@ -92,6 +93,6 @@ public class LinearRankerParserTests extends LuceneTestCase {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject().close();
-        return builder.bytes().utf8ToString();
+        return Strings.toString(builder);
     }
 }

@@ -16,25 +16,26 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
-
-import java.io.IOException;
-import java.util.Objects;
-
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import java.io.IOException;
+import java.util.Objects;
+
+import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 
 public class StoredLtrModel implements StorableElement {
     public static final String TYPE = "model";
@@ -164,7 +165,9 @@ public class StoredLtrModel implements StorableElement {
         if (modelAsString) {
             builder.value(rankingModel);
         } else {
-            try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY, rankingModel)) {
+            try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY,
+                    LoggingDeprecationHandler.INSTANCE, rankingModel)
+            ) {
                 builder.copyCurrentStructure(parser);
             }
         }
@@ -286,7 +289,7 @@ public class StoredLtrModel implements StorableElement {
                     try (XContentBuilder builder = JsonXContent.contentBuilder()) {
                         builder.copyCurrentStructure(parser);
                         modelAsString = false;
-                        definition = builder.bytes().utf8ToString();
+                        definition = Strings.toString(builder);
                     }
                 }
         }

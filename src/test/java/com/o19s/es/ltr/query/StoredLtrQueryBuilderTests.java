@@ -28,6 +28,7 @@ import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.io.stream.ByteBufferStreamInput;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -148,7 +149,8 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         builder.writeTo(out);
         out.close();
 
-        StreamInput input = ByteBufferStreamInput.wrap(out.bytes().toBytesRef().bytes);
+        BytesRef ref = out.bytes().toBytesRef();
+        StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
         StoredLtrQueryBuilder builderFromInputStream = new StoredLtrQueryBuilder(
                 LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store), input);
         List<String> expected = Arrays.asList("match1");

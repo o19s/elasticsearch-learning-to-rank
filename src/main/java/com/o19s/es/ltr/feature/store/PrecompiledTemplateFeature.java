@@ -21,11 +21,11 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.template.mustache.MustacheUtils;
-import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -93,7 +93,8 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
         String query = MustacheUtils.execute(template, params);
         try {
             XContentParser parser = XContentFactory.xContent(query)
-                    .createParser(context.getQueryShardContext().getXContentRegistry(), query);
+                    .createParser(context.getQueryShardContext().getXContentRegistry(),
+                            LoggingDeprecationHandler.INSTANCE, query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
             return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());

@@ -22,9 +22,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.SpecialPermission;
-import org.elasticsearch.common.io.FastStringReader;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -42,7 +42,7 @@ public class MustacheUtils {
     public static Mustache compile(String name, String template) {
         // Don't use compile(String name) to avoid caching in the factory
         try {
-            return FACTORY.compile(new FastStringReader(template), name);
+            return FACTORY.compile(new StringReader(template), name);
         } catch (MustacheException me) {
             throw new IllegalArgumentException(me.getMessage(), me);
         }

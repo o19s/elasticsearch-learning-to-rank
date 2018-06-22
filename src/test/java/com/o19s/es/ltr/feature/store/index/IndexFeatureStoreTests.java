@@ -21,10 +21,12 @@ import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -90,14 +92,14 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
     public void testBadValues() throws IOException {
         Map<String, Object> map = new HashMap<>();
         XContentBuilder builder = XContentBuilder.builder(Requests.INDEX_CONTENT_TYPE.xContent());
-        BytesReference bytes = builder.map(map).bytes();
+        BytesReference bytes = BytesReference.bytes(builder.map(map));
         assertThat(expectThrows(IllegalArgumentException.class,
                 () -> IndexFeatureStore.parse(StoredFeature.class, StoredFeature.TYPE, bytes))
                 .getMessage(), equalTo("No StorableElement found."));
 
         builder = XContentBuilder.builder(Requests.INDEX_CONTENT_TYPE.xContent());
         map.put("featureset", LtrTestUtils.randomFeatureSet());
-        BytesReference bytes2 = builder.map(map).bytes();
+        BytesReference bytes2 = BytesReference.bytes(builder.map(map));
         assertThat(expectThrows(IllegalArgumentException.class,
                 () -> IndexFeatureStore.parse(StoredFeature.class, StoredFeature.TYPE, bytes2))
                 .getMessage(), equalTo("Expected an element of type [" + StoredFeature.TYPE + "] but" +
@@ -106,19 +108,21 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
 
     private void parseAssertions(StorableElement elt) throws IOException {
         XContentBuilder builder = IndexFeatureStore.toSource(elt);
-        BytesReference first = builder.bytes();
+        BytesReference first = BytesReference.bytes(builder);
         StorableElement reParsed = IndexFeatureStore.parse(elt.getClass(), elt.type(), first);
         assertEquals(elt, reParsed);
-        reParsed = IndexFeatureStore.parse(elt.getClass(), elt.type(), first.toBytesRef().bytes);
+        BytesRef ref = first.toBytesRef();
+        reParsed = IndexFeatureStore.parse(elt.getClass(), elt.type(), ref.bytes, ref.offset, ref.length);
         assertEquals(elt, reParsed);
-        BytesReference second = IndexFeatureStore.toSource(reParsed).bytes();
+        BytesReference second = BytesReference.bytes(IndexFeatureStore.toSource(reParsed));
         assertEquals(first, second);
         assertNameAndTypes(elt, first);
         assertNameAndTypes(elt, second);
     }
 
     private void assertNameAndTypes(StorableElement elt, BytesReference ref) throws IOException {
-        XContentParser parser = XContentFactory.xContent(Requests.INDEX_CONTENT_TYPE).createParser(NamedXContentRegistry.EMPTY, ref);
+        XContentParser parser = XContentFactory.xContent(Requests.INDEX_CONTENT_TYPE).createParser(NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE, ref.streamInput());
         Map<String,Object> map = parser.map();
         assertEquals(elt.name(), map.get("name"));
         assertEquals(elt.type(), map.get("type"));

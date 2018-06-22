@@ -17,8 +17,8 @@
 package com.o19s.es.ltr.logging;
 
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
-import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -71,15 +71,14 @@ public class LoggingSearchExtBuilderTests extends ESTestCase {
         XContentBuilder builder = XContentFactory.jsonBuilder();
         ext1.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.close();
-        assertEquals(getTestExtAsString(), builder.bytes().utf8ToString());
+        assertEquals(getTestExtAsString(), Strings.toString(builder));
     }
 
     public void testSer() throws IOException {
         BytesStreamOutput out = new BytesStreamOutput();
         buildTestExt().writeTo(out);
         out.close();
-        StreamInput input = StreamInput.wrap(out.bytes().toBytesRef().bytes);
-        LoggingSearchExtBuilder ext = new LoggingSearchExtBuilder(input);
+        LoggingSearchExtBuilder ext = new LoggingSearchExtBuilder(out.bytes().streamInput());
         assertTestExt(ext);
     }
 
@@ -105,7 +104,7 @@ public class LoggingSearchExtBuilderTests extends ESTestCase {
                 "]}";
         ParsingException exc = expectThrows(ParsingException.class,
                 () ->parse(createParser(JsonXContent.jsonXContent, data)));
-        assertThat(exc.getCause().getMessage(),
+        assertThat(exc.getCause().getCause().getMessage(),
                 containsString("Either [named_query] or [rescore_index] must be set"));
     }
 
@@ -115,7 +114,7 @@ public class LoggingSearchExtBuilderTests extends ESTestCase {
                 "]}";
         ParsingException exc = expectThrows(ParsingException.class,
                 () ->parse(createParser(JsonXContent.jsonXContent, data)));
-        assertThat(exc.getCause().getMessage(),
+        assertThat(exc.getCause().getCause().getMessage(),
                 containsString("non-negative"));
     }
 
