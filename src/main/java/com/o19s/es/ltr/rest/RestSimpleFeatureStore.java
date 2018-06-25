@@ -258,8 +258,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         builder.request().setRouting(routing);
         builder.request().setStore(indexName);
         builder.request().setValidation(parserState.validation);
-        return (channel) -> builder.execute(new RestStatusToXContentListener<FeatureStoreAction.FeatureStoreResponse>(channel,
-                (r) -> r.getResponse().getLocation(routing)));
+        return (channel) -> builder.execute(new RestStatusToXContentListener<>(channel, (r) -> r.getResponse().getLocation(routing)));
     }
 
 

@@ -60,5 +60,6 @@ public interface LtrRanker {
          * Get the feature score
          */
         float getFeatureScore(int featureId);
+
     }
 }

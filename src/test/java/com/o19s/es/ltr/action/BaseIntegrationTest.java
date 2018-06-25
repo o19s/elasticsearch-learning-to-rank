@@ -16,20 +16,6 @@
 
 package com.o19s.es.ltr.action;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-
-import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
-import org.elasticsearch.common.Nullable;
-import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.test.ESSingleNodeTestCase;
-import org.junit.Before;
-
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
@@ -37,11 +23,33 @@ import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import org.apache.lucene.index.LeafReaderContext;
+import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptEngine;
+import org.elasticsearch.script.SearchScript;
+import org.elasticsearch.test.ESSingleNodeTestCase;
+import org.junit.Before;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import static com.o19s.es.ltr.feature.store.ScriptFeature.FEATURE_VECTOR;
 
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class);
     }
 
     public void createStore(String name) throws Exception {
@@ -108,5 +116,80 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
         assertEquals(element.id(), response.getResponse().getId());
         assertEquals(store, response.getResponse().getIndex());
         return response;
+    }
+
+    public static class NativeScriptPlugin extends Plugin implements ScriptPlugin {
+        public static final String FEATURE_EXTRACTOR = "feature_extractor";
+
+        @Override
+        public ScriptEngine getScriptEngine(Settings settings, Collection<ScriptContext<?>> contexts) {
+            return new ScriptEngine() {
+                /**
+                 * The language name used in the script APIs to refer to this scripting backend.
+                 */
+                @Override
+                public String getType() {
+                    return "native";
+                }
+
+                /**
+                 * Compiles a script.
+                 *
+                 * @param scriptName   the name of the script. {@code null} if it is anonymous (inline).
+                 *                     For a stored script, its the identifier.
+                 * @param scriptSource    actual source of the script
+                 * @param context the context this script will be used for
+                 * @param params  compile-time parameters (such as flags to the compiler)
+                 * @return A compiled script of the FactoryType from {@link ScriptContext}
+                 */
+                @SuppressWarnings("unchecked")
+                @Override
+                public <FactoryType> FactoryType compile(String scriptName, String scriptSource,
+                                                         ScriptContext<FactoryType> context, Map<String, String> params) {
+                    if (context.equals(SearchScript.CONTEXT) == false && (context.equals(SearchScript.AGGS_CONTEXT) == false)) {
+                        throw new IllegalArgumentException(getType() + " scripts cannot be used for context [" + context.name
+                                + "]");
+                    }
+                    // we use the script "source" as the script identifier
+                    if (FEATURE_EXTRACTOR.equals(scriptSource)) {
+                        SearchScript.Factory factory = (p, lookup) ->
+                                new SearchScript.LeafFactory() {
+                                    final Map<String, Float> featureSupplier;
+                                    final String dependentFeature;
+                                    public static final String DEPDENDENT_FEATURE = "dependent_feature";
+
+                                    {
+                                        if (!p.containsKey(FEATURE_VECTOR)) {
+                                            throw new IllegalArgumentException("Missing parameter [" + FEATURE_VECTOR + "]");
+                                        }
+                                        if (!p.containsKey(DEPDENDENT_FEATURE)) {
+                                            throw new IllegalArgumentException("Missing parameter [depdendent_feature ]");
+                                        }
+                                        featureSupplier = (Map<String, Float>) p.get(FEATURE_VECTOR);
+                                        dependentFeature = p.get(DEPDENDENT_FEATURE).toString();
+                                    }
+
+                                    @Override
+                                    public SearchScript newInstance(LeafReaderContext ctx) throws IOException {
+                                        return new SearchScript(p, lookup, ctx) {
+                                            @Override
+                                            public double runAsDouble() {
+                                                return featureSupplier.get(dependentFeature) * 10;
+                                            }
+                                        };
+                                    }
+
+                                    @Override
+                                    public boolean needs_score() {
+                                        return false;
+                                    }
+                                };
+
+                        return context.factoryClazz.cast(factory);
+                    }
+                    throw new IllegalArgumentException("Unknown script name " + scriptSource);
+                }
+            };
+        }
     }
 }
