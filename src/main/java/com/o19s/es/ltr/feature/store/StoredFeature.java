@@ -20,15 +20,17 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.template.mustache.MustacheUtils;
-import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -49,7 +51,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
@@ -114,7 +115,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     }
 
     public StoredFeature(String name, List<String> params, String templateLanguage, XContentBuilder template) {
-        this(name, params, templateLanguage, Objects.requireNonNull(template).bytes().utf8ToString(), false);
+        this(name, params, templateLanguage, Strings.toString(Objects.requireNonNull(template)), false);
     }
 
     @Override
@@ -137,7 +138,8 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         } else {
             builder.field(TEMPLATE.getPreferredName());
             // it's ok to use NamedXContentRegistry.EMPTY because we don't really parse we copy the structure...
-            XContentParser parser = XContentFactory.xContent(template).createParser(NamedXContentRegistry.EMPTY, template);
+            XContentParser parser = XContentFactory.xContent(template).createParser(NamedXContentRegistry.EMPTY,
+                    LoggingDeprecationHandler.INSTANCE, template);
             builder.copyCurrentStructure(parser);
         }
         builder.endObject();
@@ -225,11 +227,14 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
 
     private XContentParser createParser(Object source, NamedXContentRegistry registry) throws IOException {
         if (source instanceof String) {
-            return XContentFactory.xContent((String) source).createParser(registry, (String) source);
+            return XContentFactory.xContent((String) source).createParser(registry, LoggingDeprecationHandler.INSTANCE, (String) source);
         } else if (source instanceof BytesReference) {
-            return XContentFactory.xContent((BytesReference) source).createParser(registry, (BytesReference) source);
+            BytesRef ref = ((BytesReference) source).toBytesRef();
+            return XContentFactory.xContent(ref.bytes, ref.offset, ref.length)
+                    .createParser(registry, LoggingDeprecationHandler.INSTANCE,
+                            ref.bytes, ref.offset, ref.length);
         } else if (source instanceof byte[]) {
-            return XContentFactory.xContent((byte[]) source).createParser(registry, (byte[]) source);
+            return XContentFactory.xContent((byte[]) source).createParser(registry, LoggingDeprecationHandler.INSTANCE, (byte[]) source);
         } else {
             throw new IllegalArgumentException("Template engine returned an unsupported object type [" +
                     source.getClass().getCanonicalName() + "]");

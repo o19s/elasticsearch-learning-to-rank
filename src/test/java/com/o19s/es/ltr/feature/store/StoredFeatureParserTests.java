@@ -16,6 +16,21 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.hamcrest.CoreMatchers;
+
+import java.io.IOException;
+import java.util.Arrays;
+
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
 import static org.hamcrest.Matchers.allOf;
@@ -24,20 +39,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
-
-import java.io.IOException;
-import java.util.Arrays;
-
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.hamcrest.CoreMatchers;
 
 public class StoredFeatureParserTests extends LuceneTestCase {
     public void testParseFeatureAsJson() throws IOException {
@@ -95,7 +96,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
         String featureString = generateTestFeature();
         StoredFeature feature = parse(featureString);
         XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
-        featureString = feature.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
+        featureString = Strings.toString(feature.toXContent(builder, ToXContent.EMPTY_PARAMS));
         StoredFeature featureReparsed = parse(featureString);
         assertTestFeature(featureReparsed);
     }
@@ -249,7 +250,8 @@ public class StoredFeatureParserTests extends LuceneTestCase {
     }
 
     static StoredFeature parse(String featureString, String defaultName) throws IOException {
-        return StoredFeature.parse(jsonXContent.createParser(EMPTY, featureString), defaultName);
+        return StoredFeature.parse(jsonXContent.createParser(EMPTY,
+                LoggingDeprecationHandler.INSTANCE, featureString), defaultName);
     }
 
     private String writeAsNonFormattedString(AbstractQueryBuilder<?> builder) {

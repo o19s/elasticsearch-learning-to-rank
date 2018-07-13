@@ -16,19 +16,15 @@
 
 package com.o19s.es.ltr.rest;
 
-import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
-import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
-import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
-import static java.util.stream.Collectors.joining;
-import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
-import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
-import static org.elasticsearch.rest.RestStatus.OK;
-
-import java.io.IOException;
-import java.util.List;
-
+import com.o19s.es.ltr.action.ClearCachesAction;
+import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.ListStoresAction;
+import com.o19s.es.ltr.feature.FeatureValidation;
+import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureSet;
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -49,20 +45,22 @@ import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
-import com.o19s.es.ltr.action.ClearCachesAction;
-import com.o19s.es.ltr.action.FeatureStoreAction;
-import com.o19s.es.ltr.action.ListStoresAction;
-import com.o19s.es.ltr.feature.FeatureValidation;
-import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import java.io.IOException;
+import java.util.List;
+
+import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
+import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
+import static java.util.stream.Collectors.joining;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
+import static org.elasticsearch.rest.RestStatus.OK;
 
 /**
  * Simple CRUD operation for the feature store elements.
@@ -216,12 +214,12 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
     RestChannelConsumer createIndex(NodeClient client, String indexName) {
         return (channel) -> client.admin().indices()
-                .create(IndexFeatureStore.buildIndexRequest(indexName), new AcknowledgedRestListener<>(channel));
+                .create(IndexFeatureStore.buildIndexRequest(indexName), new RestToXContentListener<>(channel));
     }
 
     RestChannelConsumer deleteIndex(NodeClient client, String indexName) {
         DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
-        return (channel) -> client.admin().indices().delete(deleteIndexRequest, new AcknowledgedRestListener<>(channel));
+        return (channel) -> client.admin().indices().delete(deleteIndexRequest, new RestToXContentListener<>(channel));
     }
 
     RestChannelConsumer addOrUpdate(NodeClient client, String type, String indexName, RestRequest request) throws IOException {

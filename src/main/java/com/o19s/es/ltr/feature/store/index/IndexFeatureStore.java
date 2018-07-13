@@ -16,18 +16,18 @@
 
 package com.o19s.es.ltr.feature.store.index;
 
-import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.FeatureStore;
+import com.o19s.es.ltr.feature.store.StorableElement;
+import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureSet;
+import com.o19s.es.ltr.feature.store.StoredLtrModel;
+import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
-import org.apache.lucene.util.IOUtils;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -41,6 +41,7 @@ import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -48,15 +49,15 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.feature.store.CompiledLtrModel;
-import com.o19s.es.ltr.feature.store.FeatureStore;
-import com.o19s.es.ltr.feature.store.StorableElement;
-import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+
+import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 
 public class IndexFeatureStore implements FeatureStore {
     public static final int VERSION = 2;
@@ -205,15 +206,23 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     public static <E extends StorableElement> E parse(Class<E> eltClass, String type, byte[] bytes) throws IOException {
+        return parse(eltClass, type, bytes, 0, bytes.length);
+    }
+
+    public static <E extends StorableElement> E parse(Class<E> eltClass, String type, byte[] bytes,
+                                                      int offset, int length) throws IOException {
         try (XContentParser parser = XContentFactory.xContent(bytes)
-                .createParser(NamedXContentRegistry.EMPTY, bytes)) {
+                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, bytes)) {
             return parse(eltClass, type, parser);
         }
     }
 
-    public static <E extends StorableElement> E parse(Class<E> eltClass, String type, BytesReference bytes) throws IOException {
-        try (XContentParser parser = XContentFactory.xContent(bytes)
-                .createParser(NamedXContentRegistry.EMPTY, bytes)) {
+    public static <E extends StorableElement> E parse(Class<E> eltClass, String type, BytesReference bytesReference) throws IOException {
+        BytesRef ref = bytesReference.toBytesRef();
+        try (XContentParser parser = XContentFactory.xContent(ref.bytes, ref.offset, ref.length)
+                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE,
+                        ref.bytes, ref.offset, ref.length)
+        ) {
             return parse(eltClass, type, parser);
         }
     }
@@ -253,7 +262,7 @@ public class IndexFeatureStore implements FeatureStore {
         try (InputStream is = IndexFeatureStore.class.getResourceAsStream(resource)) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Streams.copy(is, out);
-            return out.toString(IOUtils.UTF_8);
+            return out.toString(StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             LOGGER.error(
                     (org.apache.logging.log4j.util.Supplier<?>) () -> new ParameterizedMessage(

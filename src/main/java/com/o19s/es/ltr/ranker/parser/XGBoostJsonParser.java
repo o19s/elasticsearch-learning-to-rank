@@ -21,6 +21,7 @@ import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree.Node;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -40,7 +41,9 @@ public class XGBoostJsonParser implements LtrRankerParser {
     @Override
     public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
         List<Node> trees = new ArrayList<>();
-        try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY, model)) {
+        try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE, model)
+        ) {
             if (parser.nextToken() != XContentParser.Token.START_ARRAY) {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_ARRAY] but got [" + parser.currentToken() + "]");
             }
@@ -59,7 +62,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
     private static class SplitParserState {
         private static final ObjectParser<SplitParserState, FeatureSet> PARSER;
         static {
-            PARSER = new ObjectParser<SplitParserState, FeatureSet>("node", SplitParserState::new);
+            PARSER = new ObjectParser<>("node", SplitParserState::new);
             PARSER.declareInt(SplitParserState::setNodeId, new ParseField("nodeid"));
             PARSER.declareInt(SplitParserState::setDepth, new ParseField("depth"));
             PARSER.declareString(SplitParserState::setSplit, new ParseField("split"));

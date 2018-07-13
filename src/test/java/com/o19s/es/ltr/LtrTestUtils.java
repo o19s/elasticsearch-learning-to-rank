@@ -30,6 +30,7 @@ import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.common.CheckedFunction;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
@@ -76,7 +77,7 @@ public class LtrTestUtils {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject();
-        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, builder.string(), false);
+        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false);
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {

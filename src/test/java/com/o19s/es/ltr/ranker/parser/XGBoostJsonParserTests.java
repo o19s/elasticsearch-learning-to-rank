@@ -24,7 +24,6 @@ import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker.FeatureVector;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
-import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.Streams;
@@ -33,6 +32,7 @@ import org.hamcrest.CoreMatchers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -157,7 +157,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         try (InputStream is = this.getClass().getResourceAsStream(model)) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             Streams.copy(is,  bos);
-            return bos.toString(IOUtils.UTF_8);
+            return bos.toString(StandardCharsets.UTF_8.name());
         }
     }
 }

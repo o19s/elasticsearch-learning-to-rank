@@ -16,16 +16,17 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import static org.apache.lucene.util.TestUtil.randomRealisticUnicodeString;
-import static org.apache.lucene.util.TestUtil.randomSimpleString;
-import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
-import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.lessThan;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.query.DerivedExpressionQuery;
+import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,15 +37,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.query.DerivedExpressionQuery;
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.MatchQueryBuilder;
+import static org.apache.lucene.util.TestUtil.randomRealisticUnicodeString;
+import static org.apache.lucene.util.TestUtil.randomSimpleString;
+import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
+import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.lessThan;
 
 public class StoredFeatureSetParserTests extends LuceneTestCase {
 
@@ -86,7 +88,7 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
         StoredFeatureSet featureSet = parse(featureSetString);
 
         XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
-        featureSetString = featureSet.toXContent(builder, ToXContent.EMPTY_PARAMS).bytes().utf8ToString();
+        featureSetString = Strings.toString(featureSet.toXContent(builder, ToXContent.EMPTY_PARAMS));
         StoredFeatureSet featureSetReparsed = parse(featureSetString);
         assertFeatureSet(featureSetReparsed, features);
     }
@@ -211,11 +213,13 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
     }
 
     private static StoredFeatureSet parse(String missingName) throws IOException {
-        return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY, missingName));
+        return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY,
+                LoggingDeprecationHandler.INSTANCE, missingName));
     }
 
     private static StoredFeatureSet parse(String missingName, String defaultName) throws IOException {
-        return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY, missingName), defaultName);
+        return StoredFeatureSet.parse(jsonXContent.createParser(EMPTY,
+                LoggingDeprecationHandler.INSTANCE, missingName), defaultName);
     }
 
     public static StoredFeature buildRandomFeature() throws IOException {
@@ -283,7 +287,8 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
         Set<String> addedFeatures = new HashSet<>();
         while(nbFeat-->0) {
             String featureString = generateRandomFeature();
-            StoredFeature feature = StoredFeature.parse(jsonXContent.createParser(EMPTY, featureString));
+            StoredFeature feature = StoredFeature.parse(jsonXContent.createParser(EMPTY,
+                    LoggingDeprecationHandler.INSTANCE, featureString));
             if (!addedFeatures.add(feature.name())) {
                 continue;
             }
