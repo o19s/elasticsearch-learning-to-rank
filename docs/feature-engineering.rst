@@ -47,9 +47,12 @@ Another common case in learning to rank is features such as popularity or recenc
     {
         "query": {
             "function_score": {
-                "functions": {
-                    "field": "vote_average"
-                },
+                "functions": [{
+                    "field_value_factor": {
+                        "field": "vote_average",
+                        "missing": 0
+                    }
+                }],
                 "query": {
                     "match_all": {}
                 }
