@@ -90,12 +90,24 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         private final Node right;
         private final int feature;
         private final float threshold;
+        private final Comparer comparer;
+
+        @FunctionalInterface
+        public interface Comparer {
+            static Comparer GT = (t, v) -> t > v;
+            boolean compare(float threshold, float value);
+        }
 
         public Split(Node left, Node right, int feature, float threshold) {
+            this(left, right, feature, threshold, Comparer.GT);
+        }
+
+        public Split(Node left, Node right, int feature, float threshold, Comparer comparer) {
             this.left = Objects.requireNonNull(left);
             this.right = Objects.requireNonNull(right);
             this.feature = feature;
             this.threshold = threshold;
+            this.comparer = comparer;
         }
 
         @Override
@@ -109,7 +121,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             while (!n.isLeaf()) {
                 assert n instanceof Split;
                 Split s = (Split) n;
-                if (s.threshold > scores[s.feature]) {
+                if (comparer.compare(s.threshold, scores[s.feature])) {
                     n = s.left;
                 } else {
                     n = s.right;
