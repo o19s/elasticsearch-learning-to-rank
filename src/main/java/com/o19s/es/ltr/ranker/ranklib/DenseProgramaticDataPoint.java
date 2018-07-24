@@ -27,9 +27,9 @@ import java.util.Arrays;
  * to be parsed
  */
 public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.FeatureVector {
-
+    private static final int RANKLIB_FEATURE_INDEX_OFFSET = 1;
     public DenseProgramaticDataPoint(int numFeatures) {
-        this.fVals = new float[numFeatures+1]; // add 1 because RankLib features 1 based
+        this.fVals = new float[numFeatures+RANKLIB_FEATURE_INDEX_OFFSET]; // add 1 because RankLib features 1 based
     }
 
     public float getFeatureValue(int fid) {

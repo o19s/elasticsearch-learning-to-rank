@@ -67,11 +67,19 @@ You'll notice the :code:`{{keywords}}`, :code:`{{users_lat}}`, and :code:`{{user
 
 For now, we'll simply focus on typical keyword searches.
 
+.. _derived-features:
+
 =================
 Derived Features
 =================
 
 Features that build on top of other features are called derived features.  These can be expressed as `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. They are recognized by :code:`"template_language": "derived_expression"`. Besides these can also take in query time variables of type `Number <https://docs.oracle.com/javase/8/docs/api/java/lang/Number.html>`_ as explained in :ref:`create-feature-set`.
+
+=================
+Script Features
+=================
+These are essentially :ref:`derived-features`, having access to the :code:`feature_vector` but could be native or painless elasticsearch scripts rather than `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. :code:`"template_language": "script_feature""` allows LTR to identify the templated script as a regular elasticsearch script e.g. native, painless, etc. The custom script has access to the feature_vector via the java `Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_ interface as explained in :ref:`create-feature-set`.
+
 
 =============================
 Uploading and Naming Features
@@ -140,6 +148,20 @@ You can create a feature set simply by using a POST. To create it, you give a fe
                     ],
                     "template_language": "derived_expressions",
                     "template": "title_query * some_multiplier"
+                },
+                {
+                    "name": "custom_title_query_boost",
+                    "params": [
+                        "some_multiplier"
+                    ],
+                    "template_language": "script_feature",
+                    "template": {
+                        "lang": "painless",
+                        "source": "params.feature_vector.get('title_query') * (long)params.some_multiplier",
+                        "params": {
+                            "some_multiplier": "some_multiplier"
+                        }
+                    }
                 }
             ]
        }

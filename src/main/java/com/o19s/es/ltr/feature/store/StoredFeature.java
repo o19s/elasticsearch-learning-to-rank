@@ -180,6 +180,8 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
                 return PrecompiledTemplateFeature.compile(this);
             case PrecompiledExpressionFeature.TEMPLATE_LANGUAGE:
                 return PrecompiledExpressionFeature.compile(this);
+            case ScriptFeature.TEMPLATE_LANGUAGE:
+                return ScriptFeature.compile(this);
             default:
                 return this;
         }

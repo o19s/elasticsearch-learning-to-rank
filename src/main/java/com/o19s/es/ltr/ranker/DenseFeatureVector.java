@@ -26,6 +26,7 @@ public class DenseFeatureVector implements LtrRanker.FeatureVector {
 
     /**
      * New simple array-backed datapoint
+     *
      * @param size size of the internal array
      */
     public DenseFeatureVector(int size) {
