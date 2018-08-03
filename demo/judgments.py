@@ -43,7 +43,7 @@ def _judgmentsFromBody(lines):
     # http://www.regexpal.com/?fam=96565
     regex = re.compile('^(\d)\s+qid:(\d+)\s+#\s+(\w+).*')
     for line in lines:
-        print(line)
+        print(line.encode('utf-8'))
         m = re.match(regex, line)
         if m:
             print("%s,%s,%s" % (m.group(1), m.group(2), m.group(3)))
@@ -51,9 +51,9 @@ def _judgmentsFromBody(lines):
 
 
 def judgmentsFromFile(filename):
-    with open(filename) as f:
+    with open(filename,encoding="utf-8") as f:
         qidToKeywords = _queriesFromHeader(f)
-    with open(filename) as f:
+    with open(filename,encoding="utf-8") as f:
         for grade, qid, docId in _judgmentsFromBody(f):
             yield Judgment(grade=grade, qid=qid, keywords=qidToKeywords[qid], docId=docId)
 
