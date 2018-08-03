@@ -2,7 +2,7 @@ baseQuery = {
   "query": {
       "multi_match": {
           "query": "test",
-          "fields": ["title", "overview"]
+          "fields": ["REMARKS", "LITHOLOGY_OILNESS_DESC"]
        }
    },
   "rescore": {
@@ -37,7 +37,8 @@ if __name__ == "__main__":
     model = "test_6"
     if len(argv) > 2:
         model = argv[2]
-    results = es.search(index='tmdb', doc_type='movie', body=ltrQuery(argv[1], model))
+    # results = es.search(index='tmdb', doc_type='movie', body=ltrQuery(argv[1], model))
+    results = es.search(index='*', body=ltrQuery(argv[1], model))
     for result in results['hits']['hits']:
-        print(result['_source']['title'])
+        print(result['_source'])
 

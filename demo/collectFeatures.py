@@ -55,13 +55,14 @@ def logFeatures(es, judgmentsByQid):
         logQuery['query']['bool']['should'][0]['sltr']['params']['keywords'] = keywords
         print("POST")
         print(json.dumps(logQuery, indent=2))
-        res = es.search(index='tmdb', body=logQuery)
+        res = es.search(index='*', body=logQuery)
         # Add feature back to each judgment
         featuresPerDoc = {}
         for doc in res['hits']['hits']:
             docId = doc['_id']
             features = doc['fields']['_ltrlog'][0]['main']
             featuresPerDoc[docId] = featureDictToList(features)
+            break
 
         # Append features from ES back to ranklib judgment list
         for judgment in judgments:
@@ -73,7 +74,7 @@ def logFeatures(es, judgmentsByQid):
 
 
 def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
-    with open(filename, 'w') as judgmentFile:
+    with open(filename, 'w', encoding="utf-8") as judgmentFile:
         for qid, judgmentList in judgmentsWithFeatures.items():
             for judgment in judgmentList:
                 judgmentFile.write(judgment.toRanklibFormat() + "\n")
