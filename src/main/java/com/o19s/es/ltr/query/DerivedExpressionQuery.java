@@ -17,8 +17,10 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.store.FeatureSupplier;
 import com.o19s.es.ltr.feature.store.PrecompiledExpressionFeature;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
@@ -40,10 +42,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class DerivedExpressionQuery extends Query {
+public class DerivedExpressionQuery extends Query
+        implements Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> {
     private final FeatureSet features;
     private final Expression expression;
     private final Map<String, Double> queryParamValues;
+    private Supplier<LtrRanker.FeatureVector> vectorSupplier;
 
     public DerivedExpressionQuery(FeatureSet features, Expression expr, Map<String, Double> queryParamValues) {
         this.features = features;
@@ -66,11 +70,10 @@ public class DerivedExpressionQuery extends Query {
                     return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
                 }
 
-
             };
         }
 
-        return new FVWeight(this);
+        return new FVWeight(this, this);
     }
 
     @Override
@@ -97,9 +100,19 @@ public class DerivedExpressionQuery extends Query {
         return "fv_query:" + field;
     }
 
+    @Override
+    public Supplier<LtrRanker.FeatureVector> get() {
+        return vectorSupplier;
+    }
+
+    @Override
+    public void set(Supplier<LtrRanker.FeatureVector> vectorSupplier) {
+        this.vectorSupplier = vectorSupplier;
+    }
+
     public class FVWeight extends FeatureVectorWeight {
-        protected FVWeight(Query query) {
-            super(query);
+        protected FVWeight(Query query, Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> vectorSupplier) {
+            super(query, vectorSupplier);
         }
 
         @Override

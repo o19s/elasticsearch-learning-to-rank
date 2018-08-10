@@ -5,6 +5,7 @@ import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.FeatureVectorWeight;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -100,9 +101,12 @@ public class ScriptFeature implements Feature {
                 context.getQueryShardContext().lookup())), featureSupplier);
     }
 
-    static class LtrScript extends Query {
+    public static class LtrScript extends Query implements Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> {
         private final ScriptScoreFunction scoreFunction;
+
+
         private final FeatureSupplier featureSupplier;
+        private Supplier<LtrRanker.FeatureVector> vectorSupplier;
 
         @Override
         public boolean equals(Object o) {
@@ -135,14 +139,24 @@ public class ScriptFeature implements Feature {
 
         @Override
         public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-            return new LtrScriptWeight(this);
+            return new LtrScriptWeight(this, this);
+        }
+
+        @Override
+        public Supplier<LtrRanker.FeatureVector> get() {
+            return vectorSupplier;
+        }
+
+        @Override
+        public void set(Supplier<LtrRanker.FeatureVector> vectorSupplier) {
+            this.vectorSupplier = vectorSupplier;
         }
 
 
         class LtrScriptWeight extends FeatureVectorWeight {
 
-            protected LtrScriptWeight(Query query) {
-                super(query);
+            protected LtrScriptWeight(Query query, Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> vectorSupplier) {
+                super(query, vectorSupplier);
             }
 
             @Override

@@ -23,7 +23,8 @@ public final class Suppliers {
     /**
      * Utility class
      */
-    private Suppliers() {}
+    private Suppliers() {
+    }
 
     /**
      * Build a supplier that stores and return the same instance.
@@ -60,7 +61,7 @@ public final class Suppliers {
     /**
      * A mutable supplier
      */
-    public static class MutableSupplier<T> implements Supplier<T> {
+    public static class MutableSupplier<T> implements MutableSupplierInterface<T> {
         T obj;
 
         @Override
@@ -68,8 +69,16 @@ public final class Suppliers {
             return obj;
         }
 
+        @Override
         public void set(T obj) {
             this.obj = obj;
         }
+    }
+
+    public interface MutableSupplierInterface<T> extends Supplier<T> {
+        @Override
+        T get();
+
+        void set(T obj);
     }
 }

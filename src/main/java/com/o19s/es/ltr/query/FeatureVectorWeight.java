@@ -17,10 +17,12 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
@@ -30,8 +32,12 @@ import java.util.function.Supplier;
  * A weight allowing to inject the FeatureVector in use by the RankerQuery
  */
 public abstract class FeatureVectorWeight extends Weight {
-    protected FeatureVectorWeight(Query query) {
+
+    private final Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> vectorSupplier;
+
+    protected FeatureVectorWeight(Query query, Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>> vectorSupplier) {
         super(query);
+        this.vectorSupplier = vectorSupplier;
     }
 
     @Override
@@ -49,10 +55,28 @@ public abstract class FeatureVectorWeight extends Weight {
     public abstract Explanation explain(LeafReaderContext context, LtrRanker.FeatureVector vector, int doc) throws IOException;
 
     /**
-     *
-     * @param context surrent segment
+     * @param context        surrent segment
      * @param vectorSupplier supplier of the feature vector (always call get(), it must not be cached)
      * @return The scorer
      */
     public abstract Scorer scorer(LeafReaderContext context, Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException;
+
+    public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+        final Scorer scorer = scorer(context, vectorSupplier.get());
+        if (scorer == null) {
+            return null;
+        }
+        return new ScorerSupplier() {
+            @Override
+            public Scorer get(long leadCost) {
+                return scorer;
+            }
+
+            @Override
+            public long cost() {
+                return scorer.iterator().cost();
+            }
+        };
+    }
+
 }

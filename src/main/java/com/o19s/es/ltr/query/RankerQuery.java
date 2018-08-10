@@ -24,6 +24,7 @@ import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.NullRanker;
+import com.o19s.es.ltr.utils.Suppliers;
 import com.o19s.es.ltr.utils.Suppliers.MutableSupplier;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -185,11 +187,12 @@ public class RankerQuery extends Query {
         for (Query q : queries) {
             weights.add(searcher.createWeight(q, needsScores, boost));
         }
-        return new RankerWeight(weights);
+        return new RankerWeight(weights, queries);
     }
 
     public class RankerWeight extends Weight {
         private final List<Weight> weights;
+        private List<Query> queries;
 
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {
@@ -201,10 +204,11 @@ public class RankerQuery extends Query {
             return true;
         }
 
-        RankerWeight(List<Weight> weights) {
+        RankerWeight(List<Weight> weights, List<Query> queries) {
             super(RankerQuery.this);
             assert weights instanceof RandomAccess;
             this.weights = weights;
+            this.queries = queries;
         }
 
         @Override
@@ -245,12 +249,18 @@ public class RankerQuery extends Query {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public RankerScorer scorer(LeafReaderContext context) throws IOException {
             List<Scorer> scorers = new ArrayList<>(weights.size());
             List<DocIdSetIterator> subIterators = new ArrayList<>(weights.size());
             MutableSupplier<LtrRanker.FeatureVector> vectorSupplier = new MutableSupplier<>();
-            for (Weight weight : weights) {
+            for (int idx = 0; idx < weights.size(); idx++) {
                 Scorer scorer;
+                Query query = queries.get(idx);
+                Weight weight = weights.get(idx);
+                if (query instanceof Suppliers.MutableSupplierInterface) {
+                    ((Suppliers.MutableSupplierInterface<Supplier<LtrRanker.FeatureVector>>) query).set(vectorSupplier);
+                }
                 if (weight instanceof FeatureVectorWeight) {
                     scorer = ((FeatureVectorWeight) weight).scorer(context, vectorSupplier);
                 } else {
