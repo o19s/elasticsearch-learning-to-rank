@@ -39,11 +39,17 @@ public class ScriptFeature implements Feature {
     private final String name;
     private final Script script;
     private final Collection<String> queryParams;
+    private final Map<String, String> ltrToScriptParams;
 
     public ScriptFeature(String name, Script script, Collection<String> queryParams) {
         this.name = Objects.requireNonNull(name);
         this.script = Objects.requireNonNull(script);
         this.queryParams = queryParams;
+        Map<String, String> ltrScriptParams = new HashMap<>();
+        for (Map.Entry<String, Object> entry : script.getParams().entrySet()) {
+            ltrScriptParams.put(String.valueOf(entry.getValue()), entry.getKey());
+        }
+        this.ltrToScriptParams = ltrScriptParams;
     }
 
     public static ScriptFeature compile(StoredFeature feature) {
@@ -84,7 +90,7 @@ public class ScriptFeature implements Feature {
         Map<String, Object> queryTimeParams = new HashMap<>();
         for (String x : queryParams) {
             if (params.containsKey(x)) {
-                queryTimeParams.put(x, params.get(x));
+                queryTimeParams.put(ltrToScriptParams.get(x), params.get(x));
             }
         }
 
