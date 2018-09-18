@@ -60,6 +60,50 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
             "\"feature6\": 1" +
             "}";
 
+    private static final String SIMPLE_SCRIPT_MODEL = "{" +
+            "\"feature1\": 1," +
+            "\"feature6\": 1" +
+            "}";
+
+
+    public void testScriptFeatureUseCase() throws Exception {
+        addElement(new StoredFeature("feature1", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field1", "{{query}}").toString()));
+        addElement(new StoredFeature("feature6", Arrays.asList("query", "extra_multiplier_ltr"), ScriptFeature.TEMPLATE_LANGUAGE,
+                "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\"," +
+                        " \"extra_script_params\" : {\"extra_multiplier_ltr\": \"extra_multiplier\"}}}"));
+        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+
+        builder.request().setFeatureSet("my_set");
+        builder.request().setFeatureNameQuery("feature1");
+        builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
+        builder.execute().get();
+        builder.request().setFeatureNameQuery("feature6");
+        long version = builder.get().getResponse().getVersion();
+
+        CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
+        createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,
+                "my_model", new StoredLtrModel.LtrModelDefinition("model/linear", SIMPLE_SCRIPT_MODEL, true));
+        createModelFromSetRequestBuilder.get();
+        buildIndex();
+        Map<String, Object> params = new HashMap<>();
+        boolean negativeScore = false;
+        params.put("query", negativeScore ? "bonjour" : "hello");
+        params.put("dependent_feature", new HashMap<>());
+        params.put("extra_multiplier_ltr", 100.0d);
+        SearchRequestBuilder sb = client().prepareSearch("test_index")
+                .setQuery(QueryBuilders.matchQuery("field1", "world"))
+                .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                        .modelName("my_model").params(params).toString()))
+                        .setScoreMode(QueryRescoreMode.Total)
+                        .setQueryWeight(0)
+                        .setRescoreQueryWeight(1));
+
+        SearchResponse sr = sb.get();
+        assertEquals(1, sr.getHits().getTotalHits());
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(29.0f));
+        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(30.0f));
+    }
 
     public void testFullUsecase() throws Exception {
         addElement(new StoredFeature("feature1", Collections.singletonList("query"), "mustache",
@@ -74,6 +118,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 "(feature1 - feature2) > 0 ? feature1 * multiplier:  feature2 * multiplier"));
         addElement(new StoredFeature("feature6", Collections.singletonList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
                 "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\"}}"));
+
 
         AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
@@ -223,6 +268,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
         assertEquals(0, stats.getAll().getTotal().getCount());
         assertEquals(0, stats.getAll().getTotal().getRam());
+
     }
 
     public void testInvalidDerived() throws Exception {
