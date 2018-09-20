@@ -156,7 +156,10 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                 new SearchScript.LeafFactory() {
                                     final Map<String, Float> featureSupplier;
                                     final String dependentFeature;
+                                    double extraMultiplier = 0.0d;
+
                                     public static final String DEPDENDENT_FEATURE = "dependent_feature";
+                                    public static final String EXTRA_SCRIPT_PARAM = "extra_multiplier";
 
                                     {
                                         if (!p.containsKey(FEATURE_VECTOR)) {
@@ -164,6 +167,9 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         }
                                         if (!p.containsKey(DEPDENDENT_FEATURE)) {
                                             throw new IllegalArgumentException("Missing parameter [depdendent_feature ]");
+                                        }
+                                        if (p.containsKey(EXTRA_SCRIPT_PARAM)) {
+                                            extraMultiplier = Double.valueOf(p.get(EXTRA_SCRIPT_PARAM).toString());
                                         }
                                         featureSupplier = (Map<String, Float>) p.get(FEATURE_VECTOR);
                                         dependentFeature = p.get(DEPDENDENT_FEATURE).toString();
@@ -174,7 +180,9 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         return new SearchScript(p, lookup, ctx) {
                                             @Override
                                             public double runAsDouble() {
-                                                return featureSupplier.get(dependentFeature) * 10;
+                                                return extraMultiplier == 0.0d ?
+                                                        featureSupplier.get(dependentFeature) * 10 :
+                                                        featureSupplier.get(dependentFeature) * extraMultiplier;
                                             }
                                         };
                                     }

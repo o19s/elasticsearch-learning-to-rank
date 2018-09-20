@@ -35,15 +35,30 @@ import java.util.stream.Collectors;
 public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
     public static final String FEATURE_VECTOR = "feature_vector";
+    public static final String EXTRA_SCRIPT_PARAMS = "extra_script_params";
 
     private final String name;
     private final Script script;
     private final Collection<String> queryParams;
+    private final Map<String, Object> baseScriptParams;
+    private final Map<String, String> extraScriptParams;
 
+    @SuppressWarnings("unchecked")
     public ScriptFeature(String name, Script script, Collection<String> queryParams) {
         this.name = Objects.requireNonNull(name);
         this.script = Objects.requireNonNull(script);
         this.queryParams = queryParams;
+        Map<String, Object> ltrScriptParams = new HashMap<>();
+        Map<String, String> ltrExtraScriptParams = new HashMap<>();
+        for (Map.Entry<String, Object> entry : script.getParams().entrySet()) {
+            if (!entry.getKey().equals(EXTRA_SCRIPT_PARAMS)) {
+                ltrScriptParams.put(String.valueOf(entry.getKey()), entry.getValue());
+            } else {
+                ltrExtraScriptParams = (Map<String, String>) entry.getValue();
+            }
+        }
+        this.baseScriptParams = ltrScriptParams;
+        this.extraScriptParams = ltrExtraScriptParams;
     }
 
     public static ScriptFeature compile(StoredFeature feature) {
@@ -82,17 +97,25 @@ public class ScriptFeature implements Feature {
         }
 
         Map<String, Object> queryTimeParams = new HashMap<>();
+        Map<String, Object> extraQueryTimeParams = new HashMap<>();
         for (String x : queryParams) {
             if (params.containsKey(x)) {
-                queryTimeParams.put(x, params.get(x));
+                /* If extra_script_param then add the appropriate param name for the script else add name:value as is */
+                if (extraScriptParams.containsKey(x)) {
+                    extraQueryTimeParams.put(extraScriptParams.get(x), params.get(x));
+                } else {
+                    queryTimeParams.put(x, params.get(x));
+                }
             }
         }
 
         Map<String, Object> nparams = new HashMap<>();
         FeatureSupplier featureSupplier = new FeatureSupplier(featureSet);
-        nparams.putAll(script.getParams());
+        nparams.putAll(baseScriptParams);
         nparams.putAll(queryTimeParams);
+        nparams.putAll(extraQueryTimeParams);
         nparams.put(FEATURE_VECTOR, featureSupplier);
+
         Script nScript = new Script(
                 this.script.getType(), this.script.getLang(), this.script.getIdOrCode(), this.script.getOptions(), nparams);
         SearchScript.Factory searchScript = context.getQueryShardContext().getScriptService().compile(script, SearchScript.CONTEXT);

@@ -78,7 +78,54 @@ Features that build on top of other features are called derived features.  These
 =================
 Script Features
 =================
-These are essentially :ref:`derived-features`, having access to the :code:`feature_vector` but could be native or painless elasticsearch scripts rather than `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. :code:`"template_language": "script_feature""` allows LTR to identify the templated script as a regular elasticsearch script e.g. native, painless, etc. The custom script has access to the feature_vector via the java `Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_ interface as explained in :ref:`create-feature-set`.
+These are essentially :ref:`derived-features`, having access to the :code:`feature_vector` but could be native or painless elasticsearch scripts rather than `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. :code:`"template_language": "script_feature""` allows LTR to identify the templated script as a regular elasticsearch script e.g. native, painless, etc.
+
+The custom script has access to the feature_vector via the java `Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_ interface as explained in :ref:`create-feature-set`.
+
+============================
+Script Features Parameters
+============================
+Script features are essentially native/painless scripts and can accept parameters as per the `elasticsearch script documentation <https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-scripting-using.html>`_. We can override parameter values and names to scripts within LTR scripts. Priority for parameterization in increasing order is as follows
+ - parameter name, value passed in directly to source script but not in params in ltr script. These cannot be configured at query time.
+ - parameter name passed in to sltr query and to source script, so the script parameter values can be overridden at query time.
+ - ltr script parameter name to native script parameter name indirection. This allows ltr parameter name to be different from the underlying script parameter name. This allows same native script to be reused as different features within LTR by specifying different parameter names at query time::
+
+    POST _ltr/_featureset/more_movie_features
+    {
+       "featureset": {
+            "features": [
+                {
+                    "name": "title_query",
+                    "params": [
+                        "keywords"
+                    ],
+                    "template_language": "mustache",
+                    "template": {
+                        "match": {
+                            "title": "{{keywords}}"
+                        }
+                    }
+                },
+                {
+                    "name": "custom_title_query_boost",
+                    "params": [
+                        "some_multiplier",
+                        "ltr_param_foo"
+                    ],
+                    "template_language": "script_feature",
+                    "template": {
+                        "lang": "painless",
+                        "source": "(long)params.default_param * params.feature_vector.get('title_query') * (long)params.some_multiplier * (long) params.param_foo",
+                        "params": {
+                            "default_param" : 10.0,
+                            "some_multiplier": "some_multiplier",
+                            "extra_script_params": {"ltr_param_foo": "param_foo"}
+                        }
+                    }
+                }
+            ]
+       }
+    }
 
 
 =============================
