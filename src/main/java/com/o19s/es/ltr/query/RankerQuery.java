@@ -179,7 +179,7 @@ public class RankerQuery extends Query {
 
                 @Override
                 public boolean isCacheable(LeafReaderContext ctx) {
-                    return true;
+                    return false;
                 }
             };
         }
@@ -195,12 +195,7 @@ public class RankerQuery extends Query {
 
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {
-            for (Weight w : weights) {
-                if (w.isCacheable(ctx) == false) {
-                    return false;
-                }
-            }
-            return true;
+            return false;
         }
 
         RankerWeight(List<Weight> weights) {
