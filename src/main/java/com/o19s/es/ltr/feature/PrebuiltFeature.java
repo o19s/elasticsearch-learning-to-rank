@@ -26,7 +26,6 @@ import org.elasticsearch.common.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A prebuilt featured query, needed by query builders
