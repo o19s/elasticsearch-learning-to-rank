@@ -19,6 +19,7 @@ import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.SearchScript;
 
@@ -118,8 +119,8 @@ public class ScriptFeature implements Feature {
 
         Script nScript = new Script(
                 this.script.getType(), this.script.getLang(), this.script.getIdOrCode(), this.script.getOptions(), nparams);
-        SearchScript.Factory searchScript = context.getQueryShardContext().getScriptService().compile(script, SearchScript.CONTEXT);
-        return new LtrScript(new ScriptScoreFunction(script, searchScript.newFactory(nparams,
+        ScoreScript.Factory scoreScript = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
+        return new LtrScript(new ScriptScoreFunction(script, scoreScript.newFactory(nparams,
                 context.getQueryShardContext().lookup())), featureSupplier);
     }
 
