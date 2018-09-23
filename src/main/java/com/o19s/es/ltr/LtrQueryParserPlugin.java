@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
 import org.elasticsearch.action.ActionRequest;
@@ -53,7 +55,9 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.analysis.AbstractTokenFilterFactory;
+import org.elasticsearch.index.analysis.AbstractTokenizerFactory;
 import org.elasticsearch.index.analysis.TokenFilterFactory;
+import org.elasticsearch.index.analysis.TokenizerFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.plugins.ActionPlugin;
@@ -69,7 +73,6 @@ import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
-
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
@@ -107,11 +110,30 @@ import com.o19s.es.ltr.rest.RestSimpleFeatureStore;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
 
+
 import ciir.umass.edu.learning.RankerFactory;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin, AnalysisPlugin {
     private final LtrRankerParserFactory parserFactory;
     private final Caches caches;
+
+    class LtrKeywordTokenizerFactory extends AbstractTokenizerFactory {
+        // This recreates Elasticsearch's KeywordTokenizerFactory which seems
+        // to have been moved out of the core ES code
+
+        private final int bufferSize;
+
+        // (IndexSettings indexSettings, String ignored, Settings settings)
+        LtrKeywordTokenizerFactory(IndexSettings indexSettings, Environment environment, String name, Settings settings) {
+            super(indexSettings, "", settings);
+            bufferSize = settings.getAsInt("buffer_size", 256);
+        }
+
+        @Override
+        public Tokenizer create() {
+            return new KeywordTokenizer(bufferSize);
+        }
+    }
 
     public LtrQueryParserPlugin(Settings settings) {
         caches = new Caches(settings);
@@ -242,6 +264,14 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         filters.put("ltr_edge_ngram", LtrEdgeNGramFilterFactory::new);
         filters.put("ltr_length", LtrLengthTokenFilterFactory::new);
         return Collections.unmodifiableMap(filters);
+    }
+
+    @Override
+
+    public Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> getTokenizers() {
+        Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> tokenizers = new HashMap<>();
+        tokenizers.put("ltr_keyword", LtrKeywordTokenizerFactory::new);
+        return Collections.unmodifiableMap(tokenizers);
     }
 
     // A simplified version of some token filters needed by the feature stores.
