@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:6.3.1"
+    classpath "org.elasticsearch.gradle:build-tools:6.4.1"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.0-es6.3.1'
+version = '1.1.0-es6.4.1'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -51,10 +51,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:6.3.1'
+  compile 'org.elasticsearch:elasticsearch:6.4.1'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:6.3.1'
+  testCompile 'org.elasticsearch.test:framework:6.4.1'
 }
 
 dependencyLicenses {

@@ -17,7 +17,6 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.feature.store.PrecompiledExpressionFeature;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;

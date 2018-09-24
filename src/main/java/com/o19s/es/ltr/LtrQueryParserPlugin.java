@@ -16,60 +16,7 @@
  */
 package com.o19s.es.ltr;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.miscellaneous.LengthFilter;
-import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.CheckedFunction;
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
-import org.elasticsearch.common.settings.ClusterSettings;
-import org.elasticsearch.common.settings.IndexScopedSettings;
-import org.elasticsearch.common.settings.Setting;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.SettingsFilter;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.env.Environment;
-import org.elasticsearch.env.NodeEnvironment;
-import org.elasticsearch.index.IndexSettings;
-import org.elasticsearch.index.analysis.AbstractTokenFilterFactory;
-import org.elasticsearch.index.analysis.TokenFilterFactory;
-import org.elasticsearch.indices.analysis.AnalysisModule;
-import org.elasticsearch.index.Index;
-import org.elasticsearch.plugins.ActionPlugin;
-import org.elasticsearch.plugins.AnalysisPlugin;
-import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.plugins.ScriptPlugin;
-import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.script.ScriptContext;
-import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.watcher.ResourceWatcherService;
-
+import ciir.umass.edu.learning.RankerFactory;
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
@@ -106,8 +53,56 @@ import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
 import com.o19s.es.ltr.rest.RestSimpleFeatureStore;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
+import org.apache.lucene.analysis.core.KeywordTokenizer;
+import org.apache.lucene.analysis.miscellaneous.LengthFilter;
+import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.CheckedFunction;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
+import org.elasticsearch.common.settings.ClusterSettings;
+import org.elasticsearch.common.settings.IndexScopedSettings;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsFilter;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.env.NodeEnvironment;
+import org.elasticsearch.index.Index;
+import org.elasticsearch.index.analysis.PreConfiguredTokenFilter;
+import org.elasticsearch.index.analysis.PreConfiguredTokenizer;
+import org.elasticsearch.plugins.ActionPlugin;
+import org.elasticsearch.plugins.AnalysisPlugin;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.plugins.SearchPlugin;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptEngine;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.fetch.FetchSubPhase;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.watcher.ResourceWatcherService;
 
-import ciir.umass.edu.learning.RankerFactory;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin, AnalysisPlugin {
     private final LtrRankerParserFactory parserFactory;
@@ -235,39 +230,23 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         return (storeName, client) -> new CachedFeatureStore(new IndexFeatureStore(storeName, client, parserFactory), caches);
     }
 
-
-    @Override
-    public Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
-        Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> filters = new HashMap<>();
-        filters.put("ltr_edge_ngram", LtrEdgeNGramFilterFactory::new);
-        filters.put("ltr_length", LtrLengthTokenFilterFactory::new);
-        return Collections.unmodifiableMap(filters);
-    }
-
     // A simplified version of some token filters needed by the feature stores.
     // This is because some common filter have been moved to analysis-common module
     // which is not included in the integration test cluster.
     // Add a simple version of these token filter to make the plugin self contained.
     private static final int STORABLE_ELEMENT_MAX_NAME_SIZE = 512;
-    private static class LtrEdgeNGramFilterFactory extends AbstractTokenFilterFactory {
-        LtrEdgeNGramFilterFactory(IndexSettings indexSettings, Environment environment, String name, Settings settings) {
-            super(indexSettings, name, settings);
-        }
 
-        @Override
-        public TokenStream create(TokenStream tokenStream) {
-            return new EdgeNGramTokenFilter(tokenStream, 1, STORABLE_ELEMENT_MAX_NAME_SIZE);
-        }
+    @Override
+    public List<PreConfiguredTokenFilter> getPreConfiguredTokenFilters() {
+        return Arrays.asList(
+                PreConfiguredTokenFilter.singleton("ltr_edge_ngram", true,
+                        (ts) -> new EdgeNGramTokenFilter(ts, 1, STORABLE_ELEMENT_MAX_NAME_SIZE)),
+                PreConfiguredTokenFilter.singleton("ltr_length", true,
+                        (ts) -> new LengthFilter(ts, 0, STORABLE_ELEMENT_MAX_NAME_SIZE)));
     }
 
-    private class LtrLengthTokenFilterFactory extends AbstractTokenFilterFactory {
-        LtrLengthTokenFilterFactory(IndexSettings indexSettings, Environment environment, String name, Settings settings) {
-            super(indexSettings, name, settings);
-        }
-
-        @Override
-        public TokenStream create(TokenStream tokenStream) {
-            return new LengthFilter(tokenStream, 0, STORABLE_ELEMENT_MAX_NAME_SIZE);
-        }
+    public List<PreConfiguredTokenizer> getPreConfiguredTokenizers() {
+        return Collections.singletonList(PreConfiguredTokenizer.singleton("ltr_keyword",
+                () -> new KeywordTokenizer(KeywordTokenizer.DEFAULT_BUFFER_SIZE), null));
     }
 }
