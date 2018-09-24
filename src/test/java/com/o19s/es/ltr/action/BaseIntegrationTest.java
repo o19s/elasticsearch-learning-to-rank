@@ -32,6 +32,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
 import org.elasticsearch.script.SearchScript;
@@ -146,14 +147,14 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                 @Override
                 public <FactoryType> FactoryType compile(String scriptName, String scriptSource,
                                                          ScriptContext<FactoryType> context, Map<String, String> params) {
-                    if (context.equals(SearchScript.CONTEXT) == false && (context.equals(SearchScript.AGGS_CONTEXT) == false)) {
+                    if (context.equals(ScoreScript.CONTEXT) == false && (context.equals(SearchScript.AGGS_CONTEXT) == false)) {
                         throw new IllegalArgumentException(getType() + " scripts cannot be used for context [" + context.name
                                 + "]");
                     }
                     // we use the script "source" as the script identifier
                     if (FEATURE_EXTRACTOR.equals(scriptSource)) {
-                        SearchScript.Factory factory = (p, lookup) ->
-                                new SearchScript.LeafFactory() {
+                        ScoreScript.Factory factory = (p, lookup) ->
+                                new ScoreScript.LeafFactory() {
                                     final Map<String, Float> featureSupplier;
                                     final String dependentFeature;
                                     double extraMultiplier = 0.0d;
@@ -176,10 +177,10 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     }
 
                                     @Override
-                                    public SearchScript newInstance(LeafReaderContext ctx) throws IOException {
-                                        return new SearchScript(p, lookup, ctx) {
+                                    public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
+                                        return new ScoreScript(p, lookup, ctx) {
                                             @Override
-                                            public double runAsDouble() {
+                                            public double execute() {
                                                 return extraMultiplier == 0.0d ?
                                                         featureSupplier.get(dependentFeature) * 10 :
                                                         featureSupplier.get(dependentFeature) * extraMultiplier;

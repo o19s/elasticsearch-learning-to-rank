@@ -116,8 +116,6 @@ public class ScriptFeature implements Feature {
         nparams.putAll(extraQueryTimeParams);
         nparams.put(FEATURE_VECTOR, featureSupplier);
 
-        Script nScript = new Script(
-                this.script.getType(), this.script.getLang(), this.script.getIdOrCode(), this.script.getOptions(), nparams);
         ScoreScript.Factory scoreScript = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
         return new LtrScript(new ScriptScoreFunction(script, scoreScript.newFactory(nparams,
                 context.getQueryShardContext().lookup())), featureSupplier);
