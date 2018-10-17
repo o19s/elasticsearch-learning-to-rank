@@ -42,10 +42,7 @@ public class LtrQueryContext {
     }
 
     public boolean isFeatureActive(String featureName) {
-        if (activeFeatures == null || activeFeatures.isEmpty() || activeFeatures.contains(featureName)) {
-            return true;
-        }
-        return false;
+        return activeFeatures == null || activeFeatures.isEmpty() || activeFeatures.contains(featureName);
     }
 
     public Set<String> getActiveFeatures() {

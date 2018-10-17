@@ -81,15 +81,11 @@ public class ScriptFeature implements Feature {
 
     /**
      * Transform this feature into a lucene query
-     *
-     * @param context
-     * @param featureSet
-     * @param params
      */
     @Override
     public Query doToQuery(LtrQueryContext context, FeatureSet featureSet, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
-                .filter((x) -> params == null || !params.containsKey(x))
+                .filter((x) -> !params.containsKey(x))
                 .collect(Collectors.toList());
         if (!missingParams.isEmpty()) {
             String names = missingParams.stream().collect(Collectors.joining(","));

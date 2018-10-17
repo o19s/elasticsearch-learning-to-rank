@@ -26,22 +26,22 @@ public class LtrQueryContextTests extends LuceneTestCase {
 
     public void testIsFeatureActiveForNull() {
         LtrQueryContext ltrContext = new LtrQueryContext(null, null);
-        assertEquals(true, ltrContext.isFeatureActive("feature"));
+        assertTrue(ltrContext.isFeatureActive("feature"));
     }
 
     public void testIsFeatureActiveForEmptySet() {
         LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.emptySet());
-        assertEquals(true, ltrContext.isFeatureActive("feature"));
+        assertTrue(ltrContext.isFeatureActive("feature"));
     }
 
     public void testIsFeatureActiveTrue() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, new HashSet<>(Arrays.asList("feature")));
-        assertEquals(true, ltrContext.isFeatureActive("feature"));
+        LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature"));
+        assertTrue(ltrContext.isFeatureActive("feature"));
     }
 
     public void testIsFeatureActiveFalse() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, new HashSet<>(Arrays.asList("feature1")));
-        assertEquals(false, ltrContext.isFeatureActive("feature2"));
+        LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature1"));
+        assertFalse(ltrContext.isFeatureActive("feature2"));
     }
 
     public void testGetActiveFeaturesForNull() {

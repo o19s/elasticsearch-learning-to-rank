@@ -133,7 +133,7 @@ public class Caches {
         return cacheLoad(key, modelCache, loader);
     }
 
-    private <E extends Object> E cacheLoad(CacheKey key, Cache<CacheKey, E> cache,
+    private <E> E cacheLoad(CacheKey key, Cache<CacheKey, E> cache,
                                                 CheckedFunction<String, E, IOException> loader) throws IOException {
         try {
             return cache.computeIfAbsent(key, (k) -> {

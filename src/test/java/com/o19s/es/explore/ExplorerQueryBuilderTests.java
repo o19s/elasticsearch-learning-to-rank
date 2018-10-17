@@ -67,9 +67,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
                         "  }" +
                         "}";
 
-        expectThrows(ParsingException.class, () -> {
-            parseQuery(query);
-        });
+        expectThrows(ParsingException.class, () -> parseQuery(query));
     }
 
     public void testMissingType() throws Exception {
@@ -83,9 +81,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
                         "  }" +
                         "}";
 
-        expectThrows(ParsingException.class, () -> {
-            parseQuery(query);
-        });
+        expectThrows(ParsingException.class, () -> parseQuery(query));
     }
 
     @Override

@@ -199,7 +199,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     @Override
     public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
-                .filter((x) -> params == null || !params.containsKey(x))
+                .filter((x) -> !params.containsKey(x))
                 .collect(Collectors.toList());
 
         if (!missingParams.isEmpty()) {

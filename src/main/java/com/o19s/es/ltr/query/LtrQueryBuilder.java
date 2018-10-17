@@ -124,7 +124,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        List<PrebuiltFeature> features = new ArrayList<PrebuiltFeature>(_features.size());
+        List<PrebuiltFeature> features = new ArrayList<>(_features.size());
         for (QueryBuilder builder : _features) {
             features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
         }

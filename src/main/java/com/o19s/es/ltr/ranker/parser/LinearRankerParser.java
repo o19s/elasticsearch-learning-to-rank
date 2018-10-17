@@ -28,7 +28,7 @@ import java.io.IOException;
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 
 public class LinearRankerParser implements LtrRankerParser {
-    public static String TYPE = "model/linear";
+    public static final String TYPE = "model/linear";
 
     @Override
     public LinearRanker parse(FeatureSet set, String model) {

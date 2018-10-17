@@ -72,6 +72,7 @@ public class DerivedExpressionQuery extends Query {
         return new FVWeight(this);
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

@@ -17,7 +17,7 @@
 package com.o19s.es.ltr.ranker;
 
 public class LogLtrRanker implements LtrRanker {
-    private LogConsumer logger;
+    private final LogConsumer logger;
     private final LtrRanker ranker;
 
     public LogLtrRanker(LtrRanker ranker, LogConsumer consumer) {
@@ -56,7 +56,7 @@ public class LogLtrRanker implements LtrRanker {
 
     private static class VectorWrapper implements FeatureVector {
         private FeatureVector inner;
-        private LogConsumer logger;
+        private final LogConsumer logger;
 
         VectorWrapper(LogConsumer consumer) {
             this.logger = consumer;

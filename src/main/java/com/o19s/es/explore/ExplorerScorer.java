@@ -22,8 +22,8 @@ import org.apache.lucene.search.Weight;
 import java.io.IOException;
 
 public class ExplorerScorer extends Scorer {
-    private Scorer subScorer;
-    private String type;
+    private final Scorer subScorer;
+    private final String type;
 
     protected ExplorerScorer(Weight weight, String type, Scorer subScorer) {
         super(weight);
@@ -49,7 +49,7 @@ public class ExplorerScorer extends Scorer {
             tf_stats.add(subScorer.score());
         }
 
-        float retval = 0.0f;
+        float retval;
         switch(type) {
             case("sum_raw_tf"):
                 retval = tf_stats.getSum();

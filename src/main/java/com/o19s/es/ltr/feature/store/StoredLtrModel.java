@@ -222,7 +222,7 @@ public class StoredLtrModel implements StorableElement {
         private static final ParseField MODEL_DEFINITION = new ParseField("definition");
 
         static {
-            PARSER = new ObjectParser<LtrModelDefinition, Void>("model", LtrModelDefinition::new);
+            PARSER = new ObjectParser<>("model", LtrModelDefinition::new);
             PARSER.declareString(LtrModelDefinition::setType,
                     MODEL_TYPE);
             PARSER.declareField((p, d, c) -> d.parseModel(p),

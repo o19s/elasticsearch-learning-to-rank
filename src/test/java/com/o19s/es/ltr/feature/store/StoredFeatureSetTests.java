@@ -81,6 +81,7 @@ public class StoredFeatureSetTests extends LuceneTestCase {
     public void testMergeMaxSize() throws IOException {
         StoredFeatureSet set_v1 = new StoredFeatureSet("name", emptyList());
         assertEquals(0, set_v1.size());
+        //noinspection ConstantConditions
         assert StoredFeatureSet.MAX_FEATURES > 10;
         List<StoredFeature> features = IntStream.range(0, StoredFeatureSet.MAX_FEATURES - 2)
                 .mapToObj(wrapIntFuncion((i) -> randomFeature("feat" + i)))

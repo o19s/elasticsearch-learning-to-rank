@@ -98,7 +98,7 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
     }
 
     private static class ParserState {
-        private static final ObjectParser<ParserState, Void> PARSER = new ObjectParser<>("create_model_from_set", ParserState::new);;
+        private static final ObjectParser<ParserState, Void> PARSER = new ObjectParser<>("create_model_from_set", ParserState::new);
 
         static {
             PARSER.declareObject(ParserState::setModel, Model.MODEL_PARSER::apply, new ParseField("model"));
@@ -132,7 +132,7 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
         }
 
         private static class Model {
-            private static final ObjectParser<Model, Void> MODEL_PARSER = new ObjectParser<>("model", Model::new);;
+            private static final ObjectParser<Model, Void> MODEL_PARSER = new ObjectParser<>("model", Model::new);
             static {
                 MODEL_PARSER.declareString(Model::setName, new ParseField("name"));
                 MODEL_PARSER.declareObject(Model::setModel,

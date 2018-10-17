@@ -147,7 +147,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                 @Override
                 public <FactoryType> FactoryType compile(String scriptName, String scriptSource,
                                                          ScriptContext<FactoryType> context, Map<String, String> params) {
-                    if (context.equals(ScoreScript.CONTEXT) == false && (context.equals(SearchScript.AGGS_CONTEXT) == false)) {
+                    if (!context.equals(ScoreScript.CONTEXT) && (!context.equals(SearchScript.AGGS_CONTEXT))) {
                         throw new IllegalArgumentException(getType() + " scripts cannot be used for context [" + context.name
                                 + "]");
                     }

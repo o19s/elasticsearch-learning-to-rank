@@ -145,8 +145,6 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
-        expectThrows(RuntimeException.class, () -> {
-            searcher.search(eq, 4);
-        });
+        expectThrows(RuntimeException.class, () -> searcher.search(eq, 4));
     }
 }

@@ -135,7 +135,7 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
 
         CachesStatsNodeResponse() {
             empty();
-        };
+        }
         CachesStatsNodeResponse(DiscoveryNode node) {
             super(node);
             empty();

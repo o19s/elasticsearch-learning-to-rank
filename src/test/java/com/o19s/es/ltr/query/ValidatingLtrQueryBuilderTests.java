@@ -33,6 +33,7 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     protected ValidatingLtrQueryBuilder doCreateTestQueryBuilder() {
         StorableElement element;
         Function<String, StoredFeature> buildFeature = (n) -> new StoredFeature(n,
-                asList("query_string"), "mustache",
+                Collections.singletonList("query_string"), "mustache",
                 QueryBuilders.matchQuery("test", "{{query_string}}").toString());
         BiFunction<Integer, String, StoredFeatureSet> buildFeatureSet = (i, name) -> new StoredFeatureSet(name, IntStream.range(0, i)
                 .mapToObj((idx) -> buildFeature.apply("feature" + idx))
