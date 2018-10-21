@@ -31,7 +31,7 @@ def reindex(es, analysisSettings={}, mappingSettings={}, movieDict={}, index='tm
                       "_source": movie}
             yield addCmd
             if 'title' in movie:
-                print("%s added to %s" % (movie['title'], index))
+                print("%s added to %s" % (movie['title'].encode('utf-8'), index))
 
     elasticsearch.helpers.bulk(es, bulkDocs(movieDict))
 
