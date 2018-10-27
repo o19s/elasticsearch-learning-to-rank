@@ -240,7 +240,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     public List<PreConfiguredTokenFilter> getPreConfiguredTokenFilters() {
         return Arrays.asList(
                 PreConfiguredTokenFilter.singleton("ltr_edge_ngram", true,
-                        (ts) -> new EdgeNGramTokenFilter(ts, 1, STORABLE_ELEMENT_MAX_NAME_SIZE)),
+                        (ts) -> new EdgeNGramTokenFilter(ts, 1, STORABLE_ELEMENT_MAX_NAME_SIZE, false)),
                 PreConfiguredTokenFilter.singleton("ltr_length", true,
                         (ts) -> new LengthFilter(ts, 0, STORABLE_ELEMENT_MAX_NAME_SIZE)));
     }

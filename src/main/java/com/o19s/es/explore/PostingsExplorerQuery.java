@@ -59,6 +59,7 @@ public class PostingsExplorerQuery extends Query {
         return buffer.toString();
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         return this.sameClassAs(obj)

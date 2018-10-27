@@ -196,7 +196,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
                 .setRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
-                        .modelName("my_model").params(params).activeFeatures(Arrays.asList("feature4")).toString()))
+                        .modelName("my_model").params(params).activeFeatures(Collections.singletonList("feature4")).toString()))
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));

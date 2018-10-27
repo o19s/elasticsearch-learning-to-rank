@@ -22,12 +22,12 @@ public class DenseLtrRankerTests extends LuceneTestCase {
     public void newFeatureVector() throws Exception {
         int modelSize = random().nextInt(10);
         DummyDenseRanker ranker = new DummyDenseRanker(modelSize);
-        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        DenseFeatureVector vector = ranker.newFeatureVector(null);
         assertNotNull(vector);
         for(int i = 0; i < modelSize; i++) {
             assertEquals(0, vector.getFeatureScore(0), Math.ulp(0));
         }
-        float[] points = ((DenseFeatureVector) vector).scores;
+        float[] points = vector.scores;
         assertEquals(points.length, 2);
 
         for(int i = 0; i < modelSize; i++) {

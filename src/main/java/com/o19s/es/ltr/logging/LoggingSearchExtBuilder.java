@@ -38,7 +38,7 @@ public class LoggingSearchExtBuilder extends SearchExtBuilder {
     public static final String NAME = "ltr_log";
 
     private static final ObjectParser<LoggingSearchExtBuilder, Void> PARSER;
-    private static ParseField LOG_SPECS = new ParseField("log_specs");
+    private static final ParseField LOG_SPECS = new ParseField("log_specs");
 
     static {
         PARSER = new ObjectParser<>(NAME, LoggingSearchExtBuilder::new);

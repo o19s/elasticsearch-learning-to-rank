@@ -7,26 +7,24 @@ import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.index.query.QueryBuilders;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import static java.util.Collections.singletonList;
 
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class FeatureSupplierTests extends LuceneTestCase {
     public static FeatureSet getFeatureSet() {
         String matchQuery = QueryBuilders.matchQuery("test", "{{query_string}}").toString();
         StoredFeature feature = new StoredFeature("test", singletonList("query_string"), "mustache", matchQuery);
-        Map<String, Object> params = new HashMap<>();
-        params.put("query_string", "a query");
-        return new StoredFeatureSet("my_feature_set", Arrays.asList(feature));
+        return new StoredFeatureSet("my_feature_set", Collections.singletonList(feature));
     }
 
     public void testGetWhenFeatureVectorNotSet() {
         FeatureSupplier featureSupplier = new FeatureSupplier(getFeatureSet());
-        expectThrows(NullPointerException.class, () -> featureSupplier.get()).getMessage();
+        expectThrows(NullPointerException.class, featureSupplier::get).getMessage();
     }
 
     public void testGetWhenFeatureVectorSet() {

@@ -90,7 +90,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         int endDoc = 0;
         int docBase = 0;
         Scorer scorer = null;
-        Weight weight = searcher.createNormalizedWeight(query, true);
+        Weight weight = searcher.createWeight(searcher.rewrite(query), true, 1F);
         // Loop logic borrowed from lucene QueryRescorer
         while (hitUpto < reordered.length) {
             SearchHit hit = reordered[hitUpto];

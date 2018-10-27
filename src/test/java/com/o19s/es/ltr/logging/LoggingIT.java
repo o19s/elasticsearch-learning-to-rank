@@ -75,8 +75,6 @@ public class LoggingIT extends BaseIntegrationTest {
     public void testFailures() throws Exception {
         prepareModels();
         buildIndex();
-        Map<String, Object> params = new HashMap<>();
-        params.put("query", "found");
         QueryBuilder query = QueryBuilders.matchQuery("field1", "found")
                 .boost(random().nextInt(3))
                 .queryName("not_sltr");

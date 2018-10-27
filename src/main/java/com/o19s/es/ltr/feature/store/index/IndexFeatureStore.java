@@ -77,7 +77,7 @@ public class IndexFeatureStore implements FeatureStore {
      * feature, features, featureSet, featureSets, feature_Set, feature_Sets,
      * featureset, featuresets, feature_set, feature_sets, model, models
      */
-    private static Pattern INVALID_NAMES = Pattern.compile("^(features?[*]?|feature_[sS]ets?|models?)$");
+    private static final Pattern INVALID_NAMES = Pattern.compile("^(features?[*]?|feature_[sS]ets?|models?)$");
 
     private static final ObjectParser<ParserState, Void> SOURCE_PARSER;
     static {

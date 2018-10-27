@@ -60,7 +60,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
 
     public static final String NAME = "validating_ltr_query";
     private static final ParseField VALIDATION = new ParseField("validation");
-    private static ObjectParser<ValidatingLtrQueryBuilder, Void> PARSER = new ObjectParser<>(NAME);
+    private static final ObjectParser<ValidatingLtrQueryBuilder, Void> PARSER = new ObjectParser<>(NAME);
 
     static {
         BiConsumer<ValidatingLtrQueryBuilder, StorableElement> setElem = (b, v) -> {

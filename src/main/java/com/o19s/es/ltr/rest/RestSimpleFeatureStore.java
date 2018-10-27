@@ -334,17 +334,17 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         private StorableElement element;
         private FeatureValidation validation;
 
-        private static ObjectParser<AutoDetectParser, String> PARSER = new ObjectParser<>("storable_elements");
+        private static final ObjectParser<AutoDetectParser, String> PARSER = new ObjectParser<>("storable_elements");
 
         static {
             PARSER.declareObject(AutoDetectParser::setElement,
-                    (parser, ctx) -> StoredFeature.parse(parser, ctx),
+                    StoredFeature::parse,
                     new ParseField(StoredFeature.TYPE));
             PARSER.declareObject(AutoDetectParser::setElement,
-                    (parser, ctx) -> StoredFeatureSet.parse(parser, ctx),
+                    StoredFeatureSet::parse,
                     new ParseField(StoredFeatureSet.TYPE));
             PARSER.declareObject(AutoDetectParser::setElement,
-                    (parser, ctx) -> StoredLtrModel.parse(parser, ctx),
+                    StoredLtrModel::parse,
                     new ParseField(StoredLtrModel.TYPE));
             PARSER.declareObject((b, v) -> b.validation = v,
                     (p, c) -> FeatureValidation.PARSER.apply(p, null),

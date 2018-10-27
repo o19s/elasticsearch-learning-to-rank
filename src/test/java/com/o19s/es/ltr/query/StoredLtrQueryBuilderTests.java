@@ -64,7 +64,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     private static final MemStore store = new MemStore();
 
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(TestPlugin.class);
+        return Collections.singletonList(TestPlugin.class);
     }
 
     /**
@@ -137,14 +137,14 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     public void testInvalidActiveFeatures() {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
         builder.modelName("model1");
-        builder.activeFeatures(Arrays.asList("non_existent_feature"));
+        builder.activeFeatures(Collections.singletonList("non_existent_feature"));
         assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
                 equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
     }
 
     public void testSerDe() throws IOException {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
-        builder.activeFeatures(Arrays.asList("match1"));
+        builder.activeFeatures(Collections.singletonList("match1"));
         BytesStreamOutput out = new BytesStreamOutput();
         builder.writeTo(out);
         out.close();
@@ -153,7 +153,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
         StoredLtrQueryBuilder builderFromInputStream = new StoredLtrQueryBuilder(
                 LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store), input);
-        List<String> expected = Arrays.asList("match1");
+        List<String> expected = Collections.singletonList("match1");
         assertEquals(expected, builderFromInputStream.activeFeatures());
     }
 
@@ -165,7 +165,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assertQueryClass(MatchNoDocsQuery.class, true);
     }
 
-    private void assertQueryClass(Class<? extends Object> clazz, boolean setActiveFeature) throws IOException {
+    private void assertQueryClass(Class<?> clazz, boolean setActiveFeature) throws IOException {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
         builder.modelName("model1");
         Map<String, Object> params = new HashMap<>();

@@ -120,6 +120,7 @@ public class RankerQuery extends Query {
         return rewritten ? new RankerQuery(rewrittenQueries, features, ranker) : this;
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         // This query should never be cached

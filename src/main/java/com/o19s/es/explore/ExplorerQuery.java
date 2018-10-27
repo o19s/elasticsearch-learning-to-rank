@@ -56,6 +56,7 @@ public class ExplorerQuery extends Query {
     public Query getQuery() { return this.query; }
     public String getType() { return this.type; }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
         return sameClassAs(other) &&
@@ -252,5 +253,5 @@ public class ExplorerQuery extends Query {
 
     public String toString(String field) {
         return query.toString();
-    };
+    }
 }
