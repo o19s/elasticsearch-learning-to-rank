@@ -1,4 +1,6 @@
 import json
+from judgments import judgments_from_file, judgments_by_qid
+from utils import elastic_connection, JUDGMENTS_FILE, JUDGMENTS_FILE_FEATURES, FEATURE_SET_NAME, INDEX_NAME
 
 logQuery = {
     "size": 100,
@@ -20,8 +22,8 @@ logQuery = {
                         "keywords": "rambo"
                     }
                 }}
-                ]
-            }
+            ]
+        }
     },
     "ext": {
         "ltr_log": {
@@ -35,55 +37,55 @@ logQuery = {
     }
 }
 
-def featureDictToList(ranklibLabeledFeatures):
-    rVal = [0.0] * len(ranklibLabeledFeatures)
-    for idx, logEntry in enumerate(ranklibLabeledFeatures):
+
+def feature_dict_to_list(ranklib_labeled_features):
+    r_val = [0.0] * len(ranklib_labeled_features)
+    for idx, logEntry in enumerate(ranklib_labeled_features):
         value = logEntry['value']
         try:
-            rVal[idx] = value
+            r_val[idx] = value
         except IndexError:
             print("Out of range %s" % idx)
-    return rVal
+    return r_val
 
 
-
-def logFeatures(es, judgmentsByQid):
-    for qid, judgments in judgmentsByQid.items():
+def log_features(es, judgments_dict, search_index):
+    for qid, judgments in judgments_dict.items():
         keywords = judgments[0].keywords
-        docIds = [judgment.docId for judgment in judgments]
-        logQuery['query']['bool']['filter'][0]['terms']['_id'] = docIds
+        doc_ids = [judgment.docId for judgment in judgments]
+        # TODO change the featureset in here as well
+        logQuery['query']['bool']['filter'][0]['terms']['_id'] = doc_ids
         logQuery['query']['bool']['should'][0]['sltr']['params']['keywords'] = keywords
+        logQuery['query']['bool']['should'][0]['sltr']['featureset'] = FEATURE_SET_NAME
         print("POST")
         print(json.dumps(logQuery, indent=2))
-        res = es.search(index='tmdb', body=logQuery)
+        res = es.search(index=search_index, body=logQuery)
         # Add feature back to each judgment
-        featuresPerDoc = {}
+        features_per_doc = {}
         for doc in res['hits']['hits']:
             docId = doc['_id']
             features = doc['fields']['_ltrlog'][0]['main']
-            featuresPerDoc[docId] = featureDictToList(features)
+            features_per_doc[docId] = feature_dict_to_list(features)
 
         # Append features from ES back to ranklib judgment list
         for judgment in judgments:
             try:
-                features = featuresPerDoc[judgment.docId] # If KeyError, then we have a judgment but no movie in index
+                features = features_per_doc[
+                    judgment.docId]  # If KeyError, then we have a judgment but no movie in index
                 judgment.features = features
             except KeyError:
                 print("Missing movie %s" % judgment.docId)
 
 
-def buildFeaturesJudgmentsFile(judgmentsWithFeatures, filename):
+def build_features_judgments_file(judgments_with_features, filename):
     with open(filename, 'w') as judgmentFile:
-        for qid, judgmentList in judgmentsWithFeatures.items():
+        for qid, judgmentList in judgments_with_features.items():
             for judgment in judgmentList:
-                judgmentFile.write(judgment.toRanklibFormat() + "\n")
+                judgmentFile.write(judgment.to_ranklib_format() + "\n")
 
 
 if __name__ == "__main__":
-    from judgments import judgmentsFromFile, judgmentsByQid
-    from utils import Elasticsearch
-    es = Elasticsearch()
-    judgmentsByQid = judgmentsByQid(judgmentsFromFile('sample_judgments.txt'))
-    logFeatures(es, judgmentsByQid)
-    buildFeaturesJudgmentsFile(judgmentsByQid, "sample_judgments_wfeatures.txt")
-
+    es_connection = elastic_connection()
+    judgmentsByQid = judgments_by_qid(judgments_from_file(JUDGMENTS_FILE))
+    log_features(es_connection, judgmentsByQid, INDEX_NAME)
+    build_features_judgments_file(judgmentsByQid, JUDGMENTS_FILE_FEATURES)
