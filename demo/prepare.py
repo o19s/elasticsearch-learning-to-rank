@@ -10,9 +10,13 @@ def download_ranklib_library():
     download_ltr_resource(RANKLIB_JAR)
 
 
-# Downloads the provided resource from the o19s website to your local folder. When running this file, the defaults
-# for the demo are downloaded. You can also used it yourself
 def download_ltr_resource(resource):
+    """
+    Downloads the provided resource from the o19s website to your local folder. When running this script, the defaults
+    for the demo are downloaded. You can also used it yourself.
+    :param resource: the name of the resource to download
+    :return:
+    """
     ltr_domain = 'http://es-learn-to-rank.labs.o19s.com/'
     resource_url = urljoin(ltr_domain, resource)
     with open(resource, 'wb') as dest:

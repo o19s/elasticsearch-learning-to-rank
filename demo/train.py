@@ -2,13 +2,13 @@ import os
 from collect_features import log_features, build_features_judgments_file
 from load_features import init_default_store, load_features
 from utils import elastic_connection, ES_HOST, ES_AUTH, JUDGMENTS_FILE, INDEX_NAME, JUDGMENTS_FILE_FEATURES, \
-    FEATURE_SET_NAME
+    FEATURE_SET_NAME, RANKLIB_JAR
 
 
 def train_model(judgments_with_features_file, model_output, which_model=6):
     # java -jar RankLib-2.6.jar -ranker 6 -train sample_judgments_wfeatures.txt -save model.txt
-    cmd = "java -jar RankLib-2.8.jar -ranker %s -train %s -save %s -frate 1.0" % \
-          (which_model, judgments_with_features_file, model_output)
+    cmd = "java -jar %s -ranker %s -train %s -save %s -frate 1.0" % \
+          (RANKLIB_JAR, which_model, judgments_with_features_file, model_output)
     print("*********************************************************************")
     print("*********************************************************************")
     print("Running %s" % cmd)

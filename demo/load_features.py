@@ -4,15 +4,22 @@ from utils import ES_AUTH, ES_HOST, BASEPATH_FEATURES, FEATURE_SET_NAME
 from urllib.parse import urljoin
 
 
-# Each feature is stored in a file with the name of the file as feature_number.json: 1.json, 2.json. This function
-# load the file from the filesystem using the basepath from the configuration file.
 def get_feature(ftr_id: int):
+    """
+    Each feature is stored in a file with the name of the file as feature_number.json: 1.json, 2.json. This
+    function loads the file from the file system using the base path from the configuration file.
+    :param ftr_id: identifier of the feature being a sequential number
+    :return: the contents of the file representing the feature belonging to the provided sequence number
+    """
     return json.loads(open(BASEPATH_FEATURES + '%s.json' % ftr_id).read())
 
 
-# Find all available features using the pattern 1.json, 2.json, etc. All features have to be in order as we stop the
-# moment we cannot find the next feature.
 def each_feature():
+    """
+    Find all available features using the pattern 1.json, 2.json, etc. All features have to be in order as we
+    stop the moment we cannot find the next feature.
+    :return: All the features
+    """
     try:
         ftr_id = 1
         while True:
@@ -29,9 +36,12 @@ def each_feature():
         pass
 
 
-# Obtain all found features from the filesystem and store them into elasticsearch using the provided name of the
-# feature set.
 def load_features(feature_set_name: str):
+    """
+    Obtain all found features from the filesystem and store them into elasticsearch using the provided name of the
+    feature set.
+    :param feature_set_name: name of the feature set to use.
+    """
     feature_set = {
         "featureset": {
             "name": feature_set_name,
@@ -48,8 +58,8 @@ def load_features(feature_set_name: str):
     print("%s" % resp.text)
 
 
-# Initialize the default feature store
 def init_default_store():
+    """ Initialize the default feature store. """
     path = urljoin(ES_HOST, '_ltr')
     print("DELETE %s" % path)
     resp = requests.delete(path, auth=ES_AUTH)
@@ -61,6 +71,7 @@ def init_default_store():
 
 if __name__ == "__main__":
     from time import sleep
+
     init_default_store()
     sleep(1)
     load_features(FEATURE_SET_NAME)
