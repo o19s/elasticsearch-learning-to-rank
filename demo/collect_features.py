@@ -1,5 +1,6 @@
 import json
 from judgments import judgments_from_file, judgments_by_qid
+from log_conf import Logger
 from utils import elastic_connection, JUDGMENTS_FILE, JUDGMENTS_FILE_FEATURES, FEATURE_SET_NAME, INDEX_NAME
 
 logQuery = {
@@ -45,7 +46,7 @@ def feature_dict_to_list(ranklib_labeled_features):
         try:
             r_val[idx] = value
         except IndexError:
-            print("Out of range %s" % idx)
+            Logger.logger.info("Out of range %s" % idx)
     return r_val
 
 
@@ -53,12 +54,11 @@ def log_features(es, judgments_dict, search_index):
     for qid, judgments in judgments_dict.items():
         keywords = judgments[0].keywords
         doc_ids = [judgment.docId for judgment in judgments]
-        # TODO change the featureset in here as well
         logQuery['query']['bool']['filter'][0]['terms']['_id'] = doc_ids
         logQuery['query']['bool']['should'][0]['sltr']['params']['keywords'] = keywords
         logQuery['query']['bool']['should'][0]['sltr']['featureset'] = FEATURE_SET_NAME
-        print("POST")
-        print(json.dumps(logQuery, indent=2))
+        Logger.logger.info("POST")
+        Logger.logger.info(json.dumps(logQuery, indent=2))
         res = es.search(index=search_index, body=logQuery)
         # Add feature back to each judgment
         features_per_doc = {}
@@ -74,7 +74,7 @@ def log_features(es, judgments_dict, search_index):
                     judgment.docId]  # If KeyError, then we have a judgment but no movie in index
                 judgment.features = features
             except KeyError:
-                print("Missing movie %s" % judgment.docId)
+                Logger.logger.info("Missing movie %s" % judgment.docId)
 
 
 def build_features_judgments_file(judgments_with_features, filename):

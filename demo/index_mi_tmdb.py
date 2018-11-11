@@ -1,5 +1,7 @@
 import json
 import elasticsearch.helpers
+
+from log_conf import Logger
 from utils import elastic_connection
 
 
@@ -45,7 +47,7 @@ def bulk_docs(movie_dict, index):
                    "_source": movie}
         yield add_cmd
         if 'title' in movie:
-            print("%s added to %s" % (movie['title'].encode('utf-8'), index))
+            Logger.logger.info("%s added to %s" % (movie['title'].encode('utf-8'), index))
 
 
 if __name__ == "__main__":

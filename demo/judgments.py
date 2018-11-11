@@ -1,4 +1,6 @@
 import re
+
+from log_conf import Logger
 from utils import JUDGMENTS_FILE
 
 
@@ -46,10 +48,10 @@ def _judgments_from_body(lines):
     # http://www.regexpal.com/?fam=96565
     regex = re.compile('^(\d)\s+qid:(\d+)\s+#\s+(\w+).*')
     for line in lines:
-        print(line)
+        Logger.logger.info(line)
         m = re.match(regex, line)
         if m:
-            print("%s,%s,%s" % (m.group(1), m.group(2), m.group(3)))
+            Logger.logger.info("%s,%s,%s" % (m.group(1), m.group(2), m.group(3)))
             yield int(m.group(1)), int(m.group(2)), m.group(3)
 
 
@@ -74,7 +76,7 @@ def judgments_by_qid(judgments):
 if __name__ == "__main__":
     from sys import argv
 
-    print(len(argv))
+    Logger.logger.info(len(argv))
 
     if len(argv) > 1 and len(argv[1]) > 0:
         judgement_file_name = argv[1]
@@ -82,4 +84,4 @@ if __name__ == "__main__":
         judgement_file_name = JUDGMENTS_FILE
 
     for judgment in judgments_from_file(judgement_file_name):
-        print(judgment)
+        Logger.logger.info(judgment)

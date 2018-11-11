@@ -3,6 +3,7 @@ import requests
 
 
 # Use this to download the library taking the version from the configuration file
+from log_conf import Logger
 from utils import RANKLIB_JAR
 
 
@@ -20,7 +21,7 @@ def download_ltr_resource(resource):
     ltr_domain = 'http://es-learn-to-rank.labs.o19s.com/'
     resource_url = urljoin(ltr_domain, resource)
     with open(resource, 'wb') as dest:
-        print("GET %s" % resource_url)
+        Logger.logger.info("GET %s" % resource_url)
         resp = requests.get(resource_url, stream=True)
         for chunk in resp.iter_content(chunk_size=1024):
             if chunk:

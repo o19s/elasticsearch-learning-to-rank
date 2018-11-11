@@ -1,3 +1,5 @@
+from log_conf import Logger
+
 baseQuery = {
   "query": {
       "multi_match": {
@@ -25,7 +27,7 @@ def ltr_query(keywords, model_name):
     baseQuery['rescore']['query']['rescore_query']['sltr']['model'] = model_name
     baseQuery['query']['multi_match']['query'] = keywords
     baseQuery['rescore']['query']['rescore_query']['sltr']['params']['keywords'] = keywords
-    print("%s" % json.dumps(baseQuery))
+    Logger.logger.info("%s" % json.dumps(baseQuery))
     return baseQuery
 
 
@@ -39,5 +41,5 @@ if __name__ == "__main__":
         model = argv[2]
     results = es.search(index=INDEX_NAME, doc_type='movie', body=ltr_query(argv[1], model))
     for result in results['hits']['hits']:
-        print(result['_source']['title'])
+        Logger.logger.info(result['_source']['title'])
 
