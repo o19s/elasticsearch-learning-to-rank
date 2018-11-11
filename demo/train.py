@@ -1,6 +1,6 @@
 import os
-from collectFeatures import log_features, build_features_judgments_file
-from loadFeatures import init_default_store, load_features
+from collect_features import log_features, build_features_judgments_file
+from load_features import init_default_store, load_features
 from utils import elastic_connection, ES_HOST, ES_AUTH, JUDGMENTS_FILE, INDEX_NAME, JUDGMENTS_FILE_FEATURES, \
     FEATURE_SET_NAME
 

@@ -6,7 +6,7 @@ __all__ = ["ES_AUTH", "ES_HOST", "elastic_connection", "RANKLIB_JAR", "BASEPATH_
            "JUDGMENTS_FILE", "JUDGMENTS_FILE_FEATURES", "INDEX_NAME"]
 
 config = configparser.ConfigParser()
-config.read('settings.cfg')
+config.read('settings_ecomm.cfg')
 
 config_set = 'DEFAULT'
 

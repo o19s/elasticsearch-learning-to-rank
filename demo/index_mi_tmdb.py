@@ -35,13 +35,13 @@ def reindex(es_connection, analysis_settings=None, mapping_settings=None, movie_
 
 
 def bulk_docs(movie_dict, index):
-    for id, movie in movie_dict.items():
+    for movie_id, movie in movie_dict.items():
         if 'release_date' in movie and movie['release_date'] == "":
             del movie['release_date']
         enrich(movie)
         add_cmd = {"_index": index,  # E
                    "_type": "movie",
-                   "_id": id,
+                   "_id": movie_id,
                    "_source": movie}
         yield add_cmd
         if 'title' in movie:
