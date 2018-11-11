@@ -30,5 +30,5 @@ def download_ltr_resource(resource):
 
 if __name__ == "__main__":
 
-    download_ltr_resource('tmdb.json')
+    # download_ltr_resource('tmdb.json')
     download_ranklib_library()
