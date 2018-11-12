@@ -21,10 +21,10 @@ baseQuery = {
 
 def ltrQuery(keywords, modelName):
     import json
-    baseQuery['rescore']['query']['rescore_query']['sltr']['model'] = model
+    baseQuery['rescore']['query']['rescore_query']['sltr']['model'] = modelName
     baseQuery['query']['multi_match']['query'] = keywords
     baseQuery['rescore']['query']['rescore_query']['sltr']['params']['keywords'] = keywords
-    print("%s" % json.dumps(baseQuery))
+    print("%s" % json.dumps(baseQuery, indent=2))
     return baseQuery
 
 
