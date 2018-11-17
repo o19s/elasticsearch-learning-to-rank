@@ -212,8 +212,10 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         // XXX: we hope that in most case users will use mustache that is embedded in the plugin
         // compiling the template from the script engine may hit a circuit breaker
         // TODO: verify that this actually works, it does not feel right
-        RankLibScriptEngine.RankLibModelContainer script = context.getQueryShardContext().getScriptService().compile(new Script(ScriptType.INLINE,
-                templateLanguage, template, params), new ScriptContext<>("search", RankLibScriptEngine.RankLibModelContainer.class));
+        RankLibScriptEngine.RankLibModelContainer script = context.getQueryShardContext().getScriptService().compile(
+                new Script(ScriptType.INLINE,
+                templateLanguage, template, params),
+                new ScriptContext<>("search", RankLibScriptEngine.RankLibModelContainer.class));
         Object source = script.run();
 
         try {
