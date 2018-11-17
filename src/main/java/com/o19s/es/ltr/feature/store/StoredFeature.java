@@ -19,6 +19,7 @@ package com.o19s.es.ltr.feature.store;
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.template.mustache.MustacheUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
@@ -40,7 +41,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.Rewriteable;
-import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptType;
@@ -212,8 +212,8 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         // XXX: we hope that in most case users will use mustache that is embedded in the plugin
         // compiling the template from the script engine may hit a circuit breaker
         // TODO: verify that this actually works, it does not feel right
-        ExecutableScript script = context.getQueryShardContext().getScriptService().compile(new Script(ScriptType.INLINE,
-                templateLanguage, template, params), new ScriptContext<>("search", ExecutableScript.class));
+        RankLibScriptEngine.RankLibModelContainer script = context.getQueryShardContext().getScriptService().compile(new Script(ScriptType.INLINE,
+                templateLanguage, template, params), new ScriptContext<>("search", RankLibScriptEngine.RankLibModelContainer.class));
         Object source = script.run();
 
         try {

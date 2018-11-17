@@ -38,7 +38,7 @@ import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.Streams;
-import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.apache.logging.log4j.LogManager;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
@@ -68,7 +68,7 @@ public class IndexFeatureStore implements FeatureStore {
     private static final String MAPPING_FILE = "fstore-index-mapping.json";
     private static final String ANALYSIS_FILE = "fstore-index-analysis.json";
 
-    public static final Logger LOGGER = ESLoggerFactory.getLogger(IndexFeatureStore.class);
+    public static final Logger LOGGER = LogManager.getLogger(IndexFeatureStore.class);
 
     public static final String ES_TYPE = "store";
 

@@ -22,7 +22,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.SpecialPermission;
-import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 public class MustacheUtils {
     public static final String TEMPLATE_LANGUAGE = "mustache";
-    private static final Logger logger = ESLoggerFactory.getLogger(MustacheUtils.class);
+    private static final Logger logger = LogManager.getLogger(MustacheUtils.class);
     private static final SpecialPermission SPECIAL_PERMS = new SpecialPermission();
     /**
      * We store templates internally always as json

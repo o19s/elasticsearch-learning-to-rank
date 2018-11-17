@@ -27,7 +27,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
@@ -69,7 +69,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     }
 
     public void deleteStore(String name) throws Exception {
-        DeleteIndexResponse resp = client().admin().indices().prepareDelete(name).get();
+        AcknowledgedResponse resp = client().admin().indices().prepareDelete(name).get();
         assertTrue(resp.isAcknowledged());
     }
 
