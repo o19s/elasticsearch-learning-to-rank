@@ -41,6 +41,8 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     public static final String NAME = "ranklib";
     public static final String EXTENSION = "ranklib";
+    public static final ScriptContext<RankLibModelContainer.Factory> CONTEXT =
+            new ScriptContext<>("ranklib", RankLibModelContainer.Factory.class);
     private final LtrRankerParserFactory factory;
 
     public RankLibScriptEngine(Settings settings, LtrRankerParserFactory factory) {
