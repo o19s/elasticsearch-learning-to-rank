@@ -19,7 +19,6 @@ package com.o19s.es.ltr.feature.store;
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.template.mustache.MustacheUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
@@ -38,11 +37,9 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardException;
-import org.elasticsearch.index.query.Rewriteable;
+import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptType;
 
 import java.io.IOException;
@@ -56,7 +53,6 @@ import java.util.stream.Collectors;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
-import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
 
 public class StoredFeature implements Feature, Accountable, StorableElement {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
@@ -212,17 +208,9 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         // XXX: we hope that in most case users will use mustache that is embedded in the plugin
         // compiling the template from the script engine may hit a circuit breaker
         // TODO: verify that this actually works, it does not feel right
-        RankLibScriptEngine.RankLibModelContainer script = context.getQueryShardContext().getScriptService().compile(
-                new Script(ScriptType.INLINE,
-                templateLanguage, template, params),
-                new ScriptContext<>("search", RankLibScriptEngine.RankLibModelContainer.class));
-        Object source = script.run();
-
+        ScriptQueryBuilder builder = new ScriptQueryBuilder(new Script(ScriptType.INLINE, templateLanguage, template, params));
         try {
-            XContentParser parser = createParser(source, context.getQueryShardContext().getXContentRegistry());
-            QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
-            // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
+            return builder.toQuery(context.getQueryShardContext());
         } catch (IOException | ParsingException | IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
             throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name + "]", e);
