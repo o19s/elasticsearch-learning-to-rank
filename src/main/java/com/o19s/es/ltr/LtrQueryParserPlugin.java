@@ -183,6 +183,12 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     @Override
+    public List<ScriptContext<?>> getContexts() {
+        ScriptContext<?> contexts = RankLibScriptEngine.CONTEXT;
+        return Collections.singletonList(contexts);
+    }
+
+    @Override
     public List<NamedXContentRegistry.Entry> getNamedXContent() {
         return unmodifiableList(asList(
                 new NamedXContentRegistry.Entry(StorableElement.class,

@@ -20,7 +20,6 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
 
@@ -42,6 +41,8 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     public static final String NAME = "ranklib";
     public static final String EXTENSION = "ranklib";
+    public static final ScriptContext<RankLibModelContainer.Factory> CONTEXT =
+            new ScriptContext<>("ranklib", RankLibModelContainer.Factory.class);
     private final LtrRankerParserFactory factory;
 
     public RankLibScriptEngine(Settings settings, LtrRankerParserFactory factory) {
@@ -58,9 +59,9 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
     @Override
     public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context, Map<String, String> params) {
 
-        ExecutableScript.Factory retFactory = params1 -> {
+        RankLibModelContainer.Factory retFactory = () -> {
             LtrRanker ltrRanker = factory.getParser(RanklibModelParser.TYPE).parse(null, scriptSource);
-            return new RankLibExecutableScript(ltrRanker);
+            return new RankLibModelContainer(ltrRanker);
         };
 
         return context.factoryClazz.cast(retFactory);
@@ -71,23 +72,27 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
 
     }
 
-    public class RankLibExecutableScript implements ExecutableScript {
+    public static class RankLibModelContainer {
+
+        public interface Factory {
+            RankLibModelContainer newInstance();
+        }
 
         LtrRanker _ranker;
 
-        public RankLibExecutableScript(LtrRanker ranker) {
+        public RankLibModelContainer(LtrRanker ranker) {
             _ranker = ranker;
         }
 
-        @Override
         public void setNextVar(String name, Object value) {
             _ranker = (LtrRanker) (value);
 
         }
 
-        @Override
         public Object run() {
             return _ranker;
         }
+
+
     }
 }

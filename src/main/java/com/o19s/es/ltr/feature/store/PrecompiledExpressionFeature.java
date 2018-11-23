@@ -88,11 +88,16 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
         return new DerivedExpressionQuery(set, expression, queryParamValues);
     }
 
+
+    private Map<String, Double> getQueryParamValues() {
+        return getQueryParamValues();
+    }
+
     /**
      * If a param is an expression variable then we need to use it as {@link Expression#variables} in lucene expression exposed via Bindings
      *
-     * @param params {@link Map<String, Double>} all query params across features.
-     * @return {@link Map<String, Double>} of {@link Expression#variables} names to params values.
+     * @param params Map all query params across features.
+     * @return Map of {@link Expression#variables} names to params values (values are doubles).
      */
     private Map<String, Double> getQueryParamValues(Map<String, Object> params) {
         Map<String, Double> queryParamValues = new HashMap<>();

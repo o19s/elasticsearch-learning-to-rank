@@ -19,10 +19,10 @@ package com.o19s.es.ltr.ranker.linear;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
-import org.elasticsearch.common.logging.ESLoggerFactory;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.AllOf.allOf;
 
 public class LinearRankerTests extends LuceneTestCase {
-    private static final Logger LOG = ESLoggerFactory.getLogger(NaiveAdditiveDecisionTreeTests.class);
+    private static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
 
     public void testName() throws Exception {
         LinearRanker ranker = new LinearRanker(new float[]{1,2});
