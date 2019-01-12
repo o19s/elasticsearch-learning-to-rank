@@ -21,7 +21,7 @@ Installing
 Pre-built versions can be found `here <http://es-learn-to-rank.labs.o19s.com/>`_. Want a build for an ES version? Follow the instructions in the `README for building <https://github.com/o19s/elasticsearch-learning-to-rank#development>`_ or `create an issue <https://github.com/o19s/elasticsearch-learning-to-rank/issues>`_. Once you've found a version compatible with your Elasticsearch, you'd run a command such as::
 
     ./bin/elasticsearch-plugin install \ 
-    http://es-learn-to-rank.labs.o19s.com/ltr-1.0.0-es6.1.2.zip
+    http://es-learn-to-rank.labs.o19s.com/ltr-1.1.0-es6.5.4.zip
 
 (It's expected you'll confirm some security exceptions, you can pass -b to elasticsearch-plugin to automatically install)
 
