@@ -82,6 +82,8 @@ These are essentially :ref:`derived-features`, having access to the :code:`featu
 
 The custom script has access to the feature_vector via the java `Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_ interface as explained in :ref:`create-feature-set`.
 
+(WARNING script features can cause the performance of your Elasticsearch cluster to degrade, if possible avoid using these for feature generation if you require your queries to be highly performant)
+
 ============================
 Script Features Parameters
 ============================
