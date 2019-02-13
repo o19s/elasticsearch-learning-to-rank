@@ -46,7 +46,7 @@ public class RankLibScriptEngine extends AbstractComponent implements ScriptEngi
     private final LtrRankerParserFactory factory;
 
     public RankLibScriptEngine(Settings settings, LtrRankerParserFactory factory) {
-        super(settings);
+        super();
         this.factory = Objects.requireNonNull(factory);
     }
 

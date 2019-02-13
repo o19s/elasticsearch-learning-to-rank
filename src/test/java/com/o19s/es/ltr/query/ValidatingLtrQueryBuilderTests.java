@@ -108,7 +108,6 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
         return false;
     }
 
-    @Override
     protected boolean supportsBoostAndQueryName() {
         return false;
     }
