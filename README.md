@@ -44,7 +44,9 @@ Notes if you want to dig into the code or build for a version there's no build f
 ./gradlew clean check
 ```
 
-This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file.
+This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file available in ./build/distributions.
+
+When building to support another version of Elasticsearch, versions should be modified in ./build.gradle, and possibly ./gradle/wrapper/gradle-wrapper.properties. See https://mvnrepository.com/artifact/org.elasticsearch.gradle/build-tools for available build tool versions.
 
 ### 2. Install with `./bin/elasticsearch-plugin`
 
