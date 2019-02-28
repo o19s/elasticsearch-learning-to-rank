@@ -146,7 +146,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public ScriptEngine getScriptEngine(Settings settings, Collection<ScriptContext<?>> contexts) {
-        return new RankLibScriptEngine(settings, parserFactory);
+        return new RankLibScriptEngine(parserFactory);
     }
 
     @Override
