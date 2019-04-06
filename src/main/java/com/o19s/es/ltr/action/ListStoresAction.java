@@ -36,8 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRequest,
-        ListStoresAction.ListStoresActionResponse,ListStoresAction.ListStoresActionRequestBuilder> {
+public class ListStoresAction extends Action<ListStoresAction.ListStoresActionResponse> {
     public static final String NAME = "cluster:admin/ltr/featurestore/list";
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
@@ -48,18 +47,6 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
     @Override
     public ListStoresActionResponse newResponse() {
         return new ListStoresActionResponse();
-    }
-
-    @Override
-    public ListStoresActionRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new ListStoresActionRequestBuilder(client);
-    }
-
-    public static class ListStoresActionRequestBuilder extends ActionRequestBuilder<ListStoresActionRequest,
-            ListStoresActionResponse, ListStoresActionRequestBuilder> {
-        protected ListStoresActionRequestBuilder(ElasticsearchClient client) {
-            super(client, INSTANCE, new ListStoresActionRequest());
-        }
     }
 
     public static class ListStoresActionRequest extends MasterNodeReadRequest<ListStoresActionRequest> {
@@ -153,6 +140,13 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
 
         public Map<String, Integer> getCounts() {
             return counts;
+        }
+    }
+
+    public static class ListStoresActionBuilder extends
+        ActionRequestBuilder<ListStoresActionRequest, ListStoresActionResponse> {
+        public ListStoresActionBuilder(ElasticsearchClient client, ListStoresAction action){
+            super(client, action, new ListStoresActionRequest());
         }
     }
 }

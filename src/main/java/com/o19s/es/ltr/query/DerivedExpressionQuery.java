@@ -30,6 +30,7 @@ import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
@@ -94,8 +95,8 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         }
 
         @Override
-        public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-            if (!needsScores) {
+        public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+            if (!scoreMode.needsScores()) {
                 // If scores are not needed simply return a constant score on all docs
                 return new ConstantScoreWeight(this.query, boost) {
                     @Override
@@ -105,7 +106,8 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
                     @Override
                     public Scorer scorer(LeafReaderContext context) throws IOException {
-                        return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
+                        return new ConstantScoreScorer(this, score(),
+                            scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
                     }
                 };
             }
@@ -214,6 +216,17 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         @Override
         public DocIdSetIterator iterator() {
             return iterator;
+        }
+
+        /**
+         * Return the maximum score that documents between the last {@code target}
+         * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+         * included and {@code upTo} included.
+         */
+        @Override
+        public float getMaxScore(int upTo) throws IOException {
+            //TODO??
+            return Float.POSITIVE_INFINITY;
         }
     }
 

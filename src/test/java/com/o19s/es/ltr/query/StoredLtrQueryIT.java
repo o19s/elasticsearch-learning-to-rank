@@ -18,13 +18,11 @@
 package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrTestUtils;
-import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
 import com.o19s.es.ltr.action.BaseIntegrationTest;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesResponse;
 import com.o19s.es.ltr.action.ClearCachesAction;
-import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
 import com.o19s.es.ltr.feature.store.ScriptFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -72,7 +70,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         addElement(new StoredFeature("feature6", Arrays.asList("query", "extra_multiplier_ltr"), ScriptFeature.TEMPLATE_LANGUAGE,
                 "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\"," +
                         " \"extra_script_params\" : {\"extra_multiplier_ltr\": \"extra_multiplier\"}}}"));
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
 
         builder.request().setFeatureSet("my_set");
         builder.request().setFeatureNameQuery("feature1");
@@ -81,7 +79,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.request().setFeatureNameQuery("feature6");
         long version = builder.get().getResponse().getVersion();
 
-        CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
+        CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = new CreateModelFromSetRequestBuilder(client());
         createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,
                 "my_model", new StoredLtrModel.LtrModelDefinition("model/linear", SIMPLE_SCRIPT_MODEL, true));
         createModelFromSetRequestBuilder.get();
@@ -119,7 +117,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\"}}"));
 
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("my_set");
         builder.request().setFeatureNameQuery("feature1");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -140,7 +138,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         builder.request().setFeatureNameQuery("feature6");
         long version = builder.get().getResponse().getVersion();
 
-        CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
+        CreateModelFromSetRequestBuilder createModelFromSetRequestBuilder = new CreateModelFromSetRequestBuilder(client());
         createModelFromSetRequestBuilder.withVersion(IndexFeatureStore.DEFAULT_STORE, "my_set", version,
                 "my_model", new StoredLtrModel.LtrModelDefinition("model/linear", SIMPLE_MODEL, true));
         createModelFromSetRequestBuilder.get();
@@ -261,7 +259,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.2876f + 2.876f));
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
-        CachesStatsNodesResponse stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
+        CachesStatsNodesResponse stats = new CachesStatsAction.CachesStatsActionBuilder(client()).execute().get();
         assertEquals(1, stats.getAll().getTotal().getCount());
         assertEquals(model.compile(parserFactory()).ramBytesUsed(), stats.getAll().getTotal().getRam());
         assertEquals(1, stats.getAll().getModels().getCount());
@@ -271,11 +269,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertEquals(0, stats.getAll().getFeaturesets().getCount());
         assertEquals(0, stats.getAll().getFeaturesets().getRam());
 
-        ClearCachesAction.RequestBuilder clearCache = ClearCachesAction.INSTANCE.newRequestBuilder(client());
+        ClearCachesAction.RequestBuilder clearCache = new ClearCachesAction.RequestBuilder(client());
         clearCache.request().clearModel(IndexFeatureStore.DEFAULT_STORE, "my_model");
         clearCache.get();
 
-        stats = CachesStatsAction.INSTANCE.newRequestBuilder(client()).execute().get();
+        stats = new CachesStatsAction.CachesStatsActionBuilder(client()).execute().get();
         assertEquals(0, stats.getAll().getTotal().getCount());
         assertEquals(0, stats.getAll().getTotal().getRam());
 
@@ -285,7 +283,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         addElement(new StoredFeature("bad_df", Collections.singletonList("query"), "derived_expression",
                 "what + is + this"));
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("my_bad_set");
         builder.request().setFeatureNameQuery("bad_df");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);

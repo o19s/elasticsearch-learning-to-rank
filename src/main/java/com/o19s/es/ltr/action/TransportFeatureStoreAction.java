@@ -62,17 +62,11 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                                        ClusterService clusterService, Client client,
                                        LtrRankerParserFactory factory,
                                        TransportClearCachesAction clearCachesAction) {
-        super(settings, FeatureStoreAction.NAME, false, threadPool, transportService, actionFilters,
-                indexNameExpressionResolver, FeatureStoreRequest::new);
+        super(FeatureStoreAction.NAME, false, transportService, actionFilters, FeatureStoreRequest::new);
         this.factory = factory;
         this.clusterService = clusterService;
         this.clearCachesAction = clearCachesAction;
         this.client = client;
-    }
-
-    @Override
-    protected void doExecute(FeatureStoreRequest request, ActionListener<FeatureStoreResponse> listener) {
-        throw new UnsupportedOperationException("attempt to execute a TransportFeatureStoreAction without a task");
     }
 
     @Override
@@ -157,7 +151,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                           Runnable onSuccess) {
         ValidatingLtrQueryBuilder ltrBuilder = new ValidatingLtrQueryBuilder(element,
                 validation, factory);
-        SearchRequestBuilder builder = SearchAction.INSTANCE.newRequestBuilder(client);
+        SearchRequestBuilder builder = new SearchRequestBuilder(client, SearchAction.INSTANCE);
         builder.setIndices(validation.getIndex());
         builder.setQuery(ltrBuilder);
         builder.setFrom(0);

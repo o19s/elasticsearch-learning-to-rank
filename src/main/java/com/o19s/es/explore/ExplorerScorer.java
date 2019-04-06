@@ -37,7 +37,7 @@ public class ExplorerScorer extends Scorer {
 
         // Grab freq from subscorer, or the children if available
         if(subScorer.getChildren().size() > 0) {
-            for(ChildScorer child : subScorer.getChildren()) {
+            for(ChildScorable child : subScorer.getChildren()) {
                 assert child.child instanceof PostingsExplorerQuery.PostingsExplorerScorer;
                 if(child.child.docID() == docID()) {
                     tf_stats.add(child.child.score());
@@ -82,5 +82,16 @@ public class ExplorerScorer extends Scorer {
     @Override
     public DocIdSetIterator iterator() {
         return subScorer.iterator();
+    }
+
+    /**
+     * Return the maximum score that documents between the last {@code target}
+     * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+     * included and {@code upTo} included.
+     */
+    @Override
+    public float getMaxScore(int upTo) throws IOException {
+        //TODO??
+        return Float.POSITIVE_INFINITY;
     }
 }

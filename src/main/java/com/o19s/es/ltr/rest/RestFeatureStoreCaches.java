@@ -16,9 +16,9 @@
 
 package com.o19s.es.ltr.rest;
 
-import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
+
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -66,13 +66,14 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private RestChannelConsumer getStats(NodeClient client) {
-        return (channel) -> CachesStatsAction.INSTANCE.newRequestBuilder(client).execute(new NodesResponseRestListener<>(channel));
+        return (channel) -> new ClearCachesAction.RequestBuilder(client).execute(new NodesResponseRestListener(channel));
     }
 
     private RestChannelConsumer clearCache(RestRequest request, NodeClient client) {
         String storeName = indexName(request);
-        ClearCachesAction.RequestBuilder builder = ClearCachesAction.INSTANCE.newRequestBuilder(client);
+        ClearCachesAction.RequestBuilder builder = new ClearCachesAction.RequestBuilder(client);
         builder.request().clearStore(storeName);
         return (channel) -> builder.execute(new RestBuilderListener<ClearCachesNodesResponse>(channel) {
             @Override

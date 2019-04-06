@@ -47,15 +47,16 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorable;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.AfterEffectB;
 import org.apache.lucene.search.similarities.AxiomaticF3LOG;
 import org.apache.lucene.search.similarities.BM25Similarity;
-import org.apache.lucene.search.similarities.BasicModelBE;
+import org.apache.lucene.search.similarities.BasicModelG;
 import org.apache.lucene.search.similarities.BooleanSimilarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.DFISimilarity;
@@ -140,7 +141,7 @@ public class LtrQueryTests extends LuceneTestCase {
                 new LMJelinekMercerSimilarity(0.2F),
                 new AxiomaticF3LOG(0.5F, 10),
                 new DFISimilarity(new IndependenceChiSquared()),
-                new DFRSimilarity(new BasicModelBE(), new AfterEffectB(), new NormalizationH1()),
+                new DFRSimilarity(new BasicModelG(), new AfterEffectB(), new NormalizationH1()),
                 new IBSimilarity(new DistributionLL(), new LambdaDF(), new NormalizationH3())
             );
         similarity = sims.get(random().nextInt(sims.size()));
@@ -181,15 +182,19 @@ public class LtrQueryTests extends LuceneTestCase {
         RankerQuery query = RankerQuery.buildLogQuery(logger, set, null, Collections.emptyMap());
 
         searcherUnderTest.search(query, new SimpleCollector() {
+
             private LeafReaderContext context;
-            private Scorer scorer;
+            private Scorable scorer;
+            /**
+             * Indicates what features are required from the scorer.
+             */
             @Override
-            public boolean needsScores() {
-                return true;
+            public ScoreMode scoreMode() {
+                return ScoreMode.COMPLETE;
             }
 
             @Override
-            public void setScorer(Scorer scorer) throws IOException {
+            public void setScorer(Scorable scorer) throws IOException {
                 this.scorer = scorer;
             }
 
@@ -324,7 +329,7 @@ public class LtrQueryTests extends LuceneTestCase {
             // It produces 0.56103003 for feat:0 in doc1 using score() but 0.5610301 using explain
             Explanation expl = searcherUnderTest.explain(ltrQuery, docId);
 
-            assertEquals("Explain scores match with similarity " + similarity.getClass(), expl.getValue(),
+            assertEquals("Explain scores match with similarity " + similarity.getClass(), expl.getValue().floatValue(),
                     queryScore, 5 * Math.ulp(modelScore));
             checkFeatureNames(expl, features);
         }

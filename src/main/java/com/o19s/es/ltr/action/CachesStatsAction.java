@@ -37,8 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodesRequest,
-        CachesStatsAction.CachesStatsNodesResponse, CachesStatsAction.CacheStatsRequestBuilder> {
+public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodesResponse> {
     public static final String NAME = "cluster:admin/ltr/caches/stats";
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
@@ -47,21 +46,10 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
     }
 
     @Override
-    public CacheStatsRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new CacheStatsRequestBuilder(client);
-    }
-
-    @Override
     public CachesStatsNodesResponse newResponse() {
         return new CachesStatsNodesResponse();
     }
 
-    public static class CacheStatsRequestBuilder extends ActionRequestBuilder<CachesStatsAction.CachesStatsNodesRequest,
-            CachesStatsAction.CachesStatsNodesResponse, CacheStatsRequestBuilder> {
-        protected CacheStatsRequestBuilder(ElasticsearchClient client) {
-            super(client, INSTANCE, new CachesStatsNodesRequest());
-        }
-    }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
     }
@@ -309,4 +297,12 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
             }
         }
     }
+
+    public static class CachesStatsActionBuilder extends
+        ActionRequestBuilder<CachesStatsNodesRequest, CachesStatsNodesResponse> {
+        public CachesStatsActionBuilder(ElasticsearchClient client){
+            super(client, INSTANCE, new CachesStatsNodesRequest());
+        }
+    }
+
 }

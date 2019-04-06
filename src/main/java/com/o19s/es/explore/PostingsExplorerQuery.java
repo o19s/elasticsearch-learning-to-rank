@@ -22,13 +22,14 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.ReaderUtil;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
 import org.apache.lucene.index.TermState;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
@@ -63,8 +64,8 @@ public class PostingsExplorerQuery extends Query {
     @Override
     public boolean equals(Object obj) {
         return this.sameClassAs(obj)
-                && this.term.equals(((PostingsExplorerQuery)obj).term)
-                && this.type.equals(((PostingsExplorerQuery)obj).type);
+                && this.term.equals(((PostingsExplorerQuery) obj).term)
+                && this.type.equals(((PostingsExplorerQuery) obj).type);
     }
 
     @Override
@@ -73,10 +74,13 @@ public class PostingsExplorerQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
+            throws IOException {
         IndexReaderContext context = searcher.getTopReaderContext();
-        assert needsScores : "Should not be used in filtering mode";
-        return new PostingsExplorerWeight(this, this.term, TermContext.build(context, this.term), this.type);
+        assert scoreMode.needsScores() : "Should not be used in filtering mode";
+        return new PostingsExplorerWeight(this, this.term, TermStates.build(context, this.term,
+                scoreMode.needsScores()),
+                this.type);
     }
 
     /**
@@ -100,10 +104,10 @@ public class PostingsExplorerQuery extends Query {
 
     static class PostingsExplorerWeight extends Weight {
         private final Term term;
-        private final TermContext termStates;
+        private final TermStates termStates;
         private final Type type;
 
-        PostingsExplorerWeight(Query query, Term term, TermContext termStates, Type type) {
+        PostingsExplorerWeight(Query query, Term term, TermStates termStates, Type type) {
             super(query);
             this.term = term;
             this.termStates = termStates;
@@ -120,15 +124,17 @@ public class PostingsExplorerQuery extends Query {
             Scorer scorer = this.scorer(context);
             int newDoc = scorer.iterator().advance(doc);
             if (newDoc == doc) {
-                return Explanation.match(scorer.score(), "weight(" + this.getQuery()  + " in doc " + newDoc + ")");
+                return Explanation
+                        .match(scorer.score(), "weight(" + this.getQuery() + " in doc " + newDoc + ")");
             }
-            return Explanation.noMatch("no matching term" );
+            return Explanation.noMatch("no matching term");
         }
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            assert this.termStates != null && this.termStates.wasBuiltFor(ReaderUtil.getTopLevelContext(context));
-            TermState state = this.termStates.get(context.ord);
+            assert this.termStates != null && this.termStates
+                    .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
+            TermState state = this.termStates.get(context);
             if (state == null) {
                 return null;
             } else {
@@ -171,6 +177,17 @@ public class PostingsExplorerQuery extends Query {
         @Override
         public float score() throws IOException {
             return this.postingsEnum.freq();
+        }
+
+        /**
+         * Return the maximum score that documents between the last {@code target}
+         * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+         * included and {@code upTo} included.
+         */
+        @Override
+        public float getMaxScore(int upTo) throws IOException {
+            //TODO?
+            return Float.POSITIVE_INFINITY;
         }
     }
 }

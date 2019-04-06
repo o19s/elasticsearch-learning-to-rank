@@ -13,12 +13,13 @@
  * limitations under the License.
  *
  */
+
 package com.o19s.es.explore;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -27,6 +28,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.Weight;
@@ -53,8 +55,13 @@ public class ExplorerQuery extends Query {
                 || type.endsWith(("_ttf"));
     }
 
-    public Query getQuery() { return this.query; }
-    public String getType() { return this.type; }
+    public Query getQuery() {
+        return this.query;
+    }
+
+    public String getType() {
+        return this.type;
+    }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -72,7 +79,7 @@ public class ExplorerQuery extends Query {
     public Query rewrite(IndexReader reader) throws IOException {
         Query rewritten = query.rewrite(reader);
 
-        if(rewritten != query) {
+        if (rewritten != query) {
             return new ExplorerQuery(rewritten, type);
         }
 
@@ -85,21 +92,24 @@ public class ExplorerQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        if (!needsScores) {
-            return searcher.createWeight(query, false, boost);
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
+            throws IOException {
+        if (!scoreMode.needsScores()) {
+            return searcher.createWeight(query, scoreMode, boost);
         }
-        final Weight subWeight = searcher.createWeight(query, true, boost);
+        final Weight subWeight = searcher.createWeight(query, scoreMode, boost);
         Set<Term> terms = new HashSet<>();
         subWeight.extractTerms(terms);
-        if(isCollectionScoped()) {
+        if (isCollectionScoped()) {
             ClassicSimilarity sim = new ClassicSimilarity();
             StatisticsHelper df_stats = new StatisticsHelper();
             StatisticsHelper idf_stats = new StatisticsHelper();
             StatisticsHelper ttf_stats = new StatisticsHelper();
 
-            for(Term term : terms) {
-                TermContext ctx = TermContext.build(searcher.getTopReaderContext(), term);
+            for (Term term : terms) {
+                TermStates
+                        ctx =
+                        TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
                 TermStatistics tStats = searcher.termStatistics(term, ctx);
                 df_stats.add(tStats.docFreq());
                 idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
@@ -113,7 +123,7 @@ public class ExplorerQuery extends Query {
              */
             float constantScore;
 
-            if(terms.size() > 0) {
+            if (terms.size() > 0) {
                 switch (type) {
                     case ("sum_classic_idf"):
                         constantScore = idf_stats.getSum();
@@ -185,7 +195,7 @@ public class ExplorerQuery extends Query {
 
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
-                    return new ConstantScoreScorer(this, constantScore, DocIdSetIterator.all(context.reader().maxDoc()));
+                    return new ConstantScoreScorer(this, constantScore, scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
 
                 @Override
@@ -198,15 +208,16 @@ public class ExplorerQuery extends Query {
             // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
             BooleanQuery.Builder qb = new BooleanQuery.Builder();
             for (Term t : terms) {
-                qb.add(new BooleanClause(new PostingsExplorerQuery(t, PostingsExplorerQuery.Type.TF), BooleanClause.Occur.SHOULD));
+                qb.add(new BooleanClause(new PostingsExplorerQuery(t, PostingsExplorerQuery.Type.TF),
+                        BooleanClause.Occur.SHOULD));
             }
             // FIXME: completely refactor this class and stop accepting a random query but a list of terms directly
             // rewriting at this point is wrong, additionally we certainly build the TermContext twice for every terms
             // problem is that we rely on extractTerms which happen too late in the process
             Query q = qb.build().rewrite(searcher.getIndexReader());
-            return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, true, boost), type);
+            return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, scoreMode, boost), type);
         }
-        throw new IllegalArgumentException( "Unknown ExplorerQuery type [" + type + "]" );
+        throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");
     }
 
     static class ExplorerWeight extends Weight {

@@ -37,6 +37,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
@@ -170,13 +171,14 @@ public class RankerQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        if (!needsScores) {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        if (!scoreMode.needsScores()) {
             // If scores are not needed simply return a constant score on all docs
             return new ConstantScoreWeight(this, boost) {
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
-                    return new ConstantScoreScorer(this, score(), DocIdSetIterator.all(context.reader().maxDoc()));
+                    return new ConstantScoreScorer(this, score(),
+                        scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
 
                 @Override
@@ -196,7 +198,7 @@ public class RankerQuery extends Query {
             if (q instanceof LtrRewritableQuery) {
                 q = ((LtrRewritableQuery)q).ltrRewrite(vectorSupplier);
             }
-            weights.add(searcher.createWeight(q, true, boost));
+            weights.add(searcher.createWeight(q, ScoreMode.COMPLETE, boost));
         }
         return new RankerWeight(this, weights, ltrRankerWrapper, features);
     }
@@ -245,7 +247,7 @@ public class RankerQuery extends Query {
                     subs.add(Explanation.noMatch(featureString + " [no match, default value 0.0 used]"));
                 } else {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
-                    d.setFeatureScore(ordinal, explain.getValue());
+                    d.setFeatureScore(ordinal, explain.getValue().floatValue());
                 }
             }
             float modelScore = ranker.score(d);
@@ -319,6 +321,17 @@ public class RankerQuery extends Query {
             @Override
             public DocIdSetIterator iterator() {
                 return iterator;
+            }
+
+            /**
+             * Return the maximum score that documents between the last {@code target}
+             * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+             * included and {@code upTo} included.
+             */
+            @Override
+            public float getMaxScore(int upTo) throws IOException {
+                //TODO??
+                return Float.POSITIVE_INFINITY;
             }
         }
     }

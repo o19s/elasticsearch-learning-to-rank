@@ -24,7 +24,6 @@ import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -67,17 +66,11 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                                              IndexNameExpressionResolver indexNameExpressionResolver,
                                              ClusterService clusterService, TransportSearchAction searchAction,
                                              TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
-        super(settings, AddFeaturesToSetAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver,
-                AddFeaturesToSetRequest::new);
+        super(AddFeaturesToSetAction.NAME, transportService, actionFilters, AddFeaturesToSetRequest::new);
         this.clusterService = clusterService;
         this.searchAction = searchAction;
         this.getAction = getAction;
         this.featureStoreAction = featureStoreAction;
-    }
-
-    @Override
-    protected final void doExecute(AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
-        throw new UnsupportedOperationException("attempt to execute a TransportAddFeatureToSetAction without a task");
     }
 
     @Override
@@ -181,7 +174,8 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
-            ActionFuture<SearchResponse> resp = searchAction.execute(srequest);
+            //do we need this?
+            //ActionFuture<SearchResponse> resp = searchAction.execute(srequest);
             searchAction.execute(srequest, wrap(this::onSearchResponse, this::onSearchFailure));
         }
 
@@ -215,10 +209,10 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
 
         private void onSearchResponse(SearchResponse sr) {
             try {
-                if (sr.getHits().getTotalHits() > StoredFeatureSet.MAX_FEATURES) {
+                if (sr.getHits().getTotalHits().value > StoredFeatureSet.MAX_FEATURES) {
                     throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returns too many features");
                 }
-                if (sr.getHits().getTotalHits() == 0) {
+                if (sr.getHits().getTotalHits().value == 0) {
                     throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returned no features");
                 }
                 final List<StoredFeature> features = new ArrayList<>(sr.getHits().getHits().length);

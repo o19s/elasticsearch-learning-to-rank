@@ -56,4 +56,15 @@ public class NoopScorer extends Scorer {
     public DocIdSetIterator iterator() {
         return _noopIter;
     }
+
+    /**
+     * Return the maximum score that documents between the last {@code target}
+     * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+     * included and {@code upTo} included.
+     */
+    @Override
+    public float getMaxScore(int upTo) throws IOException {
+        //TODO??
+        return Float.POSITIVE_INFINITY;
+    }
 }

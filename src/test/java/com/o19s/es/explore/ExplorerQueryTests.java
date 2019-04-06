@@ -110,7 +110,7 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         // Verify tf score
         TopDocs docs = searcher.search(eq, 4);
-        assertThat(docs.getMaxScore(), equalTo(3.0f));
+        assertThat(docs.scoreDocs[0].score, equalTo(3.0f));
     }
 
     public void testUniqueTerms() throws Exception {
@@ -136,7 +136,7 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify score is 5 (5 unique terms)
         TopDocs docs = searcher.search(eq, 4);
 
-        assertThat(docs.getMaxScore(), equalTo(5.0f));
+        assertThat(docs.scoreDocs[0].score, equalTo(5.0f));
     }
 
     public void testInvalidStat() throws Exception {

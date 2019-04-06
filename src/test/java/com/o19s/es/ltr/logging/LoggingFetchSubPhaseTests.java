@@ -38,6 +38,7 @@ import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
@@ -164,6 +165,14 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         int maxHits = TestUtil.nextInt(random(), minHits, minHits+10);
         List<SearchHit> hits = new ArrayList<>(maxHits);
         searcher.search(new MatchAllDocsQuery(), new SimpleCollector() {
+            /**
+             * Indicates what features are required from the scorer.
+             */
+            @Override
+            public ScoreMode scoreMode() {
+                return ScoreMode.COMPLETE_NO_SCORES;
+            }
+
             LeafReaderContext context;
 
             @Override
@@ -183,10 +192,6 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 }
             }
 
-            @Override
-            public boolean needsScores() {
-                return false;
-            }
         });
         assert hits.size() >= minHits;
         Collections.shuffle(hits, random());

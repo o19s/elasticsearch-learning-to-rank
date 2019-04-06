@@ -37,8 +37,7 @@ import java.util.Objects;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRequest,
-        FeatureStoreAction.FeatureStoreResponse, FeatureStoreAction.FeatureStoreRequestBuilder> {
+public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreResponse> {
     public static final String NAME = "cluster:admin/ltr/featurestore/data";
     public static final FeatureStoreAction INSTANCE = new FeatureStoreAction();
 
@@ -51,14 +50,9 @@ public class FeatureStoreAction extends Action<FeatureStoreAction.FeatureStoreRe
         return new FeatureStoreResponse();
     }
 
-    @Override
-    public FeatureStoreRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new FeatureStoreRequestBuilder(client, this);
-    }
-
     public static class FeatureStoreRequestBuilder
-            extends ActionRequestBuilder<FeatureStoreRequest, FeatureStoreResponse, FeatureStoreRequestBuilder> {
-        FeatureStoreRequestBuilder(ElasticsearchClient client, FeatureStoreAction action) {
+            extends ActionRequestBuilder<FeatureStoreRequest, FeatureStoreResponse> {
+        public FeatureStoreRequestBuilder(ElasticsearchClient client, FeatureStoreAction action) {
             super(client, action, new FeatureStoreRequest());
         }
     }

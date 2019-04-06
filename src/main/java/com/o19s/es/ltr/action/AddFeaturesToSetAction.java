@@ -36,8 +36,7 @@ import java.util.List;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFeaturesToSetRequest,
-        AddFeaturesToSetAction.AddFeaturesToSetResponse, AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder> {
+public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFeaturesToSetResponse> {
     public static final AddFeaturesToSetAction INSTANCE = new AddFeaturesToSetAction();
     public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
@@ -46,18 +45,12 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
     }
 
     @Override
-    public AddFeaturesToSetRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new AddFeaturesToSetRequestBuilder(client);
-    }
-
-    @Override
     public AddFeaturesToSetResponse newResponse() {
         return new AddFeaturesToSetResponse();
     }
 
-    public static class AddFeaturesToSetRequestBuilder extends ActionRequestBuilder<AddFeaturesToSetRequest,
-            AddFeaturesToSetResponse, AddFeaturesToSetRequestBuilder> {
-        protected AddFeaturesToSetRequestBuilder(ElasticsearchClient client) {
+    public static class AddFeaturesToSetRequestBuilder extends ActionRequestBuilder<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
+        public AddFeaturesToSetRequestBuilder(ElasticsearchClient client) {
             super(client, INSTANCE, new AddFeaturesToSetRequest());
         }
     }

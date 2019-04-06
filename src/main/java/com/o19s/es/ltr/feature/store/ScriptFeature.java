@@ -12,6 +12,7 @@ import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
@@ -149,9 +150,9 @@ public class ScriptFeature implements Feature {
         }
 
         @Override
-        public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-            if (!needsScores) {
-                return new MatchAllDocsQuery().createWeight(searcher, false, 1F);
+        public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+            if (!scoreMode.needsScores()) {
+                return new MatchAllDocsQuery().createWeight(searcher, scoreMode, 1F);
             }
             return new LtrScriptWeight(this, this.function);
         }
@@ -194,6 +195,17 @@ public class ScriptFeature implements Feature {
                 @Override
                 public DocIdSetIterator iterator() {
                     return iterator;
+                }
+
+                /**
+                 * Return the maximum score that documents between the last {@code target}
+                 * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+                 * included and {@code upTo} included.
+                 */
+                @Override
+                public float getMaxScore(int upTo) throws IOException {
+                    //TODO??
+                    return Float.POSITIVE_INFINITY;
                 }
             };
         }

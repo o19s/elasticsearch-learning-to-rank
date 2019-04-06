@@ -20,6 +20,7 @@ import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.Nullable;
 
@@ -75,8 +76,8 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        return query.createWeight(searcher, needsScores, boost);
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        return query.createWeight(searcher, scoreMode, boost);
     }
 
     @Override

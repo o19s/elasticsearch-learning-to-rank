@@ -35,18 +35,12 @@ import java.io.IOException;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.CreateModelFromSetRequest,
-        CreateModelFromSetAction.CreateModelFromSetResponse, CreateModelFromSetAction.CreateModelFromSetRequestBuilder> {
+public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.CreateModelFromSetResponse> {
     public static final String NAME = "cluster:admin/ltr/store/create-model-from-set";
     public static final CreateModelFromSetAction INSTANCE = new CreateModelFromSetAction();
 
     protected CreateModelFromSetAction() {
         super(NAME);
-    }
-
-    @Override
-    public CreateModelFromSetRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new CreateModelFromSetRequestBuilder(client);
     }
 
     /**
@@ -58,9 +52,9 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
     }
 
     public static class CreateModelFromSetRequestBuilder extends ActionRequestBuilder<CreateModelFromSetRequest,
-            CreateModelFromSetResponse, CreateModelFromSetRequestBuilder> {
+        CreateModelFromSetResponse> {
 
-        protected CreateModelFromSetRequestBuilder(ElasticsearchClient client) {
+        public CreateModelFromSetRequestBuilder(ElasticsearchClient client) {
             super(client, INSTANCE, new CreateModelFromSetRequest());
         }
 

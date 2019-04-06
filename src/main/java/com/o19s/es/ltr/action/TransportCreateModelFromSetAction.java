@@ -50,16 +50,10 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
                                                 IndexNameExpressionResolver indexNameExpressionResolver,
                                                 ClusterService clusterService, TransportGetAction getAction,
                                                 TransportFeatureStoreAction featureStoreAction) {
-        super(settings, CreateModelFromSetAction.NAME, threadPool, transportService,
-                actionFilters, indexNameExpressionResolver, CreateModelFromSetRequest::new);
+        super(CreateModelFromSetAction.NAME, transportService, actionFilters, CreateModelFromSetRequest::new);
         this.clusterService = clusterService;
         this.getAction = getAction;
         this.featureStoreAction = featureStoreAction;
-    }
-
-    @Override
-    protected final void doExecute(CreateModelFromSetRequest request, ActionListener<CreateModelFromSetResponse> listener) {
-        throw new UnsupportedOperationException("attempt to execute a TransportCreateModelFromSetAction without a task");
     }
 
     @Override

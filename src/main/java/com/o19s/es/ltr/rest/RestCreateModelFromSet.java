@@ -63,7 +63,7 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
         String routing = request.param("routing");
         ParserState state = new ParserState();
         request.withContentOrSourceParamParserOrNull((p) -> ParserState.parse(p, state));
-        CreateModelFromSetRequestBuilder builder = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client);
+        CreateModelFromSetRequestBuilder builder = new CreateModelFromSetRequestBuilder(client);
         if (expectedVersion != null) {
             builder.withVersion(store, request.param("name"), expectedVersion, state.model.name, state.model.model);
         } else {

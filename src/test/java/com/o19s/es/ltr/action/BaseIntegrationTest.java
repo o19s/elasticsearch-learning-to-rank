@@ -35,7 +35,6 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.script.SearchScript;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Before;
 
@@ -48,6 +47,8 @@ import java.util.concurrent.ExecutionException;
 import static com.o19s.es.ltr.feature.store.ScriptFeature.FEATURE_VECTOR;
 
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
+
+    public static final ScriptContext<ScoreScript.Factory> AGGS_CONTEXT = new ScriptContext<>("aggs", ScoreScript.Factory.class);
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class);
@@ -105,7 +106,8 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     public FeatureStoreResponse addElement(StorableElement element,
                                            @Nullable FeatureValidation validation,
                                            String store) throws ExecutionException, InterruptedException {
-        FeatureStoreRequestBuilder builder = FeatureStoreAction.INSTANCE.newRequestBuilder(client());
+        FeatureStoreRequestBuilder builder =
+            new FeatureStoreRequestBuilder(client(), FeatureStoreAction.INSTANCE);
         builder.request().setStorableElement(element);
         builder.request().setAction(FeatureStoreAction.FeatureStoreRequest.Action.CREATE);
         builder.request().setStore(store);
@@ -147,7 +149,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                 @Override
                 public <FactoryType> FactoryType compile(String scriptName, String scriptSource,
                                                          ScriptContext<FactoryType> context, Map<String, String> params) {
-                    if (!context.equals(ScoreScript.CONTEXT) && (!context.equals(SearchScript.AGGS_CONTEXT))) {
+                    if (!context.equals(ScoreScript.CONTEXT) && (!context.equals(AGGS_CONTEXT))) {
                         throw new IllegalArgumentException(getType() + " scripts cannot be used for context [" + context.name
                                 + "]");
                     }

@@ -16,7 +16,6 @@
  */
 package com.o19s.es.ltr;
 
-import ciir.umass.edu.learning.RankerFactory;
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.CachesStatsAction;
@@ -53,6 +52,7 @@ import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
 import com.o19s.es.ltr.rest.RestSimpleFeatureStore;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
+
 import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
@@ -99,6 +99,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+
+import ciir.umass.edu.learning.RankerFactory;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -253,6 +255,6 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     public List<PreConfiguredTokenizer> getPreConfiguredTokenizers() {
         return Collections.singletonList(PreConfiguredTokenizer.singleton("ltr_keyword",
-                () -> new KeywordTokenizer(KeywordTokenizer.DEFAULT_BUFFER_SIZE), null));
+                () -> new KeywordTokenizer(KeywordTokenizer.DEFAULT_BUFFER_SIZE)));
     }
 }

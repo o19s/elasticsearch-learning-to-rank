@@ -18,7 +18,6 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
-import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -30,6 +29,8 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchAction;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -208,7 +209,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     }
 
     RestChannelConsumer listStores(NodeClient client) {
-        return (channel) -> ListStoresAction.INSTANCE.newRequestBuilder(client).execute(
+        return (channel) -> new SearchRequestBuilder(client, SearchAction.INSTANCE).execute(
                 new RestToXContentListener<>(channel));
     }
 
@@ -248,7 +249,8 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                 return (channel) -> channel.sendResponse(new BytesRestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
             }
         }
-        FeatureStoreAction.FeatureStoreRequestBuilder builder = FeatureStoreAction.INSTANCE.newRequestBuilder(client);
+        FeatureStoreAction.FeatureStoreRequestBuilder builder = new FeatureStoreAction.FeatureStoreRequestBuilder(
+            client, FeatureStoreAction.INSTANCE);
         if (request.method() == RestRequest.Method.PUT) {
             builder.request().setAction(FeatureStoreAction.FeatureStoreRequest.Action.CREATE);
         } else {
@@ -275,7 +277,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                             // wrap the response so we can send another request to clear the cache
                             // usually we send only one transport request from the rest layer
                             // it's still unclear which direction we should take (thick or thin REST layer?)
-                            ClearCachesAction.RequestBuilder clearCache = ClearCachesAction.INSTANCE.newRequestBuilder(client);
+                            ClearCachesAction.RequestBuilder clearCache = new ClearCachesAction.RequestBuilder(client);
                             switch (type) {
                             case StoredFeature.TYPE:
                                 clearCache.request().clearFeature(indexName, name);

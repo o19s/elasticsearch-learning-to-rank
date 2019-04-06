@@ -35,8 +35,7 @@ import java.util.Objects;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodesRequest,
-        ClearCachesAction.ClearCachesNodesResponse, ClearCachesAction.RequestBuilder> {
+public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodesResponse> {
     public static final String NAME = "cluster:admin/ltr/caches";
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
@@ -45,18 +44,12 @@ public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodes
     }
 
     @Override
-    public RequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new RequestBuilder(client);
-    }
-
-    @Override
     public ClearCachesNodesResponse newResponse() {
         return new ClearCachesNodesResponse();
     }
 
-    public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse,
-            ClearCachesAction.RequestBuilder> {
-        RequestBuilder(ElasticsearchClient client) {
+    public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse> {
+        public RequestBuilder(ElasticsearchClient client) {
             super(client, ClearCachesAction.INSTANCE, new ClearCachesNodesRequest());
         }
     }

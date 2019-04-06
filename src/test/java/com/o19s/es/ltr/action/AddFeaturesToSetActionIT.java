@@ -45,7 +45,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
 
         addElement(randomFeature("another"));
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatureNameQuery("feature*");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -59,7 +59,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(features.size(), set.size());
         assertTrue(features.stream().map(StoredFeature::name).allMatch(set::hasFeature));
 
-        builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatureNameQuery("another");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -78,7 +78,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
             features.add(feat);
         }
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatures(features);
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -92,7 +92,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(features.size(), set.size());
         assertTrue(features.stream().map(StoredFeature::name).allMatch(set::hasFeature));
 
-        builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatures(Collections.singletonList(randomFeature("another_feature")));
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -105,7 +105,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
     }
 
     public void testFailuresWhenEmpty() throws Exception {
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_broken_set");
         builder.request().setFeatureNameQuery("doesnotexist*");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -118,7 +118,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
     public void testFailuresOnDuplicates() throws Exception {
         addElement(randomFeature("duplicated"));
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("duplicated_set");
         builder.request().setFeatureNameQuery("duplicated*");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -128,7 +128,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(1, resp.getResponse().getVersion());
 
 
-        AddFeaturesToSetRequestBuilder builder2 = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder2= new AddFeaturesToSetRequestBuilder(client());
         builder2.request().setFeatureSet("duplicated_set");
         builder2.request().setFeatureNameQuery("duplicated");
         builder2.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -143,7 +143,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         addElement(randomFeature("duplicated"));
         addElement(randomFeature("new_feature"));
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder= new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("merged_set");
         builder.request().setFeatureNameQuery("duplicated*");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -153,7 +153,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(DocWriteResponse.Result.CREATED, resp.getResponse().getResult());
         assertEquals(1, resp.getResponse().getVersion());
 
-        builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder= new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("merged_set");
         builder.request().setFeatureNameQuery("*");
         builder.request().setStore(IndexFeatureStore.DEFAULT_STORE);
@@ -176,7 +176,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
             features.add(feat);
         }
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetRequestBuilder builder= new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatures(features);
         builder.request().setMerge(true);
@@ -191,7 +191,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(features.size(), set.size());
         assertTrue(features.stream().map(StoredFeature::name).allMatch(set::hasFeature));
 
-        builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        builder= new AddFeaturesToSetRequestBuilder(client());
         builder.request().setFeatureSet("new_feature_set");
         builder.request().setFeatures(asList(randomFeature("another_feature"), randomFeature("feature0")));
         builder.request().setMerge(true);

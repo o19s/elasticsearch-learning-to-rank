@@ -41,7 +41,7 @@ public class ListStoresActionIT extends BaseIntegrationTest {
             infos.put(IndexFeatureStore.storeName(store),
                     new IndexStoreInfo(store, IndexFeatureStore.VERSION, addElements(store)));
         }
-        ListStoresActionResponse resp = ListStoresAction.INSTANCE.newRequestBuilder(client()).execute().get();
+        ListStoresActionResponse resp = new ListStoresAction.ListStoresActionBuilder(client(), ListStoresAction.INSTANCE).execute().get();
         assertEquals(infos.size(), resp.getStores().size());
         assertEquals(infos.keySet(), resp.getStores().keySet());
         for (String k : infos.keySet()) {

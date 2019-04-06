@@ -90,7 +90,7 @@ public class ValidatingFeatureStoreActionIT extends BaseIntegrationTest {
         StoredFeature brokenFeature = new StoredFeature("broken", singletonList("query_string"), "mustache", brokenQuery);
         Map<String, Object> params = new HashMap<>();
         params.put("query_string", "a query");
-        AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder request = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client());
+        AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder request = new AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder(client());
         request.request().setStore(IndexFeatureStore.DEFAULT_STORE);
         request.request().setValidation(new FeatureValidation("test_index", params));
         request.request().setFeatures(Arrays.asList(feature, brokenFeature));
@@ -112,7 +112,8 @@ public class ValidatingFeatureStoreActionIT extends BaseIntegrationTest {
         StoredFeatureSet brokenFeatureSet = new StoredFeatureSet("my_feature_set", Arrays.asList(feature, brokenFeature));
         // Store a broken feature set
         addElement(brokenFeatureSet);
-        CreateModelFromSetAction.CreateModelFromSetRequestBuilder request = CreateModelFromSetAction.INSTANCE.newRequestBuilder(client());
+        CreateModelFromSetAction.CreateModelFromSetRequestBuilder request =
+            new CreateModelFromSetAction.CreateModelFromSetRequestBuilder(client());
         request.request().setValidation(new FeatureValidation("test_index", params));
         StoredLtrModel.LtrModelDefinition definition = new StoredLtrModel.LtrModelDefinition("model/linear",
                 "{\"test\": 2.1, \"broken\": 4.3}", true);

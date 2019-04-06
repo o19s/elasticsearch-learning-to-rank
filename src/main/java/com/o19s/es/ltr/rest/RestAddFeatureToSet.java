@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.rest;
 
-import com.o19s.es.ltr.action.AddFeaturesToSetAction;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -75,7 +74,7 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
                     "or directly in the body not both");
         }
 
-        AddFeaturesToSetRequestBuilder builder = AddFeaturesToSetAction.INSTANCE.newRequestBuilder(client);
+        AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client);
         builder.request().setStore(store);
         builder.request().setFeatureSet(setName);
         builder.request().setFeatureNameQuery(featureQuery);

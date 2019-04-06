@@ -45,7 +45,7 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
                                          ClusterService clusterService, TransportService transportService,
                                          ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
                                          Caches caches) {
-        super(settings, ClearCachesAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
+        super(ClearCachesAction.NAME, threadPool, clusterService, transportService, actionFilters,
                 ClearCachesNodesRequest::new, ClearCachesNodeRequest::new, ThreadPool.Names.MANAGEMENT, ClearCachesNodeResponse.class);
         this.caches = caches;
     }
