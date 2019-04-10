@@ -227,4 +227,10 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
         assertThat(query, instanceOf(RankerQuery.class));
     }
+
+    @Override
+    protected boolean isCacheable(LtrQueryBuilder queryBuilder){
+        return false;
+    }
+
 }

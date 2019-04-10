@@ -31,7 +31,6 @@ import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.fetch.FetchPhaseExecutionException;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
@@ -72,11 +71,8 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             loggers.add(query.v2());
         });
 
-        try {
-            doLog(builder.build(), loggers, context.searcher(), hits);
-        } catch (LtrLoggingException e) {
-            throw new FetchPhaseExecutionException(context, e.getMessage(), e);
-        }
+        doLog(builder.build(), loggers, context.searcher(), hits);
+
     }
 
     void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
@@ -110,7 +106,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                 scorer = weight.scorer(readerContext);
             }
 
-            if(scorer != null) {
+            if (scorer != null) {
                 int targetDoc = docID - docBase;
                 int actualDoc = scorer.docID();
                 if (actualDoc < targetDoc) {
@@ -133,15 +129,17 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
         return toLogger(logSpec, inspectQuery(q)
                 .orElseThrow(() -> new IllegalArgumentException("Query named [" + logSpec.getNamedQuery() +
-                    "] must be a [sltr] query [" +
-                    ((q instanceof BoostQuery) ? ((BoostQuery)q).getQuery().getClass().getSimpleName()  : q.getClass().getSimpleName()) +
-                    "] found")));
+                        "] must be a [sltr] query [" +
+                        ((q instanceof BoostQuery) ? ((BoostQuery) q).getQuery().getClass().getSimpleName(
+
+                        ) : q.getClass().getSimpleName()) +
+                        "] found")));
     }
 
     private Tuple<RankerQuery, HitLogConsumer> extractRescore(LoggingSearchExtBuilder.LogSpec logSpec,
                                                               List<RescoreContext> contexts) {
         if (logSpec.getRescoreIndex() >= contexts.size()) {
-            throw new IllegalArgumentException("rescore index [" + logSpec.getRescoreIndex()+"] is out of bounds, only " +
+            throw new IllegalArgumentException("rescore index [" + logSpec.getRescoreIndex() + "] is out of bounds, only " +
                     "[" + contexts.size() + "] rescore context(s) are available");
         }
         RescoreContext context = contexts.get(logSpec.getRescoreIndex());
@@ -153,8 +151,8 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         QueryRescorer.QueryRescoreContext qrescore = (QueryRescorer.QueryRescoreContext) context;
         return toLogger(logSpec, inspectQuery(qrescore.query())
                 .orElseThrow(() -> new IllegalArgumentException("Expected a [sltr] query but found a " +
-                    "[" + qrescore.query().getClass().getSimpleName() + "] " +
-                    "at index [" + logSpec.getRescoreIndex() + "]")));
+                        "[" + qrescore.query().getClass().getSimpleName() + "] " +
+                        "at index [" + logSpec.getRescoreIndex() + "]")));
     }
 
     private Optional<RankerQuery> inspectQuery(Query q) {
@@ -200,7 +198,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         private void rebuild() {
-            List<Map<String, Object>> ini = new ArrayList<>(set.size()) ;
+            List<Map<String, Object>> ini = new ArrayList<>(set.size());
 
             for (int i = 0; i < set.size(); i++) {
                 Map<String, Object> defaultKeyVal = new HashMap<>();
@@ -217,11 +215,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         public void accept(int featureOrdinal, float score) {
             assert currentLog != null;
             assert currentHit != null;
-            if (Float.isNaN(score)) {
-                // NOTE: should we fail on Float#isInfinite() as well?
-                throw new LtrLoggingException("Feature [" + set.feature(featureOrdinal).name() +"] produced a NaN value " +
-                        "for doc [" + currentHit.getId() + "]" );
-            }
             currentLog.get(featureOrdinal).put("value", score);
         }
 
@@ -230,7 +223,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                 hit.fields(new HashMap<>());
             }
             DocumentField logs = hit.getFields()
-                    .computeIfAbsent(FIELD_NAME,(k) -> newLogField());
+                    .computeIfAbsent(FIELD_NAME, (k) -> newLogField());
             Map<String, List<Map<String, Object>>> entries = logs.getValue();
             rebuild();
             currentHit = hit;

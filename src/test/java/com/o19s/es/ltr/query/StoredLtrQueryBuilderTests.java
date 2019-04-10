@@ -229,4 +229,9 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
             return LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store);
         }
     }
+
+    @Override
+    protected boolean isCacheable(StoredLtrQueryBuilder queryBuilder){
+        return false;
+    }
 }

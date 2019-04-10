@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.logging;
 
-import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
@@ -34,7 +33,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -63,7 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.Collections.singletonList;
 import static org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction.Modifier.LN2P;
 import static org.elasticsearch.index.fielddata.IndexNumericFieldData.NumericType.FLOAT;
 
@@ -147,17 +144,6 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
             assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
             assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
         }
-    }
-
-    public void testBogusQuery() throws IOException {
-        PrebuiltFeatureSet set = new PrebuiltFeatureSet("test",
-                singletonList(new PrebuiltFeature("test", new BoostQuery(new MatchAllDocsQuery(), Float.NaN))));
-        LoggingFetchSubPhase.HitLogConsumer logger1 = new LoggingFetchSubPhase.HitLogConsumer("logger1", set, true);
-        RankerQuery q = RankerQuery.build(new PrebuiltLtrModel("test", LtrTestUtils.buildRandomRanker(set.size()), set));
-        Query lq = q.toLoggerQuery(logger1, true);
-        LoggingFetchSubPhase subPhase = new LoggingFetchSubPhase();
-        SearchHit[] hits = selectRandomHits();
-        expectThrows(LtrLoggingException.class, () -> subPhase.doLog(lq, singletonList(logger1), searcher, hits));
     }
 
     public SearchHit[] selectRandomHits() throws IOException {

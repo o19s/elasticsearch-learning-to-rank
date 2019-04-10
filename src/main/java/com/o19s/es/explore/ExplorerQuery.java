@@ -107,13 +107,14 @@ public class ExplorerQuery extends Query {
             StatisticsHelper ttf_stats = new StatisticsHelper();
 
             for (Term term : terms) {
-                TermStates
-                        ctx =
-                        TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
+                TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
                 TermStatistics tStats = searcher.termStatistics(term, ctx);
-                df_stats.add(tStats.docFreq());
-                idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
-                ttf_stats.add(tStats.totalTermFreq());
+                if(tStats!=null){
+                    df_stats.add(tStats.docFreq());
+                    idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
+                    ttf_stats.add(tStats.totalTermFreq());
+
+                }
             }
 
             /*
