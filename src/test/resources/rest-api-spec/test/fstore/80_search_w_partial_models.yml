@@ -84,10 +84,10 @@ setup:
                                     <feature> 1 </feature>
                                     <threshold> 1.0 </threshold>
                                     <split pos="left">
-                                      <output> -2.0 </output>
+                                      <output> 2.0 </output>
                                     </split>
                                     <split pos="right">
-                                     <output> 2.0 </output>
+                                     <output> 4.0 </output>
                                     </split>
                                   </split>
                                 </tree>

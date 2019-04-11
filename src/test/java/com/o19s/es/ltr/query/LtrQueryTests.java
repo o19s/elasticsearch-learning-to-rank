@@ -273,7 +273,7 @@ public class LtrQueryTests extends LuceneTestCase {
         // each RankList appears to correspond to a
         // query
         RankerTrainer trainer = new RankerTrainer();
-        Ranker ranker = trainer.train(/*what type of model ot train*/RANKER_TYPE.LAMBDAMART,
+        Ranker ranker = trainer.train(/*what type of model ot train*/RANKER_TYPE.RANKNET,
                                       /*The training data*/ samples
                                       /*which features to use*/, featuresToUse
                                       /*how to score ranking*/, new NDCGScorer());

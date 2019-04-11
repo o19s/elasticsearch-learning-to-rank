@@ -18,6 +18,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -29,8 +30,6 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchAction;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -209,7 +208,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     }
 
     RestChannelConsumer listStores(NodeClient client) {
-        return (channel) -> new SearchRequestBuilder(client, SearchAction.INSTANCE).execute(
+        return (channel) -> new ListStoresAction.ListStoresActionBuilder(client).execute(
                 new RestToXContentListener<>(channel));
     }
 

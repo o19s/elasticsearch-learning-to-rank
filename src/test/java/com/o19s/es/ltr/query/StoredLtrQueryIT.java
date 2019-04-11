@@ -97,7 +97,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setRescoreQueryWeight(1));
 
         SearchResponse sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(29.0f));
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(30.0f));
     }
@@ -158,7 +158,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setRescoreQueryWeight(1));
 
         SearchResponse sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
 
         if (negativeScore) {
             assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
@@ -179,7 +179,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setRescoreQueryWeight(1));
 
         sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
 
         if (negativeScore) {
             assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
@@ -210,7 +210,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setRescoreQueryWeight(1));
 
         sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.0f));
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(1.0f));
 
@@ -225,7 +225,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
         sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(28.0f));
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(30.0f));
 
@@ -240,7 +240,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
         sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-28.0f));
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(-30.0f));
 
@@ -255,7 +255,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
         sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits());
+        assertEquals(1, sr.getHits().getTotalHits().value);
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.2876f + 2.876f));
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");

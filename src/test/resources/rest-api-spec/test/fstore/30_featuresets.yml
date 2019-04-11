@@ -73,19 +73,19 @@
   - do:
         ltr.list_featureset: {}
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_featureset:
             prefix: my
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_featureset:
             prefix: hop
 
-  - match: { hits.total: 0 }
+  - match: { hits.total.value: 0 }
 
   - do:
         ltr.delete_featureset:
@@ -180,21 +180,21 @@
         ltr.list_featureset:
            store: mystore
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_featureset:
            store: mystore
            prefix: my
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_featureset:
            store: mystore
            prefix: hop
 
-  - match: { hits.total: 0 }
+  - match: { hits.total.value: 0 }
 
   - do:
         ltr.delete_featureset:

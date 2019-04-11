@@ -145,8 +145,8 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
 
     public static class ListStoresActionBuilder extends
         ActionRequestBuilder<ListStoresActionRequest, ListStoresActionResponse> {
-        public ListStoresActionBuilder(ElasticsearchClient client, ListStoresAction action){
-            super(client, action, new ListStoresActionRequest());
+        public ListStoresActionBuilder(ElasticsearchClient client){
+            super(client, INSTANCE, new ListStoresActionRequest());
         }
     }
 }

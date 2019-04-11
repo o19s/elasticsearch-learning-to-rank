@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.rest;
 
+import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
 
@@ -68,7 +69,7 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private RestChannelConsumer getStats(NodeClient client) {
-        return (channel) -> new ClearCachesAction.RequestBuilder(client).execute(new NodesResponseRestListener(channel));
+        return (channel) -> new CachesStatsAction.CachesStatsActionBuilder(client).execute(new NodesResponseRestListener(channel));
     }
 
     private RestChannelConsumer clearCache(RestRequest request, NodeClient client) {

@@ -60,19 +60,19 @@
   - do:
         ltr.list_feature: {}
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_feature:
             prefix: my
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_feature:
             prefix: hop
 
-  - match: { hits.total: 0 }
+  - match: { hits.total.value: 0 }
 
   - do:
         ltr.delete_feature:
@@ -155,21 +155,21 @@
         ltr.list_feature:
            store: mystore
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_feature:
            store: mystore
            prefix: my
 
-  - match: { hits.total: 1 }
+  - match: { hits.total.value: 1 }
 
   - do:
         ltr.list_feature:
            store: mystore
            prefix: hop
 
-  - match: { hits.total: 0 }
+  - match: { hits.total.value: 0 }
 
   - do:
         ltr.delete_feature:
