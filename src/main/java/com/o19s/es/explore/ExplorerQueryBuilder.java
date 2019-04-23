@@ -15,7 +15,6 @@
 
 package com.o19s.es.explore;
 
-import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -47,7 +46,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
                 QUERY_NAME
         );
         PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
-        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
+        declareStandardFields(PARSER);
     }
 
     private QueryBuilder query;
