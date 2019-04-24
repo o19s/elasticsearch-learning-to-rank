@@ -218,7 +218,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     }
 
     @Override
-    protected boolean isCachable(StoredLtrQueryBuilder queryBuilder) {
+    protected boolean isCacheable(StoredLtrQueryBuilder queryBuilder) {
         // This query is not cachable as it needs a ScriptService
         // see QueryShardContext#failIfFrozen()
         return false;
