@@ -174,8 +174,6 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
-            //do we need this?
-            //ActionFuture<SearchResponse> resp = searchAction.execute(srequest);
             searchAction.execute(srequest, wrap(this::onSearchResponse, this::onSearchFailure));
         }
 

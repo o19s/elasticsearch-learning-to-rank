@@ -64,7 +64,6 @@ public class NoopScorer extends Scorer {
      */
     @Override
     public float getMaxScore(int upTo) throws IOException {
-        //TODO??
         return Float.POSITIVE_INFINITY;
     }
 }

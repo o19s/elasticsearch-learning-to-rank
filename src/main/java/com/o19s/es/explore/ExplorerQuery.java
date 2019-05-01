@@ -55,13 +55,9 @@ public class ExplorerQuery extends Query {
                 || type.endsWith(("_ttf"));
     }
 
-    public Query getQuery() {
-        return this.query;
-    }
+    public Query getQuery() { return this.query; }
 
-    public String getType() {
-        return this.type;
-    }
+    public String getType() { return this.type; }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -109,7 +105,7 @@ public class ExplorerQuery extends Query {
             for (Term term : terms) {
                 TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
                 TermStatistics tStats = searcher.termStatistics(term, ctx);
-                if(tStats!=null){
+                if(tStats != null){
                     df_stats.add(tStats.docFreq());
                     idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
                     ttf_stats.add(tStats.totalTermFreq());

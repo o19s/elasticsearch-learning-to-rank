@@ -330,7 +330,6 @@ public class RankerQuery extends Query {
              */
             @Override
             public float getMaxScore(int upTo) throws IOException {
-                //TODO??
                 return Float.POSITIVE_INFINITY;
             }
         }
