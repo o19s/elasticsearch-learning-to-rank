@@ -117,7 +117,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(name);
-        out.writeStringArray(queryParams.toArray(new String[0]));
+        out.writeStringCollection(queryParams);
         out.writeString(templateLanguage);
         out.writeString(template);
         out.writeBoolean(templateAsString);

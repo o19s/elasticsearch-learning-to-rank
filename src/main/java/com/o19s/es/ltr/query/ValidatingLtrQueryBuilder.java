@@ -28,7 +28,6 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -83,7 +82,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         PARSER.declareObject((b, v) -> b.validation = v,
                 (p, c) -> FeatureValidation.PARSER.apply(p, null),
                 new ParseField("validation"));
-        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
+        declareStandardFields(PARSER);
     }
 
     private final transient LtrRankerParserFactory factory;

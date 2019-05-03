@@ -53,7 +53,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     static {
         PARSER = new ObjectParser<>(NAME, LtrQueryBuilder::new);
-        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
+        declareStandardFields(PARSER);
         PARSER.declareObjectArray(
                 LtrQueryBuilder::features,
                 (parser, context) -> parseInnerQueryBuilder(parser),

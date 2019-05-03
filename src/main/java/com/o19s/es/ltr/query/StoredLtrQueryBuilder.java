@@ -22,7 +22,6 @@ import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
@@ -63,7 +62,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         PARSER.declareString(StoredLtrQueryBuilder::storeName, STORE_NAME);
         PARSER.declareField(StoredLtrQueryBuilder::params, XContentParser::map, PARAMS, ObjectParser.ValueType.OBJECT);
         PARSER.declareStringArray(StoredLtrQueryBuilder::activeFeatures, ACTIVE_FEATURES);
-        AbstractQueryBuilderUtils.declareStandardFields(PARSER);
+        declareStandardFields(PARSER);
     }
 
     /**

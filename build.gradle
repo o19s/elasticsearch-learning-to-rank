@@ -11,7 +11,7 @@ buildscript {
 }
 
 group = 'com.o19s'
-version = '1.1.0-es7.0.0'
+version = '1.1.1-es7.0.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -55,6 +55,7 @@ dependencies {
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
   testCompile 'org.elasticsearch.test:framework:7.0.0'
+
 }
 
 dependencyLicenses {
