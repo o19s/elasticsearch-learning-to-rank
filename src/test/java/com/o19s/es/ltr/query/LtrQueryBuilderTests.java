@@ -233,9 +233,4 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         assertThat(query, instanceOf(RankerQuery.class));
     }
 
-    @Override
-    protected boolean isCacheable(LtrQueryBuilder queryBuilder){
-        return false;
-    }
-
 }

@@ -236,8 +236,4 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         }
     }
 
-    @Override
-    protected boolean isCacheable(StoredLtrQueryBuilder queryBuilder){
-        return false;
-    }
 }
