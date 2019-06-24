@@ -1,0 +1,8 @@
+version: 2
+jobs:
+    build:
+        docker:
+            - image: codeaches/openjdk:12-jdk
+        steps:
+            - checkout
+            - run: ./gradlew clean check -Des.insecure.allow.root=true  -Dtests.jvms=1
