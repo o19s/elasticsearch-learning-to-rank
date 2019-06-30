@@ -1,5 +1,6 @@
 version: 2
 jobs:
+    resource_class: large
     build:
         docker:
             - image: quepid/es-plugin-test
