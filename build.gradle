@@ -8,6 +8,7 @@ buildscript {
   dependencies {
     classpath "org.elasticsearch.gradle:build-tools:7.0.1"
   }
+
 }
 
 group = 'com.o19s'
@@ -63,6 +64,10 @@ dependencyLicenses {
   mapping from: /asm-.*/, to: 'asm'
   mapping from: /Ranky-.*/, to: 'lucene'
   mapping from: /compiler-.*/, to: 'lucene'
+}
+
+test { 
+  maxHeapSize = "512m" 
 }
 
 // Set to false to not use elasticsearch checkstyle rules
