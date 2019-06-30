@@ -2,7 +2,7 @@ version: 2
 jobs:
     build:
         docker:
-            - image: codeaches/openjdk:12-jdk
+            - image: quepid/es-plugin-test
         steps:
             - checkout
             - run: ./gradlew clean check -Des.insecure.allow.root=true  -Dtests.jvms=1
