@@ -1,5 +1,8 @@
 FROM alpine:3.10
 
+# Basics: Git, bash libc, etc
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
 RUN apk update \
 	&& apk add \
 	openssh-client \
@@ -72,9 +75,9 @@ ENV JAVA_HOME=/opt/java/openjdk \
 
 RUN java -version
 
-# Create a group and user
-#RUN addgroup -S elastic && adduser -S elastic -G elastic
-
+# Elasticsearch cant be run as root, 
+# this includes various integration and unit tests
+# Build as another user
 ENV USER=docker
 ENV UID=12345
 ENV GID=23456
@@ -83,18 +86,18 @@ RUN addgroup --gid "$GID" "$USER" \
     && adduser \
     --disabled-password \
     --gecos "" \
-    --home "/home/docker" \
+    --home "/home/$USER" \
     --ingroup "$USER" \
     --uid "$UID" \
     "$USER"
 
-USER docker
-WORKDIR /home/docker/
+USER $USER
+WORKDIR /home/$USER/
 
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 
-# Various tests
+# Various sanity checks 
 RUN mkdir project
 RUN which java
 RUN java -version
