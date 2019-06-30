@@ -5,4 +5,9 @@ jobs:
             - image: quepid/es-plugin-test
         steps:
             - checkout
-            - run: ./gradlew clean check --no-daemon -Dtests.jvms=1
+            - run: 
+                name: Full ES Plugin Build ('clean and check')
+                environment: 
+                   GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false
+                command: ./gradlew clean check --no-daemon -Dtests.jvms=1
+
