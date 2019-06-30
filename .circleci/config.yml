@@ -5,4 +5,4 @@ jobs:
             - image: quepid/es-plugin-test
         steps:
             - checkout
-            - run: ./gradlew clean check -Des.insecure.allow.root=true  -Dtests.jvms=1
+            - run: ./gradlew clean check --no-daemon -Dtests.jvms=1
