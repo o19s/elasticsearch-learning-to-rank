@@ -7,5 +7,5 @@ jobs:
             - checkout
             - run: 
                 name: Full ES Plugin Build ('clean and check')
-                command: ./gradlew clean check -Dtests.jvms=1
+                command: ./gradlew clean check --no-daemon -Dtests.jvms=1
 
