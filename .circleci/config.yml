@@ -3,6 +3,9 @@ jobs:
     build:
         docker:
             - image: quepid/es-plugin-test
+              environment:
+                MAX_HEAP_SIZE: 4096m
+                HEAP_NEWSIZE: 1024m
         steps:
             - checkout
             - run: 
