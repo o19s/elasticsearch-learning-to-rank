@@ -63,10 +63,7 @@ RUN set -eux; \
     rm -rf /var/cache/apk/*; \
     rm -rf /tmp/openjdk.tar.gz;
 
-RUN chmod a+rwx /opt/java/openjdk/bin/*
-
-#RUN apt-get update
-#RUN apt-get -y install git openjdk-12-jdk
+RUN chmod a+x /opt/java/openjdk/bin/*
 
 RUN apk add --no-cache git
 
