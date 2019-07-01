@@ -9,5 +9,7 @@ jobs:
         steps:
             - checkout
             - run: 
+                environment: 
+                   GRADLE_OPTS: -Xmx2048m 
                 name: Full ES Plugin Build ('clean and check')
                 command: ./gradlew clean check --no-daemon -Dtests.jvms=1
