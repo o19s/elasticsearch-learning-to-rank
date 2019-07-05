@@ -1,8 +1,0 @@
-version: 2
-jobs:
-    build:
-        docker:
-          - image: circleci/openjdk:11.0.1-jdk-node-browsers
-        steps:
-            - checkout
-            - run: ./gradlew clean check -Dtests.jvms=1
