@@ -1,5 +1,6 @@
 {
   "ltr.clear_cache": {
+    "stability": "stable",
     "methods" : ["POST"],
     "url": {
       "paths": ["/_ltr/_clearcache", "/_ltr/{store}/_clearcache"],

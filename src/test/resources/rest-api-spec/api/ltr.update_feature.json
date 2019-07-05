@@ -1,5 +1,6 @@
 {
   "ltr.update_feature": {
+    "stability": "stable",
     "methods" : ["POST"],
     "url": {
       "path": "/_ltr/{store}/_feature/{name}",

@@ -1,5 +1,6 @@
 {
   "ltr.create_feature": {
+    "stability": "stable",
     "methods" : ["PUT"],
     "url": {
       "path": "/_ltr/{store}/_feature/{name}",

@@ -1,5 +1,6 @@
 {
   "ltr.delete_model": {
+    "stability": "stable",
     "methods" : ["DELETE"],
     "url": {
       "path": "/_ltr/{store}/_model/{name}",

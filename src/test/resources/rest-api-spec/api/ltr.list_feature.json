@@ -1,5 +1,6 @@
 {
   "ltr.list_feature": {
+    "stability": "stable",
     "methods" : ["GET"],
     "url": {
       "paths": ["/_ltr/_feature", "/_ltr/{store}/_feature"],
