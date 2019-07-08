@@ -1,0 +1,9 @@
+language: java
+install: true
+dist: xenial
+
+jdk:
+  - oraclejdk12
+
+script:
+  - ./gradlew clean check
