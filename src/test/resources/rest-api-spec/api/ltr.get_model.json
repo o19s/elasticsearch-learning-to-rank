@@ -1,5 +1,6 @@
 {
   "ltr.get_model": {
+    "stability": "stable",
     "methods" : ["GET"],
     "url": {
       "path": "/_ltr/{store}/_model/{name}",

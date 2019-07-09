@@ -1,5 +1,6 @@
 {
   "ltr.delete_feature": {
+    "stability": "stable",
     "methods" : ["DELETE"],
     "url": {
       "path": "/_ltr/{store}/_feature/{name}",

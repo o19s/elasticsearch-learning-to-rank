@@ -1,5 +1,6 @@
 {
   "ltr.get_featureset": {
+    "stability": "stable",
     "methods" : ["GET"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}",

@@ -1,5 +1,6 @@
 {
   "ltr.add_features_to_set": {
+    "stability": "stable",
     "methods" : ["POST"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",

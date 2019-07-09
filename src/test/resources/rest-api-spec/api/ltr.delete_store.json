@@ -1,5 +1,6 @@
 {
   "ltr.delete_store": {
+    "stability": "stable",
     "methods" : ["DELETE"],
     "url": {
       "paths": ["/_ltr", "/_ltr/{store}"],

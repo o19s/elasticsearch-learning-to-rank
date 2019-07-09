@@ -1,5 +1,6 @@
 {
   "ltr.create_featureset": {
+    "stability": "stable",
     "methods" : ["PUT"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}",

@@ -1,5 +1,6 @@
 {
   "ltr.update_featureset": {
+    "stability": "stable",
     "methods" : ["POST"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}",

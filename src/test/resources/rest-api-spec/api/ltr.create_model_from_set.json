@@ -1,5 +1,6 @@
 {
   "ltr.create_model_from_set": {
+    "stability": "stable",
     "methods" : ["POST"],
     "url": {
       "path": "/_ltr/{store}/_featureset/{name}/_createmodel",

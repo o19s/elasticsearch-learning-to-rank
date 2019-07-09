@@ -1,5 +1,6 @@
 {
   "ltr.get_store": {
+    "stability": "stable",
     "methods" : ["GET"],
     "url": {
       "paths": ["/_ltr/{store}"],
