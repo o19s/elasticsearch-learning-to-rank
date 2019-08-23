@@ -57,8 +57,8 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
     }
 
     @Override
-    protected ClearCachesNodeRequest newNodeRequest(String nodeId, ClearCachesNodesRequest request) {
-        return new ClearCachesNodeRequest(nodeId, request);
+    protected ClearCachesNodeRequest newNodeRequest(ClearCachesNodesRequest request) {
+        return new ClearCachesNodeRequest(request);
     }
 
     @Override
@@ -93,8 +93,7 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
 
         public ClearCachesNodeRequest() {}
 
-        public ClearCachesNodeRequest(String nodeId, ClearCachesNodesRequest req) {
-            super(nodeId);
+        public ClearCachesNodeRequest(ClearCachesNodesRequest req) {
             this.request = req;
         }
 

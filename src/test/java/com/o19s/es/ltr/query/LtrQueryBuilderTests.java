@@ -160,15 +160,19 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
 
     }
 
-
     @Override
     protected boolean builderGeneratesCacheableQueries() {
         return false;
     }
 
     @Override
-    protected boolean isCacheable(LtrQueryBuilder queryBuilder) {
-        return false;
+    public void testCacheability() throws IOException {
+        LtrQueryBuilder queryBuilder = createTestQueryBuilder();
+        QueryShardContext context = createShardContext();
+        assert context.isCacheable();
+        QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
+        assertNotNull(rewritten.toQuery(context));
+        assertFalse("query should not be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
 
     @Override

@@ -16,9 +16,10 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesResponse;
 import com.o19s.es.ltr.feature.store.index.Caches;
-import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesRequest;
@@ -29,6 +30,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -37,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodesResponse> {
+public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
     public static final String NAME = "cluster:admin/ltr/caches/stats";
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
@@ -46,10 +48,9 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
     }
 
     @Override
-    public CachesStatsNodesResponse newResponse() {
-        return new CachesStatsNodesResponse();
+    public Reader<CachesStatsNodesResponse> getResponseReader() {
+        return CachesStatsNodesResponse::new;
     }
-
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
     }
@@ -57,7 +58,12 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
     public static class CachesStatsNodesResponse extends BaseNodesResponse<CachesStatsNodeResponse> implements ToXContent {
         private StatDetails allStores;
         private Map<String, StatDetails> byStore;
-        public CachesStatsNodesResponse() {}
+
+        public CachesStatsNodesResponse(StreamInput in) throws IOException {
+            super.readFrom(in);
+            allStores = new StatDetails(in);
+            byStore = in.readMap(StreamInput::readString, StatDetails::new);
+        }
 
         public CachesStatsNodesResponse(ClusterName clusterName, List<CachesStatsNodeResponse> nodes, List<FailedNodeException> failures) {
             super(clusterName, nodes, failures);
@@ -77,13 +83,6 @@ public class CachesStatsAction extends Action<CachesStatsAction.CachesStatsNodes
         @Override
         protected void writeNodesTo(StreamOutput out, List<CachesStatsNodeResponse> nodes) throws IOException {
             out.writeStreamableList(nodes);
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            allStores = new StatDetails(in);
-            byStore = in.readMap(StreamInput::readString, StatDetails::new);
         }
 
         @Override

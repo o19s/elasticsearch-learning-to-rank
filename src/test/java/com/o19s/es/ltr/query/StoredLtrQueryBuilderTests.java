@@ -218,10 +218,13 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     }
 
     @Override
-    protected boolean isCacheable(StoredLtrQueryBuilder queryBuilder) {
-        // This query is not cachable as it needs a ScriptService
-        // see QueryShardContext#failIfFrozen()
-        return false;
+    public void testCacheability() throws IOException {
+        StoredLtrQueryBuilder queryBuilder = createTestQueryBuilder();
+        QueryShardContext context = createShardContext();
+        assert context.isCacheable();
+        QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
+        assertNotNull(rewritten.toQuery(context));
+        assertFalse("query should not be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
 
     // Hack to inject our MemStore

@@ -16,17 +16,19 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetResponse;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.FeatureValidation;
-import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.StatusToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
@@ -36,7 +38,7 @@ import java.util.List;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFeaturesToSetResponse> {
+public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse> {
     public static final AddFeaturesToSetAction INSTANCE = new AddFeaturesToSetAction();
     public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
@@ -45,8 +47,8 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
     }
 
     @Override
-    public AddFeaturesToSetResponse newResponse() {
-        return new AddFeaturesToSetResponse();
+    public Reader<AddFeaturesToSetResponse> getResponseReader() {
+        return AddFeaturesToSetResponse::new;
     }
 
     public static class AddFeaturesToSetRequestBuilder extends ActionRequestBuilder<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
@@ -169,18 +171,14 @@ public class AddFeaturesToSetAction extends Action<AddFeaturesToSetAction.AddFea
     public static class AddFeaturesToSetResponse extends ActionResponse implements StatusToXContentObject {
         private IndexResponse response;
 
-        public AddFeaturesToSetResponse() {
+        public AddFeaturesToSetResponse(StreamInput in) throws IOException {
+            super(in);
+            response = new IndexResponse();
+            response.readFrom(in);
         }
 
         public AddFeaturesToSetResponse(IndexResponse response) {
             this.response = response;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            response = new IndexResponse();
-            response.readFrom(in);
         }
 
         @Override

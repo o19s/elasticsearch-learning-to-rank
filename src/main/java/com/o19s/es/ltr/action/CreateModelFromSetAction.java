@@ -16,17 +16,19 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetResponse;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.StatusToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
@@ -35,7 +37,7 @@ import java.io.IOException;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.CreateModelFromSetResponse> {
+public class CreateModelFromSetAction extends ActionType<CreateModelFromSetResponse> {
     public static final String NAME = "cluster:admin/ltr/store/create-model-from-set";
     public static final CreateModelFromSetAction INSTANCE = new CreateModelFromSetAction();
 
@@ -47,8 +49,8 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
      * Creates a new response instance.
      */
     @Override
-    public CreateModelFromSetResponse newResponse() {
-        return new CreateModelFromSetResponse();
+    public Reader<CreateModelFromSetResponse> getResponseReader() {
+        return CreateModelFromSetResponse::new;
     }
 
     public static class CreateModelFromSetRequestBuilder extends ActionRequestBuilder<CreateModelFromSetRequest,
@@ -179,20 +181,16 @@ public class CreateModelFromSetAction extends Action<CreateModelFromSetAction.Cr
         private static final int VERSION = 1;
         private IndexResponse response;
 
-        public CreateModelFromSetResponse() {
-        }
-
-        public CreateModelFromSetResponse(IndexResponse response) {
-            this.response = response;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
+        public CreateModelFromSetResponse(StreamInput in) throws IOException {
+            super(in);
             int version = in.readVInt();
             assert version == VERSION;
             response = new IndexResponse();
             response.readFrom(in);
+        }
+
+        public CreateModelFromSetResponse(IndexResponse response) {
+            this.response = response;
         }
 
         @Override

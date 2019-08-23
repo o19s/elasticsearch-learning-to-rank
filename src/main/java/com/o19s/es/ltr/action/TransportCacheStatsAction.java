@@ -55,8 +55,8 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
     }
 
     @Override
-    protected CachesStatsNodeRequest newNodeRequest(String nodeId, CachesStatsNodesRequest request) {
-        return new CachesStatsNodeRequest(nodeId);
+    protected CachesStatsNodeRequest newNodeRequest(CachesStatsNodesRequest request) {
+        return new CachesStatsNodeRequest();
     }
 
     @Override
@@ -70,11 +70,6 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
     }
 
     public static class CachesStatsNodeRequest extends BaseNodeRequest {
-        public CachesStatsNodeRequest() {
-        }
-
-        public CachesStatsNodeRequest(String nodeId) {
-            super(nodeId);
-        }
+        public CachesStatsNodeRequest() {}
     }
 }

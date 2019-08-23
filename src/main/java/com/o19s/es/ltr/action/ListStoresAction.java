@@ -16,16 +16,18 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.ltr.action.ListStoresAction.ListStoresActionResponse;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.support.master.MasterNodeReadRequest;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -36,7 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ListStoresAction extends Action<ListStoresAction.ListStoresActionResponse> {
+public class ListStoresAction extends ActionType<ListStoresActionResponse> {
     public static final String NAME = "cluster:admin/ltr/featurestore/list";
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
@@ -45,8 +47,8 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
     }
 
     @Override
-    public ListStoresActionResponse newResponse() {
-        return new ListStoresActionResponse();
+    public Reader<ListStoresActionResponse> getResponseReader() {
+        return ListStoresActionResponse::new;
     }
 
     public static class ListStoresActionRequest extends MasterNodeReadRequest<ListStoresActionRequest> {
@@ -61,6 +63,11 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
 
         ListStoresActionResponse() {}
 
+        ListStoresActionResponse(StreamInput in) throws IOException {
+            super(in);
+            stores = in.readMap(StreamInput::readString, IndexStoreInfo::new);
+        }
+
         public ListStoresActionResponse(List<IndexStoreInfo> info) {
             stores = info.stream().collect(Collectors.toMap((i) -> i.storeName, (i) -> i));
         }
@@ -70,12 +77,6 @@ public class ListStoresAction extends Action<ListStoresAction.ListStoresActionRe
             return builder.startObject()
                     .field("stores", stores)
                     .endObject();
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            stores = in.readMap(StreamInput::readString, IndexStoreInfo::new);
         }
 
         @Override
