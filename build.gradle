@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.2.0"
+    classpath "org.elasticsearch.gradle:build-tools:7.3.1"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.1-es7.2.0'
+version = '1.1.1-es7.3.1'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -35,6 +35,11 @@ esplugin {
   noticeFile = rootProject.file('NOTICE.txt')
 }
 
+configurations.restSpec.withDependencies { dependencies -> 
+  dependencies.clear()
+  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.3.1"))
+}
+
 
 // In this section you declare the dependencies for your production and test code
 // Note, the two dependencies are not really needed as the buildscript dependency gets them in already
@@ -51,10 +56,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.2.0'
+  compile 'org.elasticsearch:elasticsearch:7.3.1'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.2.0'
+  testCompile 'org.elasticsearch.test:framework:7.3.1'
 
 }
 
@@ -77,3 +82,4 @@ thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
 licenseHeaders.enabled = false
+
