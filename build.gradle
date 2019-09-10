@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.2.0"
+    classpath "org.elasticsearch.gradle:build-tools:7.3.1"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.1-es7.2.0'
+version = '1.1.2-es7.3.1'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -27,7 +27,7 @@ noticeFile = rootProject.file('NOTICE.txt')
 
 esplugin {
   name 'ltr'
-  description 'Learing to Rank Query w/ RankLib Models'
+  description 'Learning to Rank Query w/ RankLib Models'
   classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
   // license of this project
   licenseFile = rootProject.file('LICENSE.txt')
@@ -46,15 +46,15 @@ repositories {
 }
 
 dependencies {
-  compile "org.apache.lucene:lucene-expressions:8.0.0"
+  compile "org.apache.lucene:lucene-expressions:8.1.0"
   compile 'org.antlr:antlr4-runtime:4.5.1-1'
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.2.0'
+  compile 'org.elasticsearch:elasticsearch:7.3.1'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.2.0'
+  testCompile 'org.elasticsearch.test:framework:7.3.1'
 
 }
 
@@ -64,6 +64,14 @@ dependencyLicenses {
   mapping from: /Ranky-.*/, to: 'lucene'
   mapping from: /compiler-.*/, to: 'lucene'
 }
+
+
+// https://github.com/elastic/elasticsearch/issues/45891#issuecomment-525399411
+configurations.restSpec.withDependencies { dependencies ->
+  dependencies.clear()
+  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.3.1"))
+}
+
 
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true

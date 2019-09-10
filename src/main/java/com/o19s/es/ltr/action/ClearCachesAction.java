@@ -16,9 +16,10 @@
 
 package com.o19s.es.ltr.action;
 
-import org.elasticsearch.action.Action;
+import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesRequest;
@@ -32,10 +33,11 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodesResponse> {
+public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     public static final String NAME = "cluster:admin/ltr/caches";
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
@@ -44,8 +46,8 @@ public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodes
     }
 
     @Override
-    public ClearCachesNodesResponse newResponse() {
-        return new ClearCachesNodesResponse();
+    public Reader<ClearCachesNodesResponse> getResponseReader() {
+        return ClearCachesNodesResponse::new;
     }
 
     public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse> {
@@ -136,7 +138,9 @@ public class ClearCachesAction extends Action<ClearCachesAction.ClearCachesNodes
     }
 
     public static class ClearCachesNodesResponse extends BaseNodesResponse<ClearCachesNodeResponse> {
-        public ClearCachesNodesResponse() {}
+        public ClearCachesNodesResponse(StreamInput in) throws IOException {
+            super.readFrom(in);
+        }
 
         public ClearCachesNodesResponse(ClusterName clusterName, List<ClearCachesNodeResponse> responses,
                                         List<FailedNodeException> failures) {
