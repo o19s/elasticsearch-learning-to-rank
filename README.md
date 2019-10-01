@@ -54,6 +54,25 @@ When building to support another version of Elasticsearch, versions should be mo
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-<LTR-VER>-es<ES-VER>.zip
 ```
 
+### Docs Development
+
+[Docs](/docs) are built using Sphinx and written in reStructuredText. After [installing sphinx](https://www.sphinx-doc.org/en/master/index.html) (`pip install sphinx`) rebuild the docs with:
+
+```
+cd docs
+make html
+```
+
+In another tab, you can simply run:
+
+```
+python -m http.server
+```
+
+and browse to the _build/html directory to view the built docs. 
+
+Docs changes at master will be automatically built and deployed to readthedocs.
+
 # Who built this?
 - [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
 - Significant contributions by [Wikimedia Foundation](https://wikimediafoundation.org/wiki/Home), [Snagajob Engineering](https://engineering.snagajob.com/), and [Bonsai](https://bonsai.io/)
