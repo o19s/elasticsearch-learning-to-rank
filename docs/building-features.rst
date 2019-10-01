@@ -67,69 +67,6 @@ You'll notice the :code:`{{keywords}}`, :code:`{{users_lat}}`, and :code:`{{user
 
 For now, we'll simply focus on typical keyword searches.
 
-.. _derived-features:
-
-=================
-Derived Features
-=================
-
-Features that build on top of other features are called derived features.  These can be expressed as `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. They are recognized by :code:`"template_language": "derived_expression"`. Besides these can also take in query time variables of type `Number <https://docs.oracle.com/javase/8/docs/api/java/lang/Number.html>`_ as explained in :ref:`create-feature-set`.
-
-=================
-Script Features
-=================
-These are essentially :ref:`derived-features`, having access to the :code:`feature_vector` but could be native or painless elasticsearch scripts rather than `lucene expressions <http://lucene.apache.org/core/7_1_0/expressions/index.html?org/apache/lucene/expressions/js/package-summary.html>`_. :code:`"template_language": "script_feature""` allows LTR to identify the templated script as a regular elasticsearch script e.g. native, painless, etc.
-
-The custom script has access to the feature_vector via the java `Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_ interface as explained in :ref:`create-feature-set`.
-
-(WARNING script features can cause the performance of your Elasticsearch cluster to degrade, if possible avoid using these for feature generation if you require your queries to be highly performant)
-
-============================
-Script Features Parameters
-============================
-Script features are essentially native/painless scripts and can accept parameters as per the `elasticsearch script documentation <https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-scripting-using.html>`_. We can override parameter values and names to scripts within LTR scripts. Priority for parameterization in increasing order is as follows
- - parameter name, value passed in directly to source script but not in params in ltr script. These cannot be configured at query time.
- - parameter name passed in to sltr query and to source script, so the script parameter values can be overridden at query time.
- - ltr script parameter name to native script parameter name indirection. This allows ltr parameter name to be different from the underlying script parameter name. This allows same native script to be reused as different features within LTR by specifying different parameter names at query time::
-
-    POST _ltr/_featureset/more_movie_features
-    {
-       "featureset": {
-            "features": [
-                {
-                    "name": "title_query",
-                    "params": [
-                        "keywords"
-                    ],
-                    "template_language": "mustache",
-                    "template": {
-                        "match": {
-                            "title": "{{keywords}}"
-                        }
-                    }
-                },
-                {
-                    "name": "custom_title_query_boost",
-                    "params": [
-                        "some_multiplier",
-                        "ltr_param_foo"
-                    ],
-                    "template_language": "script_feature",
-                    "template": {
-                        "lang": "painless",
-                        "source": "(long)params.default_param * params.feature_vector.get('title_query') * (long)params.some_multiplier * (long) params.param_foo",
-                        "params": {
-                            "default_param" : 10.0,
-                            "some_multiplier": "some_multiplier",
-                            "extra_script_params": {"ltr_param_foo": "param_foo"}
-                        }
-                    }
-                }
-            ]
-       }
-    }
-
-
 =============================
 Uploading and Naming Features
 =============================
@@ -318,5 +255,10 @@ Feature Sets are Lists
 
 You'll notice we *appended* to the feature set. Feature sets perhaps ought to be really called "lists." Each feature has an ordinal (its place in the list) in addition to a name. Some LTR training applications, such as Ranklib, refer to a feature by ordinal (the "1st" feature, the "2nd" feature). Others more conveniently refer to the name. So you may need both/either. You'll see that when features are logged, they give you a list of features back to preserve the ordinal.
 
+==========================
+But wait there's more
+==========================
 
-Next-up, we'll talk about some unique features the Elasticsearch LTR plugin allows with a few extra custom queries in :doc:`feature-engineering`.
+Feature engineering is a complex part of Elasticsearch Learning to Rank, and additional features (such as features that can be derived from other features) are listed in :doc:`advanced-functionality`.
+
+Next-up, we'll talk about some specific use cases you'll run into when :doc:`feature-engineering`.
