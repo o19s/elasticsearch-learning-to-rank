@@ -75,7 +75,7 @@ Docs changes at master will be automatically built and deployed to readthedocs.
 
 # Who built this?
 - [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
-- Significant contributions by [Wikimedia Foundation](https://wikimediafoundation.org/wiki/Home), [Snagajob Engineering](https://engineering.snagajob.com/), and [Bonsai](https://bonsai.io/)
+- Significant contributions by [Wikimedia Foundation](https://wikimediafoundation.org/wiki/Home), [Snagajob Engineering](https://engineering.snagajob.com/), [Bonsai](https://bonsai.io/), and [Yelp Engineering](https://engineeringblog.yelp.com/)
 - Thanks to [Jettro Coenradie](https://amsterdam.luminis.eu/author/jettro/) for porting to ES 6.1
 
 ## Other Acknowledgments & Stuff To Read
