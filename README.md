@@ -69,7 +69,7 @@ In another tab, you can simply run:
 python -m http.server
 ```
 
-and browse to the _build/html directory to view the built docs. 
+Visit [localhost:8000](http://localhost:8000) and browse to the `_build/html` directory in your browser to view the built docs. 
 
 Docs changes at master will be automatically built and deployed to readthedocs.
 
