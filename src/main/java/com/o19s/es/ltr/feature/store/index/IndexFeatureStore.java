@@ -162,7 +162,7 @@ public class IndexFeatureStore implements FeatureStore {
     public CompiledLtrModel loadModel(String name) throws IOException {
         StoredLtrModel model = getAndParse(name, StoredLtrModel.class, StoredLtrModel.TYPE);
         if (model == null) {
-            throw new IllegalArgumentException("Unkown model [" + name + "]");
+            throw new IllegalArgumentException("Unknown model [" + name + "]");
         }
         return model.compile(parserFactory);
     }

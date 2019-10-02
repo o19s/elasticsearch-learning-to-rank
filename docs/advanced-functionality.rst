@@ -166,4 +166,4 @@ Characteristics of the internal cache can be controlled with these node settings
     # Evict cache entries 10 minutes after insertion (defaults to 1hour, set to 0 to disable)
     ltr.caches.expire_after_write: 10m
     # Evict cache entries 10 minutes after access (defaults to 1hour, set to 0 to disable)
-    ltr.caches.expire_after_access: 10m
+    ltr.caches.expire_after_read: 10m
