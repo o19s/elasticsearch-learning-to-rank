@@ -54,18 +54,30 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
         NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 0);
+                new float[0], 0, new ModelObjective());
         assertEquals("naive_additive_decision_tree", dectree.name());
     }
 
     public void testScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt");
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", new ModelObjective());
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
         vector.setFeatureScore(2, 3);
 
         float expected = 1.2F*3.4F + 3.2F*2.8F;
+        assertEquals(expected, ranker.score(vector), Math.ulp(expected));
+    }
+
+    public void testLogisticScore() throws IOException {
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", new ModelObjective.LogisticObjective());
+        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        vector.setFeatureScore(0, 1);
+        vector.setFeatureScore(1, 2);
+        vector.setFeatureScore(2, 3);
+
+        float expected = 1.2F*3.4F + 3.2F*2.8F;
+        expected = (float) (1 / (1 + Math.exp(-expected)));
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
@@ -125,16 +137,16 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             }
             trees[i] = new RandomTreeGenerator(nbFeatures, minDepth, maxDepth, collector).genTree();
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures);
+        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, new ModelObjective());
     }
 
     public void testSize() {
         NaiveAdditiveDecisionTree ranker = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 3);
+                new float[0], 3, new ModelObjective());
         assertEquals(ranker.size(), 3);
     }
 
-    private NaiveAdditiveDecisionTree parseTreeModel(String textRes) throws IOException {
+    private NaiveAdditiveDecisionTree parseTreeModel(String textRes, ModelObjective objective) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<>(3);
         features.add(new PrebuiltFeature("feature1", new MatchAllDocsQuery()));
         features.add(new PrebuiltFeature("feature2", new MatchAllDocsQuery()));
@@ -149,7 +161,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             weights[i] = treesAndWeight.get(i).weight;
             trees[i] = treesAndWeight.get(i).tree;
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size());
+        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), objective);
     }
 
     private static class TreeTextParser {

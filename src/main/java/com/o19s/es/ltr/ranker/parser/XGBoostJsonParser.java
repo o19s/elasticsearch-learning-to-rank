@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.ranker.parser;
 
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.dectree.ModelObjective;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree.Node;
 import org.elasticsearch.common.ParseField;
@@ -41,10 +42,23 @@ public class XGBoostJsonParser implements LtrRankerParser {
     @Override
     public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
         List<Node> trees = new ArrayList<>();
+        XGBoostParams params;
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY,
                 LoggingDeprecationHandler.INSTANCE, model)
         ) {
-            if (parser.nextToken() != XContentParser.Token.START_ARRAY) {
+            // Check for existence of a parameter object, parse or use defaults
+            if (parser.nextToken() == XContentParser.Token.START_OBJECT) {
+                try {
+                    params = XGBoostParams.parse(parser, new Object());
+                } catch (Exception e) {
+                    throw new ParsingException(parser.getTokenLocation(), "Unable to parse xgboost params", e);
+                }
+                parser.nextToken();
+            } else {
+                params = new XGBoostParams();
+            }
+
+            if (parser.currentToken() != XContentParser.Token.START_ARRAY) {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_ARRAY] but got [" + parser.currentToken() + "]");
             }
             while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -56,7 +70,32 @@ public class XGBoostJsonParser implements LtrRankerParser {
         float[] weights = new float[trees.size()];
         // Tree weights are already encoded in outputs
         Arrays.fill(weights, 1F);
-        return new NaiveAdditiveDecisionTree(trees.toArray(new Node[0]), weights, set.size());
+        return new NaiveAdditiveDecisionTree(trees.toArray(new Node[0]), weights, set.size(), params.objective);
+    }
+
+    private static class XGBoostParams {
+        private static final ObjectParser<XGBoostParams, Object> PARSER;
+        static {
+            PARSER = new ObjectParser<>("params", XGBoostParams::new);
+            PARSER.declareString(XGBoostParams::setObjective, new ParseField("objective"));
+        }
+
+        private ModelObjective objective;
+
+        public static XGBoostParams parse(XContentParser parser, Object o) {
+            return PARSER.apply(parser, o);
+        }
+
+        XGBoostParams() {
+            objective = ModelObjective.defaultObjective();
+        }
+
+        void setObjective(String objectiveName) {
+            if (!ModelObjective.exists(objectiveName)) {
+                throw new IllegalArgumentException("Objective [" + objectiveName + "] is not a valid xgboost objective");
+            }
+            objective = ModelObjective.get(objectiveName);
+        }
     }
 
     private static class SplitParserState {

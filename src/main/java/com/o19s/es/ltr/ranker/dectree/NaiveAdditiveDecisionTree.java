@@ -33,6 +33,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     private final Node[] trees;
     private final float[] weights;
     private final int modelSize;
+    private final ModelObjective objective;
 
     /**
      * TODO: Constructor for these classes are strict and not really
@@ -42,12 +43,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      * @param trees an array of trees
      * @param weights the respective weights
      * @param modelSize the modelSize in number of feature used
+     * @param objective learning objective to transform model prediction
      */
-    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize) {
+    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize, ModelObjective objective) {
         assert trees.length == weights.length;
         this.trees = trees;
         this.weights = weights;
         this.modelSize = modelSize;
+        this.objective = objective;
     }
 
     @Override
@@ -62,7 +65,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         for (int i = 0; i < trees.length; i++) {
             sum += weights[i]*trees[i].eval(scores);
         }
-        return sum;
+        return objective.predTransform(sum);
     }
 
     @Override
