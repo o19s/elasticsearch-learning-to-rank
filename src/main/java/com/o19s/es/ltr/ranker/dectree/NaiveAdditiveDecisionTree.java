@@ -88,12 +88,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
         private final Node left;
         private final Node right;
+        private final Node onMissing;
         private final int feature;
         private final float threshold;
 
-        public Split(Node left, Node right, int feature, float threshold) {
+        public Split(Node left, Node right, Node onMissing, int feature, float threshold) {
             this.left = Objects.requireNonNull(left);
             this.right = Objects.requireNonNull(right);
+            this.onMissing = onMissing == null ? this.left : onMissing;
             this.feature = feature;
             this.threshold = threshold;
         }
@@ -109,7 +111,9 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
             while (!n.isLeaf()) {
                 assert n instanceof Split;
                 Split s = (Split) n;
-                if (s.threshold > scores[s.feature]) {
+                if (scores[s.feature] == Float.MAX_VALUE) {
+                    n = s.onMissing;
+                } else if (s.threshold > scores[s.feature]) {
                     n = s.left;
                 } else {
                     n = s.right;

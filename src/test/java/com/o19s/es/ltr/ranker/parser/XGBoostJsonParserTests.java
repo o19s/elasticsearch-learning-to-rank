@@ -73,6 +73,8 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
         v.setFeatureScore(0, 0.123F);
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+        v.setFeatureScore(0, Float.MAX_VALUE);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
     }
 
     public void testMissingField() throws IOException {

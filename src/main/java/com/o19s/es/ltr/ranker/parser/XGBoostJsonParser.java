@@ -82,7 +82,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
         private Float threshold;
         private Integer rightNodeId;
         private Integer leftNodeId;
-        // Ignored
         private Integer missingNodeId;
         private Float leaf;
         private List<SplitParserState> children;
@@ -161,8 +160,10 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         Node toNode(FeatureSet set) {
             if (isSplit()) {
-                return new NaiveAdditiveDecisionTree.Split(children.get(0).toNode(set), children.get(1).toNode(set),
-                        set.featureOrdinal(split), threshold);
+                Node left = children.get(0).toNode(set);
+                Node right = children.get(1).toNode(set);
+                Node onMissing = this.missingNodeId.equals(this.rightNodeId) ? right : left;
+                return new NaiveAdditiveDecisionTree.Split(left, right, onMissing, set.featureOrdinal(split), threshold);
             } else {
                 return new NaiveAdditiveDecisionTree.Leaf(leaf);
             }
