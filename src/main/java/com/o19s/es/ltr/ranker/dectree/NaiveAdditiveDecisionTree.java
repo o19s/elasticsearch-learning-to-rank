@@ -18,6 +18,7 @@ package com.o19s.es.ltr.ranker.dectree;
 
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.DenseLtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
@@ -33,7 +34,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     private final Node[] trees;
     private final float[] weights;
     private final int modelSize;
-    private final ModelObjective objective;
+    private final Normalizer normalizer;
 
     /**
      * TODO: Constructor for these classes are strict and not really
@@ -43,14 +44,14 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      * @param trees an array of trees
      * @param weights the respective weights
      * @param modelSize the modelSize in number of feature used
-     * @param objective learning objective to transform model prediction
+     * @param normalizer class to perform any normalization on model score
      */
-    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize, ModelObjective objective) {
+    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize, Normalizer normalizer) {
         assert trees.length == weights.length;
         this.trees = trees;
         this.weights = weights;
         this.modelSize = modelSize;
-        this.objective = objective;
+        this.normalizer = normalizer;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         for (int i = 0; i < trees.length; i++) {
             sum += weights[i]*trees[i].eval(scores);
         }
-        return objective.predTransform(sum);
+        return normalizer.normalize(sum);
     }
 
     @Override

@@ -22,6 +22,8 @@ import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizers;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.util.LuceneTestCase;
@@ -54,12 +56,12 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
         NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 0, new ModelObjective());
+                new float[0], 0, Normalizers.defaultNormalizer());
         assertEquals("naive_additive_decision_tree", dectree.name());
     }
 
     public void testScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", new ModelObjective());
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get("noop"));
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -69,8 +71,8 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
-    public void testLogisticScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", new ModelObjective.LogisticObjective());
+    public void testSigmoidScore() throws IOException {
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get("sigmoid"));
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -137,16 +139,16 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             }
             trees[i] = new RandomTreeGenerator(nbFeatures, minDepth, maxDepth, collector).genTree();
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, new ModelObjective());
+        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, Normalizers.defaultNormalizer());
     }
 
     public void testSize() {
         NaiveAdditiveDecisionTree ranker = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 3, new ModelObjective());
+                new float[0], 3, Normalizers.defaultNormalizer());
         assertEquals(ranker.size(), 3);
     }
 
-    private NaiveAdditiveDecisionTree parseTreeModel(String textRes, ModelObjective objective) throws IOException {
+    private NaiveAdditiveDecisionTree parseTreeModel(String textRes, Normalizer normalizer) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<>(3);
         features.add(new PrebuiltFeature("feature1", new MatchAllDocsQuery()));
         features.add(new PrebuiltFeature("feature2", new MatchAllDocsQuery()));
@@ -161,7 +163,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             weights[i] = treesAndWeight.get(i).weight;
             trees[i] = treesAndWeight.get(i).tree;
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), objective);
+        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), normalizer);
     }
 
     private static class TreeTextParser {

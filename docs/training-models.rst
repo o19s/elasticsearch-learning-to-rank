@@ -51,11 +51,11 @@ There's also an example of how to train a model `using XGBoost <http://github.co
 ===================
 XGBoost Parameters
 ===================
-Additional parameters can optionally be passed for an XGBoost model. This can be done by prepending them to the model definition. See the example below.
+Additional parameters can optionally be passed for an XGBoost model. This can be done by specifying the definition as an object, with the decision trees as the 'splits' field. See the example below.
 
 Currently supported parameters:
 
-**objective** - Defines the model learning objective as specified in the `XGBoost documentation <https://xgboost.readthedocs.io/en/latest/parameter.html#learning-task-parameters>`_. This parameter can transform the final model prediction. Using logistic objectives applies a sigmoid transform.
+**objective** - Defines the model learning objective as specified in the `XGBoost documentation <https://xgboost.readthedocs.io/en/latest/parameter.html#learning-task-parameters>`_. This parameter can transform the final model prediction. Using logistic objectives applies a sigmoid normalization.
 
 Currently supported values: 'binary:logistic', 'binary:logitraw', 'rank:pairwise', 'reg:linear', 'reg:logistic'
 
@@ -131,11 +131,14 @@ Or an xgboost model with parameters::
             "name": "my_xgboost_model",
             "model": {
                 "type": "model/xgboost+json",
-                "definition": "{ \"objective\": \"reg:logistic\" }
-                               [  { \"nodeid\": 0, \"depth\": 0, \"split\": \"tmdb_multi\", \"split_condition\": 11.2009, \"yes\": 1, \"no\": 2, \"missing\": 1, \"children\": [
-                                    { \"nodeid\": 1, \"depth\": 1, \"split\": \"tmdb_title\", \"split_condition\": 2.20631, \"yes\": 3, \"no\": 4, \"missing\": 3, \"children\": [
-                                      { \"nodeid\": 3, \"leaf\": -0.03125 },
-                                    ..."
+                "definition": "{
+                                 \"objective\": \"reg:logistic\",
+                                 \"splits\": [  { \"nodeid\": 0, \"depth\": 0, \"split\": \"tmdb_multi\", \"split_condition\": 11.2009, \"yes\": 1, \"no\": 2, \"missing\": 1, \"children\": [
+                                                  { \"nodeid\": 1, \"depth\": 1, \"split\": \"tmdb_title\", \"split_condition\": 2.20631, \"yes\": 3, \"no\": 4, \"missing\": 3, \"children\": [
+                                                    { \"nodeid\": 3, \"leaf\": -0.03125 },
+                                                  ...
+                                             ]
+                               }"
             }
         }
     }

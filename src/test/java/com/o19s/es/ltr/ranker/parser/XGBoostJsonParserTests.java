@@ -75,37 +75,116 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
     }
 
-    public void testReadSplitWithParams() throws IOException {
-        verifyModelWithParams("{ \"objective\": \"reg:linear\"}");
+    public void testReadSimpleSplitInObject() throws IOException {
+        String model = "{" +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":2,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
+                "]}]}";
+
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        FeatureVector v = tree.newFeatureVector(null);
+        v.setFeatureScore(0, 0.124F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+        v.setFeatureScore(0, 0.122F);
+        assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
+        v.setFeatureScore(0, 0.123F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
     }
-    public void testReadSplitWithEmptyParams() throws IOException {
-        verifyModelWithParams("{}");
+
+    public void testReadSimpleSplitWithObjective() throws IOException {
+        String model = "{" +
+                "\"objective\": \"reg:linear\"," +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":2,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
+                "]}]}";
+
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        FeatureVector v = tree.newFeatureVector(null);
+        v.setFeatureScore(0, 0.124F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+        v.setFeatureScore(0, 0.122F);
+        assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
+        v.setFeatureScore(0, 0.123F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
     }
 
     public void testReadSplitWithUnknownParams() throws IOException {
-        assertThat(expectThrows(ParsingException.class, () -> verifyModelWithParams("{ \"notparam\": \"unknown\"}")).getMessage(),
-                CoreMatchers.containsString("Unable to parse xgboost params"));
+        String model = "{" +
+                "\"not_param\": \"value\"," +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":2,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
+                "]}]}";
+
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
+                CoreMatchers.containsString("Unable to parse XGBoost object"));
     }
 
     public void testBadObjectiveParam() throws IOException {
-        assertThat(expectThrows(ParsingException.class, () -> verifyModelWithParams("{ \"objective\": \"reg:invalid\"}")).getMessage(),
-                CoreMatchers.containsString("Unable to parse xgboost params"));
+        String model = "{" +
+                "\"objective\": \"reg:invalid\"," +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":2,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
+                "]}]}";
+
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
+                CoreMatchers.containsString("Unable to parse XGBoost object"));
     }
 
     public void testReadWithLogisticObjective() throws IOException {
-        String model = "{ \"objective\": \"reg:logistic\"}" +
-                "[{" +
-                "\"nodeid\": 0," +
-                "\"split\":\"feat1\"," +
-                "\"depth\":0," +
-                "\"split_condition\":0.123," +
-                "\"yes\":1," +
-                "\"no\": 2," +
-                "\"missing\":2,"+
-                "\"children\": [" +
-                "   {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
-                "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": -0.2}" +
-                "]}]";
+        String model = "{" +
+                "\"objective\": \"reg:logistic\"," +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":2,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": -0.2}" +
+                "]}]}";
 
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
         NaiveAdditiveDecisionTree tree = parser.parse(set, model);
@@ -194,32 +273,6 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
             LinearRankerTests.fillRandomWeights(v.scores);
             assertFalse(Float.isNaN(tree.score(v)));
         }
-    }
-
-    public void verifyModelWithParams(String params) throws IOException {
-        String model = params +
-                "[{" +
-                "\"nodeid\": 0," +
-                "\"split\":\"feat1\"," +
-                "\"depth\":0," +
-                "\"split_condition\":0.123," +
-                "\"yes\":1," +
-                "\"no\": 2," +
-                "\"missing\":2,"+
-                "\"children\": [" +
-                "   {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
-                "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
-                "]}]";
-
-        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
-        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
-        FeatureVector v = tree.newFeatureVector(null);
-        v.setFeatureScore(0, 0.124F);
-        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
-        v.setFeatureScore(0, 0.122F);
-        assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
-        v.setFeatureScore(0, 0.123F);
-        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
     }
 
     private float sigmoid(float f) {
