@@ -1,5 +1,6 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,17 +8,12 @@ import java.util.Map;
  * Class that manages Normalizer implementations
  */
 public class Normalizers {
-    private static final Map<String, Normalizer> NORMALIZERS = new HashMap<>();
-    public static final String DEFAULT_NORMALIZER_NAME = "noop";
-
-    static {
-        register("noop", new NoopNormalizer());
-        register("sigmoid", new SigmoidNormalizer());
-    }
-
-    public static void register(String name, Normalizer normalizer) {
-        NORMALIZERS.put(name, normalizer);
-    }
+    private static final Map<String, Normalizer> NORMALIZERS = Collections.unmodifiableMap(new HashMap<String, Normalizer>() {{
+        put(NOOP_NORMALIZER_NAME, new NoopNormalizer());
+        put(SIGMOID_NORMALIZER_NAME, new SigmoidNormalizer());
+    }});
+    public static final String NOOP_NORMALIZER_NAME = "noop";
+    public static final String SIGMOID_NORMALIZER_NAME = "sigmoid";
 
     public static Normalizer get(String name) {
         Normalizer normalizer = NORMALIZERS.get(name);
@@ -29,10 +25,6 @@ public class Normalizers {
 
     public static boolean exists(String name) {
         return NORMALIZERS.containsKey(name);
-    }
-
-    public static Normalizer defaultNormalizer() {
-        return get(DEFAULT_NORMALIZER_NAME);
     }
 
     static class NoopNormalizer implements Normalizer {

@@ -190,11 +190,11 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         NaiveAdditiveDecisionTree tree = parser.parse(set, model);
         FeatureVector v = tree.newFeatureVector(null);
         v.setFeatureScore(0, 0.124F);
-        assertEquals(sigmoid(-0.2F), tree.score(v), Math.ulp(sigmoid(-0.2F)));
+        assertEquals(0.45016602F, tree.score(v), Math.ulp(0.45016602F));
         v.setFeatureScore(0, 0.122F);
-        assertEquals(sigmoid(0.5F), tree.score(v), Math.ulp(sigmoid(0.5F)));
+        assertEquals(0.62245935F, tree.score(v), Math.ulp(0.62245935F));
         v.setFeatureScore(0, 0.123F);
-        assertEquals(sigmoid(-0.2F), tree.score(v), Math.ulp(sigmoid(-0.2F)));
+        assertEquals(0.45016602F, tree.score(v), Math.ulp(0.45016602F));
     }
 
     public void testMissingField() throws IOException {
@@ -273,10 +273,6 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
             LinearRankerTests.fillRandomWeights(v.scores);
             assertFalse(Float.isNaN(tree.score(v)));
         }
-    }
-
-    private float sigmoid(float f) {
-        return (float) (1 / (1 + Math.exp(-f)));
     }
 
     private String readModel(String model) throws IOException {

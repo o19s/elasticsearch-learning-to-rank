@@ -84,6 +84,9 @@ public class XGBoostJsonParser implements LtrRankerParser {
                 } catch (XContentParseException e) {
                     throw new ParsingException(parser.getTokenLocation(), "Unable to parse XGBoost object", e);
                 }
+                if (definition.splitParserStates == null) {
+                    throw new ParsingException(parser.getTokenLocation(), "XGBoost model missing required field [splits]");
+                }
             } else if (startToken == XContentParser.Token.START_ARRAY) {
                 definition = new XGBoostDefinition();
                 definition.splitParserStates = new ArrayList<>();
@@ -94,9 +97,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_ARRAY] or [START_OBJECT] but got ["
                         + startToken + "]");
             }
-            if (!definition.hasAllFields()) {
-                throw new ParsingException(parser.getTokenLocation(), "XGBoost model missing required fields");
-            }
             if (definition.splitParserStates.size() == 0) {
                 throw new ParsingException(parser.getTokenLocation(), "XGBoost model must define at lease one tree");
             }
@@ -104,7 +104,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
         }
 
         XGBoostDefinition() {
-            normalizer = Normalizers.defaultNormalizer();
+            normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
         }
 
         /**
@@ -121,11 +121,11 @@ public class XGBoostJsonParser implements LtrRankerParser {
                 case "binary:logitraw":
                 case "rank:pairwise":
                 case "reg:linear":
-                    normalizer = Normalizers.get("noop");
+                    normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
                     break;
                 case "binary:logistic":
                 case "reg:logistic":
-                    normalizer = Normalizers.get("sigmoid");
+                    normalizer = Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME);
                     break;
                 default:
                     throw new IllegalArgumentException("Objective [" + objectiveName + "] is not a valid XGBoost objective");
@@ -143,10 +143,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
                 trees[it.nextIndex()] = it.next().toNode(set);
             }
             return trees;
-        }
-
-        boolean hasAllFields() {
-            return splitParserStates != null;
         }
     }
 

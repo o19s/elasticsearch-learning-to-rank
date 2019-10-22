@@ -56,12 +56,12 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
         NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 0, Normalizers.defaultNormalizer());
+                new float[0], 0, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
         assertEquals("naive_additive_decision_tree", dectree.name());
     }
 
     public void testScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get("noop"));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -72,7 +72,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     public void testSigmoidScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get("sigmoid"));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME));
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -139,12 +139,12 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             }
             trees[i] = new RandomTreeGenerator(nbFeatures, minDepth, maxDepth, collector).genTree();
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, Normalizers.defaultNormalizer());
+        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
     }
 
     public void testSize() {
         NaiveAdditiveDecisionTree ranker = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 3, Normalizers.defaultNormalizer());
+                new float[0], 3, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
         assertEquals(ranker.size(), 3);
     }
 
