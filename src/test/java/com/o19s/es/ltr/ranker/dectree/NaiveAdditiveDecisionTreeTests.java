@@ -83,6 +83,31 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
+    public void testScoreSparseFeatureSet() throws IOException {
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        vector.setFeatureScore(0, 1);
+        vector.setFeatureScore(1, 3);
+        vector.setFeatureScore(2, Float.MAX_VALUE);
+
+        // simple_tree model does not specify `missing`. We should take the
+        // left branch in that case.
+        float expected = 17F*3.4F + 3.2F*2.8F;
+        assertEquals(expected, ranker.score(vector), Math.ulp(expected));
+    }
+
+    public void testScoreSparseFeatureSetWithMissingField() throws IOException {
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        vector.setFeatureScore(0, Float.MAX_VALUE);
+        vector.setFeatureScore(1, 2);
+        vector.setFeatureScore(2, 3);
+
+        float expected = 3.2F*3.4F + 3.2F*2.8F;
+        assertEquals(expected, ranker.score(vector), Math.ulp(expected));
+    }
+
+
     public void testPerfAndRobustness() {
         SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
         NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
@@ -207,7 +232,8 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             if (line.contains("- output")) {
                 return new NaiveAdditiveDecisionTree.Leaf(extractLastFloat(line));
             } else if(line.contains("- split")) {
-                String featName = line.split(":")[1];
+                String[] splitString = line.split(":");
+                String featName = splitString[1];
                 int ord = set.featureOrdinal(featName);
                 if (ord < 0 || ord > set.size()) {
                     throw new IllegalArgumentException("Unknown feature " + featName);
@@ -215,9 +241,10 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 float threshold = extractLastFloat(line);
                 NaiveAdditiveDecisionTree.Node right = parseTree();
                 NaiveAdditiveDecisionTree.Node left = parseTree();
+                NaiveAdditiveDecisionTree.Node onMissing = (splitString.length > 3) ?
+                        (Boolean.parseBoolean(splitString[2]) ? left : right) : null;
+                return new NaiveAdditiveDecisionTree.SplitWithMissing(left, right, onMissing, ord, threshold);
 
-                return new NaiveAdditiveDecisionTree.Split(left, right,
-                        ord, threshold);
             } else {
                 throw new IllegalArgumentException("Invalid tree");
             }

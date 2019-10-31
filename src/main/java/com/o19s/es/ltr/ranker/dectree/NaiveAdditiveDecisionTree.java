@@ -132,6 +132,54 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         }
     }
 
+    public static class SplitWithMissing implements Node {
+        private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(SplitWithMissing.class);
+        private final Node left;
+        private final Node right;
+        private final int feature;
+        private final float threshold;
+        private final Node onMissing;
+
+        public SplitWithMissing(Node left, Node right, Node onMissing, int feature, float threshold) {
+            this.left = Objects.requireNonNull(left);
+            this.right = Objects.requireNonNull(right);
+            this.feature = feature;
+            this.threshold = threshold;
+            this.onMissing = onMissing == null ? left : onMissing;
+        }
+
+        @Override
+        public boolean isLeaf() {
+            return false;
+        }
+
+        @Override
+        public float eval(float[] scores) {
+            Node n = this;
+            while (!n.isLeaf()) {
+                assert n instanceof SplitWithMissing;
+                SplitWithMissing s = (SplitWithMissing) n;
+                if (scores[s.feature] == Float.MAX_VALUE) {
+                    n = s.onMissing;
+                } else if (s.threshold > scores[s.feature]) {
+                    n = s.left;
+                } else {
+                    n = s.right;
+                }
+            }
+            assert n instanceof Leaf;
+            return n.eval(scores);
+        }
+
+        /**
+         * Return the memory usage of this object in bytes. Negative values are illegal.
+         */
+        @Override
+        public long ramBytesUsed() {
+            return BASE_RAM_USED + left.ramBytesUsed() + right.ramBytesUsed();
+        }
+    }
+
     public static class Leaf implements Node {
         private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
 

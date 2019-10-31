@@ -65,10 +65,12 @@ public class XGBoostJsonParser implements LtrRankerParser {
         static {
             PARSER = new ObjectParser<>("xgboost_definition", XGBoostDefinition::new);
             PARSER.declareString(XGBoostDefinition::setNormalizer, new ParseField("objective"));
+            PARSER.declareBoolean(XGBoostDefinition::setFloatMaxForMissing, new ParseField("use_float_max_for_missing"));
             PARSER.declareObjectArray(XGBoostDefinition::setSplitParserStates, SplitParserState::parse, new ParseField("splits"));
         }
 
         private Normalizer normalizer;
+        private boolean useFloatMaxForMissing;
         private List<SplitParserState> splitParserStates;
 
         public static XGBoostDefinition parse(XContentParser parser, FeatureSet set) throws IOException {
@@ -105,6 +107,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         XGBoostDefinition() {
             normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
+            useFloatMaxForMissing = false;
         }
 
         /**
@@ -132,6 +135,10 @@ public class XGBoostJsonParser implements LtrRankerParser {
             }
         }
 
+        void setFloatMaxForMissing(boolean useFloatMaxForMissing) {
+            this.useFloatMaxForMissing = useFloatMaxForMissing;
+        }
+
         void setSplitParserStates(List<SplitParserState> splitParserStates) {
             this.splitParserStates = splitParserStates;
         }
@@ -140,7 +147,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
             Node[] trees = new Node[splitParserStates.size()];
             ListIterator<SplitParserState> it = splitParserStates.listIterator();
             while(it.hasNext()) {
-                trees[it.nextIndex()] = it.next().toNode(set);
+                trees[it.nextIndex()] = it.next().toNode(set, this);
             }
             return trees;
         }
@@ -169,7 +176,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
         private Float threshold;
         private Integer rightNodeId;
         private Integer leftNodeId;
-        // Ignored
         private Integer missingNodeId;
         private Float leaf;
         private List<SplitParserState> children;
@@ -246,10 +252,16 @@ public class XGBoostJsonParser implements LtrRankerParser {
         }
 
 
-        Node toNode(FeatureSet set) {
+        Node toNode(FeatureSet set, XGBoostDefinition xgb) {
             if (isSplit()) {
-                return new NaiveAdditiveDecisionTree.Split(children.get(0).toNode(set), children.get(1).toNode(set),
-                        set.featureOrdinal(split), threshold);
+                Node left = children.get(0).toNode(set, xgb);
+                Node right = children.get(1).toNode(set, xgb);
+                if (xgb.useFloatMaxForMissing) {
+                    Node onMissing = this.missingNodeId.equals(this.rightNodeId) ? right : left;
+                    return new NaiveAdditiveDecisionTree.SplitWithMissing(left, right, onMissing, set.featureOrdinal(split), threshold);
+                } else {
+                    return new NaiveAdditiveDecisionTree.Split(left, right, set.featureOrdinal(split), threshold);
+                }
             } else {
                 return new NaiveAdditiveDecisionTree.Leaf(leaf);
             }
