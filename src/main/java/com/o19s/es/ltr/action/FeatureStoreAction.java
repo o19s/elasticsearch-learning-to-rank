@@ -44,7 +44,7 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
     public static final FeatureStoreAction INSTANCE = new FeatureStoreAction();
 
     protected FeatureStoreAction() {
-        super(NAME);
+        super(NAME, FeatureStoreResponse::new);
     }
 
     @Override
@@ -69,6 +69,15 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
         private FeatureValidation validation;
 
         public FeatureStoreRequest() {}
+
+        public FeatureStoreRequest(StreamInput in) throws IOException {
+            super(in);
+            store = in.readString();
+            routing = in.readOptionalString();
+            action = Action.values()[in.readVInt()];
+            storableElement = in.readNamedWriteable(StorableElement.class);
+            validation = in.readOptionalWriteable(FeatureValidation::new);
+        }
 
         public FeatureStoreRequest(String store, StorableElement storableElement, Action action) {
             this.store = Objects.requireNonNull(store);
@@ -154,16 +163,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
 
 
         @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            store = in.readString();
-            routing = in.readOptionalString();
-            action = Action.values()[in.readVInt()];
-            storableElement = in.readNamedWriteable(StorableElement.class);
-            validation = in.readOptionalWriteable(FeatureValidation::new);
-        }
-
-        @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(store);
@@ -184,8 +183,7 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
 
         public FeatureStoreResponse(StreamInput in) throws IOException {
             super(in);
-            response = new IndexResponse();
-            response.readFrom(in);
+            response = new IndexResponse(in);
         }
 
         public FeatureStoreResponse(IndexResponse response) {
@@ -202,7 +200,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
             response.writeTo(out);
         }
 

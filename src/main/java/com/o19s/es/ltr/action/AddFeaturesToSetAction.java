@@ -43,7 +43,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
     public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
     protected AddFeaturesToSetAction() {
-        super(NAME);
+        super(NAME, AddFeaturesToSetResponse::new);
     }
 
     @Override
@@ -66,6 +66,24 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
         private String routing;
         private FeatureValidation validation;
 
+        public AddFeaturesToSetRequest() {
+        }
+
+
+        public  AddFeaturesToSetRequest(StreamInput in) throws IOException {
+            super(in);
+            store = in.readString();
+            features = in.readList(StoredFeature::new);
+            if (in.readBoolean()) {
+                featureNameQuery = in.readOptionalString();
+            }
+            merge = in.readBoolean();
+            featureSet = in.readString();
+            routing = in.readOptionalString();
+            validation = in.readOptionalWriteable(FeatureValidation::new);
+        }
+
+
         @Override
         public ActionRequestValidationException validate() {
             ActionRequestValidationException arve = null;
@@ -81,20 +99,6 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
                 arve = addValidationError("featureSet must be set", arve);
             }
             return arve;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            store = in.readString();
-            features = in.readList(StoredFeature::new);
-            if (in.readBoolean()) {
-                featureNameQuery = in.readOptionalString();
-            }
-            merge = in.readBoolean();
-            featureSet = in.readString();
-            routing = in.readOptionalString();
-            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -173,8 +177,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
 
         public AddFeaturesToSetResponse(StreamInput in) throws IOException {
             super(in);
-            response = new IndexResponse();
-            response.readFrom(in);
+            response = new IndexResponse(in);
         }
 
         public AddFeaturesToSetResponse(IndexResponse response) {
@@ -183,7 +186,6 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
             response.writeTo(out);
         }
 

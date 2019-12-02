@@ -42,7 +42,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
     private ClearCachesAction() {
-        super(NAME);
+        super(NAME, ClearCachesNodesResponse::new);
     }
 
     @Override
@@ -61,6 +61,14 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
         private Operation operation;
         private String name;
 
+
+        public ClearCachesNodesRequest(StreamInput in ) throws IOException {
+            super(in);
+            store = in.readString();
+            operation = Operation.values()[in.readVInt()];
+            name = in.readOptionalString();
+        }
+
         @Override
         public ActionRequestValidationException validate() {
             ActionRequestValidationException arve = null;
@@ -76,14 +84,6 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
                 arve = addValidationError("name must be provided if clearing a specific element", arve);
             }
             return arve;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            store = in.readString();
-            operation = Operation.values()[in.readVInt()];
-            name = in.readOptionalString();
         }
 
         public void clearStore(String storeName) {
@@ -139,7 +139,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
     public static class ClearCachesNodesResponse extends BaseNodesResponse<ClearCachesNodeResponse> {
         public ClearCachesNodesResponse(StreamInput in) throws IOException {
-            super.readFrom(in);
+            super(in);
         }
 
         public ClearCachesNodesResponse(ClusterName clusterName, List<ClearCachesNodeResponse> responses,
@@ -154,21 +154,20 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<ClearCachesNodeResponse> nodes) throws IOException {
-            out.writeStreamableList(nodes);
+            out.writeList(nodes);
         }
     }
 
     // NOOP response
     public static class ClearCachesNodeResponse extends BaseNodeResponse {
-        public ClearCachesNodeResponse() {
+        public ClearCachesNodeResponse(StreamInput in) throws IOException {
+            super(in);
         }
 
         public ClearCachesNodeResponse(DiscoveryNode node) {
             super(node);
         }
 
-        public ClearCachesNodeResponse(StreamInput in) throws IOException {
-            readFrom(in);
-        }
+
     }
 }

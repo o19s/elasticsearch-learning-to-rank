@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.3.1"
+    classpath "org.elasticsearch.gradle:build-tools:7.4.2"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.2-es7.3.1'
+version = '1.1.2-es7.4.2'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -51,10 +51,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.3.1'
+  compile 'org.elasticsearch:elasticsearch:7.4.2'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.3.1'
+  testCompile 'org.elasticsearch.test:framework:7.4.2'
 
 }
 
@@ -69,7 +69,7 @@ dependencyLicenses {
 // https://github.com/elastic/elasticsearch/issues/45891#issuecomment-525399411
 configurations.restSpec.withDependencies { dependencies ->
   dependencies.clear()
-  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.3.1"))
+  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.4.2"))
 }
 
 

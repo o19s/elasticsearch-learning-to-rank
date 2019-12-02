@@ -43,7 +43,7 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
     private ListStoresAction() {
-        super(NAME);
+        super(NAME, ListStoresActionResponse::new);
     }
 
     @Override
@@ -56,6 +56,8 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
         public ActionRequestValidationException validate() {
             return null;
         }
+
+        public ListStoresActionRequest() {}
     }
 
     public static class ListStoresActionResponse extends ActionResponse implements ToXContentObject {
@@ -81,7 +83,6 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
             out.writeMap(stores, StreamOutput::writeString, (w, i) -> i.writeTo(w));
         }
 
