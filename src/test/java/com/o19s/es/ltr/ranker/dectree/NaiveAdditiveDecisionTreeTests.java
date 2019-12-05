@@ -56,12 +56,12 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     static final Logger LOG = LogManager.getLogger(NaiveAdditiveDecisionTreeTests.class);
     public void testName() {
         NaiveAdditiveDecisionTree dectree = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 0, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+                new float[0], 0, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), null);
         assertEquals("naive_additive_decision_tree", dectree.name());
     }
 
     public void testScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), null);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -72,7 +72,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     public void testSigmoidScore() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME), null);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -84,26 +84,24 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     public void testScoreSparseFeatureSet() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
-        vector.setFeatureScore(1, 3);
+        vector.setFeatureScore(1, 2);
         vector.setFeatureScore(2, Float.MAX_VALUE);
 
-        // simple_tree model does not specify `missing`. We should take the
-        // left branch in that case.
-        float expected = 17F*3.4F + 3.2F*2.8F;
+        float expected = 1.2F*3.4F + 10F*2.8F;
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
     public void testScoreSparseFeatureSetWithMissingField() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, Float.MAX_VALUE);
         vector.setFeatureScore(1, 2);
         vector.setFeatureScore(2, 3);
 
-        float expected = 3.2F*3.4F + 3.2F*2.8F;
+        float expected = 1.2F*3.4F + 23F*2.8F;
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
@@ -164,16 +162,16 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             }
             trees[i] = new RandomTreeGenerator(nbFeatures, minDepth, maxDepth, collector).genTree();
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        return new NaiveAdditiveDecisionTree(trees, weights, nbFeatures, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), null);
     }
 
     public void testSize() {
         NaiveAdditiveDecisionTree ranker = new NaiveAdditiveDecisionTree(new NaiveAdditiveDecisionTree.Node[0],
-                new float[0], 3, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+                new float[0], 3, Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), null);
         assertEquals(ranker.size(), 3);
     }
 
-    private NaiveAdditiveDecisionTree parseTreeModel(String textRes, Normalizer normalizer) throws IOException {
+    private NaiveAdditiveDecisionTree parseTreeModel(String textRes, Normalizer normalizer, Float missingValue) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<>(3);
         features.add(new PrebuiltFeature("feature1", new MatchAllDocsQuery()));
         features.add(new PrebuiltFeature("feature2", new MatchAllDocsQuery()));
@@ -188,7 +186,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             weights[i] = treesAndWeight.get(i).weight;
             trees[i] = treesAndWeight.get(i).tree;
         }
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), normalizer);
+        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), normalizer, missingValue);
     }
 
     private static class TreeTextParser {
@@ -241,9 +239,11 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 float threshold = extractLastFloat(line);
                 NaiveAdditiveDecisionTree.Node right = parseTree();
                 NaiveAdditiveDecisionTree.Node left = parseTree();
-                NaiveAdditiveDecisionTree.Node onMissing = (splitString.length > 3) ?
-                        (Boolean.parseBoolean(splitString[2]) ? left : right) : null;
-                return new NaiveAdditiveDecisionTree.SplitWithMissing(left, right, onMissing, ord, threshold);
+                NaiveAdditiveDecisionTree.Node onMissing = null;
+                if (splitString.length > 3) {
+                    onMissing = Boolean.parseBoolean(splitString[2]) ? left : right;
+                }
+                return new NaiveAdditiveDecisionTree.Split(left, right, onMissing, ord, threshold);
 
             } else {
                 throw new IllegalArgumentException("Invalid tree");
@@ -309,7 +309,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             int feature = featureGen.get();
             float thresh = thresholdGenerator.apply(feature);
             statsCollector.newSplit(depth, feature, thresh);
-            return new NaiveAdditiveDecisionTree.Split(newNode(depth), newNode(depth), feature, thresh);
+            return new NaiveAdditiveDecisionTree.Split(newNode(depth), newNode(depth), null, feature, thresh);
         }
 
         private NaiveAdditiveDecisionTree.Node newLeaf(int depth) {

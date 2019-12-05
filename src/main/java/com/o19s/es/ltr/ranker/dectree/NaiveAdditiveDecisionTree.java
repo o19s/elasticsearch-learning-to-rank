@@ -35,6 +35,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     private final float[] weights;
     private final int modelSize;
     private final Normalizer normalizer;
+    private final Float missingValue;
 
     /**
      * TODO: Constructor for these classes are strict and not really
@@ -45,13 +46,15 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
      * @param weights the respective weights
      * @param modelSize the modelSize in number of feature used
      * @param normalizer class to perform any normalization on model score
+     * @param missingValue sentinel value to indicate feature is missing in the feature vector (optional)
      */
-    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize, Normalizer normalizer) {
+    public NaiveAdditiveDecisionTree(Node[] trees, float[] weights, int modelSize, Normalizer normalizer, Float missingValue) {
         assert trees.length == weights.length;
         this.trees = trees;
         this.weights = weights;
         this.modelSize = modelSize;
         this.normalizer = normalizer;
+        this.missingValue = missingValue;
     }
 
     @Override
@@ -63,10 +66,48 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     protected float score(DenseFeatureVector vector) {
         float sum = 0;
         float[] scores = vector.scores;
-        for (int i = 0; i < trees.length; i++) {
-            sum += weights[i]*trees[i].eval(scores);
+        if (this.missingValue != null) {
+            for (int i = 0; i < trees.length; i++) {
+                sum += weights[i] * evalWithMissing(trees[i], scores);
+            }
+        } else {
+            for (int i = 0; i < trees.length; i++) {
+                sum += weights[i] * eval(trees[i], scores);
+            }
         }
         return normalizer.normalize(sum);
+    }
+
+    private float eval(Node rootNode, float[] scores) {
+        Node n = rootNode;
+        while (!n.isLeaf()) {
+            assert n instanceof Split;
+            Split s = (Split) n;
+            if (s.threshold > scores[s.feature]) {
+                n = s.left;
+            } else {
+                n = s.right;
+            }
+        }
+        assert n instanceof Leaf;
+        return ((Leaf) n).getOutput();
+    }
+
+    private float evalWithMissing(Node rootNode, float[] scores) {
+        Node n = rootNode;
+        while (!n.isLeaf()) {
+            assert n instanceof Split;
+            Split s = (Split) n;
+            if (scores[s.feature] == this.missingValue) {
+                n = s.onMissing;
+            } else if (s.threshold > scores[s.feature]) {
+                n = s.left;
+            } else {
+                n = s.right;
+            }
+        }
+        assert n instanceof Leaf;
+        return ((Leaf) n).getOutput();
     }
 
     @Override
@@ -85,90 +126,27 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
 
     public interface Node extends Accountable {
          boolean isLeaf();
-         float eval(float[] scores);
     }
 
     public static class Split implements Node {
         private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
-        private final Node left;
-        private final Node right;
-        private final int feature;
-        private final float threshold;
+        final Node left;
+        final Node right;
+        final int feature;
+        final float threshold;
+        final Node onMissing;
 
-        public Split(Node left, Node right, int feature, float threshold) {
+        public Split(Node left, Node right, Node onMissing, int feature, float threshold) {
             this.left = Objects.requireNonNull(left);
             this.right = Objects.requireNonNull(right);
             this.feature = feature;
             this.threshold = threshold;
+            this.onMissing = onMissing;
         }
 
         @Override
         public boolean isLeaf() {
             return false;
-        }
-
-        @Override
-        public float eval(float[] scores) {
-            Node n = this;
-            while (!n.isLeaf()) {
-                assert n instanceof Split;
-                Split s = (Split) n;
-                if (s.threshold > scores[s.feature]) {
-                    n = s.left;
-                } else {
-                    n = s.right;
-                }
-            }
-            assert n instanceof Leaf;
-            return n.eval(scores);
-        }
-
-        /**
-         * Return the memory usage of this object in bytes. Negative values are illegal.
-         */
-        @Override
-        public long ramBytesUsed() {
-            return BASE_RAM_USED + left.ramBytesUsed() + right.ramBytesUsed();
-        }
-    }
-
-    public static class SplitWithMissing implements Node {
-        private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(SplitWithMissing.class);
-        private final Node left;
-        private final Node right;
-        private final int feature;
-        private final float threshold;
-        private final Node onMissing;
-
-        public SplitWithMissing(Node left, Node right, Node onMissing, int feature, float threshold) {
-            this.left = Objects.requireNonNull(left);
-            this.right = Objects.requireNonNull(right);
-            this.feature = feature;
-            this.threshold = threshold;
-            this.onMissing = onMissing == null ? left : onMissing;
-        }
-
-        @Override
-        public boolean isLeaf() {
-            return false;
-        }
-
-        @Override
-        public float eval(float[] scores) {
-            Node n = this;
-            while (!n.isLeaf()) {
-                assert n instanceof SplitWithMissing;
-                SplitWithMissing s = (SplitWithMissing) n;
-                if (scores[s.feature] == Float.MAX_VALUE) {
-                    n = s.onMissing;
-                } else if (s.threshold > scores[s.feature]) {
-                    n = s.left;
-                } else {
-                    n = s.right;
-                }
-            }
-            assert n instanceof Leaf;
-            return n.eval(scores);
         }
 
         /**
@@ -183,6 +161,10 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     public static class Leaf implements Node {
         private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
 
+        float getOutput() {
+            return output;
+        }
+
         private final float output;
 
         public Leaf(float output) {
@@ -192,11 +174,6 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
         @Override
         public boolean isLeaf() {
             return true;
-        }
-
-        @Override
-        public float eval(float[] scores) {
-            return output;
         }
 
         /**

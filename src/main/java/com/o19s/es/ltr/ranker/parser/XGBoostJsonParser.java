@@ -57,7 +57,9 @@ public class XGBoostJsonParser implements LtrRankerParser {
         float[] weights = new float[trees.length];
         // Tree weights are already encoded in outputs
         Arrays.fill(weights, 1F);
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), modelDefinition.normalizer);
+        return new NaiveAdditiveDecisionTree(trees, weights, set.size(),
+                modelDefinition.normalizer,
+                modelDefinition.useFloatMaxForMissing ? Float.MAX_VALUE : null);
     }
 
     private static class XGBoostDefinition {
@@ -256,11 +258,11 @@ public class XGBoostJsonParser implements LtrRankerParser {
             if (isSplit()) {
                 Node left = children.get(0).toNode(set, xgb);
                 Node right = children.get(1).toNode(set, xgb);
+                Node onMissing = this.missingNodeId.equals(this.rightNodeId) ? right : left;
                 if (xgb.useFloatMaxForMissing) {
-                    Node onMissing = this.missingNodeId.equals(this.rightNodeId) ? right : left;
-                    return new NaiveAdditiveDecisionTree.SplitWithMissing(left, right, onMissing, set.featureOrdinal(split), threshold);
+                    return new NaiveAdditiveDecisionTree.Split(left, right, onMissing, set.featureOrdinal(split), threshold);
                 } else {
-                    return new NaiveAdditiveDecisionTree.Split(left, right, set.featureOrdinal(split), threshold);
+                    return new NaiveAdditiveDecisionTree.Split(left, right, null, set.featureOrdinal(split), threshold);
                 }
             } else {
                 return new NaiveAdditiveDecisionTree.Leaf(leaf);

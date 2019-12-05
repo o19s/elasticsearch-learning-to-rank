@@ -1,0 +1,18 @@
+# first line after split is right
+# third field in split -> take left branch on missing
+- tree:3.4
+  - split:feature1:true:2.3
+    - output:3.2
+    - split:feature2:false:2.2
+      - split:feature3:true:3.2
+        - output:11
+        - output:17
+      - output:1.2
+- tree:2.8
+  - split:feature1:true:0.1
+    - split:feature2:true:1.8
+      - split:feature3:false:3.2
+        - output:10
+        - output:3.2
+      - output:15
+    - output:23
