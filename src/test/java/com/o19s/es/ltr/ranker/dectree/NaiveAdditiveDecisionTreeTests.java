@@ -84,7 +84,8 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     public void testScoreSparseFeatureSet() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt",
+                Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, 1);
         vector.setFeatureScore(1, 2);
@@ -95,7 +96,8 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
     }
 
     public void testScoreSparseFeatureSetWithMissingField() throws IOException {
-        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("tree_with_missing_branches.txt",
+                Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME), Float.MAX_VALUE);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         vector.setFeatureScore(0, Float.MAX_VALUE);
         vector.setFeatureScore(1, 2);
