@@ -130,7 +130,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
 
     public void testReadSimpleSplitWithSupportForMissing() throws IOException {
         String model = "{" +
-                "\"use_float_max_for_missing\": true," +
+                "\"missing_value\": -999," +
                 "\"splits\": [{" +
                 "   \"nodeid\": 0," +
                 "   \"split\":\"feat1\"," +
@@ -153,8 +153,37 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
         v.setFeatureScore(0, 0.123F);
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
-        v.setFeatureScore(0, Float.MAX_VALUE);
+        v.setFeatureScore(0, -999);
         assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+    }
+
+    public void testReadSimpleSplitWithFloatMaxForMissing() throws IOException {
+        String model = "{" +
+                "\"use_float_max_for_missing\": true," +
+                "\"splits\": [{" +
+                "   \"nodeid\": 0," +
+                "   \"split\":\"feat1\"," +
+                "   \"depth\":0," +
+                "   \"split_condition\":0.123," +
+                "   \"yes\":1," +
+                "   \"no\": 2," +
+                "   \"missing\":1,"+
+                "   \"children\": [" +
+                "      {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
+                "      {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
+                "]}]}";
+
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        NaiveAdditiveDecisionTree tree = parser.parse(set, model);
+        FeatureVector v = tree.newFeatureVector(null);
+        v.setFeatureScore(0, 0.124F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+        v.setFeatureScore(0, 0.122F);
+        assertEquals(0.5F, tree.score(v), Math.ulp(0.5F));
+        v.setFeatureScore(0, 0.123F);
+        assertEquals(0.2F, tree.score(v), Math.ulp(0.2F));
+        v.setFeatureScore(0, Float.MAX_VALUE);
+        assertEquals(0.5F, tree.score(v), Math.ulp(0.2F));
     }
 
     public void testReadSplitWithUnknownParams() throws IOException {

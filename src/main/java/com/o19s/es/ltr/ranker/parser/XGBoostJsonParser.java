@@ -59,7 +59,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
         Arrays.fill(weights, 1F);
         return new NaiveAdditiveDecisionTree(trees, weights, set.size(),
                 modelDefinition.normalizer,
-                modelDefinition.useFloatMaxForMissing ? Float.MAX_VALUE : null);
+                modelDefinition.missingValue);
     }
 
     private static class XGBoostDefinition {
@@ -67,12 +67,24 @@ public class XGBoostJsonParser implements LtrRankerParser {
         static {
             PARSER = new ObjectParser<>("xgboost_definition", XGBoostDefinition::new);
             PARSER.declareString(XGBoostDefinition::setNormalizer, new ParseField("objective"));
+
+            // Parameters to represent missing features in feature vector
+            //
+            // There are convenience options like `use_float_max_for_missing`
+            // which can be used instead of specifying the actual floating
+            // point value.
+            //
+            // Only one of the following parameter should be specified
+            // otherwise the behavior is undefined (depends on the order of
+            // names in JSON).
+            PARSER.declareFloat(XGBoostDefinition::setMissingValue, new ParseField("missing_value"));
             PARSER.declareBoolean(XGBoostDefinition::setFloatMaxForMissing, new ParseField("use_float_max_for_missing"));
+
             PARSER.declareObjectArray(XGBoostDefinition::setSplitParserStates, SplitParserState::parse, new ParseField("splits"));
         }
 
         private Normalizer normalizer;
-        private boolean useFloatMaxForMissing;
+        private Float missingValue;
         private List<SplitParserState> splitParserStates;
 
         public static XGBoostDefinition parse(XContentParser parser, FeatureSet set) throws IOException {
@@ -109,7 +121,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
 
         XGBoostDefinition() {
             normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
-            useFloatMaxForMissing = false;
         }
 
         /**
@@ -138,7 +149,11 @@ public class XGBoostJsonParser implements LtrRankerParser {
         }
 
         void setFloatMaxForMissing(boolean useFloatMaxForMissing) {
-            this.useFloatMaxForMissing = useFloatMaxForMissing;
+            this.missingValue = Float.MAX_VALUE;
+        }
+
+        void setMissingValue(float missingValue) {
+            this.missingValue = missingValue;
         }
 
         void setSplitParserStates(List<SplitParserState> splitParserStates) {
@@ -259,7 +274,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
                 Node left = children.get(0).toNode(set, xgb);
                 Node right = children.get(1).toNode(set, xgb);
                 Node onMissing = this.missingNodeId.equals(this.rightNodeId) ? right : left;
-                if (xgb.useFloatMaxForMissing) {
+                if (xgb.missingValue != null) {
                     return new NaiveAdditiveDecisionTree.Split(left, right, onMissing, set.featureOrdinal(split), threshold);
                 } else {
                     return new NaiveAdditiveDecisionTree.Split(left, right, null, set.featureOrdinal(split), threshold);
