@@ -27,6 +27,8 @@ import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.query.ValidatingLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
@@ -37,12 +39,9 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.tasks.Task;
-import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
@@ -55,10 +54,11 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
     private final ClusterService clusterService;
     private final TransportClearCachesAction clearCachesAction;
     private final Client client;
+    private final Logger logger = LogManager.getLogger(getClass());
 
     @Inject
-    public TransportFeatureStoreAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                                       ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+    public TransportFeatureStoreAction(TransportService transportService,
+                                       ActionFilters actionFilters,
                                        ClusterService clusterService, Client client,
                                        LtrRankerParserFactory factory,
                                        TransportClearCachesAction clearCachesAction) {
@@ -86,7 +86,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         }
     }
 
-    private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) {
+    private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) throws IOException {
         if (request.getAction() == FeatureStoreRequest.Action.UPDATE) {
              ClearCachesAction.ClearCachesNodesRequest clearCachesNodesRequest = new ClearCachesAction.ClearCachesNodesRequest();
              switch (request.getStorableElement().type()) {
@@ -174,9 +174,9 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
      * Prepare a Runnable to send an index request to store the element, invalidates the cache on success
      */
     private void store(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
-        Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
 
         try {
+            Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
             IndexRequest indexRequest = buildIndexRequest(task, request);
             client.execute(IndexAction.INSTANCE, indexRequest, wrap(
                     (r) -> {

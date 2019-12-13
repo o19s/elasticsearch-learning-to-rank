@@ -1,50 +1,99 @@
 {
   "ltr.add_features_to_set": {
     "stability": "stable",
-    "methods" : ["POST"],
     "url": {
-      "path": "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
       "paths": [
-        "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
-        "/_ltr/{store}/_featureset/{name}/_addfeatures",
-        "/_ltr/_featureset/{name}/_addfeatures/{query}",
-        "/_ltr/_featureset/{name}/_addfeatures"
-      ],
-      "parts": {
-        "store": {
-          "type": "string",
-          "required": false,
-          "description": "The store name"
+        {
+          "path": "/_ltr/_featureset/{name}/_addfeatures/{query}",
+          "parts": {
+            "query": {
+              "required": false,
+              "type": "string",
+              "description": "The feature names query"
+            },
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
         },
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The featureset name"
+        {
+          "path": "/_ltr/_featureset/{name}/_addfeatures",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
         },
-        "query": {
-          "type": "string",
-          "required": false,
-          "description": "The feature names query"
+        {
+          "path": "/_ltr/{store}/_featureset/{name}/_addfeatures",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            },
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "path": "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}",
+          "parts": {
+            "query": {
+              "required": false,
+              "type": "string",
+              "description": "The feature names query"
+            },
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            },
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
         }
-      },
-      "params": {
-        "routing": {
-          "type" : "string",
-          "description" : "Specific routing value"
-        },
-        "version": {
-          "type" : "long",
-          "description" : "Extra check to ensure that the model is created with this version of the set"
-        },
-        "merge": {
-          "type" : "boolean",
-          "description" : "Merge the list for features otherwise append only"
-        }
-      }
+      ]
     },
     "body": {
-      "description" : "The feature",
-      "required": "false"
+      "required": "false",
+      "description": "The feature"
+    },
+    "params": {
+      "merge": {
+        "type": "boolean",
+        "description": "Merge the list for features otherwise append only"
+      },
+      "version": {
+        "type": "long",
+        "description": "Extra check to ensure that the model is created with this version of the set"
+      },
+      "routing": {
+        "type": "string",
+        "description": "Specific routing value"
+      }
     }
   }
 }

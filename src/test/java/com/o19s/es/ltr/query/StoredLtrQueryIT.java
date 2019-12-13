@@ -259,7 +259,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.2876f + 2.876f));
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
-        CachesStatsNodesResponse stats = new CachesStatsAction.CachesStatsActionBuilder(client()).execute().get();
+        CachesStatsNodesResponse stats = client().execute(CachesStatsAction.INSTANCE,
+            new CachesStatsAction.CachesStatsNodesRequest()).get();
         assertEquals(1, stats.getAll().getTotal().getCount());
         assertEquals(model.compile(parserFactory()).ramBytesUsed(), stats.getAll().getTotal().getRam());
         assertEquals(1, stats.getAll().getModels().getCount());
@@ -269,11 +270,12 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertEquals(0, stats.getAll().getFeaturesets().getCount());
         assertEquals(0, stats.getAll().getFeaturesets().getRam());
 
-        ClearCachesAction.RequestBuilder clearCache = new ClearCachesAction.RequestBuilder(client());
-        clearCache.request().clearModel(IndexFeatureStore.DEFAULT_STORE, "my_model");
-        clearCache.get();
+        ClearCachesAction.ClearCachesNodesRequest clearCache = new ClearCachesAction.ClearCachesNodesRequest();
+        clearCache.clearModel(IndexFeatureStore.DEFAULT_STORE, "my_model");
+        client().execute(ClearCachesAction.INSTANCE, clearCache).get();
 
-        stats = new CachesStatsAction.CachesStatsActionBuilder(client()).execute().get();
+        stats = client().execute(CachesStatsAction.INSTANCE,
+                new CachesStatsAction.CachesStatsNodesRequest()).get();
         assertEquals(0, stats.getAll().getTotal().getCount());
         assertEquals(0, stats.getAll().getTotal().getRam());
 

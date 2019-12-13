@@ -1,32 +1,50 @@
 {
   "ltr.create_model_from_set": {
     "stability": "stable",
-    "methods" : ["POST"],
     "url": {
-      "path": "/_ltr/{store}/_featureset/{name}/_createmodel",
-      "paths": ["/_ltr/{store}/_featureset/{name}/_createmodel","/_ltr/_featureset/{name}/_createmodel"],
-      "parts": {
-        "store": {
-          "type": "string",
-          "required": false,
-          "description": "The store name"
+      "paths": [
+        {
+          "path": "/_ltr/_featureset/{name}/_createmodel",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
         },
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The featureset name"
+        {
+          "path": "/_ltr/{store}/_featureset/{name}/_createmodel",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The featureset name"
+            },
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "POST"
+          ]
         }
-      },
-      "params": {
-        "routing": {
-          "type" : "string",
-          "description" : "Specific routing value"
-        }
-      }
+      ]
     },
     "body": {
-      "description" : "Definition of the model: name, type and model",
-      "required": "true"
+      "required": "true",
+      "description": "Definition of the model: name, type and model"
+    },
+    "params": {
+      "routing": {
+        "type": "string",
+        "description": "Specific routing value"
+      }
     }
   }
 }

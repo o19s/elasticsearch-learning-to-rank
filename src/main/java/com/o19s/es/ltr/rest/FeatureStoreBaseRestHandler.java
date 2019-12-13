@@ -17,13 +17,11 @@
 package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
 
 public abstract class FeatureStoreBaseRestHandler extends BaseRestHandler {
-    protected FeatureStoreBaseRestHandler(Settings settings) {
-        super(settings);
+    protected FeatureStoreBaseRestHandler() {
     }
 
     protected String indexName(RestRequest request) {

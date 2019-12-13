@@ -1,22 +1,40 @@
 {
   "ltr.get_feature": {
     "stability": "stable",
-    "methods" : ["GET"],
     "url": {
-      "path": "/_ltr/{store}/_feature/{name}",
-      "paths": ["/_ltr/_feature/{name}", "/_ltr/{store}/_feature/{name}"],
-      "parts": {
-        "store": {
-          "type": "string",
-          "required": false,
-          "description": "The store name"
+      "paths": [
+        {
+          "path": "/_ltr/_feature/{name}",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The feature name"
+            }
+          },
+          "methods": [
+            "GET"
+          ]
         },
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The feature name"
+        {
+          "path": "/_ltr/{store}/_feature/{name}",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The feature name"
+            },
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "GET"
+          ]
         }
-      }
+      ]
     },
     "body": null
   }
