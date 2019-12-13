@@ -42,11 +42,16 @@ esplugin {
 repositories {
     mavenCentral()
     mavenLocal()
-    jcenter()
+    jcenter{
+    	url "https://jcenter.bintray.com/"
+	metadataSources{
+		artifact()
+	}
+    }
 }
 
 dependencies {
-  compile "org.apache.lucene:lucene-expressions:8.1.0"
+  compile "org.apache.lucene:lucene-expressions:8.2.0"
   compile 'org.antlr:antlr4-runtime:4.5.1-1'
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
@@ -55,7 +60,6 @@ dependencies {
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
   testCompile 'org.elasticsearch.test:framework:7.4.2'
-
 }
 
 dependencyLicenses {
