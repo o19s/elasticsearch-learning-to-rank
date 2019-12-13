@@ -72,7 +72,7 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
         return (channel) -> new CachesStatsAction.CachesStatsActionBuilder(client).execute(new NodesResponseRestListener(channel));
     }
 
-    private RestChannelConsumer clearCache(RestRequest request, NodeClient client) {
+    private RestChannelConsumer clearCache(RestRequest request, NodeClient client) throws IOException {
         String storeName = indexName(request);
         ClearCachesAction.RequestBuilder builder = new ClearCachesAction.RequestBuilder(client);
         builder.request().clearStore(storeName);

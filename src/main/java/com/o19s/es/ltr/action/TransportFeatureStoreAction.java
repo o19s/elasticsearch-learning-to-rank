@@ -86,7 +86,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         }
     }
 
-    private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) {
+    private Optional<ClearCachesNodesRequest> buildClearCache(FeatureStoreRequest request) throws IOException {
         if (request.getAction() == FeatureStoreRequest.Action.UPDATE) {
              ClearCachesAction.ClearCachesNodesRequest clearCachesNodesRequest = new ClearCachesAction.ClearCachesNodesRequest();
              switch (request.getStorableElement().type()) {
@@ -174,9 +174,9 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
      * Prepare a Runnable to send an index request to store the element, invalidates the cache on success
      */
     private void store(FeatureStoreRequest request, Task task, ActionListener<FeatureStoreResponse> listener) {
-        Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
 
         try {
+            Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
             IndexRequest indexRequest = buildIndexRequest(task, request);
             client.execute(IndexAction.INSTANCE, indexRequest, wrap(
                     (r) -> {

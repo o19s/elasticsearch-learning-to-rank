@@ -51,6 +51,10 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
         public CachesStatsNodesRequest(StreamInput in) throws IOException {
             super(in);
         }
+
+        public CachesStatsNodesRequest() {
+            super((String[]) null);
+        }
     }
 
     public static class CachesStatsNodesResponse extends BaseNodesResponse<CachesStatsNodeResponse> implements ToXContent {

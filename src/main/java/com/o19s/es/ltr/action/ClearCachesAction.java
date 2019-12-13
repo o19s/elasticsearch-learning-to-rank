@@ -51,7 +51,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     }
 
     public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse> {
-        public RequestBuilder(ElasticsearchClient client) {
+        public RequestBuilder(ElasticsearchClient client) throws IOException {
             super(client, ClearCachesAction.INSTANCE, new ClearCachesNodesRequest());
         }
     }
@@ -62,11 +62,15 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
         private String name;
 
 
-        public ClearCachesNodesRequest(StreamInput in ) throws IOException {
+        public ClearCachesNodesRequest(StreamInput in) throws IOException {
             super(in);
             store = in.readString();
             operation = Operation.values()[in.readVInt()];
             name = in.readOptionalString();
+        }
+
+        public ClearCachesNodesRequest() {
+            super((String[]) null);
         }
 
         @Override

@@ -58,6 +58,10 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
         }
 
         public ListStoresActionRequest() {}
+
+        public ListStoresActionRequest(StreamInput in) throws IOException {
+            super(in);
+        }
     }
 
     public static class ListStoresActionResponse extends ActionResponse implements ToXContentObject {

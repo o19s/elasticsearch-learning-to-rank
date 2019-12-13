@@ -65,7 +65,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
                                      ThreadPool threadPool, ActionFilters actionFilters,
                                      IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
-            actionFilters, indexNameExpressionResolver, ListStoresActionRequest::new);
+            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver);
         this.client = client;
     }
     
