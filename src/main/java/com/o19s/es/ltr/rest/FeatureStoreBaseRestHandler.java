@@ -23,7 +23,6 @@ import org.elasticsearch.rest.RestRequest;
 
 public abstract class FeatureStoreBaseRestHandler extends BaseRestHandler {
     protected FeatureStoreBaseRestHandler(Settings settings) {
-        super(settings);
     }
 
     protected String indexName(RestRequest request) {

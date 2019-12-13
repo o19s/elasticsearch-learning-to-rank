@@ -67,11 +67,6 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
     }
 
     @Override
-    protected ClearCachesNodeResponse newNodeResponse() {
-        return new ClearCachesNodeResponse();
-    }
-
-    @Override
     protected ClearCachesNodeResponse nodeOperation(ClearCachesNodeRequest request) {
         ClearCachesNodesRequest r = request.request;
         switch (r.getOperation()) {

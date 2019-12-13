@@ -68,15 +68,15 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
             actionFilters, indexNameExpressionResolver, ListStoresActionRequest::new);
         this.client = client;
     }
-
+    
     @Override
     protected String executor() {
         return ThreadPool.Names.SAME;
     }
 
     @Override
-    protected ListStoresActionResponse newResponse() {
-        return new ListStoresActionResponse();
+    protected ListStoresActionResponse read(StreamInput in) throws IOException {
+        return new ListStoresActionResponse(in);
     }
 
     @Override
