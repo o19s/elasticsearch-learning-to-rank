@@ -1,17 +1,28 @@
 {
   "ltr.create_store": {
     "stability": "stable",
-    "methods" : ["PUT"],
     "url": {
-      "path": "/_ltr/{store}",
-      "paths": ["/_ltr", "/_ltr/{store}"],
-      "parts": {
-        "store": {
-          "type": "string",
-          "required": false,
-          "description": "The store name"
+      "paths": [
+        {
+          "path": "/_ltr",
+          "methods": [
+            "PUT"
+          ]
+        },
+        {
+          "path": "/_ltr/{store}",
+          "parts": {
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "PUT"
+          ]
         }
-      }
+      ]
     },
     "body": null
   }

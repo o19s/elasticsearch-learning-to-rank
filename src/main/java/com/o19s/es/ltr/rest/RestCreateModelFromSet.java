@@ -25,7 +25,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -39,8 +38,8 @@ import java.io.IOException;
 
 public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
 
-    public RestCreateModelFromSet(Settings settings, RestController controller) {
-        super(settings);
+    public RestCreateModelFromSet(RestController controller) {
+        super();
         controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_createmodel", this);
         controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_createmodel", this);
     }

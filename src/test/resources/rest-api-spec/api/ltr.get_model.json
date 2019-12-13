@@ -1,22 +1,40 @@
 {
   "ltr.get_model": {
     "stability": "stable",
-    "methods" : ["GET"],
     "url": {
-      "path": "/_ltr/{store}/_model/{name}",
-      "paths": ["/_ltr/_model/{name}", "/_ltr/{store}/_model/{name}"],
-      "parts": {
-        "store": {
-          "type": "string",
-          "required": false,
-          "description": "The store name"
+      "paths": [
+        {
+          "path": "/_ltr/_model/{name}",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The model name"
+            }
+          },
+          "methods": [
+            "GET"
+          ]
         },
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The model name"
+        {
+          "path": "/_ltr/{store}/_model/{name}",
+          "parts": {
+            "name": {
+              "required": true,
+              "type": "string",
+              "description": "The model name"
+            },
+            "store": {
+              "required": false,
+              "type": "string",
+              "description": "The store name"
+            }
+          },
+          "methods": [
+            "GET"
+          ]
         }
-      }
+      ]
     },
     "body": null
   }

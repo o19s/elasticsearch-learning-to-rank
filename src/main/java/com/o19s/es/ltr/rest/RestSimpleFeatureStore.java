@@ -33,7 +33,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -66,22 +65,17 @@ import static org.elasticsearch.rest.RestStatus.OK;
  * Simple CRUD operation for the feature store elements.
  */
 public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler {
-    private RestSimpleFeatureStore(Settings settings) {
-        super(settings);
-    }
-
-    public static void register(List<RestHandler> list, Settings settings, RestController restController) {
+    public static void register(List<RestHandler> list, RestController restController) {
         for (String type : SUPPORTED_TYPES) {
-            list.add(new RestAddOrUpdateFeature(settings, restController, type));
-            list.add(new RestSearchStoreElements(settings, restController, type));
+            list.add(new RestAddOrUpdateFeature(restController, type));
+            list.add(new RestSearchStoreElements(restController, type));
         }
-        list.add(new RestStoreManager(settings, restController));
+        list.add(new RestStoreManager(restController));
     }
 
     static class RestAddOrUpdateFeature extends RestSimpleFeatureStore {
         private final String type;
-        RestAddOrUpdateFeature(Settings settings, RestController controller, String type) {
-            super(settings);
+        RestAddOrUpdateFeature(RestController controller, String type) {
             this.type = type;
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}/_" + type + "/{name}", this);
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr/_" + type + "/{name}", this);
@@ -116,8 +110,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     static class RestSearchStoreElements extends RestSimpleFeatureStore {
         private final String type;
 
-        RestSearchStoreElements(Settings settings, RestController controller, String type) {
-            super(settings);
+        RestSearchStoreElements(RestController controller, String type) {
             this.type = type;
             controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type, this);
             controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type, this);
@@ -129,14 +122,13 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         }
 
         @Override
-        protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+        protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
             return search(client, type, indexName(request), request);
         }
     }
 
     static class RestStoreManager extends RestSimpleFeatureStore {
-        RestStoreManager(Settings settings, RestController controller) {
-            super(settings);
+        RestStoreManager(RestController controller) {
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}", this);
             controller.registerHandler(RestRequest.Method.PUT, "/_ltr", this);
             controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}", this);
@@ -276,19 +268,19 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                             // wrap the response so we can send another request to clear the cache
                             // usually we send only one transport request from the rest layer
                             // it's still unclear which direction we should take (thick or thin REST layer?)
-                            ClearCachesAction.RequestBuilder clearCache = new ClearCachesAction.RequestBuilder(client);
+                            ClearCachesAction.ClearCachesNodesRequest clearCache = new ClearCachesAction.ClearCachesNodesRequest();
                             switch (type) {
                             case StoredFeature.TYPE:
-                                clearCache.request().clearFeature(indexName, name);
+                                clearCache.clearFeature(indexName, name);
                                 break;
                             case StoredFeatureSet.TYPE:
-                                clearCache.request().clearFeatureSet(indexName, name);
+                                clearCache.clearFeatureSet(indexName, name);
                                 break;
                             case StoredLtrModel.TYPE:
-                                clearCache.request().clearModel(indexName, name);
+                                clearCache.clearModel(indexName, name);
                                 break;
                             }
-                            clearCache.execute(ActionListener.wrap(
+                            client.execute(ClearCachesAction.INSTANCE, clearCache, ActionListener.wrap(
                                     (r) -> restR.onResponse(deleteResponse),
                                     // Is it good to fail the whole request if cache invalidation failed?
                                     restR::onFailure

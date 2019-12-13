@@ -149,10 +149,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
             return updatedVersion;
         }
 
-        public void setUpdatedVersion(Long updatedVersion) {
-            this.updatedVersion = updatedVersion;
-        }
-
         public FeatureValidation getValidation() {
             return validation;
         }
@@ -160,7 +156,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
         public void setValidation(FeatureValidation validation) {
             this.validation = validation;
         }
-
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
@@ -192,10 +187,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
 
         public IndexResponse getResponse() {
             return response;
-        }
-
-        public void setResponse(IndexResponse response) {
-            this.response = response;
         }
 
         @Override
