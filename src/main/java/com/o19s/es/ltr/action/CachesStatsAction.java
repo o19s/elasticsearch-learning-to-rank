@@ -44,12 +44,7 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
     protected CachesStatsAction() {
-        super(NAME);
-    }
-
-    @Override
-    public Reader<CachesStatsNodesResponse> getResponseReader() {
-        return CachesStatsNodesResponse::new;
+        super(NAME, CachesStatsNodesResponse::new);
     }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
