@@ -54,6 +54,14 @@ When building to support another version of Elasticsearch, versions should be mo
 ./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-<LTR-VER>-es<ES-VER>.zip
 ```
 
+### Open in IntelliJ
+
+The normal gradle idea commands apply to this project, and should work. To open the project in IntelliJ:
+
+```
+./gradlew idea open
+```
+
 ### Docs Development
 
 [Docs](/docs) are built using Sphinx and written in reStructuredText. After [installing sphinx](https://www.sphinx-doc.org/en/master/index.html) (`pip install sphinx`) rebuild the docs with:
