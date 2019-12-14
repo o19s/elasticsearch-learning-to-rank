@@ -76,6 +76,13 @@ configurations.restSpec.withDependencies { dependencies ->
   dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.5.0"))
 }
 
+// REMOVE PAST 7.5.1
+configurations.whenObjectAdded { c ->
+  if (c.name == 'elasticsearch_7.5.0_integ_test_zip_null') {
+    project.dependencies.add('elasticsearch_7.5.0_integ_test_zip_null', 'org.elasticsearch.distribution.integ-test-zip:elasticsearch:7.5.0@zip')
+  }
+}
+
 
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true
