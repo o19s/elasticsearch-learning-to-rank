@@ -21,6 +21,7 @@ import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.functionscore.ScriptScoreFunctionBuilder;
 import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 
@@ -118,7 +119,10 @@ public class ScriptFeature implements Feature {
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
         ScoreScript.Factory factoryFactory  = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getQueryShardContext().lookup());
-        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory);
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
+                context.getQueryShardContext().index().getName(),
+                context.getQueryShardContext().getShardId(),
+                context.getQueryShardContext().indexVersionCreated());
         return new LtrScript(function, supplier);
     }
 
