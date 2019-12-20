@@ -1,3 +1,7 @@
+// Remove after 7.5.1
+import org.elasticsearch.gradle.testclusters.TestClustersRegistry
+import org.elasticsearch.gradle.testclusters.TestClustersPlugin
+
 buildscript {
   repositories {
     mavenCentral()
@@ -96,3 +100,9 @@ thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
 licenseHeaders.enabled = false
+
+// Remove after 7.5.1
+TestClustersRegistry registry = project.rootProject.extensions.create("testClustersRegistry", TestClustersRegistry)
+TestClustersPlugin.configureClaimClustersHook(project.gradle, registry)
+TestClustersPlugin.configureStartClustersHook(project.gradle, registry)
+TestClustersPlugin.configureStopClustersHook(project.gradle, registry)
