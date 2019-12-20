@@ -18,9 +18,9 @@ package com.o19s.es.explore;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
@@ -85,7 +85,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
     }
 
     @Override
-    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         assertThat(query, instanceOf(ExplorerQuery.class));
     }
 }

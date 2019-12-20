@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
@@ -27,9 +28,10 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -48,6 +50,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
+@RunWith(RandomizedRunner.class)
 public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<ValidatingLtrQueryBuilder> {
     private final LtrRankerParserFactory factory = new LtrRankerParserFactory.Builder()
             .register(LinearRankerParser.TYPE, LinearRankerParser::new)
@@ -119,7 +122,7 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     }
 
     @Override
-    protected void doAssertLuceneQuery(ValidatingLtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(ValidatingLtrQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         if (StoredFeature.TYPE.equals(queryBuilder.getElement().type())) {
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
         } else if (StoredFeatureSet.TYPE.equals(queryBuilder.getElement().type())) {
