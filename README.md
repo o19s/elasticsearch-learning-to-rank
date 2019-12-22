@@ -31,55 +31,21 @@ To install, you'd run a command such as:
 
 If you already are running Elasticsearch, don't forget to restart!
 
-## Know issues
+# Known issues
 As any other piece of software, this plugin is not exempt from issues. Please read the [known issues](KNOWN_ISSUES.md) to learn about the current issues that we are aware of. This file might include workarounds to mitigate them when possible.
 
-# Development
+# Build and Deploy Locally
 
-Notes if you want to dig into the code or build for a version there's no build for.
-
-### 1. Build with Gradle Wrapper
+Notes if you want to dig into the code or build for a version there's no build for, please feel free to run the build and installation process yourself:
 
 ```
 ./gradlew clean check
+./bin/elasticsearch-plugin install file:///path/to/elasticsearch-learning-to-rank/build/distributions/ltr-<LTR-VER>-es<ES-VER>.zip
 ```
 
-This runs the tasks in the `esplugin` gradle plugin that builds, tests, generates a Elasticsearch plugin zip file available in ./build/distributions.
+# How to Contribute
 
-When building to support another version of Elasticsearch, versions should be modified in ./build.gradle, and possibly ./gradle/wrapper/gradle-wrapper.properties. See https://mvnrepository.com/artifact/org.elasticsearch.gradle/build-tools for available build tool versions.
-
-### 2. Install with `./bin/elasticsearch-plugin`
-
-```
-./bin/elasticsearch-plugin install file:///path/to/project/build/distributions/ltr-<LTR-VER>-es<ES-VER>.zip
-```
-
-### Open in IntelliJ
-
-The normal gradle idea commands apply to this project, and should work. To open the project in IntelliJ:
-
-```
-./gradlew idea open
-```
-
-### Docs Development
-
-[Docs](/docs) are built using Sphinx and written in reStructuredText. After [installing sphinx](https://www.sphinx-doc.org/en/master/index.html) (`pip install sphinx`) rebuild the docs with:
-
-```
-cd docs
-make html
-```
-
-In another tab, you can simply run:
-
-```
-python -m http.server
-```
-
-Visit [localhost:8000](http://localhost:8000) and browse to the `_build/html` directory in your browser to view the built docs. 
-
-Docs changes at master will be automatically built and deployed to readthedocs.
+For more information on helping us out (we need your help!), developing with the plugin, creating docs, etc please read [CONTRIBUTING.md](/CONTRIBUTING.MD).
 
 # Who built this?
 - [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
