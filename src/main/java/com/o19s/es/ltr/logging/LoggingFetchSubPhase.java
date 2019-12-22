@@ -32,6 +32,7 @@ import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchPhaseExecutionException;
 import org.elasticsearch.search.fetch.FetchSubPhase;
+import org.elasticsearch.search.fetch.subphase.InnerHitsContext;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
@@ -59,17 +60,19 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         List<HitLogConsumer> loggers = new ArrayList<>();
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
-        ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
-            Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
-            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-            loggers.add(query.v2());
-        });
+        if(!(context instanceof InnerHitsContext.InnerHitSubContext)) {
+          ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
+              Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
+              builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+              loggers.add(query.v2());
+          });
 
-        ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-            Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-            loggers.add(query.v2());
-        });
+          ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+              Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+              builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+              loggers.add(query.v2());
+          });
+        }
 
         try {
             doLog(builder.build(), loggers, context.searcher(), hits);

@@ -23,6 +23,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParserTests;
+import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.index.IndexResponse;
@@ -30,6 +31,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.InnerHitBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
@@ -44,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -188,6 +191,26 @@ public class LoggingIT extends BaseIntegrationTest {
 
         SearchResponse resp2 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
         assertSearchHits(docs, resp2);
+
+        query = QueryBuilders.boolQuery()
+            .must(new WrapperQueryBuilder(sbuilder.toString()))
+            .must(
+                    QueryBuilders.nestedQuery(
+                            "nesteddocs1",
+                            QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("nesteddocs1.field1", "nestedvalue")),
+                            ScoreMode.None
+                    ).innerHit(new InnerHitBuilder())
+            );
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+        SearchResponse resp3 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHits(docs, resp3);
     }
 
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {
@@ -243,17 +266,29 @@ public class LoggingIT extends BaseIntegrationTest {
 
     public Map<String,Doc> buildIndex() {
         client().admin().indices().prepareCreate("test_index")
-                .addMapping("test", "{\"properties\":{\"scorefield1\": {\"type\": \"float\"}}}", XContentType.JSON)
+                .addMapping(
+                        "test",
+                        "{\"properties\":{\"scorefield1\": {\"type\": \"float\"}, \"nesteddocs1\": {\"type\": \"nested\"}}}}",
+                        XContentType.JSON)
                 .get();
 
         int numDocs = TestUtil.nextInt(random(), 20, 100);
         Map<String, Doc> docs = new HashMap<>();
         for (int i = 0; i < numDocs; i++) {
             boolean field1IsFound = random().nextBoolean();
+            int numNestedDocs = TestUtil.nextInt(random(), 1, 20);
+            List<NestedDoc> nesteddocs1 = new ArrayList<>();
+            for (int j = 0; j < numNestedDocs; j++) {
+                nesteddocs1.add(
+                        new NestedDoc(
+                                "nestedvalue",
+                                Math.abs(random().nextFloat())));
+            }
             Doc d = new Doc(
                     field1IsFound ? "found" : "notfound",
                     field1IsFound ? "notfound" : "found",
-                    Math.abs(random().nextFloat()));
+                    Math.abs(random().nextFloat()),
+                    nesteddocs1);
             indexDoc(d);
             docs.put(d.id, d);
         }
@@ -263,7 +298,7 @@ public class LoggingIT extends BaseIntegrationTest {
 
     public void indexDoc(Doc d) {
         IndexResponse resp = client().prepareIndex("test_index", "test")
-                .setSource("field1", d.field1, "field2", d.field2, "scorefield1", d.scorefield1)
+                .setSource("field1", d.field1, "field2", d.field2, "scorefield1", d.scorefield1, "nesteddocs1", d.getNesteddocs1())
                 .get();
         d.id = resp.getId();
     }
@@ -273,11 +308,34 @@ public class LoggingIT extends BaseIntegrationTest {
         String field1;
         String field2;
         float scorefield1;
+        List<NestedDoc> nesteddocs1;
 
-        Doc(String field1, String field2, float scorefield1) {
+        Doc(String field1, String field2, float scorefield1, List<NestedDoc> nesteddocs1) {
             this.field1 = field1;
             this.field2 = field2;
             this.scorefield1 = scorefield1;
+            this.nesteddocs1 = nesteddocs1;
+        }
+
+        List<Map<String, Object>> getNesteddocs1() {
+            return nesteddocs1.stream().map(nd -> nd.toMap()).collect(Collectors.toList());
+        }
+    }
+
+    static class NestedDoc {
+        String field1;
+        float sortfield1;
+
+        NestedDoc(String field1, float sortfield1) {
+            this.field1 = field1;
+            this.sortfield1 = sortfield1;
+        }
+
+        Map<String, Object> toMap() {
+            Map<String, Object> map = new HashMap<>();
+            map.put("field1", field1);
+            map.put("sortfield1", sortfield1);
+            return map;
         }
     }
 }
