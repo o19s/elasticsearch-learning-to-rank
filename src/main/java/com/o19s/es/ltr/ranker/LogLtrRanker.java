@@ -16,6 +16,8 @@
 
 package com.o19s.es.ltr.ranker;
 
+import java.util.Map;
+
 public class LogLtrRanker implements LtrRanker {
     private final LogConsumer logger;
     private final LtrRanker ranker;
@@ -79,9 +81,14 @@ public class LogLtrRanker implements LtrRanker {
         }
     }
 
+    public LogConsumer getLogConsumer() {
+        return logger;
+    }
+
     @FunctionalInterface
     public interface LogConsumer {
         void accept(int featureOrdinal, float score);
+        default Map<String,Object> getExtraLoggingMap() {return null;}
         default void reset() {}
     }
 }

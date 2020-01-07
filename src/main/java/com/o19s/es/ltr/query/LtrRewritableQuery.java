@@ -10,5 +10,6 @@ public interface LtrRewritableQuery {
     /**
      * Rewrite the query so that it holds the vectorSupplier
      */
-    Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSuppler) throws IOException;
+    Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSuppler,
+                     LtrRanker ranker) throws IOException;
 }

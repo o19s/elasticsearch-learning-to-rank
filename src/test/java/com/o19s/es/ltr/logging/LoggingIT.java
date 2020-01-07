@@ -18,6 +18,7 @@ package com.o19s.es.ltr.logging;
 
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.action.BaseIntegrationTest;
+import com.o19s.es.ltr.feature.store.ScriptFeature;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -42,6 +43,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.rescore.QueryRescorerBuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +69,29 @@ public class LoggingIT extends BaseIntegrationTest {
                         .missing(0F)).scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY).toString()));
         features.add(new StoredFeature("derived_feature", Collections.singletonList("query"), "derived_expression",
                 "100"));
+
+        StoredFeatureSet set = new StoredFeatureSet("my_set", features);
+        addElement(set);
+        StoredLtrModel model = new StoredLtrModel("my_model", set,
+                new StoredLtrModel.LtrModelDefinition("model/linear",
+                        LinearRankerParserTests.generateRandomModelString(set), true));
+        addElement(model);
+    }
+    public void prepareModelsExtraLogging() throws Exception {
+        List<StoredFeature> features = new ArrayList<>(3);
+        features.add(new StoredFeature("text_feature1", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field1", "{{query}}").toString()));
+        features.add(new StoredFeature("text_feature2", Collections.singletonList("query"), "mustache",
+                QueryBuilders.matchQuery("field2", "{{query}}").toString()));
+        features.add(new StoredFeature("numeric_feature1", Collections.singletonList("query"), "mustache",
+                new FunctionScoreQueryBuilder(QueryBuilders.matchAllQuery(), new FieldValueFactorFunctionBuilder("scorefield1")
+                        .factor(FACTOR)
+                        .modifier(FieldValueFactorFunction.Modifier.LN2P)
+                        .missing(0F)).scoreMode(FunctionScoreQuery.ScoreMode.MULTIPLY).toString()));
+        features.add(new StoredFeature("derived_feature", Collections.singletonList("query"), "derived_expression",
+                "100"));
+        features.add(new StoredFeature("extra_logging_feature", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
+                "{\"lang\": \"native\", \"source\": \"feature_extractor_extra_logging\", \"params\": {}}"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
         addElement(set);
@@ -213,6 +238,82 @@ public class LoggingIT extends BaseIntegrationTest {
         assertSearchHits(docs, resp3);
     }
 
+    public void testLogExtraLogging() throws Exception {
+        prepareModelsExtraLogging();
+        Map<String, Doc> docs = buildIndex();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query", "found");
+        List<String> idsColl = new ArrayList<>(docs.keySet());
+        Collections.shuffle(idsColl, random());
+        String[] ids = idsColl.subList(0, TestUtil.nextInt(random(), 5, 15)).toArray(new String[0]);
+        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test")
+                .boost(random().nextInt(3));
+
+        StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test_rescore")
+                .boost(random().nextInt(3));
+
+        QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+
+        SearchResponse resp = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHitsExtraLogging(docs, resp);
+        sbuilder.featureSetName(null);
+        sbuilder.modelName("my_model");
+        sbuilder.boost(random().nextInt(3));
+        sbuilder_rescore.featureSetName(null);
+        sbuilder_rescore.modelName("my_model");
+        sbuilder_rescore.boost(random().nextInt(3));
+
+        query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+
+        SearchResponse resp2 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHitsExtraLogging(docs, resp2);
+
+        query = QueryBuilders.boolQuery()
+                .must(new WrapperQueryBuilder(sbuilder.toString()))
+                .must(
+                        QueryBuilders.nestedQuery(
+                                "nesteddocs1",
+                                QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("nesteddocs1.field1", "nestedvalue")),
+                                ScoreMode.None
+                        ).innerHit(new InnerHitBuilder())
+                );
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+        SearchResponse resp3 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHitsExtraLogging(docs, resp3);
+    }
+
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {
         for (SearchHit hit: resp.getHits()) {
             assertTrue(hit.getFields().containsKey("_ltrlog"));
@@ -223,6 +324,9 @@ public class LoggingIT extends BaseIntegrationTest {
             List<Map<String, Object>> log1 = logs.get("first_log");
             List<Map<String, Object>> log2 = logs.get("second_log");
             Doc d = docs.get(hit.getId());
+
+            assertEquals(4, log1.size());
+            assertEquals(4, log2.size());
             if (d.field1.equals("found")) {
                 assertEquals(log1.get(0).get("name"), "text_feature1");
                 assertEquals(log2.get(0).get("name"), "text_feature1");
@@ -258,9 +362,82 @@ public class LoggingIT extends BaseIntegrationTest {
             assertEquals(log1.get(3).get("name"), "derived_feature");
             assertEquals(log2.get(3).get("name"), "derived_feature");
 
-            assertEquals(100.0, (Float)log1.get(3).get("value"), Math.ulp(100.0));
+            assertEquals(100.0, (Float) log1.get(3).get("value"), Math.ulp(100.0));
             assertEquals(100.0, (Float) log2.get(3).get("value"), Math.ulp(100.0));
 
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void assertSearchHitsExtraLogging(Map<String, Doc> docs, SearchResponse resp) {
+        for (SearchHit hit: resp.getHits()) {
+            assertTrue(hit.getFields().containsKey("_ltrlog"));
+            Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
+            assertTrue(logs.containsKey("first_log"));
+            assertTrue(logs.containsKey("second_log"));
+
+            List<Map<String, Object>> log1 = logs.get("first_log");
+            List<Map<String, Object>> log2 = logs.get("second_log");
+            Doc d = docs.get(hit.getId());
+
+            assertEquals(6, log1.size());
+            assertEquals(6, log2.size());
+            if (d.field1.equals("found")) {
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertTrue((Float)log1.get(0).get("value") > 0F);
+                assertTrue((Float)log2.get(0).get("value") > 0F);
+
+                assertEquals(log1.get(1).get("name"), "text_feature2");
+                assertFalse(log1.get(1).containsKey("value"));
+
+                assertEquals(log2.get(1).get("name"), "text_feature2");
+                assertEquals(log2.get(1).get("value"), 0F);
+
+            } else {
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertTrue((Float)log1.get(1).get("value") > 0F);
+                assertTrue((Float)log2.get(1).get("value") > 0F);
+
+                assertEquals(log1.get(0).get("name"), "text_feature1");
+                assertEquals(log2.get(0).get("name"), "text_feature1");
+
+                assertEquals(0F, (Float)log2.get(0).get("value"), 0F);
+            }
+            float score = (float) Math.log1p((d.scorefield1 * FACTOR) + 1);
+            assertEquals(log1.get(2).get("name"), "numeric_feature1");
+            assertEquals(log2.get(2).get("name"), "numeric_feature1");
+
+            assertEquals(score, (Float)log1.get(2).get("value"), Math.ulp(score));
+            assertEquals(score, (Float)log2.get(2).get("value"), Math.ulp(score));
+
+            assertEquals(log1.get(3).get("name"), "derived_feature");
+            assertEquals(log2.get(3).get("name"), "derived_feature");
+
+            assertEquals(100.0, (Float) log1.get(3).get("value"), Math.ulp(100.0));
+            assertEquals(100.0, (Float) log2.get(3).get("value"), Math.ulp(100.0));
+
+            assertEquals(log1.get(4).get("name"), "extra_logging_feature");
+            assertEquals(log2.get(4).get("name"), "extra_logging_feature");
+
+            assertEquals(1.0, (Float) log1.get(4).get("value"), Math.ulp(1.0));
+            assertEquals(1.0, (Float) log2.get(4).get("value"), Math.ulp(1.0));
+
+            assertEquals(log1.get(5).get("name"), "extra_logging");
+            assertEquals(log2.get(5).get("name"), "extra_logging");
+
+            Map<String,Object> extraMap1 = (Map<String,Object>) log1.get(5).get("value");
+            Map<String,Object> extraMap2 = (Map<String,Object>) log2.get(5).get("value");
+
+            assertEquals(2, extraMap1.size());
+            assertEquals(2, extraMap2.size());
+            assertEquals(10.0f, extraMap1.get("extra_float"));
+            assertEquals(10.0f, extraMap2.get("extra_float"));
+            assertEquals("additional_info", extraMap1.get("extra_string"));
+            assertEquals("additional_info", extraMap2.get("extra_string"));
         }
     }
 

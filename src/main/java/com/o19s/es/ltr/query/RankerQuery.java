@@ -196,7 +196,7 @@ public class RankerQuery extends Query {
         FVLtrRankerWrapper ltrRankerWrapper = new FVLtrRankerWrapper(ranker, vectorSupplier);
         for (Query q : queries) {
             if (q instanceof LtrRewritableQuery) {
-                q = ((LtrRewritableQuery)q).ltrRewrite(vectorSupplier);
+                q = ((LtrRewritableQuery)q).ltrRewrite(vectorSupplier, ranker);
             }
             weights.add(searcher.createWeight(q, ScoreMode.COMPLETE, boost));
         }
