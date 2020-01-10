@@ -10,12 +10,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.5.0"
+    classpath "org.elasticsearch.gradle:build-tools:7.5.1"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.2-es7.5.0'
+version = '1.1.2-es7.5.1'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -60,10 +60,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.5.0'
+  compile 'org.elasticsearch:elasticsearch:7.5.1'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.5.0'
+  testCompile 'org.elasticsearch.test:framework:7.5.1'
 }
 
 dependencyLicenses {
@@ -77,13 +77,13 @@ dependencyLicenses {
 // https://github.com/elastic/elasticsearch/issues/45891#issuecomment-525399411
 configurations.restSpec.withDependencies { dependencies ->
   dependencies.clear()
-  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.5.0"))
+  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.5.1"))
 }
 
 // REMOVE PAST 7.5.1
 configurations.whenObjectAdded { c ->
-  if (c.name == 'elasticsearch_7.5.0_integ_test_zip_null') {
-    project.dependencies.add('elasticsearch_7.5.0_integ_test_zip_null', 'org.elasticsearch.distribution.integ-test-zip:elasticsearch:7.5.0@zip')
+  if (c.name == 'elasticsearch_7.5.1_integ_test_zip_null') {
+    project.dependencies.add('elasticsearch_7.5.1_integ_test_zip_null', 'org.elasticsearch.distribution.integ-test-zip:elasticsearch:7.5.1@zip')
   }
 }
 
