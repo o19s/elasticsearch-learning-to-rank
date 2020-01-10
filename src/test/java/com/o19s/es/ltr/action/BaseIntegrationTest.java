@@ -182,7 +182,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
                                         return new ScoreScript(p, lookup, ctx) {
                                             @Override
-                                            public double execute() {
+                                            public double execute(ExplanationHolder explainationHolder ) {
                                                 return extraMultiplier == 0.0d ?
                                                         featureSupplier.get(dependentFeature) * 10 :
                                                         featureSupplier.get(dependentFeature) * extraMultiplier;

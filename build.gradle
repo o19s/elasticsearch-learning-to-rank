@@ -1,3 +1,7 @@
+// Remove after 7.5.1
+import org.elasticsearch.gradle.testclusters.TestClustersRegistry
+import org.elasticsearch.gradle.testclusters.TestClustersPlugin
+
 buildscript {
   repositories {
     mavenCentral()
@@ -6,12 +10,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.4.2"
+    classpath "org.elasticsearch.gradle:build-tools:7.5.1"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.2-es7.4.2'
+version = '1.1.2-es7.5.1'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -51,15 +55,15 @@ repositories {
 }
 
 dependencies {
-  compile "org.apache.lucene:lucene-expressions:8.2.0"
+  compile "org.apache.lucene:lucene-expressions:8.3.0"
   compile 'org.antlr:antlr4-runtime:4.5.1-1'
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.4.2'
+  compile 'org.elasticsearch:elasticsearch:7.5.1'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.4.2'
+  testCompile 'org.elasticsearch.test:framework:7.5.1'
 }
 
 dependencyLicenses {
@@ -73,7 +77,14 @@ dependencyLicenses {
 // https://github.com/elastic/elasticsearch/issues/45891#issuecomment-525399411
 configurations.restSpec.withDependencies { dependencies ->
   dependencies.clear()
-  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.4.2"))
+  dependencies.add(project.dependencies.create("org.elasticsearch:rest-api-spec:7.5.1"))
+}
+
+// REMOVE PAST 7.5.1
+configurations.whenObjectAdded { c ->
+  if (c.name == 'elasticsearch_7.5.1_integ_test_zip_null') {
+    project.dependencies.add('elasticsearch_7.5.1_integ_test_zip_null', 'org.elasticsearch.distribution.integ-test-zip:elasticsearch:7.5.1@zip')
+  }
 }
 
 
@@ -89,3 +100,9 @@ thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
 licenseHeaders.enabled = false
+
+// Remove after 7.5.1
+TestClustersRegistry registry = project.rootProject.extensions.create("testClustersRegistry", TestClustersRegistry)
+TestClustersPlugin.configureClaimClustersHook(project.gradle, registry)
+TestClustersPlugin.configureStartClustersHook(project.gradle, registry)
+TestClustersPlugin.configureStopClustersHook(project.gradle, registry)
