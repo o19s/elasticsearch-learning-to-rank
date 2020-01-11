@@ -167,3 +167,48 @@ Characteristics of the internal cache can be controlled with these node settings
     ltr.caches.expire_after_write: 10m
     # Evict cache entries 10 minutes after access (defaults to 1hour, set to 0 to disable)
     ltr.caches.expire_after_read: 10m
+
+=============================
+Extra Logging
+=============================
+
+As described in :doc:`logging-features`, it is possible to used the logging extension to return the feature values with each document. For native scripts, it is also possible to return extra arbitrary information with the logged features.
+
+For native scripts, the parameter :code:`extra_logging` is injected into the script parameters. The parameter value is a `Supplier <https://docs.oracle.com/javase/8/docs/api/java/util/function/Supplier.html>`_ <`Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_>, which provides a non-null :code:`Map<String,Object>` **only** during the logging fetch phase. Any values added to this Map will be returned with the logged features::
+
+    @Override
+    public double runAsDouble() {
+    ...
+        Map<String,Object> extraLoggingMap = ((Supplier<Map<String,Object>>) getParams().get("extra_logging")).get();
+        if (extraLoggingMap != null) {
+            extraLoggingMap.put("extra_float", 10.0f);
+            extraLoggingMap.put("extra_string", "additional_info");
+        }
+    ...
+    }
+
+If (and only if) the extra logging Map is accessed, it will be returned as an additional entry with the logged features::
+
+    {
+        "log_entry1": [
+            {
+                "name": "title_query"
+                "value": 9.510193
+            },
+            {
+                "name": "body_query"
+                "value": 10.7808075
+            },
+            {
+                "name": "user_rating",
+                "value": 7.8
+            },
+            {
+                "name": "extra_logging",
+                "value": {
+                    "extra_float": 10.0,
+                    "extra_string": "additional_info"
+                }
+            }
+        ]
+    }
