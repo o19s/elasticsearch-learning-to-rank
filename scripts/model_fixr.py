@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""This is a script for fixing XGBoost boosting trees which have negative scores.
+    We calculate the most negative leaf value, and append one more tree to the model
+    which adds the abs() of this smallest value, meaning we always get a positive score,
+    but relatively the scores will not change.
+"""
+
 import json
 import sys
 import argparse
