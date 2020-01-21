@@ -1,7 +1,7 @@
 from unittest import TestCase
-from model_fixr import find_min
-from model_fixr import find_first_feature
-from model_fixr import fix_tree
+from xgboost_model_fixr import find_min
+from xgboost_model_fixr import find_first_feature
+from xgboost_model_fixr import fix_tree
 
 
 class ModelFixrTest(TestCase):
