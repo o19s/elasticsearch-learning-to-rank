@@ -1,16 +1,14 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.LogLtrRanker;
-
 import java.util.Map;
 import java.util.function.Supplier;
 
 
 public class ExtraLoggingSupplier implements Supplier<Map<String,Object>> {
-    protected LogLtrRanker.LogConsumer consumer;
+    protected Supplier<Map<String,Object>> supplier;
 
-    public void setConsumer(LogLtrRanker.LogConsumer consumer) {
-        this.consumer = consumer;
+    public void setSupplier(Supplier<Map<String,Object>> supplier) {
+        this.supplier = supplier;
     }
 
     /**
@@ -20,8 +18,8 @@ public class ExtraLoggingSupplier implements Supplier<Map<String,Object>> {
      */
     @Override
     public Map<String, Object> get() {
-        if (consumer != null) {
-            return consumer.getExtraLoggingMap();
+        if (supplier != null) {
+            return supplier.get();
         }
         return null;
     }

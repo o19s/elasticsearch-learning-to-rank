@@ -203,6 +203,8 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         private void rebuild() {
+            // Allocate one Map per feature, plus one placeholder for an extra logging Map
+            // that will only be added if used.
             List<Map<String, Object>> ini = new ArrayList<>(set.size() + 1);
 
             for (int i = 0; i < set.size(); i++) {
@@ -233,7 +235,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         public Map<String,Object> getExtraLoggingMap() {
             if (extraLogging == null) {
                 extraLogging = new HashMap<>();
-                Map<String,Object> logEntry = new HashMap<>(2);
+                Map<String,Object> logEntry = new HashMap<>();
                 logEntry.put("name", EXTRA_LOGGING_NAME);
                 logEntry.put("value", extraLogging);
                 currentLog.add(logEntry);

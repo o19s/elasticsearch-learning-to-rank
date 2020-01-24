@@ -172,7 +172,7 @@ Characteristics of the internal cache can be controlled with these node settings
 Extra Logging
 =============================
 
-As described in :doc:`logging-features`, it is possible to used the logging extension to return the feature values with each document. For native scripts, it is also possible to return extra arbitrary information with the logged features.
+As described in :doc:`logging-features`, it is possible to use the logging extension to return the feature values with each document. For native scripts, it is also possible to return extra arbitrary information with the logged features.
 
 For native scripts, the parameter :code:`extra_logging` is injected into the script parameters. The parameter value is a `Supplier <https://docs.oracle.com/javase/8/docs/api/java/util/function/Supplier.html>`_ <`Map <https://docs.oracle.com/javase/8/docs/api/java/util/Map.html>`_>, which provides a non-null :code:`Map<String,Object>` **only** during the logging fetch phase. Any values added to this Map will be returned with the logged features::
 

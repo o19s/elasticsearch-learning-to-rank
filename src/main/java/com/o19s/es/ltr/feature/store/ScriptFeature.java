@@ -4,8 +4,8 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.LtrRewritableQuery;
+import com.o19s.es.ltr.query.LtrRewriteContext;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
-import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ScriptFeature implements Feature {
@@ -167,15 +166,15 @@ public class ScriptFeature implements Feature {
         }
 
         @Override
-        public Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSupplier,
-                                LtrRanker ranker) throws IOException {
-            supplier.set(vectorSupplier);
+        public Query ltrRewrite(LtrRewriteContext context) throws IOException {
+            supplier.set(context.getFeatureVectorSupplier());
 
-            LogLtrRanker.LogConsumer consumer = null;
-            if (ranker instanceof LogLtrRanker) {
-                consumer = ((LogLtrRanker)ranker).getLogConsumer();
+            LogLtrRanker.LogConsumer consumer = context.getLogConsumer();
+            if (consumer != null) {
+                extraLoggingSupplier.setSupplier(consumer::getExtraLoggingMap);
+            } else {
+                extraLoggingSupplier.setSupplier(() -> null);
             }
-            extraLoggingSupplier.setConsumer(consumer);
             return this;
         }
     }

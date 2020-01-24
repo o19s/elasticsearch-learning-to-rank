@@ -14,11 +14,17 @@ public class ExtraLoggingSupplierTests extends LuceneTestCase {
 
     public void testGetWillNullConsumerSet() {
         ExtraLoggingSupplier supplier = new ExtraLoggingSupplier();
-        supplier.setConsumer(null);
+        supplier.setSupplier(null);
         assertNull(supplier.get());
     }
 
-    public void testGetWithConsumerSet() {
+    public void testGetWithSuppliedNull() {
+        ExtraLoggingSupplier supplier = new ExtraLoggingSupplier();
+        supplier.setSupplier(() -> null);
+        assertNull(supplier.get());
+    }
+
+    public void testGetWithSuppliedMap() {
         Map<String,Object> extraLoggingMap = new HashMap<>();
 
         LogLtrRanker.LogConsumer consumer = new LogLtrRanker.LogConsumer() {
@@ -32,7 +38,7 @@ public class ExtraLoggingSupplierTests extends LuceneTestCase {
         };
 
         ExtraLoggingSupplier supplier = new ExtraLoggingSupplier();
-        supplier.setConsumer(consumer);
+        supplier.setSupplier(consumer::getExtraLoggingMap);
         assertTrue(supplier.get() == extraLoggingMap);
     }
 }
