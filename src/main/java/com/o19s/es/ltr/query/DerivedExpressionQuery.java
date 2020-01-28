@@ -66,8 +66,8 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
     }
 
     @Override
-    public Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSuppler) {
-        return new FVDerivedExpressionQuery(this, vectorSuppler);
+    public Query ltrRewrite(LtrRewriteContext context) {
+        return new FVDerivedExpressionQuery(this, context.getFeatureVectorSupplier());
     }
 
     @Override
