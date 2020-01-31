@@ -10,7 +10,7 @@ Now that you have a model, what can you do with it? As you saw in :doc:`logging-
                     "params": {
                         "keywords": "rambo"
                     },
-                    "model": "my_model",
+                    "model": "my_model"
                 }
         }
     }
