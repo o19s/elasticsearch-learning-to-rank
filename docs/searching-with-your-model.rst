@@ -40,7 +40,7 @@ More often, you'll execute your model on the top N of a baseline relevance query
                         "params": {
                             "keywords": "rambo"
                         },
-                        "model": "my_model",
+                        "model": "my_model"
                     }
                 }
             }
