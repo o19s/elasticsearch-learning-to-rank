@@ -10,7 +10,7 @@ Now that you have a model, what can you do with it? As you saw in :doc:`logging-
                     "params": {
                         "keywords": "rambo"
                     },
-                    "model": "my_model",
+                    "model": "my_model"
                 }
         }
     }
@@ -40,7 +40,7 @@ More often, you'll execute your model on the top N of a baseline relevance query
                         "params": {
                             "keywords": "rambo"
                         },
-                        "model": "my_model",
+                        "model": "my_model"
                     }
                 }
             }
