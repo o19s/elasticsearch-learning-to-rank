@@ -94,12 +94,12 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     private final String index;
-    private final Client client;
+    private final Supplier<Client> clientSupplier;
     private final LtrRankerParserFactory parserFactory;
 
-    public IndexFeatureStore(String index, Client client, LtrRankerParserFactory factory) {
+    public IndexFeatureStore(String index, Supplier<Client> clientSupplier, LtrRankerParserFactory factory) {
         this.index = Objects.requireNonNull(index);
-        this.client = Objects.requireNonNull(client);
+        this.clientSupplier = Objects.requireNonNull(clientSupplier);
         this.parserFactory = Objects.requireNonNull(factory);
     }
 
@@ -189,7 +189,7 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     private Supplier<GetResponse> internalGet(String id) {
-        return () -> client.prepareGet(index, ES_TYPE, id).get();
+        return () -> clientSupplier.get().prepareGet(index, ES_TYPE, id).get();
     }
 
     /**

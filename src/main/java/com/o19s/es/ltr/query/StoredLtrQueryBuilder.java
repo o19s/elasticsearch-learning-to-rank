@@ -155,7 +155,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     @Override
     protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
-        FeatureStore store = storeLoader.load(indexName, context.getClient());
+        FeatureStore store = storeLoader.load(indexName, context::getClient);
         LtrQueryContext ltrQueryContext = new LtrQueryContext(context,
                 activeFeatures == null ? Collections.emptySet() : new HashSet<>(activeFeatures));
         if (modelName != null) {

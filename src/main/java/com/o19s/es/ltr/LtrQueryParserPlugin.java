@@ -233,7 +233,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     protected FeatureStoreLoader getFeatureStoreLoader() {
-        return (storeName, client) -> new CachedFeatureStore(new IndexFeatureStore(storeName, client, parserFactory), caches);
+        return (storeName, clientSupplier) ->
+            new CachedFeatureStore(new IndexFeatureStore(storeName, clientSupplier, parserFactory), caches);
     }
 
     // A simplified version of some token filters needed by the feature stores.
