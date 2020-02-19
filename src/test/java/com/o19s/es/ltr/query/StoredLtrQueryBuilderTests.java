@@ -223,7 +223,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assert context.isCacheable();
         QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
         assertNotNull(rewritten.toQuery(context));
-        assertFalse("query should not be cacheable: " + queryBuilder.toString(), context.isCacheable());
+        assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
 
     // Hack to inject our MemStore
