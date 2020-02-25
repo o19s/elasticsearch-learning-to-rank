@@ -3,7 +3,7 @@ install: true
 dist: xenial
 
 jdk:
-  - oraclejdk12
+  - oraclejdk13
 
 script:
   - ./gradlew clean check

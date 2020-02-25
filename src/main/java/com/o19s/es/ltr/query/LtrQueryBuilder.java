@@ -130,7 +130,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         }
         features = Collections.unmodifiableList(features);
 
-        RankLibScriptEngine.RankLibModelContainer.Factory factory = context.getScriptService().compile(_rankLibScript, new ScriptContext<>(
+        RankLibScriptEngine.RankLibModelContainer.Factory factory = context.compile(_rankLibScript, new ScriptContext<>(
                 "ranklib", RankLibScriptEngine.RankLibModelContainer.Factory.class));
         RankLibScriptEngine.RankLibModelContainer executableScript = factory.newInstance();
         LtrRanker ranker = (LtrRanker) executableScript.run();

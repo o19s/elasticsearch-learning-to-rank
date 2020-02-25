@@ -23,6 +23,7 @@ import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
@@ -41,7 +42,9 @@ import org.junit.Before;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
@@ -241,6 +244,11 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                         return context.factoryClazz.cast(factory);
                     }
                     throw new IllegalArgumentException("Unknown script name " + scriptSource);
+                }
+
+                @Override
+                public Set<ScriptContext<?>> getSupportedContexts() {
+                    return Collections.singleton(RankLibScriptEngine.CONTEXT);
                 }
             };
         }

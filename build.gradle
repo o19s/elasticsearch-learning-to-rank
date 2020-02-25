@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.5.2"
+    classpath "org.elasticsearch.gradle:build-tools:7.6.0"
   }
 }
 
 group = 'com.o19s'
-version = '1.2.0-es7.5.2'
+version = '1.2.0-es7.6.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -53,10 +53,10 @@ dependencies {
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.5.2'
+  compile 'org.elasticsearch:elasticsearch:7.6.0'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.5.2'
+  testCompile 'org.elasticsearch.test:framework:7.6.0'
 }
 
 dependencyLicenses {
@@ -78,12 +78,3 @@ thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
 licenseHeaders.enabled = false
-
-// added for 7.5.1, still required for 7.5.2
-import org.elasticsearch.gradle.testclusters.TestClustersRegistry
-import org.elasticsearch.gradle.testclusters.TestClustersPlugin
-
-TestClustersRegistry registry = project.rootProject.extensions.create("testClustersRegistry", TestClustersRegistry)
-TestClustersPlugin.configureClaimClustersHook(project.gradle, registry)
-TestClustersPlugin.configureStartClustersHook(project.gradle, registry)
-TestClustersPlugin.configureStopClustersHook(project.gradle, registry)
