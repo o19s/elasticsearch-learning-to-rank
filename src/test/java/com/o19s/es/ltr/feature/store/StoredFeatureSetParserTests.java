@@ -209,7 +209,7 @@ public class StoredFeatureSetParserTests extends LuceneTestCase {
                 "]}";
         assertThat(expectThrows(ParsingException.class,
                 () -> parse(set)).getMessage(),
-                containsString("unknown field [random_field], parser not found"));
+                containsString("[2:1] [featureset] unknown field [random_field]"));
     }
 
     private static StoredFeatureSet parse(String missingName) throws IOException {
