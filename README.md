@@ -45,7 +45,7 @@ Notes if you want to dig into the code or build for a version there's no build f
 
 # How to Contribute
 
-For more information on helping us out (we need your help!), developing with the plugin, creating docs, etc please read [CONTRIBUTING.md](/CONTRIBUTING.MD).
+For more information on helping us out (we need your help!), developing with the plugin, creating docs, etc please read [CONTRIBUTING.md](/CONTRIBUTING.md).
 
 # Who built this?
 - [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
