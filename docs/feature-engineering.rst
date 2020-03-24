@@ -33,6 +33,7 @@ The statistics available include:
 - :code:`raw_df` -- the direct document frequency for a term. So if rambo occurs in 3 movie titles, this is 3.
 - :code:`classic_idf` -- the IDF calculation of the classic similarity :code:`log((NUM_DOCS+1)/(raw_df+1)) + 1`.
 - :code:`raw_ttf` -- the total term frequency for the term across the index. So if rambo is mentioned a total of 100 times in the overview field, this would be 100.
+- :code:`raw_tf` -- the term frequency for a document. So if rambo occurs in 3 in movie synopsis in same document, this is 3.
 
 Putting the operation and the statistic together, you can see some examples. To get stddev of classic_idf, you would write :code:`stddev_classic_idf`. To get the minimum total term frequency, you'd write :code:`min_raw_ttf`.
 
