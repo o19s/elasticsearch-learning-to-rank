@@ -247,16 +247,16 @@ public class ExplorerQuery extends Query {
 
             // This impl always scores docs in order, so we can
             // ignore scoreDocsInOrder:
-            return new LalaDefaultBulkScorer(scorer);
+            return new ExplorerDefaultBulkScorer(scorer);
         }
 
-        protected static class LalaDefaultBulkScorer extends BulkScorer {
+        protected static class ExplorerDefaultBulkScorer extends BulkScorer {
             private final Scorer scorer;
             private final DocIdSetIterator iterator;
             private final TwoPhaseIterator twoPhase;
 
             /** Sole constructor. */
-            public LalaDefaultBulkScorer(Scorer scorer) {
+            public ExplorerDefaultBulkScorer(Scorer scorer) {
                 if (scorer == null) {
                     throw new NullPointerException();
                 }
