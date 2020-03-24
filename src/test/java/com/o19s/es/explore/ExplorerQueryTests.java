@@ -100,8 +100,12 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
-        // Basic query check, should match 2 docs
+        // Basic query check, should match 0 docs
         assertThat(searcher.count(eq), equalTo(0));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 4);
+        assertThat(docs.scoreDocs.length, equalTo(0));
     }
 
     public void testBooleanQuery() throws Exception {

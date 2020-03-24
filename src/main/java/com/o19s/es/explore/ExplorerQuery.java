@@ -366,6 +366,9 @@ public class ExplorerQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Scorer subscorer = weight.scorer(context);
+            if (subscorer == null) {
+                return null;
+            }
             return new ExplorerScorer(weight, type, subscorer);
         }
     }
