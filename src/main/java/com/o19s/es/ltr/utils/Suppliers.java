@@ -29,7 +29,8 @@ public final class Suppliers {
     private Suppliers() {}
 
     /**
-     * Build a supplier that stores and return the same instance.
+     * @param supplier the original supplier to store
+     * @return a supplier storing and returning the same instance
      */
     public static <E> Supplier<E> memoize(Supplier<E> supplier) {
         return new MemoizeSupplier<>(supplier);

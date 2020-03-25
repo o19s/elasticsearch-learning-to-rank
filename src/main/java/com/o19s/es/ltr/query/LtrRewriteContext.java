@@ -25,6 +25,8 @@ public class LtrRewriteContext {
      * Get LogConsumer used during the LoggingFetchSubPhase
      *
      * The returned consumer will only be non-null during the logging fetch phase
+     *
+     * @return the LogConsumer used during the fetch-subphase, null otherwise
      */
     public LogLtrRanker.LogConsumer getLogConsumer() {
         if (ranker instanceof LogLtrRanker) {

@@ -117,17 +117,11 @@ public class StoredLtrModel implements StorableElement {
         return new CompiledLtrModel(name, optimized, ranker);
     }
 
-    /**
-     * Name of the model
-     */
     @Override
     public String name() {
         return name;
     }
 
-    /**
-     * Type of the element
-     */
     @Override
     public String type() {
         return TYPE;
@@ -139,16 +133,22 @@ public class StoredLtrModel implements StorableElement {
     }
 
     /**
-     * The set of features used by this model
+     * @return the set of features used by the stored model
      */
     public StoredFeatureSet featureSet() {
         return featureSet;
     }
 
+    /**
+     * @return the type of the stored ranking model
+     */
     public String rankingModelType() {
         return rankingModelType;
     }
 
+    /**
+     * @return the stored ranking model
+     */
     public String rankingModel() {
         return rankingModel;
     }

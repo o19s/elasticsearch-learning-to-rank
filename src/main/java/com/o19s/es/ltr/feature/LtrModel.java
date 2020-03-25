@@ -23,17 +23,17 @@ import com.o19s.es.ltr.ranker.LtrRanker;
  */
 public interface LtrModel {
     /**
-     * Name of the model
+     * @return the name of the model
      */
     String name();
 
     /**
-     * Return the {@link LtrRanker} implementation used by this model
+     * @return the {@link LtrRanker} implementation used by this model
      */
     LtrRanker ranker();
 
     /**
-     * The set of features used by this model
+     * @return the set of features used by this model
      */
     FeatureSet featureSet();
 }
