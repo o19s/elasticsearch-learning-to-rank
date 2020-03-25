@@ -98,6 +98,6 @@ public class RankLibScriptEngine implements ScriptEngine {
             return _ranker;
         }
 
-
+        public void execute () {}
     }
 }
