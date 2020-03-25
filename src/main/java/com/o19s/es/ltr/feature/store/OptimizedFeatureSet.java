@@ -57,7 +57,7 @@ public class OptimizedFeatureSet implements FeatureSet, Accountable {
             if(context.isFeatureActive(feature.name())) {
                 queries.add(feature.doToQuery(context, this, params));
             } else {
-                queries.add(new MatchNoDocsQuery( "Feature " + feature.name() + " deactivated" ));
+                queries.add(new MatchNoDocsQuery("Feature " + feature.name() + " deactivated"));
             }
         }
         return queries;

@@ -41,7 +41,7 @@ public abstract class DenseLtrRanker implements LtrRanker {
     protected abstract float score(DenseFeatureVector vector);
 
     /**
-     * The number of features supported by this ranker
+     * @return the number of features supported by this ranker
      */
     protected abstract int size();
 }

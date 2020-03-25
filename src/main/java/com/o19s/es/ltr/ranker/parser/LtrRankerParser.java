@@ -23,8 +23,13 @@ import com.o19s.es.ltr.ranker.LtrRanker;
  * A model parser (don't have to be thread-safe)
  */
 public interface LtrRankerParser {
+
     /**
-     * Parse the model with the given FeatureSet
+     * Parse the model with the given {@link FeatureSet}
+     *
+     * @param set the feature-set to use to parse the model
+     * @param model the model name
+     * @return the {@link LtrRanker} parsed from the given model and feature-set
      */
     LtrRanker parse(FeatureSet set, String model);
 }

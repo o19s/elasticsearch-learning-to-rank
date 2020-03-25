@@ -29,7 +29,8 @@ public class NoopScorer extends Scorer {
     /**
      * Constructs a Scorer
      *
-     * @param weight The scorers <code>Weight</code>.
+     * @param weight The scorers weight
+     * @param maxDocs maximum number of documents to score
      */
     public NoopScorer(Weight weight, int maxDocs) {
         super(weight);
