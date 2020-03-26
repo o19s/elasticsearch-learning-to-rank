@@ -81,11 +81,7 @@ public class ExplorerScorer extends Scorer {
 
     @Override
     public DocIdSetIterator iterator() {
-        try {
-            return subScorer.iterator();
-        } catch (Exception e) {
-            return null;
-        }
+        return subScorer.iterator();
     }
 
     /**

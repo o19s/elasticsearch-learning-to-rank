@@ -31,12 +31,9 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BulkScorer;
+
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
-import org.apache.lucene.util.Bits;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -234,113 +231,6 @@ public class ExplorerQuery extends Query {
         @Override
         public void extractTerms(Set<Term> terms) {
             weight.extractTerms(terms);
-        }
-
-        @Override
-        public BulkScorer bulkScorer(LeafReaderContext context) throws IOException {
-
-            Scorer scorer = scorer(context);
-            if (scorer == null) {
-                // No docs match
-                return null;
-            }
-
-            // This impl always scores docs in order, so we can
-            // ignore scoreDocsInOrder:
-            return new ExplorerDefaultBulkScorer(scorer);
-        }
-
-        protected static class ExplorerDefaultBulkScorer extends BulkScorer {
-            private final Scorer scorer;
-            private final DocIdSetIterator iterator;
-            private final TwoPhaseIterator twoPhase;
-
-            /** Sole constructor. */
-            public ExplorerDefaultBulkScorer(Scorer scorer) {
-                if (scorer == null) {
-                    throw new NullPointerException();
-                }
-                this.scorer = scorer;
-                this.iterator = scorer.iterator();
-                this.twoPhase = scorer.twoPhaseIterator();
-            }
-
-            @Override
-            public long cost() {
-                return iterator.cost();
-            }
-
-            @Override
-            public int score(LeafCollector collector, Bits acceptDocs, int min, int max) throws IOException {
-                try {
-                    collector.setScorer(scorer);
-                    if (scorer.docID() == -1 && min == 0 && max == DocIdSetIterator.NO_MORE_DOCS) {
-                        scoreAll(collector, iterator, twoPhase, acceptDocs);
-                        return DocIdSetIterator.NO_MORE_DOCS;
-                    } else {
-                        int doc = scorer.docID();
-                        if (doc < min) {
-                            if (twoPhase == null) {
-                                doc = iterator.advance(min);
-                            } else {
-                                doc = twoPhase.approximation().advance(min);
-                            }
-                        }
-                        return scoreRange(collector, iterator, twoPhase, acceptDocs, doc, max);
-                    }
-                }catch (Exception e ) {
-                    return 0;
-                }
-            }
-
-            /** Specialized method to bulk-score a range of hits; we
-             *  separate this from {@link #scoreAll} to help out
-             *  hotspot.
-             *  See <a href="https://issues.apache.org/jira/browse/LUCENE-5487">LUCENE-5487</a> */
-            static int scoreRange(LeafCollector collector, DocIdSetIterator iterator, TwoPhaseIterator twoPhase,
-                                  Bits acceptDocs, int currentDoc, int end) throws IOException {
-                if (twoPhase == null) {
-                    while (currentDoc < end) {
-                        if (acceptDocs == null || acceptDocs.get(currentDoc)) {
-                            collector.collect(currentDoc);
-                        }
-                        currentDoc = iterator.nextDoc();
-                    }
-                    return currentDoc;
-                } else {
-                    final DocIdSetIterator approximation = twoPhase.approximation();
-                    while (currentDoc < end) {
-                        if ((acceptDocs == null || acceptDocs.get(currentDoc)) && twoPhase.matches()) {
-                            collector.collect(currentDoc);
-                        }
-                        currentDoc = approximation.nextDoc();
-                    }
-                    return currentDoc;
-                }
-            }
-
-            /** Specialized method to bulk-score all hits; we
-             *  separate this from {@link #scoreRange} to help out
-             *  hotspot.
-             *  See <a href="https://issues.apache.org/jira/browse/LUCENE-5487">LUCENE-5487</a> */
-            static void scoreAll(LeafCollector collector, DocIdSetIterator iterator,
-                                 TwoPhaseIterator twoPhase, Bits acceptDocs) throws IOException {
-                if (twoPhase == null) {
-                    for (int doc = iterator.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = iterator.nextDoc()) {
-                        if (acceptDocs == null || acceptDocs.get(doc)) {
-                            collector.collect(doc);
-                        }
-                    }
-                } else {
-                    // The scorer has an approximation, so run the approximation first, then check acceptDocs, then confirm
-                    final DocIdSetIterator approximation = twoPhase.approximation();
-                    for (int doc = approximation.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = approximation.nextDoc()) {
-                        if ((acceptDocs == null || acceptDocs.get(doc)) && twoPhase.matches()) {
-                            collector.collect(doc);
-                        }
-                    }
-                }
-            }
         }
 
         @Override
