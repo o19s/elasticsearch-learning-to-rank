@@ -20,18 +20,19 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.ConstantScoreScorer;
-import org.apache.lucene.search.ConstantScoreWeight;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TermStatistics;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.TermStatistics;
+import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanClause;
+
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
@@ -255,6 +256,9 @@ public class ExplorerQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Scorer subscorer = weight.scorer(context);
+            if (subscorer == null) {
+                return null;
+            }
             return new ExplorerScorer(weight, type, subscorer);
         }
     }

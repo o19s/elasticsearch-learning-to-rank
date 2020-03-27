@@ -93,6 +93,21 @@ public class ExplorerQueryTests extends LuceneTestCase {
         assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: sum_raw_tf"));
     }
 
+    public void testQueryWithEmptyResults() throws Exception {
+        Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
+
+        String statsType = "sum_raw_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 0 docs
+        assertThat(searcher.count(eq), equalTo(0));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 4);
+        assertThat(docs.scoreDocs.length, equalTo(0));
+    }
+
     public void testBooleanQuery() throws Exception {
         TermQuery tq1 = new TermQuery(new Term("text", "cow"));
         TermQuery tq2 = new TermQuery(new Term("text", "brown"));
