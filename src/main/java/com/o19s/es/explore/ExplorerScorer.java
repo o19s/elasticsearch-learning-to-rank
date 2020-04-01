@@ -20,7 +20,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
-import java.util.Collections;
 
 public class ExplorerScorer extends Scorer {
     private final Scorer subScorer;
@@ -61,9 +60,11 @@ public class ExplorerScorer extends Scorer {
                 retval = tf_stats.getMean();
                 break;
             case("max_raw_tf"):
+            case("max_raw_tp"):
                 retval = tf_stats.getMax();
                 break;
             case("min_raw_tf"):
+            case("min_raw_tp"):
                 retval = tf_stats.getMin();
                 break;
             case("stddev_raw_tf"):
@@ -71,12 +72,6 @@ public class ExplorerScorer extends Scorer {
                 break;
             case("avg_raw_tp"):
                 retval = tf_stats.getAvg();
-                break;
-            case("max_raw_tp"):
-                retval = tf_stats.getMax();
-                break;
-            case("min_raw_tp"):
-                retval = tf_stats.getMin();
                 break;
             default:
                 throw new RuntimeException("Invalid stat type specified.");
