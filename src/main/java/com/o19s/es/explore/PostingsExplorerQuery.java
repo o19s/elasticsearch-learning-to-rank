@@ -34,6 +34,8 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -88,7 +90,8 @@ public class PostingsExplorerQuery extends Query {
      */
     enum Type implements CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> {
         // Extract TF from the postings
-        TF((weight, terms) -> new TFScorer(weight, terms.postings(null, PostingsEnum.FREQS)));
+        TF((weight, terms) -> new TFScorer(weight, terms.postings(null, PostingsEnum.FREQS))),
+        TP((weight, terms) -> new TPScorer(weight, terms.postings(null, PostingsEnum.POSITIONS)));
 
         private final CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> func;
 
@@ -152,10 +155,15 @@ public class PostingsExplorerQuery extends Query {
 
     public abstract static class PostingsExplorerScorer extends Scorer {
         final PostingsEnum postingsEnum;
+        protected String typeConditional;
 
         PostingsExplorerScorer(Weight weight, PostingsEnum postingsEnum) {
             super(weight);
             this.postingsEnum = postingsEnum;
+        }
+
+        public void setType(String type) {
+            this.typeConditional = type;
         }
 
         @Override
@@ -177,6 +185,55 @@ public class PostingsExplorerQuery extends Query {
         @Override
         public float score() throws IOException {
             return this.postingsEnum.freq();
+        }
+
+        /**
+         * Return the maximum score that documents between the last {@code target}
+         * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+         * included and {@code upTo} included.
+         */
+        @Override
+        public float getMaxScore(int upTo) throws IOException {
+            return Float.POSITIVE_INFINITY;
+        }
+    }
+
+    static class TPScorer extends PostingsExplorerScorer {
+        TPScorer(Weight weight, PostingsEnum postingsEnum) {
+            super(weight, postingsEnum);
+        }
+
+        @Override
+        public float score() throws IOException {
+            if (this.postingsEnum.freq() <= 0) {
+                return 0;
+            }
+
+            ArrayList<Float> positions = new ArrayList<Float>();
+            for (int i=0;i<this.postingsEnum.freq();i++){
+                positions.add((float) this.postingsEnum.nextPosition());
+            }
+
+            float retval;
+            switch(this.typeConditional) {
+                case("avg_raw_tp"):
+                    float sum = 0;
+                    for (float position : positions) {
+                        sum += position;
+                    }
+                    retval = sum / positions.size();
+                    break;
+                case("max_raw_tp"):
+                    retval = Collections.max(positions);
+                    break;
+                case("min_raw_tp"):
+                    retval = Collections.min(positions);
+                    break;
+                default:
+                    retval = 0;
+            }
+
+            return retval;
         }
 
         /**

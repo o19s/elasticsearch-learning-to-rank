@@ -49,7 +49,8 @@ public class ExplorerQueryTests extends LuceneTestCase {
             "how now brown cow",
             "brown is the color of cows",
             "brown cow",
-            "banana cows are yummy"
+            "banana cows are yummy",
+            "dance with monkeys and do not stop to dance"
     };
 
     @Before
@@ -106,6 +107,51 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify explain
         TopDocs docs = searcher.search(eq, 4);
         assertThat(docs.scoreDocs.length, equalTo(0));
+    }
+
+    public void testQueryWithTermPositionAverage() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("4.0 = Stat Score: avg_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionMax() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "max_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("8.0 = Stat Score: max_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionMin() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "min_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("0.0 = Stat Score: min_raw_tp"));
     }
 
     public void testBooleanQuery() throws Exception {

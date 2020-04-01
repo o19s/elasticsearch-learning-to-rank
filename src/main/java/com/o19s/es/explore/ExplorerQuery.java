@@ -214,6 +214,18 @@ public class ExplorerQuery extends Query {
             // problem is that we rely on extractTerms which happen too late in the process
             Query q = qb.build().rewrite(searcher.getIndexReader());
             return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, scoreMode, boost), type);
+        } else if (type.endsWith("_raw_tp")) {
+            // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
+            BooleanQuery.Builder qb = new BooleanQuery.Builder();
+            for (Term t : terms) {
+                qb.add(new BooleanClause(new PostingsExplorerQuery(t, PostingsExplorerQuery.Type.TP),
+                        BooleanClause.Occur.SHOULD));
+            }
+            // FIXME: completely refactor this class and stop accepting a random query but a list of terms directly
+            // rewriting at this point is wrong, additionally we certainly build the TermContext twice for every terms
+            // problem is that we rely on extractTerms which happen too late in the process
+            Query q = qb.build().rewrite(searcher.getIndexReader());
+            return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, scoreMode, boost), type);
         }
         throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");
     }

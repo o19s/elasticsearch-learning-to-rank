@@ -84,4 +84,20 @@ public class StatisticsHelper {
 
         return (float) Math.sqrt(getVariance());
     }
+
+    public float getAvg() {
+        assert !data.isEmpty();
+
+        if (data.size() == 1){
+            return data.get(0);
+        }
+
+        float retval = 0;
+        float sum = 0;
+        for (float position : data) {
+            sum += position;
+        }
+        retval = sum / data.size();
+        return retval;
+    }
 }
