@@ -116,12 +116,12 @@ public class ExplorerQueryTests extends LuceneTestCase {
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
         // Basic query check, should match 1 docs
-        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+        assertThat(searcher.count(eq), equalTo(1));
 
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("4.0 = Stat Score: avg_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("4.0 = Stat Score: avg_raw_tp"));
     }
 
     public void testQueryWithTermPositionMax() throws Exception {
@@ -131,12 +131,12 @@ public class ExplorerQueryTests extends LuceneTestCase {
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
         // Basic query check, should match 1 docs
-        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+        assertThat(searcher.count(eq), equalTo(1));
 
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("8.0 = Stat Score: max_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("8.0 = Stat Score: max_raw_tp"));
     }
 
     public void testQueryWithTermPositionMin() throws Exception {
@@ -146,12 +146,12 @@ public class ExplorerQueryTests extends LuceneTestCase {
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
         // Basic query check, should match 1 docs
-        assertThat(searcher.count(eq), CoreMatchers.equalTo(1));
+        assertThat(searcher.count(eq), equalTo(1));
 
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), CoreMatchers.equalTo("0.0 = Stat Score: min_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("0.0 = Stat Score: min_raw_tp"));
     }
 
     public void testBooleanQuery() throws Exception {
