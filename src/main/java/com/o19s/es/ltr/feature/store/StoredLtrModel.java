@@ -33,6 +33,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
@@ -214,12 +215,14 @@ public class StoredLtrModel implements StorableElement {
     public static class LtrModelDefinition implements Writeable {
         private String type;
         private String definition;
+        private List<FeatureNormNamed> featureNormalizers;
         private boolean modelAsString;
 
         public static final ObjectParser<LtrModelDefinition, Void> PARSER;
 
         private static final ParseField MODEL_TYPE = new ParseField("type");
         private static final ParseField MODEL_DEFINITION = new ParseField("definition");
+        private static final ParseField FEATURE_NORMALIZERS = new ParseField("feature_normalizers");
 
         static {
             PARSER = new ObjectParser<>("model", LtrModelDefinition::new);
@@ -228,6 +231,10 @@ public class StoredLtrModel implements StorableElement {
             PARSER.declareField((p, d, c) -> d.parseModel(p),
                     MODEL_DEFINITION,
                     ObjectParser.ValueType.OBJECT_ARRAY_OR_STRING);
+
+            PARSER.declareNamedObjects(LtrModelDefinition::setNamedFeatureNormalizers,
+                    FeatureNormNamed.PARSER,
+                    FEATURE_NORMALIZERS);
         }
 
 
@@ -260,6 +267,10 @@ public class StoredLtrModel implements StorableElement {
 
         public String getType() {
             return type;
+        }
+
+        public void setNamedFeatureNormalizers(List<FeatureNormNamed> featureNormalizers) {
+            this.featureNormalizers = featureNormalizers;
         }
 
         public String getDefinition() {
