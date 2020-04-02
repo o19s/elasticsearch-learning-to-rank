@@ -50,7 +50,8 @@ public class ExplorerQueryTests extends LuceneTestCase {
             "brown is the color of cows",
             "brown cow",
             "banana cows are yummy",
-            "dance with monkeys and do not stop to dance"
+            "dance with monkeys and do not stop to dance",
+            "break on through to the other side... break on through to the other side... break on through to the other side"
     };
 
     @Before
@@ -121,7 +122,7 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("4.0 = Stat Score: avg_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("5.0 = Stat Score: avg_raw_tp"));
     }
 
     public void testQueryWithTermPositionMax() throws Exception {
@@ -136,7 +137,7 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("8.0 = Stat Score: max_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("9.0 = Stat Score: max_raw_tp"));
     }
 
     public void testQueryWithTermPositionMin() throws Exception {
@@ -151,7 +152,52 @@ public class ExplorerQueryTests extends LuceneTestCase {
         // Verify explain
         TopDocs docs = searcher.search(eq, 5);
         Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("0.0 = Stat Score: min_raw_tp"));
+        assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: min_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionNormaAvgWithMorenThanTwoTerms() throws Exception {
+        Query q = new TermQuery(new Term("text", "break"));
+        String statsType = "norma_avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 6);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("4.5 = Stat Score: norma_avg_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionNormaAvgWithOnlyOneTerm() throws Exception {
+        Query q = new TermQuery(new Term("text", "banana"));
+        String statsType = "norma_avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 6);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("2500.5 = Stat Score: norma_avg_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionNormaAvgWithNoTerm() throws Exception {
+        Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
+        String statsType = "norma_avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(0));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 6);
+
+        assertThat(docs.scoreDocs.length, equalTo(0));
     }
 
     public void testBooleanQuery() throws Exception {

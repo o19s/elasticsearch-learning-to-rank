@@ -202,26 +202,40 @@ public class PostingsExplorerQuery extends Query {
         TPScorer(Weight weight, PostingsEnum postingsEnum) {
             super(weight, postingsEnum);
         }
-
+        final float NORMALIZED_TP = 5000.0f;
         @Override
         public float score() throws IOException {
             if (this.postingsEnum.freq() <= 0) {
-                return 0;
+                return 0.0f;
             }
 
             ArrayList<Float> positions = new ArrayList<Float>();
             for (int i=0;i<this.postingsEnum.freq();i++){
-                positions.add((float) this.postingsEnum.nextPosition());
+                positions.add((float) this.postingsEnum.nextPosition() + 1);
             }
 
             float retval;
             switch(this.typeConditional) {
                 case("avg_raw_tp"):
-                    float sum = 0;
+                    float sum = 0.0f;
                     for (float position : positions) {
                         sum += position;
                     }
                     retval = sum / positions.size();
+                    break;
+                case("norma_avg_raw_tp"):
+                    float norma_sum = 0.0f;
+                    if (positions.size() <2){
+                        positions.add(NORMALIZED_TP);
+                    }
+                    else{
+                        positions = new ArrayList<Float>(positions.subList(0,2));
+                    }
+
+                    for (float position : positions) {
+                        norma_sum += position;
+                    }
+                    retval = norma_sum / positions.size();
                     break;
                 case("max_raw_tp"):
                     retval = Collections.max(positions);
@@ -230,7 +244,7 @@ public class PostingsExplorerQuery extends Query {
                     retval = Collections.min(positions);
                     break;
                 default:
-                    retval = 0;
+                    retval = 0.0f;
             }
 
             return retval;
