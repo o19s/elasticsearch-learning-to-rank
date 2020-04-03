@@ -44,7 +44,8 @@ public class FeatureNormalizerFactory {
         PARSER = (XContentParser p, Void c, String featureName) -> {
             // this seems really intended for switching on the key (here featureName) and making
             // a decision, when in reality, we want to look a layer deeper and switch on that
-            ObjectParser<FeatureNormConsumer, Void> parser = new ObjectParser<>("feature_normalizers");
+            ObjectParser<FeatureNormConsumer, Void> parser = new ObjectParser<>("feature_normalizers",
+                                                                                  FeatureNormConsumer::new);
 
             BiConsumer<FeatureNormConsumer, StandardFeatureNormalizer> setStd = (s, v) -> {
                 v.setFeatureName(featureName);

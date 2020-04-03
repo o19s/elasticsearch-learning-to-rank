@@ -23,7 +23,7 @@ public class StandardFeatureNormalizer implements FeatureNormalizer {
     static {
         PARSER = new ObjectParser<>("standard", StandardFeatureNormalizer::new);
         PARSER.declareDouble(StandardFeatureNormalizer::setMean, MEAN);
-        PARSER.declareDouble(StandardFeatureNormalizer::setMean, STD_DEVIATION);
+        PARSER.declareDouble(StandardFeatureNormalizer::setStdDeviation, STD_DEVIATION);
     }
 
     public StandardFeatureNormalizer() {
@@ -57,8 +57,16 @@ public class StandardFeatureNormalizer implements FeatureNormalizer {
         this.mean = mean;
     }
 
+    public double getMean() { // GRR!
+        return this.mean;
+    }
+
     public void setStdDeviation(double stdDeviation) {
         this.stdDeviation = stdDeviation;
+    }
+
+    public double getStdDeviation() { // GRR!
+        return this.stdDeviation;
     }
 
     public void setFeatureName(String featureName) {

@@ -175,6 +175,14 @@ public class StoredLtrModel implements StorableElement {
         return rankingModel;
     }
 
+    public FeatureNormalizer getFeatureNormalizer(String fieldName) {
+        return this.featureNormalizers.get(fieldName);
+    }
+
+    public Map<String, FeatureNormalizer> getFeatureNormalizers() {
+        return this.featureNormalizers;
+    }
+
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();

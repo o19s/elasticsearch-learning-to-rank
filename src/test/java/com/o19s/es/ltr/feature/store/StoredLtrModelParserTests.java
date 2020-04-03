@@ -106,7 +106,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "   \"feature_normalizers\": {\n"+
                 "     \"feature_1\": { \"standard\":" +
                 "           {\"mean\": 1.25," +
-                "            \"std\": 0.25}}}" +
+                "            \"standard_deviation\": 0.25}}}" +
                 " }" +
                 "}";
         return modelJson;
@@ -136,6 +136,12 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
     public void testFeatureNormParsing() throws IOException {
         String modelJson = getTestModelWithFeatureNorms();
         StoredLtrModel model = parse(modelJson);
+
+        assertEquals(model.getFeatureNormalizers().size(), 1);
+        StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)model.getFeatureNormalizer("feature_1");
+        assertNotNull(stdFtrNorm);
+        assertEquals(stdFtrNorm.getStdDeviation(), 0.25, 0.001);
+        assertEquals(stdFtrNorm.getMean(), 1.25, 0.001);
 
     }
 
