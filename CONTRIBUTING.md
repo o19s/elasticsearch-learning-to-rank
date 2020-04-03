@@ -41,7 +41,7 @@ You can clean your project files (such as switching a branch), with
 
 ### Juggling Multiple Java Versions
 
-Elastic is pretty religous about upgrading Java versions. This means if a month ago, you developed the plugin with Java 10, you might need Java 12 for the latest. You might just want to keep multiple JDK versions on your laptop, and be able to switch between them, by setting `JAVA_HOME` accordingly:
+Elastic is pretty religious about upgrading Java versions. This means if a month ago, you developed the plugin with Java 10, you might need Java 12 for the latest. You might just want to keep multiple JDK versions on your laptop, and be able to switch between them, by setting `JAVA_HOME` accordingly:
 
 ```
 export JAVA11_HOME=/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/
