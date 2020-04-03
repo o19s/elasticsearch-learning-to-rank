@@ -42,6 +42,7 @@ Term position statistics
 The :code:`type` parameter can be prepended with the operation to be performed across term position for the statistic :code:`max`, :code:`min`, :code:`avg`, and :code:`norma_avg`. The :code:`norma_avg` is a normalization average using a specific pound when second position does not exists in document.
 
 The :code:`norma_avg`:
+
 - So if rambo occurs in 3 in movie synopsis in same document, we have 3 positions. In this case :code:`norma_avg` gets only first and second position to average.
 - Now if dance occur in 1 in music synopsis in same document, we have 1 position. In this case :code:`norma_avg` gets only first position and add a default pound in second position to average.
 
