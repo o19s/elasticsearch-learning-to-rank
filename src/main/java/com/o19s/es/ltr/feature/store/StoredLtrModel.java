@@ -16,8 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.FeatureNormalizer;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.common.ParseField;
@@ -33,7 +35,10 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
@@ -51,6 +56,7 @@ public class StoredLtrModel implements StorableElement {
     private final String rankingModelType;
     private final String rankingModel;
     private final boolean modelAsString;
+    private Map<String, FeatureNormalizer> featureNormalizers;
 
     static {
         PARSER = new ObjectParser<>(TYPE, ParsingState::new);
@@ -63,15 +69,17 @@ public class StoredLtrModel implements StorableElement {
     }
 
     public StoredLtrModel(String name, StoredFeatureSet featureSet, LtrModelDefinition definition) {
-        this(name, featureSet, definition.type, definition.definition, definition.modelAsString);
+        this(name, featureSet, definition.type, definition.definition, definition.modelAsString, definition.featureNormalizers);
     }
 
-    public StoredLtrModel(String name, StoredFeatureSet featureSet, String rankingModelType, String rankingModel, boolean modelAsString) {
+    public StoredLtrModel(String name, StoredFeatureSet featureSet, String rankingModelType, String rankingModel,
+                          boolean modelAsString, Map<String, FeatureNormalizer> featureNormalizers) {
         this.name = Objects.requireNonNull(name);
         this.featureSet = Objects.requireNonNull(featureSet);
         this.rankingModelType = Objects.requireNonNull(rankingModelType);
         this.rankingModel = Objects.requireNonNull(rankingModel);
         this.modelAsString = modelAsString;
+        this.featureNormalizers = featureNormalizers;
     }
 
     public StoredLtrModel(StreamInput input) throws IOException {
@@ -80,6 +88,14 @@ public class StoredLtrModel implements StorableElement {
         rankingModelType = input.readString();
         rankingModel = input.readString();
         modelAsString = input.readBoolean();
+        int numNormalizers = input.readInt();
+        FeatureNormalizerFactory ftrNormFactory = new FeatureNormalizerFactory();
+        this.featureNormalizers = new HashMap<String, FeatureNormalizer>();
+        for (; numNormalizers > 0; numNormalizers--) {
+            FeatureNormalizer ftrNormalizer = ftrNormFactory.createFromStreamInput(input);
+            featureNormalizers.put(ftrNormalizer.featureName(), ftrNormalizer);
+        }
+
     }
 
     @Override
@@ -89,6 +105,11 @@ public class StoredLtrModel implements StorableElement {
         out.writeString(rankingModelType);
         out.writeString(rankingModel);
         out.writeBoolean(modelAsString);
+        out.write(this.featureNormalizers.size());
+        FeatureNormalizerFactory ftrNormFactory = new FeatureNormalizerFactory();
+        for (Map.Entry<String, FeatureNormalizer> ftrNormEntry: this.featureNormalizers.entrySet()) {
+            ftrNormFactory.writeTo(out, ftrNormEntry.getValue());
+        }
     }
 
     public static StoredLtrModel parse(XContentParser parser) {
@@ -215,7 +236,7 @@ public class StoredLtrModel implements StorableElement {
     public static class LtrModelDefinition implements Writeable {
         private String type;
         private String definition;
-        private List<FeatureNormNamed> featureNormalizers;
+        private Map<String, FeatureNormalizer> featureNormalizers;
         private boolean modelAsString;
 
         public static final ObjectParser<LtrModelDefinition, Void> PARSER;
@@ -232,25 +253,36 @@ public class StoredLtrModel implements StorableElement {
                     MODEL_DEFINITION,
                     ObjectParser.ValueType.OBJECT_ARRAY_OR_STRING);
 
+            // TODO evaluate if this should be a level up
             PARSER.declareNamedObjects(LtrModelDefinition::setNamedFeatureNormalizers,
-                    FeatureNormNamed.PARSER,
+                    FeatureNormalizerFactory.PARSER,
                     FEATURE_NORMALIZERS);
         }
 
 
         private LtrModelDefinition() {
+            this.featureNormalizers = new HashMap<>();
         }
 
         public LtrModelDefinition(String type, String definition, boolean modelAsString) {
             this.type = type;
             this.definition = definition;
             this.modelAsString = modelAsString;
+            this.featureNormalizers = new HashMap<>();
         }
 
         public LtrModelDefinition(StreamInput in) throws IOException {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
+            int numFeatureNorms = in.read();
+
+            FeatureNormalizerFactory normFactory = new FeatureNormalizerFactory();
+            this.featureNormalizers = new HashMap<>();
+            for (; numFeatureNorms > 0; numFeatureNorms--) {
+                FeatureNormalizer norm = normFactory.createFromStreamInput(in);
+                this.featureNormalizers.put(norm.featureName(), norm);
+            }
         }
 
         @Override
@@ -258,6 +290,12 @@ public class StoredLtrModel implements StorableElement {
             out.writeString(type);
             out.writeString(definition);
             out.writeBoolean(modelAsString);
+
+            FeatureNormalizerFactory normFactory = new FeatureNormalizerFactory();
+            out.write(this.featureNormalizers.size());
+            for (Map.Entry<String, FeatureNormalizer> featureNormEntry: this.featureNormalizers.entrySet()) {
+                normFactory.writeTo(out, featureNormEntry.getValue());
+            }
         }
 
 
@@ -269,8 +307,11 @@ public class StoredLtrModel implements StorableElement {
             return type;
         }
 
-        public void setNamedFeatureNormalizers(List<FeatureNormNamed> featureNormalizers) {
-            this.featureNormalizers = featureNormalizers;
+        public void setNamedFeatureNormalizers(List<FeatureNormalizer> featureNormalizers) {
+            this.featureNormalizers = new HashMap<>();
+            for (FeatureNormalizer featureNorm: featureNormalizers) {
+                this.featureNormalizers.put(featureNorm.featureName(), featureNorm);
+            }
         }
 
         public String getDefinition() {

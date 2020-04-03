@@ -1,5 +1,12 @@
 package com.o19s.es.ltr.feature;
 
-public interface FeatureNormalizer {
+import com.o19s.es.ltr.feature.store.FeatureNormalizerFactory;
+import org.elasticsearch.common.io.stream.Writeable;
+
+public interface FeatureNormalizer extends Writeable {
     double normalize(double value);
+
+    String featureName();
+
+    FeatureNormalizerFactory.Type getType();
 }

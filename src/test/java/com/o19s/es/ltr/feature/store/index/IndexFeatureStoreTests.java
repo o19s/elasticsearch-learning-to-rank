@@ -54,7 +54,8 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
                 LtrTestUtils.randomFeatureSet(),
                 randomSimpleString(random(), 5, 10),
                 randomRealisticUnicodeString(random(), 5, 1000),
-                true));
+                true,
+                new HashMap<>()));
     }
 
     public void testIsIndexName() {

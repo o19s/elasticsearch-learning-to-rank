@@ -73,6 +73,45 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "}";
     }
 
+    public String getTestModelWithFeatureNorms() {
+        String inlineFeatureSet = "{" +
+                "\"name\": \"normed_model\"," +
+                "  \"features\": [{" +
+                "      \"name\": \"feature_1\"," +
+                "      \"params\": [\"keywords\"]," +
+                "      \"template\": {" +
+                "        \"match\": {" +
+                "          \"a_field\": {" +
+                "            \"query\": \"test1\"" +
+                "          }" +
+                "        }" +
+                "      }" +
+                "    }," +
+                "    {" +
+                "      \"name\": \"feature_2\"," +
+                "      \"params\": [\"keywords\"]," +
+                "      \"template\": {" +
+                "        \"match\": {" +
+                "          \"esyww\": {" +
+                "            \"query\": \"test1\"" +
+                "    }}}}]}";
+
+        String modelJson = "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" + inlineFeatureSet +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n"+
+                "   \"feature_normalizers\": {\n"+
+                "     \"feature_1\": { \"standard\":" +
+                "           {\"mean\": 1.25," +
+                "            \"std\": 0.25}}}" +
+                " }" +
+                "}";
+        return modelJson;
+    }
+
     public void testParse() throws IOException {
         StoredLtrModel model = parse(getTestModel());
         assertTestModel(model);
@@ -93,6 +132,13 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertSame(ranker, model.compile(factory).ranker());
         assertTrue(model.featureSet().size() > 0);
     }
+
+    public void testFeatureNormParsing() throws IOException {
+        String modelJson = getTestModelWithFeatureNorms();
+        StoredLtrModel model = parse(modelJson);
+
+    }
+
 
     public void testToXContent() throws IOException {
         StoredLtrModel model = parse(getTestModel());

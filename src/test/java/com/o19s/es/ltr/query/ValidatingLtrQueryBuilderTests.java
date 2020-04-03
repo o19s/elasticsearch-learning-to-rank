@@ -84,7 +84,8 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
                 IntStream.range(0, 5)
                         .mapToObj((i) -> "\"feature" + i + "\": " + random().nextFloat())
                         .collect(joining(",", "{", "}")),
-                true);
+                true,
+                new HashMap<>());
 
         int type = randomInt(2);
         switch (type) {
