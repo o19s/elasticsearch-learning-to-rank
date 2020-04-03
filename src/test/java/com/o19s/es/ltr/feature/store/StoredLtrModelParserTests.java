@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.FeatureNormalizer;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
@@ -29,6 +30,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
+import java.util.Random;
 
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
@@ -73,7 +75,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "}";
     }
 
-    public String getTestModelWithFeatureNorms() {
+    public String getSimpleFeatureSet() {
         String inlineFeatureSet = "{" +
                 "\"name\": \"normed_model\"," +
                 "  \"features\": [{" +
@@ -95,21 +97,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "          \"esyww\": {" +
                 "            \"query\": \"test1\"" +
                 "    }}}}]}";
-
-        String modelJson = "{\n" +
-                " \"name\":\"my_model\",\n" +
-                " \"feature_set\":" + inlineFeatureSet +
-                "," +
-                " \"model\": {\n" +
-                "   \"type\": \"model/dummy\",\n" +
-                "   \"definition\": \"completely ignored\",\n"+
-                "   \"feature_normalizers\": {\n"+
-                "     \"feature_1\": { \"standard\":" +
-                "           {\"mean\": 1.25," +
-                "            \"standard_deviation\": 0.25}}}" +
-                " }" +
-                "}";
-        return modelJson;
+        return inlineFeatureSet;
     }
 
     public void testParse() throws IOException {
@@ -133,16 +121,68 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertTrue(model.featureSet().size() > 0);
     }
 
-    public void testFeatureNormParsing() throws IOException {
-        String modelJson = getTestModelWithFeatureNorms();
+    public void testFeatureStdNormParsing() throws IOException {
+        String modelJson = "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" + getSimpleFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n"+
+                "   \"feature_normalizers\": {\n"+
+                "     \"feature_1\": { \"standard\":" +
+                "           {\"mean\": 1.25," +
+                "            \"standard_deviation\": 0.25}}}" +
+                " }" +
+                "}";
+
         StoredLtrModel model = parse(modelJson);
 
         assertEquals(model.getFeatureNormalizers().size(), 1);
         StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)model.getFeatureNormalizer("feature_1");
         assertNotNull(stdFtrNorm);
-        assertEquals(stdFtrNorm.getStdDeviation(), 0.25, 0.001);
-        assertEquals(stdFtrNorm.getMean(), 1.25, 0.001);
+        double expectedMean = 1.25;
+        double expectedStdDev = 0.25;
+        assertEquals(stdFtrNorm.getStdDeviation(), expectedStdDev, 0.001);
+        assertEquals(stdFtrNorm.getMean(), expectedMean, 0.001);
+        assertEquals(stdFtrNorm.featureName(), "feature_1");
+        assertEquals(stdFtrNorm.getType(), FeatureNormalizerFactory.Type.STANDARD);
 
+        Random r = new Random();
+        double testVal = r.nextDouble();
+        double expectedNormalized = (testVal - expectedMean) / expectedStdDev;
+        assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
+    }
+
+    public void testFeatureMinMaxParsing() throws IOException {
+        String modelJson = "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" + getSimpleFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n"+
+                "   \"feature_normalizers\": {\n"+
+                "     \"feature_2\": { \"min_max\":" +
+                "           {\"minimum\": -1.0," +
+                "            \"maximum\": 1.25}}}" +
+                " }" +
+                "}";
+
+        StoredLtrModel model = parse(modelJson);
+
+        assertEquals(model.getFeatureNormalizers().size(), 1);
+        MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)model.getFeatureNormalizer("feature_2");
+        assertNotNull(minMaxFtrNorm);
+        assertEquals(minMaxFtrNorm.getType(), FeatureNormalizerFactory.Type.MIN_MAX);
+        assertEquals(minMaxFtrNorm.featureName(), "feature_2");
+        double expectedMin = -1.00;
+        double expectedMax = 1.25;
+
+        Random r = new Random();
+        double testVal = r.nextDouble();
+        double expectedNormalized = (testVal) / (expectedMax - expectedMin);
+        assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
     }
 
 

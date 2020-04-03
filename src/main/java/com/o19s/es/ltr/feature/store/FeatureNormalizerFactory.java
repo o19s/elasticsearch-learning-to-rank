@@ -8,6 +8,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.search.aggregations.metrics.Min;
 
 import java.io.IOException;
 import java.util.function.BiConsumer;
@@ -38,6 +39,7 @@ public class FeatureNormalizerFactory {
 
     public static final ObjectParser.NamedObjectParser<FeatureNormalizer, Void> PARSER;
     private static final ParseField STANDARD = new ParseField("standard");
+    private static final ParseField MIN_MAX = new ParseField("min_max");
 
     static {
 
@@ -52,7 +54,14 @@ public class FeatureNormalizerFactory {
                 s.setFeatureNormalizer(v);
             };
 
+            BiConsumer<FeatureNormConsumer, MinMaxFeatureNormalizer> setMinMax = (s, v) -> {
+                v.setFeatureName(featureName);
+                s.setFeatureNormalizer(v);
+            };
+
             parser.declareObject(setStd, StandardFeatureNormalizer.PARSER, STANDARD);
+            parser.declareObject(setMinMax, MinMaxFeatureNormalizer.PARSER, MIN_MAX);
+
             FeatureNormConsumer parsedNorm  = parser.parse(p, c);
             return parsedNorm.featureNormalizer;
 

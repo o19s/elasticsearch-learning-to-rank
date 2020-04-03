@@ -40,7 +40,7 @@ public class StandardFeatureNormalizer implements FeatureNormalizer {
 
     @Override
     public double normalize(double value) {
-        return 0;
+        return (value - this.mean) / this.stdDeviation;
     }
 
     @Override
