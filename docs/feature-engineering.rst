@@ -37,6 +37,18 @@ The statistics available include:
 
 Putting the operation and the statistic together, you can see some examples. To get stddev of classic_idf, you would write :code:`stddev_classic_idf`. To get the minimum total term frequency, you'd write :code:`min_raw_ttf`.
 
+Term position statistics
+
+The :code:`type` parameter can be prepended with the operation to be performed across term position for the statistic :code:`max`, :code:`min`, :code:`avg`, and :code:`norma_avg`. The :code:`norma_avg` is a normalization average using a specific pound when second position does not exists in document.
+
+The :code:`norma_avg`:
+- So if rambo occurs in 3 in movie synopsis in same document, we have 3 positions. In this case :code:`norma_avg` gets only first and second position to average.
+- Now if dance occur in 1 in music synopsis in same document, we have 1 position. In this case :code:`norma_avg` gets only first position and add a default pound in second position to average.
+
+The statistics available include:
+
+- :code: `raw_tp` -- the term position for a document. So if dance occurs 5 in music text in same document, this is 5 because of the term frequency.
+
 Finally a special stat exists for just counting the number of search terms. That stat is :code:`unique_terms_count`.
 
 ===========================
