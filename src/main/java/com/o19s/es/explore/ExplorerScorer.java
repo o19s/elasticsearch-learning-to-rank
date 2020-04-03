@@ -72,7 +72,7 @@ public class ExplorerScorer extends Scorer {
                 break;
             case("avg_raw_tp"):
             case("norma_avg_raw_tp"):
-                retval = tf_stats.getAvg();
+                retval = tf_stats.getMean();
                 break;
             default:
                 throw new RuntimeException("Invalid stat type specified.");
