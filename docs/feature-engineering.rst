@@ -48,7 +48,7 @@ The :code:`norma_avg`:
 
 The statistics available include:
 
-- :code: `raw_tp` -- the term position for a document. So if dance occurs 5 in music text in same document, this is 5 because of the term frequency.
+- :code:`raw_tp` -- the term position for a document. So if dance occurs 5 in music text in same document, this is 5 because of the term frequency.
 
 Finally a special stat exists for just counting the number of search terms. That stat is :code:`unique_terms_count`.
 
