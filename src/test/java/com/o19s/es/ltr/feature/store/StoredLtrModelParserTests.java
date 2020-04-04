@@ -16,9 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.FeatureNormalizer;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
@@ -138,19 +139,30 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel model = parse(modelJson);
 
-        assertEquals(model.getFeatureNormalizers().size(), 1);
-        StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)model.getFeatureNormalizer("feature_1");
+        assertEquals(model.getFeatureNormDefns().size(), 1);
+        StandardFeatureNormDefinition stdFtrNormDefn = (StandardFeatureNormDefinition)model.getFeatureNormDefn("feature_1");
+        assertNotNull(stdFtrNormDefn);
+        StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
         assertNotNull(stdFtrNorm);
+
         double expectedMean = 1.25;
         double expectedStdDev = 0.25;
-        assertEquals(stdFtrNorm.getStdDeviation(), expectedStdDev, 0.001);
-        assertEquals(stdFtrNorm.getMean(), expectedMean, 0.001);
         assertEquals(stdFtrNorm.featureName(), "feature_1");
         assertEquals(stdFtrNorm.getType(), FeatureNormalizerFactory.Type.STANDARD);
 
         Random r = new Random();
         double testVal = r.nextDouble();
         double expectedNormalized = (testVal - expectedMean) / expectedStdDev;
+        assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
+
+        StoredLtrModel reparsedModel = reparseModel(model);
+        assertEquals(reparsedModel.getFeatureNormDefns().size(), 1);
+        stdFtrNormDefn = (StandardFeatureNormDefinition)reparsedModel.getFeatureNormDefn("feature_1");
+        assertNotNull(stdFtrNormDefn);
+        stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
+
+        testVal = r.nextDouble();
+        expectedNormalized = (testVal - expectedMean) / expectedStdDev;
         assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
     }
 
@@ -171,8 +183,11 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel model = parse(modelJson);
 
-        assertEquals(model.getFeatureNormalizers().size(), 1);
-        MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)model.getFeatureNormalizer("feature_2");
+        assertEquals(model.getFeatureNormDefns().size(), 1);
+        MinMaxFeatureNormDefinition ftrNormDefn = (MinMaxFeatureNormDefinition)model.getFeatureNormDefn("feature_2");
+        assertNotNull(ftrNormDefn);
+
+        MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormDefn.createFeatureNorm();
         assertNotNull(minMaxFtrNorm);
         assertEquals(minMaxFtrNorm.getType(), FeatureNormalizerFactory.Type.MIN_MAX);
         assertEquals(minMaxFtrNorm.featureName(), "feature_2");
@@ -183,6 +198,23 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         double testVal = r.nextDouble();
         double expectedNormalized = (testVal) / (expectedMax - expectedMin);
         assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
+
+        StoredLtrModel reparsedModel = reparseModel(model);
+        assertEquals(reparsedModel.getFeatureNormDefns().size(), 1);
+        ftrNormDefn = (MinMaxFeatureNormDefinition)reparsedModel.getFeatureNormDefn("feature_2");
+        assertNotNull(ftrNormDefn);
+        minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormDefn.createFeatureNorm();
+
+        testVal = r.nextDouble();
+        expectedNormalized = (testVal) / (expectedMax - expectedMin);
+        assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
+    }
+
+    public StoredLtrModel reparseModel(StoredLtrModel srcModel) throws IOException {
+        XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
+        String modelString = Strings.toString(srcModel.toXContent(builder, ToXContent.EMPTY_PARAMS));
+        StoredLtrModel modelReparsed = parse(modelString);
+        return modelReparsed;
     }
 
 

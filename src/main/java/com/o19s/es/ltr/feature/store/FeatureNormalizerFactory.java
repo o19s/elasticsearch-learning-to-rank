@@ -1,6 +1,8 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -8,7 +10,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.search.aggregations.metrics.Min;
 
 import java.io.IOException;
 import java.util.function.BiConsumer;
@@ -37,7 +38,7 @@ public class FeatureNormalizerFactory {
         }
     }
 
-    public static final ObjectParser.NamedObjectParser<FeatureNormalizer, Void> PARSER;
+    public static final ObjectParser.NamedObjectParser<FeatureNormDefinition, Void> PARSER;
     private static final ParseField STANDARD = new ParseField("standard");
     private static final ParseField MIN_MAX = new ParseField("min_max");
 
@@ -49,57 +50,59 @@ public class FeatureNormalizerFactory {
             ObjectParser<FeatureNormConsumer, Void> parser = new ObjectParser<>("feature_normalizers",
                                                                                   FeatureNormConsumer::new);
 
-            BiConsumer<FeatureNormConsumer, StandardFeatureNormalizer> setStd = (s, v) -> {
+            BiConsumer<FeatureNormConsumer, StandardFeatureNormDefinition> setStd = (s, v) -> {
                 v.setFeatureName(featureName);
-                s.setFeatureNormalizer(v);
+                s.setFtrNormDefn(v);
             };
 
-            BiConsumer<FeatureNormConsumer, MinMaxFeatureNormalizer> setMinMax = (s, v) -> {
+            BiConsumer<FeatureNormConsumer, MinMaxFeatureNormDefinition> setMinMax = (s, v) -> {
                 v.setFeatureName(featureName);
-                s.setFeatureNormalizer(v);
+                s.setFtrNormDefn(v);
             };
 
-            parser.declareObject(setStd, StandardFeatureNormalizer.PARSER, STANDARD);
-            parser.declareObject(setMinMax, MinMaxFeatureNormalizer.PARSER, MIN_MAX);
+            parser.declareObject(setStd, StandardFeatureNormDefinition.PARSER, STANDARD);
+            parser.declareObject(setMinMax, MinMaxFeatureNormDefinition.PARSER, MIN_MAX);
 
             FeatureNormConsumer parsedNorm  = parser.parse(p, c);
-            return parsedNorm.featureNormalizer;
+            return parsedNorm.ftrNormDefn;
 
         };
 
     }
 
-    // TODO revisit deleting this dumb class needed for a passthrough
+    // A temp holder for parsing out of xcontent
     private static class FeatureNormConsumer {
         String featureName;
-        FeatureNormalizer featureNormalizer;
+        FeatureNormDefinition ftrNormDefn;
 
-        public FeatureNormConsumer() {
+        FeatureNormConsumer() {
         }
 
-        public FeatureNormalizer getFeatureNormalizer() {
-            return this.featureNormalizer;
+        public FeatureNormDefinition getFtrNormDefn() {
+            return this.ftrNormDefn;
         }
 
-        public void setFeatureNormalizer(FeatureNormalizer featureNormalizer) {
-            this.featureNormalizer = featureNormalizer;
+        public void setFtrNormDefn(FeatureNormDefinition ftrNormDefn) {
+            this.ftrNormDefn = ftrNormDefn;
         }
     }
 
 
 
-    public  FeatureNormalizer createFromStreamInput(StreamInput input) throws IOException {
+    public  FeatureNormDefinition createFromStreamInput(StreamInput input) throws IOException {
         Type normType = Type.readFromStream(input);
+        String featureName = input.readString();
         if (normType == Type.STANDARD) {
-            return new StandardFeatureNormalizer(input);
+            return new StandardFeatureNormDefinition(input);
         } else if (normType == Type.MIN_MAX) {
-            //return new MinMaxNormalizer(in);
+            return new MinMaxFeatureNormDefinition(input);
         }
-        throw new ElasticsearchException("unknown normalizer type during deserialization"); // note the Type constructor throws on this condition as well
+        // note the Type constructor throws on this condition as well
+        throw new ElasticsearchException("unknown normalizer type during deserialization");
     }
 
-    public void writeTo(StreamOutput output, FeatureNormalizer ftrNorm) throws IOException {
-        ftrNorm.getType().writeTo(output);
+    public void writeTo(StreamOutput output, FeatureNormDefinition ftrNorm) throws IOException {
+        ftrNorm.normType().writeTo(output);
         ftrNorm.writeTo(output);
     }
 
