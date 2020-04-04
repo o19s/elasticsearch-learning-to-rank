@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
@@ -103,7 +102,7 @@ public class StoredLtrModel implements StorableElement {
         out.writeString(rankingModelType);
         out.writeString(rankingModel);
         out.writeBoolean(modelAsString);
-        out.write(this.featureNormDefs.size());
+        out.writeInt(this.featureNormDefs.size());
         FeatureNormalizerFactory ftrNormFactory = new FeatureNormalizerFactory();
         for (Map.Entry<String, FeatureNormDefinition> ftrNormEntry: this.featureNormDefs.entrySet()) {
             ftrNormFactory.writeTo(out, ftrNormEntry.getValue());
@@ -201,7 +200,7 @@ public class StoredLtrModel implements StorableElement {
             }
         }
         builder.field(LtrModelDefinition.FEATURE_NORMALIZERS.getPreferredName());
-        builder.startObject();
+        builder.startObject(); // begin feature norms
         for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormDefs.entrySet()) {
             builder.field(ftrNormDefEntry.getKey());
             ftrNormDefEntry.getValue().toXContent(builder, params);

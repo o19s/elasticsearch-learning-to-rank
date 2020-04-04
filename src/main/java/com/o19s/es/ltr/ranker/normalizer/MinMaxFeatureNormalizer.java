@@ -2,17 +2,13 @@ package com.o19s.es.ltr.ranker.normalizer;
 
 import com.o19s.es.ltr.feature.store.FeatureNormalizerFactory;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.xcontent.ObjectParser;
-
-import java.io.IOException;
 
 public class MinMaxFeatureNormalizer implements FeatureNormalizer  {
-    double maximum;
-    double minimum;
+    float maximum;
+    float minimum;
     String featureName;
 
-    public MinMaxFeatureNormalizer(String featureName, double minimum, double maximum) {
+    public MinMaxFeatureNormalizer(String featureName, float minimum, float maximum) {
         if (minimum >= maximum) {
             throw new ElasticsearchException("Minimum " + Double.toString(minimum) +
                                              " must be smaller than than maximum: " +
@@ -24,7 +20,7 @@ public class MinMaxFeatureNormalizer implements FeatureNormalizer  {
     }
 
     @Override
-    public double normalize(double value) {
+    public float normalize(float value) {
         return value / (maximum - minimum);
     }
 

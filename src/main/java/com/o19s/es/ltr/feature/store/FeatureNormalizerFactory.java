@@ -1,8 +1,5 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
-import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
-import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;

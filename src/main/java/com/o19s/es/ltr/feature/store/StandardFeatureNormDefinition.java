@@ -12,8 +12,8 @@ import java.io.IOException;
 
 public class StandardFeatureNormDefinition implements FeatureNormDefinition {
 
-    private double mean;
-    private double stdDeviation;
+    private float mean;
+    private float stdDeviation;
     private String featureName;
 
     public static final ObjectParser<StandardFeatureNormDefinition, Void> PARSER;
@@ -23,26 +23,26 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
 
     static {
         PARSER = new ObjectParser<>("standard", StandardFeatureNormDefinition::new);
-        PARSER.declareDouble(StandardFeatureNormDefinition::setMean, MEAN);
-        PARSER.declareDouble(StandardFeatureNormDefinition::setStdDeviation, STD_DEVIATION);
+        PARSER.declareFloat(StandardFeatureNormDefinition::setMean, MEAN);
+        PARSER.declareFloat(StandardFeatureNormDefinition::setStdDeviation, STD_DEVIATION);
     }
 
     public StandardFeatureNormDefinition() {
-        this.mean = 0.0;
-        this.stdDeviation = 0.0;
+        this.mean = 0.0f;
+        this.stdDeviation = 0.0f;
     }
 
     StandardFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
-        this.mean = input.readDouble();
-        this.stdDeviation = input.readDouble();
+        this.mean = input.readFloat();
+        this.stdDeviation = input.readFloat();
     }
 
-    public void setMean(double mean) {
+    public void setMean(float mean) {
         this.mean = mean;
     }
 
-    public void setStdDeviation(double stdDeviation) {
+    public void setStdDeviation(float stdDeviation) {
         this.stdDeviation = stdDeviation;
     }
 
@@ -63,8 +63,8 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(this.featureName);
-        out.writeDouble(this.mean);
-        out.writeDouble(this.stdDeviation);
+        out.writeFloat(this.mean);
+        out.writeFloat(this.stdDeviation);
     }
 
     @Override
@@ -72,8 +72,8 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
         builder.startObject();
         builder.field(this.name());
         builder.startObject();
-        builder.field(this.MEAN.getPreferredName(), this.mean);
-        builder.field(this.STD_DEVIATION.getPreferredName(), this.stdDeviation);
+        builder.field(MEAN.getPreferredName(), this.mean);
+        builder.field(STD_DEVIATION.getPreferredName(), this.stdDeviation);
         builder.endObject();
         builder.endObject();
         return builder;    }

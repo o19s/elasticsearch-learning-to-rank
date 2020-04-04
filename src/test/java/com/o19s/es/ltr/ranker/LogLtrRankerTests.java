@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.ranker;
 
-import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
@@ -29,7 +28,7 @@ public class LogLtrRankerTests extends LuceneTestCase {
         LinearRankerTests.fillRandomWeights(expectedScores);
 
         final float[] actualScores = new float[modelSize];
-        LogLtrRanker ranker = new LogLtrRanker(LtrTestUtils.buildRandomRanker(modelSize), (i, s) -> actualScores[i] = s);
+        LogLtrRanker ranker = new LogLtrRanker(new NullRanker(modelSize), (i, s) -> actualScores[i] = s);
         LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
         for (int i = 0; i < expectedScores.length; i++) {
             vector.setFeatureScore(i, expectedScores[i]);
@@ -39,8 +38,8 @@ public class LogLtrRankerTests extends LuceneTestCase {
 
     public void score() throws Exception {
         int modelSize = TestUtil.nextInt(random(), 1, 20);
-        LtrRanker ranker = LtrTestUtils.buildRandomRanker(modelSize);
-        LogLtrRanker logRanker = new LogLtrRanker(ranker, (i, s) -> {});
+        LtrRanker ranker = new NullRanker(modelSize);
+        LogLtrRanker logRanker = new LogLtrRanker(new NullRanker(modelSize), (i, s) -> {});
         int nPass = TestUtil.nextInt(random(), 100, 200);
         float[] scores = new float[modelSize];
 

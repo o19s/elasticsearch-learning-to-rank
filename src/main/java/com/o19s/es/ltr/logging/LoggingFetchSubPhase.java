@@ -169,9 +169,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
     private Tuple<RankerQuery, HitLogConsumer> toLogger(LoggingSearchExtBuilder.LogSpec logSpec, RankerQuery query) {
         HitLogConsumer consumer = new HitLogConsumer(logSpec.getLoggerName(), query.featureSet(), logSpec.isMissingAsZero());
-        // Use a null ranker, we don't care about the final score here so don't spend time on it.
-        query = query.toLoggerQuery(consumer, true);
-
+        query = query.toLoggerQuery(consumer);
         return new Tuple<>(query, consumer);
     }
 

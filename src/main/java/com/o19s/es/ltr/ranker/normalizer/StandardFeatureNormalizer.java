@@ -5,12 +5,12 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
 
 public class StandardFeatureNormalizer implements FeatureNormalizer {
 
-    private double mean;
-    private double stdDeviation;
+    private float mean;
+    private float stdDeviation;
     private String featureName;
 
 
-    public StandardFeatureNormalizer(String featureName, double mean, double stdDeviation) {
+    public StandardFeatureNormalizer(String featureName, float mean, float stdDeviation) {
         this.mean = mean;
         this.stdDeviation = stdDeviation;
         this.featureName = featureName;
@@ -18,7 +18,7 @@ public class StandardFeatureNormalizer implements FeatureNormalizer {
 
 
     @Override
-    public double normalize(double value) {
+    public float normalize(float value) {
         return (value - this.mean) / this.stdDeviation;
     }
 

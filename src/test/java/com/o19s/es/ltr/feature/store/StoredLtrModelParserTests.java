@@ -23,6 +23,7 @@ import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.Randomness;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -31,7 +32,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
-import java.util.Random;
 
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
 import static org.elasticsearch.common.xcontent.json.JsonXContent.jsonXContent;
@@ -145,14 +145,13 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
         assertNotNull(stdFtrNorm);
 
-        double expectedMean = 1.25;
-        double expectedStdDev = 0.25;
+        float expectedMean = 1.25f;
+        float expectedStdDev = 0.25f;
         assertEquals(stdFtrNorm.featureName(), "feature_1");
         assertEquals(stdFtrNorm.getType(), FeatureNormalizerFactory.Type.STANDARD);
 
-        Random r = new Random();
-        double testVal = r.nextDouble();
-        double expectedNormalized = (testVal - expectedMean) / expectedStdDev;
+        float testVal = Randomness.get().nextFloat();
+        float expectedNormalized = (testVal - expectedMean) / expectedStdDev;
         assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
 
         StoredLtrModel reparsedModel = reparseModel(model);
@@ -161,7 +160,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertNotNull(stdFtrNormDefn);
         stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
 
-        testVal = r.nextDouble();
+        testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal - expectedMean) / expectedStdDev;
         assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
     }
@@ -191,12 +190,11 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertNotNull(minMaxFtrNorm);
         assertEquals(minMaxFtrNorm.getType(), FeatureNormalizerFactory.Type.MIN_MAX);
         assertEquals(minMaxFtrNorm.featureName(), "feature_2");
-        double expectedMin = -1.00;
-        double expectedMax = 1.25;
+        float expectedMin = -1.00f;
+        float expectedMax = 1.25f;
 
-        Random r = new Random();
-        double testVal = r.nextDouble();
-        double expectedNormalized = (testVal) / (expectedMax - expectedMin);
+        float testVal = Randomness.get().nextFloat();
+        float expectedNormalized = (testVal) / (expectedMax - expectedMin);
         assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
 
         StoredLtrModel reparsedModel = reparseModel(model);
@@ -205,7 +203,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertNotNull(ftrNormDefn);
         minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormDefn.createFeatureNorm();
 
-        testVal = r.nextDouble();
+        testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal) / (expectedMax - expectedMin);
         assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
     }

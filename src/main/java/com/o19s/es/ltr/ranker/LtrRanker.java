@@ -66,23 +66,14 @@ public interface LtrRanker {
         void setFeatureScore(int featureId, float score);
 
         /**
-         * Retrieve the score for the given feature-id
+         * Retrieve the score for the given feature-id. May
+         * have been normalized, and may not be equal
          *
          * @param featureId the feature-id to retrieve the score for
          * @return the score computed for the given feature
          */
         float getFeatureScore(int featureId);
 
-        /**
-         * Retrieve a normalized score for the given feature-id
-         * to be used in evaluation
-         *
-         * @param featureId the feature-id to retrieve the score for
-         * @return the score computed for the given feature
-         */
-        default float getNormalizedFeatureScore(int featureId) {
-            return this.getFeatureScore(featureId);
-        }
 
     }
 }

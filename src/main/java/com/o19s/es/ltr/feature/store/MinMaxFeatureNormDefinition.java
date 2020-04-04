@@ -13,8 +13,8 @@ import java.io.IOException;
 
 public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
-    private double minimum;
-    private double maximum;
+    private float minimum;
+    private float maximum;
     private String featureName;
 
     public static final ObjectParser<MinMaxFeatureNormDefinition, Void> PARSER;
@@ -23,19 +23,19 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
     static {
         PARSER = new ObjectParser<>("min_max", MinMaxFeatureNormDefinition::new);
-        PARSER.declareDouble(MinMaxFeatureNormDefinition::setMinimum, MINIMUM);
-        PARSER.declareDouble(MinMaxFeatureNormDefinition::setMaximum, MAXIMUM);
+        PARSER.declareFloat(MinMaxFeatureNormDefinition::setMinimum, MINIMUM);
+        PARSER.declareFloat(MinMaxFeatureNormDefinition::setMaximum, MAXIMUM);
     }
 
     MinMaxFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
-        this.minimum = input.readDouble();
-        this.maximum = input.readDouble();
+        this.minimum = input.readFloat();
+        this.maximum = input.readFloat();
     }
 
     MinMaxFeatureNormDefinition() {
-        this.maximum = Double.MAX_VALUE;
-        this.minimum = Double.MIN_VALUE;
+        this.maximum = Float.MAX_VALUE;
+        this.minimum = Float.MIN_VALUE;
     }
 
     @Override
@@ -68,16 +68,16 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     }
 
 
-    public void setMinimum(double min) {
+    public void setMinimum(float min) {
         if (min >= this.maximum) {
-            throw new ElasticsearchException("Minimum " + Double.toString(min) + " must be smaller than than maximum");
+            throw new ElasticsearchException("Minimum " + Float.toString(min) + " must be smaller than than maximum");
         }
         this.minimum = min;
     }
 
-    public void setMaximum(double max) {
+    public void setMaximum(float max) {
         if (max <= this.minimum) {
-            throw new ElasticsearchException("Maximum " + Double.toString(max) + " must be larger than minimum");
+            throw new ElasticsearchException("Maximum " + Float.toString(max) + " must be larger than minimum");
         }
         this.maximum = max;
     }
@@ -85,8 +85,8 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(this.featureName);
-        out.writeDouble(this.minimum);
-        out.writeDouble(this.maximum);
+        out.writeFloat(this.minimum);
+        out.writeFloat(this.maximum);
     }
 
     @Override
@@ -94,8 +94,8 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
         builder.startObject();
         builder.field(this.name());
         builder.startObject();
-        builder.field(this.MINIMUM.getPreferredName(), this.minimum);
-        builder.field(this.MAXIMUM.getPreferredName(), this.maximum);
+        builder.field(MINIMUM.getPreferredName(), this.minimum);
+        builder.field(MAXIMUM.getPreferredName(), this.maximum);
         builder.endObject();
         builder.endObject();
         return builder;

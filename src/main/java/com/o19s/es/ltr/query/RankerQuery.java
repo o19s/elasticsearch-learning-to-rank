@@ -102,11 +102,8 @@ public class RankerQuery extends Query {
         return new RankerQuery(queries, features, new LogLtrRanker(consumer, features.size()));
     }
 
-    public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer, boolean replaceWithNullRanker) {
-        LtrRanker newRanker = ranker;
-        if (replaceWithNullRanker && !(ranker instanceof NullRanker)) {
-            newRanker = new NullRanker(features.size());
-        }
+    public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer) {
+        NullRanker newRanker = new NullRanker(features.size());
         return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer));
     }
 
