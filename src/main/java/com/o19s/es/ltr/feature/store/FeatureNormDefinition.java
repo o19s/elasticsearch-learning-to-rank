@@ -8,5 +8,5 @@ public interface FeatureNormDefinition extends StorableElement {
 
     String featureName();
 
-    FeatureNormalizerFactory.Type normType();
+    StoredFeatureNormalizerSet.Type normType();
 }

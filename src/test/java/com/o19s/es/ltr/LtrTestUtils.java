@@ -19,6 +19,7 @@ package com.o19s.es.ltr;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -36,7 +37,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -78,7 +78,7 @@ public class LtrTestUtils {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject();
-        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new HashMap<>());
+        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new StoredFeatureNormalizerSet());
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {

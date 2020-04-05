@@ -36,4 +36,11 @@ public interface LtrModel {
      * @return the set of features used by this model
      */
     FeatureSet featureSet();
+
+    /**
+     * @return normalizers that should be used to
+     */
+    FeatureNormalizerSet featureNormalizerSet();
+
+
 }

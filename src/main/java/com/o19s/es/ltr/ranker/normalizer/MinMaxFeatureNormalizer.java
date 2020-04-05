@@ -1,6 +1,5 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import com.o19s.es.ltr.feature.store.FeatureNormalizerFactory;
 import org.elasticsearch.ElasticsearchException;
 
 public class MinMaxFeatureNormalizer implements FeatureNormalizer  {
@@ -24,13 +23,4 @@ public class MinMaxFeatureNormalizer implements FeatureNormalizer  {
         return value / (maximum - minimum);
     }
 
-    @Override
-    public String featureName() {
-        return this.featureName;
-    }
-
-    @Override
-    public FeatureNormalizerFactory.Type getType() {
-        return FeatureNormalizerFactory.Type.MIN_MAX;
-    }
 }

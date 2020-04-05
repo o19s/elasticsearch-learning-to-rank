@@ -53,8 +53,8 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     }
 
     @Override
-    public FeatureNormalizerFactory.Type normType() {
-        return FeatureNormalizerFactory.Type.MIN_MAX;
+    public StoredFeatureNormalizerSet.Type normType() {
+        return StoredFeatureNormalizerSet.Type.MIN_MAX;
     }
 
     @Override

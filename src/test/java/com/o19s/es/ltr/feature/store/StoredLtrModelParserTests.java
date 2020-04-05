@@ -139,26 +139,22 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel model = parse(modelJson);
 
-        assertEquals(model.getFeatureNormDefns().size(), 1);
-        StandardFeatureNormDefinition stdFtrNormDefn = (StandardFeatureNormDefinition)model.getFeatureNormDefn("feature_1");
-        assertNotNull(stdFtrNormDefn);
-        StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
+        StoredFeatureNormalizerSet ftrNormSet = (StoredFeatureNormalizerSet)model.getFeatureNormalizerSet();
+        assertNotNull(ftrNormSet);
+
+        StandardFeatureNormalizer stdFtrNorm = (StandardFeatureNormalizer)ftrNormSet.getNormalizer("feature_1");
         assertNotNull(stdFtrNorm);
 
         float expectedMean = 1.25f;
         float expectedStdDev = 0.25f;
-        assertEquals(stdFtrNorm.featureName(), "feature_1");
-        assertEquals(stdFtrNorm.getType(), FeatureNormalizerFactory.Type.STANDARD);
 
         float testVal = Randomness.get().nextFloat();
         float expectedNormalized = (testVal - expectedMean) / expectedStdDev;
         assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
 
         StoredLtrModel reparsedModel = reparseModel(model);
-        assertEquals(reparsedModel.getFeatureNormDefns().size(), 1);
-        stdFtrNormDefn = (StandardFeatureNormDefinition)reparsedModel.getFeatureNormDefn("feature_1");
-        assertNotNull(stdFtrNormDefn);
-        stdFtrNorm = (StandardFeatureNormalizer)stdFtrNormDefn.createFeatureNorm();
+        ftrNormSet = (StoredFeatureNormalizerSet)reparsedModel.getFeatureNormalizerSet();
+        stdFtrNorm = (StandardFeatureNormalizer)ftrNormSet.getNormalizer("feature_1");
 
         testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal - expectedMean) / expectedStdDev;
@@ -182,14 +178,11 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel model = parse(modelJson);
 
-        assertEquals(model.getFeatureNormDefns().size(), 1);
-        MinMaxFeatureNormDefinition ftrNormDefn = (MinMaxFeatureNormDefinition)model.getFeatureNormDefn("feature_2");
-        assertNotNull(ftrNormDefn);
 
-        MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormDefn.createFeatureNorm();
-        assertNotNull(minMaxFtrNorm);
-        assertEquals(minMaxFtrNorm.getType(), FeatureNormalizerFactory.Type.MIN_MAX);
-        assertEquals(minMaxFtrNorm.featureName(), "feature_2");
+        StoredFeatureNormalizerSet ftrNormSet = (StoredFeatureNormalizerSet)model.getFeatureNormalizerSet();
+        assertNotNull(ftrNormSet);
+
+        MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormSet.getNormalizer("feature_2");
         float expectedMin = -1.00f;
         float expectedMax = 1.25f;
 
@@ -198,10 +191,8 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
 
         StoredLtrModel reparsedModel = reparseModel(model);
-        assertEquals(reparsedModel.getFeatureNormDefns().size(), 1);
-        ftrNormDefn = (MinMaxFeatureNormDefinition)reparsedModel.getFeatureNormDefn("feature_2");
-        assertNotNull(ftrNormDefn);
-        minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormDefn.createFeatureNorm();
+        ftrNormSet = (StoredFeatureNormalizerSet)reparsedModel.getFeatureNormalizerSet();
+        minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormSet.getNormalizer("feature_2");
 
         testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal) / (expectedMax - expectedMin);

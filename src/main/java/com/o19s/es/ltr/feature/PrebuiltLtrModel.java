@@ -48,4 +48,9 @@ public class PrebuiltLtrModel implements LtrModel {
     public FeatureSet featureSet() {
         return featureSet;
     }
+
+    @Override
+    public FeatureNormalizerSet featureNormalizerSet() {
+        return null;
+    }
 }
