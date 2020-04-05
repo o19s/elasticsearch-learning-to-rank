@@ -7,9 +7,9 @@ import java.util.Map;
 public class FeatureNormalizingRanker implements LtrRanker {
 
     LtrRanker wrappedRanker;
-    Map<Integer, FeatureNormalizer> ftrNorms;
+    Map<Integer, Normalizer> ftrNorms;
 
-    FeatureNormalizingRanker(LtrRanker wrappedRanker, Map<Integer, FeatureNormalizer> ftrNorms) {
+    FeatureNormalizingRanker(LtrRanker wrappedRanker, Map<Integer, Normalizer> ftrNorms) {
         this.wrappedRanker = wrappedRanker;
         this.ftrNorms = ftrNorms;
     }
@@ -32,11 +32,11 @@ public class FeatureNormalizingRanker implements LtrRanker {
 
     public static class NormalizedFeatureVector implements LtrRanker.FeatureVector {
 
-        private Map<Integer, FeatureNormalizer> ftrNorms;
+        private Map<Integer, Normalizer> ftrNorms;
         private FeatureVector wrapped;
 
 
-        NormalizedFeatureVector(Map<Integer, FeatureNormalizer> ftrNorms, FeatureVector wrapped) {
+        NormalizedFeatureVector(Map<Integer, Normalizer> ftrNorms, FeatureVector wrapped) {
             this.ftrNorms = ftrNorms;
             this.wrapped = wrapped;
         }
@@ -48,7 +48,7 @@ public class FeatureNormalizingRanker implements LtrRanker {
 
         @Override
         public float getFeatureScore(int featureId) {
-            FeatureNormalizer ftrNorm = ftrNorms.get(featureId);
+            Normalizer ftrNorm = ftrNorms.get(featureId);
             if (ftrNorm != null) {
                 return ftrNorm.normalize(wrapped.getFeatureScore(featureId));
             } else {

@@ -2,7 +2,7 @@ package com.o19s.es.ltr.ranker.normalizer;
 
 import org.elasticsearch.ElasticsearchException;
 
-public class MinMaxFeatureNormalizer implements FeatureNormalizer  {
+public class MinMaxFeatureNormalizer implements Normalizer  {
     float maximum;
     float minimum;
     String featureName;

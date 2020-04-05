@@ -1,7 +1,7 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.FeatureNormalizerSet;
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-// Factory & parsing for feature norms -> make to regular factory class?
 public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
 
 
@@ -109,7 +108,7 @@ public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
     }
 
     @Override
-    public FeatureNormalizer getNormalizer(String featureName) {
+    public Normalizer getNormalizer(String featureName) {
         return this.featureNormalizers.get(featureName).createFeatureNorm();
     }
 

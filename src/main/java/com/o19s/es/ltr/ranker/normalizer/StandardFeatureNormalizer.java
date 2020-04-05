@@ -1,6 +1,6 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-public class StandardFeatureNormalizer implements FeatureNormalizer {
+public class StandardFeatureNormalizer implements Normalizer {
 
     private float mean;
     private float stdDeviation;

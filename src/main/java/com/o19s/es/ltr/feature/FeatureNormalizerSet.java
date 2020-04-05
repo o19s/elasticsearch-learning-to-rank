@@ -1,8 +1,8 @@
 package com.o19s.es.ltr.feature;
 
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 
 public interface FeatureNormalizerSet  {
 
-    FeatureNormalizer getNormalizer(String featureName);
+    Normalizer getNormalizer(String featureName);
 }

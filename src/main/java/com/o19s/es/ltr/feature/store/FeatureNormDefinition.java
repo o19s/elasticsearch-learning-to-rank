@@ -1,10 +1,10 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 
 public interface FeatureNormDefinition extends StorableElement {
 
-    FeatureNormalizer createFeatureNorm();
+    Normalizer createFeatureNorm();
 
     String featureName();
 

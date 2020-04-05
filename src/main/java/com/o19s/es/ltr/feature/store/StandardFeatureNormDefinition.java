@@ -1,6 +1,6 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -79,7 +79,7 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
         return builder;    }
 
     @Override
-    public FeatureNormalizer createFeatureNorm() {
+    public Normalizer createFeatureNorm() {
         return new StandardFeatureNormalizer(this.featureName, this.mean, this.stdDeviation);
     }
 
