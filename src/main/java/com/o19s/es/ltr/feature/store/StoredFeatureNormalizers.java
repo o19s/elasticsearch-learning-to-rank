@@ -1,6 +1,7 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.FeatureNormalizerSet;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
@@ -13,12 +14,13 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
+public class StoredFeatureNormalizers {
 
 
     public enum Type implements Writeable {
@@ -94,20 +96,19 @@ public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
 
     private Map<String, FeatureNormDefinition> featureNormalizers;
 
-    public StoredFeatureNormalizerSet() {
+    public StoredFeatureNormalizers() {
         this.featureNormalizers = new HashMap<>();
     }
 
-    public StoredFeatureNormalizerSet(StreamInput input) throws IOException {
+    public StoredFeatureNormalizers(StreamInput input) throws IOException {
         this.featureNormalizers = new HashMap<>();
         int numFeatureNorms = input.readInt();
-        for (; numFeatureNorms > 0; numFeatureNorms--) {
+        for (int i = numFeatureNorms; i > 0; i--) {
             FeatureNormDefinition norm = this.createFromStreamInput(input);
             this.featureNormalizers.put(norm.featureName(), norm);
         }
     }
 
-    @Override
     public Normalizer getNormalizer(String featureName) {
         return this.featureNormalizers.get(featureName).createFeatureNorm();
     }
@@ -132,11 +133,33 @@ public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
         }
     }
 
+    public CompiledFeatureNormalizerSet compile(FeatureSet featureSet) {
+        List<Normalizer> ftrNorms = new ArrayList<>(featureSet.size());
+
+        for (int i = 0; i < featureSet.size(); i++) {
+            ftrNorms.add(new NoOpNormalizer());
+        }
+
+        for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormalizers.entrySet()) {
+            String featureName = ftrNormDefEntry.getValue().featureName();
+            Normalizer ftrNorm = ftrNormDefEntry.getValue().createFeatureNorm();
+
+            if (!featureSet.hasFeature(featureName)) {
+                throw new ElasticsearchException("Feature " + featureName +
+                                                 " not found in feature set " + featureSet.name());
+            }
+
+            int ord = featureSet.featureOrdinal(featureName);
+            ftrNorms.set(ord, ftrNorm);
+        }
+        return new CompiledFeatureNormalizerSet(ftrNorms);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StoredFeatureNormalizerSet)) return false;
-        StoredFeatureNormalizerSet that = (StoredFeatureNormalizerSet) o;
+        if (!(o instanceof StoredFeatureNormalizers)) return false;
+        StoredFeatureNormalizers that = (StoredFeatureNormalizers) o;
 
         return that.featureNormalizers.equals(this.featureNormalizers);
     }

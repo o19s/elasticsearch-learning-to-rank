@@ -27,11 +27,13 @@ public class PrebuiltLtrModel implements LtrModel {
     private final String name;
     private final LtrRanker ranker;
     private final PrebuiltFeatureSet featureSet;
+    private final NoOpFeatureNormalizerSet ftrNorms;
 
     public PrebuiltLtrModel(String name, LtrRanker ranker, PrebuiltFeatureSet featureSet) {
         this.name = Objects.requireNonNull(name);
         this.ranker = Objects.requireNonNull(ranker);
         this.featureSet = Objects.requireNonNull(featureSet);
+        ftrNorms = new NoOpFeatureNormalizerSet();
     }
 
     @Override
@@ -51,6 +53,6 @@ public class PrebuiltLtrModel implements LtrModel {
 
     @Override
     public FeatureNormalizerSet featureNormalizerSet() {
-        return null;
+        return ftrNorms;
     }
 }

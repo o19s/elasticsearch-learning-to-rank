@@ -18,6 +18,7 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
@@ -168,7 +169,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             float[] weitghs = new float[set.size()];
             Arrays.fill(weitghs, 1F);
             LinearRanker ranker = new LinearRanker(weitghs);
-            CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
+            CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker, new NoOpFeatureNormalizerSet());
             validateActiveFeatures(model.featureSet(), ltrQueryContext);
             return RankerQuery.build(model, ltrQueryContext, params);
         }

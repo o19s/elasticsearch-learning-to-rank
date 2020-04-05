@@ -89,8 +89,8 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     }
 
     @Override
-    public StoredFeatureNormalizerSet.Type normType() {
-        return StoredFeatureNormalizerSet.Type.STANDARD;
+    public StoredFeatureNormalizers.Type normType() {
+        return StoredFeatureNormalizers.Type.STANDARD;
     }
 
     @Override

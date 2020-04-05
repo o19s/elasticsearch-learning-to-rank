@@ -18,12 +18,15 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.NullRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.utils.Suppliers;
 import com.o19s.es.ltr.utils.Suppliers.MutableSupplier;
 import org.apache.lucene.index.IndexReader;
@@ -61,11 +64,13 @@ public class RankerQuery extends Query {
     private final List<Query> queries;
     private final FeatureSet features;
     private final LtrRanker ranker;
+    private final FeatureNormalizerSet featureNorms;
 
-    private RankerQuery(List<Query> queries, FeatureSet features, LtrRanker ranker) {
+    private RankerQuery(List<Query> queries, FeatureSet features, LtrRanker ranker, FeatureNormalizerSet featureNorms) {
         this.queries = Objects.requireNonNull(queries);
         this.features = Objects.requireNonNull(features);
         this.ranker = Objects.requireNonNull(ranker);
+        this.featureNorms = Objects.requireNonNull(featureNorms);
     }
 
     /**
@@ -76,7 +81,8 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(PrebuiltLtrModel model) {
-        return build(model.ranker(), model.featureSet(), new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap());
+        return build(model.ranker(), model.featureSet(), model.featureNormalizerSet(),
+                     new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap());
     }
 
     /**
@@ -88,23 +94,26 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(LtrModel model, LtrQueryContext context, Map<String, Object> params) {
-        return build(model.ranker(), model.featureSet(), context, params);
+        return build(model.ranker(), model.featureSet(), model.featureNormalizerSet(), context, params);
     }
 
-    private static RankerQuery build(LtrRanker ranker, FeatureSet features, LtrQueryContext context, Map<String, Object> params) {
+    private static RankerQuery build(LtrRanker ranker, FeatureSet features, FeatureNormalizerSet ftrNormSet,
+                                     LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
-        return new RankerQuery(queries, features, ranker);
+        return new RankerQuery(queries, features, ranker, ftrNormSet);
     }
 
     public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,
                                             LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
-        return new RankerQuery(queries, features, new LogLtrRanker(consumer, features.size()));
+        return new RankerQuery(queries, features,
+                               new LogLtrRanker(consumer, features.size()),
+                               new NoOpFeatureNormalizerSet());
     }
 
     public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer) {
         NullRanker newRanker = new NullRanker(features.size());
-        return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer));
+        return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer), new NoOpFeatureNormalizerSet());
     }
 
     @Override
@@ -116,7 +125,7 @@ public class RankerQuery extends Query {
             rewritten |= rewrittenQuery != query;
             rewrittenQueries.add(rewrittenQuery);
         }
-        return rewritten ? new RankerQuery(rewrittenQueries, features, ranker) : this;
+        return rewritten ? new RankerQuery(rewrittenQueries, features, ranker, featureNorms) : this;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -198,20 +207,23 @@ public class RankerQuery extends Query {
             }
             weights.add(searcher.createWeight(q, ScoreMode.COMPLETE, boost));
         }
-        return new RankerWeight(this, weights, ltrRankerWrapper, features);
+        return new RankerWeight(this, weights, ltrRankerWrapper, features, featureNorms);
     }
 
     public static class RankerWeight extends Weight {
         private final List<Weight> weights;
         private final FVLtrRankerWrapper ranker;
+        private final FeatureNormalizerSet ftrNorms;
         private final FeatureSet features;
 
-        RankerWeight(RankerQuery query, List<Weight> weights, FVLtrRankerWrapper ranker, FeatureSet features) {
+        RankerWeight(RankerQuery query, List<Weight> weights, FVLtrRankerWrapper ranker, FeatureSet features,
+                     FeatureNormalizerSet ftrNorms) {
             super(query);
             assert weights instanceof RandomAccess;
             this.weights = weights;
             this.ranker = Objects.requireNonNull(ranker);
             this.features = Objects.requireNonNull(features);
+            this.ftrNorms = ftrNorms;
         }
 
         @Override
@@ -267,7 +279,7 @@ public class RankerQuery extends Query {
 
             DisjunctionDISI rankerIterator = new DisjunctionDISI(
                     DocIdSetIterator.all(context.reader().maxDoc()), disiPriorityQueue);
-            return new RankerScorer(scorers, rankerIterator, ranker);
+            return new RankerScorer(scorers, rankerIterator, ranker, ftrNorms);
         }
 
         class RankerScorer extends Scorer {
@@ -278,13 +290,15 @@ public class RankerQuery extends Query {
             private final List<Scorer> scorers;
             private final DisjunctionDISI iterator;
             private final FVLtrRankerWrapper ranker;
+            private final FeatureNormalizerSet featureNorms;
             private LtrRanker.FeatureVector fv;
 
-            RankerScorer(List<Scorer> scorers, DisjunctionDISI iterator, FVLtrRankerWrapper ranker) {
+            RankerScorer(List<Scorer> scorers, DisjunctionDISI iterator, FVLtrRankerWrapper ranker, FeatureNormalizerSet ftrNorms) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
                 this.ranker = ranker;
+                this.featureNorms = ftrNorms;
             }
 
             @Override
@@ -305,7 +319,9 @@ public class RankerQuery extends Query {
                         float score = scorer.score();
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        fv.setFeatureScore(ordinal, score);
+                        Normalizer norm = this.featureNorms.getNomalizer(ordinal);
+                        float normed = norm.normalize(score);
+                        fv.setFeatureScore(ordinal, normed);
                     }
                 }
                 return ranker.score(fv);

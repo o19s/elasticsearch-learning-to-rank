@@ -4,5 +4,5 @@ import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 
 public interface FeatureNormalizerSet  {
 
-    Normalizer getNormalizer(String featureName);
+    Normalizer getNomalizer(int featureOrd);
 }

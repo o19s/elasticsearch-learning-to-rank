@@ -18,6 +18,7 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -97,7 +98,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         store.add(set);
         LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
-        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker, new NoOpFeatureNormalizerSet());
         store.add(model);
     }
 

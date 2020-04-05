@@ -17,6 +17,7 @@
 package com.o19s.es.ltr;
 
 import com.o19s.es.ltr.action.BaseIntegrationTest;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.index.CachedFeatureStore;
@@ -81,7 +82,7 @@ public class NodeSettingsIT extends BaseIntegrationTest {
 
     public static class DummyModel extends CompiledLtrModel {
         public DummyModel(String name, long size) throws IOException {
-            super(name, LtrTestUtils.randomFeatureSet(1), new DummryRanker(size));
+            super(name, LtrTestUtils.randomFeatureSet(1), new DummryRanker(size), new NoOpFeatureNormalizerSet());
         }
     }
 

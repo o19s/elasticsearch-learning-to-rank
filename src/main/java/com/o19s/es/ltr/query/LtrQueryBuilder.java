@@ -136,7 +136,7 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         LtrRanker ranker = (LtrRanker) executableScript.run();
 
         PrebuiltFeatureSet featureSet = new PrebuiltFeatureSet(queryName(), features);
-        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, featureSet);
+        PrebuiltLtrModel model = new PrebuiltLtrModel(ranker.name(), ranker, featureSet );
         return RankerQuery.build(model);
     }
 

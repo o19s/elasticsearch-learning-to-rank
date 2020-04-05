@@ -20,6 +20,7 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.FeatureValidation;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.PrecompiledExpressionFeature;
 import com.o19s.es.ltr.feature.store.StorableElement;
@@ -172,7 +173,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         } else if (StoredFeatureSet.TYPE.equals(element.type())) {
             FeatureSet set = ((StoredFeatureSet) element).optimize();
             LinearRanker ranker = new LinearRanker(new float[set.size()]);
-            CompiledLtrModel model = new CompiledLtrModel("validation", set, ranker);
+            CompiledLtrModel model = new CompiledLtrModel("validation", set, ranker, new NoOpFeatureNormalizerSet());
             return RankerQuery.build(model, context, validation.getParams());
         } else if (StoredLtrModel.TYPE.equals(element.type())) {
             CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);

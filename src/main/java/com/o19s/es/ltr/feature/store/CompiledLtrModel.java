@@ -32,11 +32,13 @@ public class CompiledLtrModel implements LtrModel, Accountable {
     private final String name;
     private final FeatureSet set;
     private final LtrRanker ranker;
+    private final FeatureNormalizerSet ftrNorms;
 
-    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
+    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker, FeatureNormalizerSet ftrNorms) {
         this.name = name;
         this.set = set.optimize();
         this.ranker = ranker;
+        this.ftrNorms = ftrNorms;
     }
 
     /**
@@ -65,7 +67,7 @@ public class CompiledLtrModel implements LtrModel, Accountable {
 
     @Override
     public FeatureNormalizerSet featureNormalizerSet() {
-        return null;
+        return ftrNorms;
     }
 
     /**

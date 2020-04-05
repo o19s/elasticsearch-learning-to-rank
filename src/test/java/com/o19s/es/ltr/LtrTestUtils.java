@@ -16,10 +16,11 @@
 
 package com.o19s.es.ltr;
 
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
-import com.o19s.es.ltr.feature.store.StoredFeatureNormalizerSet;
+import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -68,7 +69,8 @@ public class LtrTestUtils {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
         LtrRanker ranker;
         ranker = buildRandomRanker(set.size());
-        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set, ranker);
+        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
+                                                                ranker, new NoOpFeatureNormalizerSet());
     }
 
     public static StoredLtrModel randomLinearModel(String name, StoredFeatureSet set) throws IOException {
@@ -78,7 +80,7 @@ public class LtrTestUtils {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject();
-        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new StoredFeatureNormalizerSet());
+        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new StoredFeatureNormalizers());
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {

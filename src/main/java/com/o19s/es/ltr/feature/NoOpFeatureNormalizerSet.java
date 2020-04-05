@@ -1,15 +1,18 @@
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 
 public class NoOpFeatureNormalizerSet implements FeatureNormalizerSet {
+
+    private Normalizer noopNorm;
+
+    public NoOpFeatureNormalizerSet() {
+        this.noopNorm = new NoOpNormalizer();
+    }
+
     @Override
-    public Normalizer getNormalizer(String featureName) {
-        return new Normalizer() {
-            @Override
-            public float normalize(float val) {
-                return val;
-            }
-        };
+    public Normalizer getNomalizer(int featureOrd) {
+        return noopNorm;
     }
 }
