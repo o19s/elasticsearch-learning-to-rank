@@ -200,6 +200,7 @@ public class StoredLtrModel implements StorableElement {
         if (!name.equals(that.name)) return false;
         if (!featureSet.equals(that.featureSet)) return false;
         if (!rankingModelType.equals(that.rankingModelType)) return false;
+        if (!featureNormalizerSet.equals(that.featureNormalizerSet)) return false;
         return rankingModel.equals(that.rankingModel);
     }
 
@@ -209,6 +210,7 @@ public class StoredLtrModel implements StorableElement {
         result = 31 * result + featureSet.hashCode();
         result = 31 * result + rankingModelType.hashCode();
         result = 31 * result + rankingModel.hashCode();
+        result = 31 * result + featureNormalizerSet.hashCode();
         return result;
     }
 

@@ -100,4 +100,27 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
         builder.endObject();
         return builder;
     }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MinMaxFeatureNormDefinition)) return false;
+        MinMaxFeatureNormDefinition that = (MinMaxFeatureNormDefinition) o;
+
+        if (!this.featureName.equals(that.featureName)) return false;
+        if (this.minimum != that.minimum) return false;
+        if (this.maximum != that.maximum) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = this.featureName.hashCode();
+        hash = (hash * 31) + Float.hashCode(this.minimum);
+        hash = (hash * 31) + Float.hashCode(this.maximum);
+
+        return hash;
+    }
 }

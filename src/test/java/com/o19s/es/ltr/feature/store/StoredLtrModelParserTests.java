@@ -159,6 +159,8 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal - expectedMean) / expectedStdDev;
         assertEquals(expectedNormalized, stdFtrNorm.normalize(testVal), 0.01);
+        assertEquals(reparsedModel, model);
+        assertEquals(reparsedModel.hashCode(), model.hashCode());
     }
 
     public void testFeatureMinMaxParsing() throws IOException {
@@ -197,6 +199,8 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         testVal = Randomness.get().nextFloat();
         expectedNormalized = (testVal) / (expectedMax - expectedMin);
         assertEquals(expectedNormalized, minMaxFtrNorm.normalize(testVal), 0.01);
+        assertEquals(reparsedModel, model);
+        assertEquals(reparsedModel.hashCode(), model.hashCode());
     }
 
     public StoredLtrModel reparseModel(StoredLtrModel srcModel) throws IOException {

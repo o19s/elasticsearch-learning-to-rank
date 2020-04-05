@@ -132,6 +132,20 @@ public class StoredFeatureNormalizerSet implements FeatureNormalizerSet {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StoredFeatureNormalizerSet)) return false;
+        StoredFeatureNormalizerSet that = (StoredFeatureNormalizerSet) o;
+
+        return that.featureNormalizers.equals(this.featureNormalizers);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.featureNormalizers.hashCode();
+    }
+
 
     private  FeatureNormDefinition createFromStreamInput(StreamInput input) throws IOException {
         Type normType = Type.readFromStream(input);

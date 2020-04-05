@@ -92,4 +92,26 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     public StoredFeatureNormalizerSet.Type normType() {
         return StoredFeatureNormalizerSet.Type.STANDARD;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StandardFeatureNormDefinition)) return false;
+        StandardFeatureNormDefinition that = (StandardFeatureNormDefinition) o;
+
+        if (!this.featureName.equals(that.featureName)) return false;
+        if (this.stdDeviation != that.stdDeviation) return false;
+        if (this.mean != that.mean) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = this.featureName.hashCode();
+        hash = (hash * 31) + Float.hashCode(this.stdDeviation);
+        hash = (hash * 31) + Float.hashCode(this.mean);
+
+        return hash;
+    }
 }
