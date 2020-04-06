@@ -155,6 +155,69 @@ public class ExplorerQueryTests extends LuceneTestCase {
         assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: min_raw_tp"));
     }
 
+    public void testQueryWithTermPositionMinWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(3.0f));
+    }
+
+    public void testQueryWithTermPositionMaxWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(7.0f));
+    }
+
+    public void testQueryWithTermPositionAvgWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(5.0f));
+    }
+
     public void testQueryWithTermPositionAvgWithNoTerm() throws Exception {
         Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
         String statsType = "avg_raw_tp";
