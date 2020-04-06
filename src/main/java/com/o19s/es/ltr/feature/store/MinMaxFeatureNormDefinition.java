@@ -33,7 +33,7 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
         this.maximum = input.readFloat();
     }
 
-    MinMaxFeatureNormDefinition() {
+    public MinMaxFeatureNormDefinition() {
         this.maximum = Float.MAX_VALUE;
         this.minimum = Float.MIN_VALUE;
     }

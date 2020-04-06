@@ -16,9 +16,12 @@
 
 package com.o19s.es.ltr;
 
-import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
+import com.o19s.es.ltr.feature.FeatureNormalizerSet;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
+import com.o19s.es.ltr.feature.store.MinMaxFeatureNormDefinition;
+import com.o19s.es.ltr.feature.store.StandardFeatureNormDefinition;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
@@ -28,6 +31,8 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
@@ -38,6 +43,8 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -67,10 +74,11 @@ public class LtrTestUtils {
 
     public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
+        FeatureNormalizerSet ftrNormSet = randomFtrNorms(set);
         LtrRanker ranker;
         ranker = buildRandomRanker(set.size());
         return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
-                                                                ranker, new NoOpFeatureNormalizerSet());
+                                                                ranker, ftrNormSet);
     }
 
     public static StoredLtrModel randomLinearModel(String name, StoredFeatureSet set) throws IOException {
@@ -81,6 +89,44 @@ public class LtrTestUtils {
         }
         builder.endObject();
         return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new StoredFeatureNormalizers());
+    }
+
+    public static FeatureNormalizerSet randomFtrNorms(FeatureSet set) {
+        final List<Normalizer> ftrNormDefns = new ArrayList<>();
+
+        for (int i = 0; i < set.size(); i++) {
+
+            if (random().nextBoolean()) {
+                ftrNormDefns.add(new NoOpNormalizer());
+            }
+            else {
+
+                if (random().nextBoolean()) {
+                    StandardFeatureNormDefinition stdFtrNormDefn = new StandardFeatureNormDefinition();
+                    stdFtrNormDefn.setMean(random().nextFloat());
+                    stdFtrNormDefn.setStdDeviation(random().nextFloat());
+                    ftrNormDefns.add(stdFtrNormDefn.createFeatureNorm());
+
+                } else {
+                    MinMaxFeatureNormDefinition minMaxFtrNormDefn = new MinMaxFeatureNormDefinition();
+                    minMaxFtrNormDefn.setMinimum(random().nextFloat());
+                    minMaxFtrNormDefn.setMaximum(1.01f + random().nextFloat());
+                    ftrNormDefns.add(minMaxFtrNormDefn.createFeatureNorm());
+                }
+            }
+        }
+
+        FeatureNormalizerSet normSet = new FeatureNormalizerSet() {
+
+            @Override
+            public Normalizer getNomalizer(int featureOrd) {
+                return ftrNormDefns.get(featureOrd);
+            }
+        };
+
+        return normSet;
+
+
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {

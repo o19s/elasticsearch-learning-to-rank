@@ -2,6 +2,7 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -35,7 +36,7 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     StandardFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
         this.mean = input.readFloat();
-        this.stdDeviation = input.readFloat();
+        this.setStdDeviation(input.readFloat());
     }
 
     public void setMean(float mean) {
@@ -43,6 +44,10 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     }
 
     public void setStdDeviation(float stdDeviation) {
+        if (stdDeviation <= 0.0f) {
+            throw new ElasticsearchException("Standard Deviation Must Be Positive. " +
+                                             " You passed: " + Float.toString(stdDeviation));
+        }
         this.stdDeviation = stdDeviation;
     }
 
