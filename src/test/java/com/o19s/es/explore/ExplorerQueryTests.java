@@ -287,4 +287,175 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         expectThrows(RuntimeException.class, () -> searcher.search(eq, 4));
     }
+
+    public void testQueryWithTermPositionMinAt2() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_at2_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(9.0f));
+    }
+
+    public void testQueryWithTermPositionMinAt2WithTwoTerm() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "break"));
+        TermQuery tq2 = new TermQuery(new Term("text", "through"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_at2_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(8.0f));
+    }
+
+    public void testQueryWithTermPositionMinAt3() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_at3_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
+
+    public void testQueryWithTermPositionMaxAt1() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_at1_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(1.0f));
+    }
+
+    public void testQueryWithTermPositionMaxAt3WithTwoTerm() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "break"));
+        TermQuery tq2 = new TermQuery(new Term("text", "through"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_at3_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(17.0f));
+    }
+
+    public void testQueryWithTermPositionMaxAt3() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_at3_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
+
+    public void testQueryWithTermPositionAvgAt2() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_at2_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(9.0f));
+    }
+
+    public void testQueryWithTermPositionAvgAt3WithTwoTerm() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "break"));
+        TermQuery tq2 = new TermQuery(new Term("text", "through"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_at3_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(16.0f));
+    }
+
+    public void testQueryWithTermPositionAvgAt3() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_at3_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
 }

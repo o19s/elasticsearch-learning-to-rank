@@ -202,7 +202,7 @@ public class ExplorerQuery extends Query {
                 }
 
             };
-        } else if (type.endsWith("_raw_tf") || type.endsWith("_raw_tp")) {
+        } else if (type.endsWith("_raw_tf") || type.endsWith("_tp")) {
             // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
             BooleanQuery.Builder qb = new BooleanQuery.Builder();
             for (Term t : terms) {
@@ -221,7 +221,7 @@ public class ExplorerQuery extends Query {
         if(type.endsWith("_raw_tf")) {
             return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TF),
                     BooleanClause.Occur.SHOULD);
-        }else if(type.endsWith("_raw_tp")) {
+        }else if(type.endsWith("_tp")) {
             return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TP),
                     BooleanClause.Occur.SHOULD);
         }
