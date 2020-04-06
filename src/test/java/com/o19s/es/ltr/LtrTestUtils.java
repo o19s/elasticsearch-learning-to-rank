@@ -16,9 +16,11 @@
 
 package com.o19s.es.ltr;
 
+import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.FeatureNormDefinition;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.MinMaxFeatureNormDefinition;
 import com.o19s.es.ltr.feature.store.StandardFeatureNormDefinition;
@@ -31,8 +33,6 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
-import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
-import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
@@ -74,7 +74,7 @@ public class LtrTestUtils {
 
     public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
-        FeatureNormalizerSet ftrNormSet = randomFtrNorms(set);
+        FeatureNormalizerSet ftrNormSet = randomFtrNorms(set).compile(set);
         LtrRanker ranker;
         ranker = buildRandomRanker(set.size());
         return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
@@ -88,45 +88,42 @@ public class LtrTestUtils {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject();
-        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, new StoredFeatureNormalizers());
+        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, randomFtrNorms(set));
     }
 
-    public static FeatureNormalizerSet randomFtrNorms(FeatureSet set) {
-        final List<Normalizer> ftrNormDefns = new ArrayList<>();
+    public static StoredFeatureNormalizers randomFtrNorms(FeatureSet set) {
+        final List<FeatureNormDefinition> ftrNormDefns = new ArrayList<>();
 
         for (int i = 0; i < set.size(); i++) {
 
             if (random().nextBoolean()) {
-                ftrNormDefns.add(new NoOpNormalizer());
+                continue;
             }
             else {
+
+                Feature ftr = set.feature(i);
 
                 if (random().nextBoolean()) {
                     StandardFeatureNormDefinition stdFtrNormDefn = new StandardFeatureNormDefinition();
                     stdFtrNormDefn.setMean(random().nextFloat());
                     stdFtrNormDefn.setStdDeviation(random().nextFloat());
-                    ftrNormDefns.add(stdFtrNormDefn.createFeatureNorm());
+                    stdFtrNormDefn.setFeatureName(ftr.name());
+                    ftrNormDefns.add(stdFtrNormDefn);
 
                 } else {
                     MinMaxFeatureNormDefinition minMaxFtrNormDefn = new MinMaxFeatureNormDefinition();
                     minMaxFtrNormDefn.setMinimum(random().nextFloat());
                     minMaxFtrNormDefn.setMaximum(1.01f + random().nextFloat());
-                    ftrNormDefns.add(minMaxFtrNormDefn.createFeatureNorm());
+                    minMaxFtrNormDefn.setFeatureName(ftr.name());
+
+                    ftrNormDefns.add(minMaxFtrNormDefn);
                 }
             }
         }
 
-        FeatureNormalizerSet normSet = new FeatureNormalizerSet() {
-
-            @Override
-            public Normalizer getNomalizer(int featureOrd) {
-                return ftrNormDefns.get(featureOrd);
-            }
-        };
-
-        return normSet;
-
-
+        StoredFeatureNormalizers ftrNorms = new StoredFeatureNormalizers();
+        ftrNorms.addFeatureNormalizers(ftrNormDefns);
+        return ftrNorms;
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {
