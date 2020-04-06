@@ -39,16 +39,14 @@ Putting the operation and the statistic together, you can see some examples. To 
 
 Term position statistics
 
-The :code:`type` parameter can be prepended with the operation to be performed across term position for the statistic :code:`max`, :code:`min`, :code:`avg`, and :code:`norma_avg`. The :code:`norma_avg` is a normalization average using a specific pound when second position does not exists in document.
+The :code:`type` parameter can be prepended with the operation to be performed across term position for the statistic :code:`min`, :code:`max` and :code:`avg`.
+For any of the cases, 0 will be returned if there isn't any occurrence of the terms in the document.
 
-The :code:`norma_avg`:
+The statistics available include, e.g. using the query "dance monkey" we have:
 
-- So if rambo occurs in 3 in movie synopsis in same document, we have 3 positions. In this case :code:`norma_avg` gets only first and second position to average.
-- Now if dance occur in 1 in music synopsis in same document, we have 1 position. In this case :code:`norma_avg` gets only first position and add a default pound in second position to average.
-
-The statistics available include:
-
-- :code:`raw_tp` -- the term position for a document. So if dance occurs 5 in music text in same document, this is 5 because of the term frequency.
+- :code:`min_raw_tp` -- return the minimal occurrence, i.e. the first one, of any term on the query. So if dance occurs at positions [2, 5 ,9], and monkey occurs at positions [1, 4] in a text in the same document, the minimal is 1.
+- :code:`max_raw_tp` -- return the maximum occurrence, i.e. the last one, of any term on the query. So if dance occurs at positions [2, 5 ,9] and monkey occurs at positions [1, 4] in a text in the same document, the minimal is 9.
+- :code:`avg_raw_tp` -- return the average of all occurrence of the terms on the query. So if dance occurs at positions [2, 5 ,9] its average is :code:`5.33`, and monkey has average :code:`2.5` for positions [1, 4]. So the returned average is :code:`3.91`, computed by :code:`(5.33 + 2.5)/2`.
 
 Finally a special stat exists for just counting the number of search terms. That stat is :code:`unique_terms_count`.
 

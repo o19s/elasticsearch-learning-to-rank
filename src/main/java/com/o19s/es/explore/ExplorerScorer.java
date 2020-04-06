@@ -71,7 +71,6 @@ public class ExplorerScorer extends Scorer {
                 retval = tf_stats.getStdDev();
                 break;
             case("avg_raw_tp"):
-            case("norma_avg_raw_tp"):
                 retval = tf_stats.getMean();
                 break;
             default:

@@ -202,7 +202,6 @@ public class PostingsExplorerQuery extends Query {
         TPScorer(Weight weight, PostingsEnum postingsEnum) {
             super(weight, postingsEnum);
         }
-        final float NORMALIZED_TP = 5000.0f;
         @Override
         public float score() throws IOException {
             if (this.postingsEnum.freq() <= 0) {
@@ -222,20 +221,6 @@ public class PostingsExplorerQuery extends Query {
                         sum += position;
                     }
                     retval = sum / positions.size();
-                    break;
-                case("norma_avg_raw_tp"):
-                    float norma_sum = 0.0f;
-                    if (positions.size() <2){
-                        positions.add(NORMALIZED_TP);
-                    }
-                    else{
-                        positions = new ArrayList<Float>(positions.subList(0,2));
-                    }
-
-                    for (float position : positions) {
-                        norma_sum += position;
-                    }
-                    retval = norma_sum / positions.size();
                     break;
                 case("max_raw_tp"):
                     retval = Collections.max(positions);

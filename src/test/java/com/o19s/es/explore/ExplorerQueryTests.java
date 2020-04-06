@@ -155,39 +155,9 @@ public class ExplorerQueryTests extends LuceneTestCase {
         assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: min_raw_tp"));
     }
 
-    public void testQueryWithTermPositionNormaAvgWithMorenThanTwoTerms() throws Exception {
-        Query q = new TermQuery(new Term("text", "break"));
-        String statsType = "norma_avg_raw_tp";
-
-        ExplorerQuery eq = new ExplorerQuery(q, statsType);
-
-        // Basic query check, should match 1 docs
-        assertThat(searcher.count(eq), equalTo(1));
-
-        // Verify explain
-        TopDocs docs = searcher.search(eq, 6);
-        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("4.5 = Stat Score: norma_avg_raw_tp"));
-    }
-
-    public void testQueryWithTermPositionNormaAvgWithOnlyOneTerm() throws Exception {
-        Query q = new TermQuery(new Term("text", "banana"));
-        String statsType = "norma_avg_raw_tp";
-
-        ExplorerQuery eq = new ExplorerQuery(q, statsType);
-
-        // Basic query check, should match 1 docs
-        assertThat(searcher.count(eq), equalTo(1));
-
-        // Verify explain
-        TopDocs docs = searcher.search(eq, 6);
-        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("2500.5 = Stat Score: norma_avg_raw_tp"));
-    }
-
-    public void testQueryWithTermPositionNormaAvgWithNoTerm() throws Exception {
+    public void testQueryWithTermPositionAvgWithNoTerm() throws Exception {
         Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
-        String statsType = "norma_avg_raw_tp";
+        String statsType = "avg_raw_tp";
 
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
