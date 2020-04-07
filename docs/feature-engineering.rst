@@ -37,16 +37,24 @@ The statistics available include:
 
 Putting the operation and the statistic together, you can see some examples. To get stddev of classic_idf, you would write :code:`stddev_classic_idf`. To get the minimum total term frequency, you'd write :code:`min_raw_ttf`.
 
-Term position statistics
+Term position statistics:
 
 The :code:`type` parameter can be prepended with the operation to be performed across term position for the statistic :code:`min`, :code:`max` and :code:`avg`.
 For any of the cases, 0 will be returned if there isn't any occurrence of the terms in the document.
 
-The statistics available include, e.g. using the query "dance monkey" we have:
+The statistics available include, e.g. using the query "dance monkey":
 
 - :code:`min_raw_tp` -- return the minimum occurrence, i.e. the first one, of any term on the query. So if dance occurs at positions [2, 5 ,9], and monkey occurs at positions [1, 4] in a text in the same document, the minimum is 1.
 - :code:`max_raw_tp` -- return the maximum occurrence, i.e. the last one, of any term on the query. So if dance occurs at positions [2, 5 ,9] and monkey occurs at positions [1, 4] in a text in the same document, the maximum is 9.
 - :code:`avg_raw_tp` -- return the average of all occurrence of the terms on the query. So if dance occurs at positions [2, 5 ,9] its average is :code:`5.33`, and monkey has average :code:`2.5` for positions [1, 4]. So the returned average is :code:`3.91`, computed by :code:`(5.33 + 2.5)/2`.
+
+In addition, you can also pass a specific position you want to obtain the statistics. To do so, just use code:`atX` instead of code:`raw` in any of the above :code:`types`, where code:`X` is the desired position.
+For the query "break through", you may:
+
+- :code:`min_at2_tp` -- return the minimum occurrence in the second position. So if break occurs at positions [1, 8 ,15] and through occurs at positions [3, 10, 17] in a text in the same document, the minimum is 8 considering only the second position.
+- :code:`max_at3_tp` -- return the maximum occurrence in the third position. So if break occurs at positions [1, 8 ,15] and through occurs at positions [3, 10, 17] in a text in the same document, the maximum is 17 considering only the third position.
+- :code:`avg_at1_tp` -- return the average of all occurrence in the first position of the terms on the query. So if break occurs at positions [1, 8 ,15] and through occurs at positions [3, 10, 17], the average is 2 considering only the first positions computed by :code:`(1 + 3)/2`.
+
 
 Finally a special stat exists for just counting the number of search terms. That stat is :code:`unique_terms_count`.
 
