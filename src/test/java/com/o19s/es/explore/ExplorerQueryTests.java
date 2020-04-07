@@ -36,8 +36,8 @@ import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ExplorerQueryTests extends LuceneTestCase {
@@ -479,7 +479,6 @@ public class ExplorerQueryTests extends LuceneTestCase {
         assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
     }
 
-    @Test(expected = java.lang.NumberFormatException.class)
     public void testQueryWithInvalidTypeTermPosition() throws Exception {
         TermQuery tq1 = new TermQuery(new Term("text", "dance"));
         TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
@@ -493,6 +492,8 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
-        searcher.search(eq, 1);
+        NumberFormatException exc = expectThrows(NumberFormatException.class, () ->searcher.search(eq, 1));
+        String raisedErrorMessage = "For input string: \"X\"";
+        assertThat(exc.getMessage(), containsString(raisedErrorMessage));
     }
 }
