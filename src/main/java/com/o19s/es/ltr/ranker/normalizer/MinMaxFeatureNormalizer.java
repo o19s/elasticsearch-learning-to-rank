@@ -5,9 +5,8 @@ import org.elasticsearch.ElasticsearchException;
 public class MinMaxFeatureNormalizer implements Normalizer  {
     float maximum;
     float minimum;
-    String featureName;
 
-    public MinMaxFeatureNormalizer(String featureName, float minimum, float maximum) {
+    public MinMaxFeatureNormalizer(float minimum, float maximum) {
         if (minimum >= maximum) {
             throw new ElasticsearchException("Minimum " + Double.toString(minimum) +
                                              " must be smaller than than maximum: " +
@@ -15,12 +14,32 @@ public class MinMaxFeatureNormalizer implements Normalizer  {
         }
         this.minimum = minimum;
         this.maximum = maximum;
-        this.featureName = featureName;
     }
 
     @Override
     public float normalize(float value) {
         return value / (maximum - minimum);
+    }
+
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof MinMaxFeatureNormalizer)) return false;
+        MinMaxFeatureNormalizer that = (MinMaxFeatureNormalizer) other;
+
+        if (this.minimum != that.minimum) return false;
+        if (this.maximum != that.maximum) return false;
+
+        return true;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = Float.hashCode(this.minimum);
+        hashCode += 31 * Float.hashCode(this.maximum);
+        return hashCode;
     }
 
 }

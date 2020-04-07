@@ -40,7 +40,7 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
     @Override
     public Normalizer createFeatureNorm() {
-        return new MinMaxFeatureNormalizer(this.featureName, this.minimum, this.maximum);
+        return new MinMaxFeatureNormalizer(this.minimum, this.maximum);
     }
 
     @Override

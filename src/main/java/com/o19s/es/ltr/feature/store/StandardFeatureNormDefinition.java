@@ -85,7 +85,7 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
 
     @Override
     public Normalizer createFeatureNorm() {
-        return new StandardFeatureNormalizer(this.featureName, this.mean, this.stdDeviation);
+        return new StandardFeatureNormalizer(this.mean, this.stdDeviation);
     }
 
     @Override

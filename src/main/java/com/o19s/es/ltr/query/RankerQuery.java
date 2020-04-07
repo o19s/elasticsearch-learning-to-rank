@@ -141,16 +141,21 @@ public class RankerQuery extends Query {
         RankerQuery that = (RankerQuery) obj;
         return Objects.deepEquals(queries, that.queries) &&
                 Objects.deepEquals(features, that.features) &&
-                Objects.equals(ranker, that.ranker);
+                Objects.equals(ranker, that.ranker) &&
+                Objects.equals(featureNorms, that.featureNorms);
     }
 
     Stream<Query> stream() {
         return queries.stream();
     }
 
+    FeatureNormalizerSet ftrNormSet() {
+        return this.featureNorms;
+    }
+
     @Override
     public int hashCode() {
-        return 31 * classHash() + Objects.hash(features, queries, ranker);
+        return 31 * classHash() + Objects.hash(features, queries, ranker, featureNorms);
     }
 
     @Override

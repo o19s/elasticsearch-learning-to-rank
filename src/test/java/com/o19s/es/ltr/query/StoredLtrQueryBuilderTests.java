@@ -18,7 +18,9 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
+import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
+import com.o19s.es.ltr.feature.store.CompiledFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -26,6 +28,9 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
+import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
@@ -47,6 +52,7 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +104,14 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         store.add(set);
         LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
-        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker, new NoOpFeatureNormalizerSet());
+
+        List<Normalizer> ftrNorms = new ArrayList<>();
+        ftrNorms.add(new NoOpNormalizer());
+        ftrNorms.add(new NoOpNormalizer());
+        ftrNorms.add(new StandardFeatureNormalizer(1.0f,0.5f));
+
+        FeatureNormalizerSet ftrNormSet = new CompiledFeatureNormalizerSet(ftrNorms);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker, ftrNormSet);
         store.add(model);
     }
 
@@ -187,6 +200,13 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
 
+        // Confirm each feature normalizer
+        FeatureNormalizerSet ftrNormSet = rquery.ftrNormSet();
+        assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
+        assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
+        assertEquals(ftrNormSet.getNomalizer(2), new StandardFeatureNormalizer(1.0f, 0.5f));
+
+        // Check each feature query
         assertTrue(ite.hasNext());
         Query featureQuery = ite.next();
         QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
@@ -201,7 +221,6 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         qcontext = createShardContext();
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
-
         assertTrue(ite.hasNext());
 
         featureQuery = ite.next();
@@ -212,6 +231,8 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         qcontext = createShardContext();
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
+
+
 
         assertThat(rquery.ranker(), instanceOf(LinearRanker.class));
         assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
