@@ -15,4 +15,20 @@ public class NoOpFeatureNormalizerSet implements FeatureNormalizerSet {
     public Normalizer getNomalizer(int featureOrd) {
         return noopNorm;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof NoOpFeatureNormalizerSet)) return false;
+
+        NoOpFeatureNormalizerSet that = (NoOpFeatureNormalizerSet)(other);
+
+        if (!noopNorm.equals(((NoOpFeatureNormalizerSet) other).noopNorm)) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        return this.noopNorm.hashCode();
+    }
 }

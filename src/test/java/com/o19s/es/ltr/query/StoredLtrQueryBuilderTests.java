@@ -19,7 +19,6 @@ package com.o19s.es.ltr.query;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.FeatureNormalizerSet;
-import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledFeatureNormalizerSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
@@ -202,10 +201,15 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
         // Confirm each feature normalizer
         FeatureNormalizerSet ftrNormSet = rquery.ftrNormSet();
-        assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
-        assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
-        assertEquals(ftrNormSet.getNomalizer(2), new StandardFeatureNormalizer(1.0f, 0.5f));
-
+        if (queryBuilder.modelName() != null && queryBuilder.modelName().equals("model1")) {
+            assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
+            assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
+            assertEquals(ftrNormSet.getNomalizer(2), new StandardFeatureNormalizer(1.0f, 0.5f));
+        } else {
+            assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
+            assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
+            assertEquals(ftrNormSet.getNomalizer(2).getClass(), NoOpNormalizer.class);
+        }
         // Check each feature query
         assertTrue(ite.hasNext());
         Query featureQuery = ite.next();

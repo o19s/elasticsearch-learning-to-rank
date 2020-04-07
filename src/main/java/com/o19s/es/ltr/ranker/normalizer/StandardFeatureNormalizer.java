@@ -1,7 +1,5 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import com.o19s.es.ltr.feature.store.CompiledFeatureNormalizerSet;
-
 public class StandardFeatureNormalizer implements Normalizer {
 
     private float mean;
