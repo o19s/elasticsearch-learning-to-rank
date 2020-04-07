@@ -215,7 +215,7 @@ public class PostingsExplorerQuery extends Query {
 
             if (this.typeConditional.contains("_at")){
                 int atPosition = Integer.parseInt(this.typeConditional.split("_")[1].split("at")[1]);
-                if (atPosition <= this.postingsEnum.freq()){
+                if (atPosition <= this.postingsEnum.freq() && atPosition > 0){
                     return positions.get(atPosition-1);
                 }
                 return 0.0f;

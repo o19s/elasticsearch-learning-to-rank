@@ -36,6 +36,7 @@ import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -457,5 +458,41 @@ public class ExplorerQueryTests extends LuceneTestCase {
         TopDocs docs = searcher.search(eq, 4);
 
         assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
+
+    public void testQueryWithInvalidTermPosition() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_at0_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
+
+    @Test(expected = java.lang.NumberFormatException.class)
+    public void testQueryWithInvalidTypeTermPosition() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "dance"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_atX_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        searcher.search(eq, 1);
     }
 }
