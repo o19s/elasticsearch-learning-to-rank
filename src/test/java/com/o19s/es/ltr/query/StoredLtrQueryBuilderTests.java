@@ -27,6 +27,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
@@ -110,7 +111,8 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         ftrNorms.add(new StandardFeatureNormalizer(1.0f,0.5f));
 
         FeatureNormalizerSet ftrNormSet = new CompiledFeatureNormalizerSet(ftrNorms);
-        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker, ftrNormSet);
+        FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, ftrNormSet);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ftrNormRanker);
         store.add(model);
     }
 
@@ -199,16 +201,19 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
 
-        // Confirm each feature normalizer
-        FeatureNormalizerSet ftrNormSet = rquery.ftrNormSet();
+        // Confirm each feature normalizer when evaluating a model
+        LtrRanker ranker = rquery.ranker();
         if (queryBuilder.modelName() != null && queryBuilder.modelName().equals("model1")) {
+            assertEquals(ranker.getClass(), FeatureNormalizingRanker.class);
+            FeatureNormalizingRanker ftrNormRanker = (FeatureNormalizingRanker)ranker;
+            FeatureNormalizerSet ftrNormSet = ftrNormRanker.getFtrNormSet();
             assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
             assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
             assertEquals(ftrNormSet.getNomalizer(2), new StandardFeatureNormalizer(1.0f, 0.5f));
-        } else {
-            assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
-            assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
-            assertEquals(ftrNormSet.getNomalizer(2).getClass(), NoOpNormalizer.class);
+
+        } else { // logging, no normalization should occur
+            assertNotEquals(ranker.getClass(), FeatureNormalizingRanker.class);
+            assertThat(ranker, instanceOf(LinearRanker.class));
         }
         // Check each feature query
         assertTrue(ite.hasNext());
@@ -236,9 +241,6 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
-
-
-        assertThat(rquery.ranker(), instanceOf(LinearRanker.class));
         assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
     }
 

@@ -33,6 +33,7 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
@@ -75,10 +76,9 @@ public class LtrTestUtils {
     public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
         FeatureNormalizerSet ftrNormSet = randomFtrNorms(set).compile(set);
-        LtrRanker ranker;
-        ranker = buildRandomRanker(set.size());
+        LtrRanker ranker = new FeatureNormalizingRanker(buildRandomRanker(set.size()), ftrNormSet);
         return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
-                                                                ranker, ftrNormSet);
+                                                                ranker);
     }
 
     public static StoredLtrModel randomLinearModel(String name, StoredFeatureSet set) throws IOException {

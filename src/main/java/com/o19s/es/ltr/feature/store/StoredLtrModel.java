@@ -18,7 +18,9 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.common.ParseField;
@@ -122,7 +124,10 @@ public class StoredLtrModel implements StorableElement {
         FeatureSet optimized = featureSet.optimize();
         LtrRanker ranker = modelParser.parse(optimized, rankingModel);
         FeatureNormalizerSet ftrNormSet = parsedFtrNorms.compile(optimized);
-        return new CompiledLtrModel(name, optimized, ranker, ftrNormSet);
+        if (ftrNormSet.getClass() != NoOpFeatureNormalizerSet.class) {
+            ranker = new FeatureNormalizingRanker(ranker, ftrNormSet);
+        }
+        return new CompiledLtrModel(name, optimized, ranker);
     }
 
     @Override

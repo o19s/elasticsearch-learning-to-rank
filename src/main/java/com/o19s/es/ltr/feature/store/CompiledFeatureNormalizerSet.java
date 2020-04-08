@@ -43,4 +43,5 @@ public class CompiledFeatureNormalizerSet implements FeatureNormalizerSet {
         return hashCode;
 
     }
+
 }

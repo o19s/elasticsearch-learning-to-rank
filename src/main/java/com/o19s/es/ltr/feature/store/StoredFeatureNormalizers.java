@@ -1,6 +1,8 @@
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.feature.NoOpFeatureNormalizerSet;
 import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.elasticsearch.ElasticsearchException;
@@ -133,7 +135,10 @@ public class StoredFeatureNormalizers {
         }
     }
 
-    public CompiledFeatureNormalizerSet compile(FeatureSet featureSet) {
+    public FeatureNormalizerSet compile(FeatureSet featureSet) {
+        if (featureNormalizers.size() == 0) {
+            return new NoOpFeatureNormalizerSet();
+        }
         List<Normalizer> ftrNorms = new ArrayList<>(featureSet.size());
 
         for (int i = 0; i < featureSet.size(); i++) {

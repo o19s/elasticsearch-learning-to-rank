@@ -16,7 +16,6 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.FeatureNormalizerSet;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
@@ -32,13 +31,11 @@ public class CompiledLtrModel implements LtrModel, Accountable {
     private final String name;
     private final FeatureSet set;
     private final LtrRanker ranker;
-    private final FeatureNormalizerSet ftrNorms;
 
-    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker, FeatureNormalizerSet ftrNorms) {
+    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
         this.name = name;
         this.set = set.optimize();
         this.ranker = ranker;
-        this.ftrNorms = ftrNorms;
     }
 
     /**
@@ -63,11 +60,6 @@ public class CompiledLtrModel implements LtrModel, Accountable {
     @Override
     public FeatureSet featureSet() {
         return set;
-    }
-
-    @Override
-    public FeatureNormalizerSet featureNormalizerSet() {
-        return ftrNorms;
     }
 
     /**
