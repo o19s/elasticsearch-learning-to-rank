@@ -202,7 +202,7 @@ public class ExplorerQuery extends Query {
                 }
 
             };
-        } else if (type.endsWith("_raw_tf") || type.endsWith("_raw_tp")) {
+        } else if (type.endsWith("_tf") || type.endsWith("_raw_tp")) {
             // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
             BooleanQuery.Builder qb = new BooleanQuery.Builder();
             for (Term t : terms) {
@@ -223,6 +223,9 @@ public class ExplorerQuery extends Query {
                     BooleanClause.Occur.SHOULD);
         }else if(type.endsWith("_raw_tp")) {
             return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TP),
+                    BooleanClause.Occur.SHOULD);
+        }else if(type.endsWith("_idf_x_tf")) {
+            return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.IDFxTF),
                     BooleanClause.Occur.SHOULD);
         }
         throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");

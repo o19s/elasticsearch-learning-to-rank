@@ -32,6 +32,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.TermStatistics;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -80,9 +82,16 @@ public class PostingsExplorerQuery extends Query {
             throws IOException {
         IndexReaderContext context = searcher.getTopReaderContext();
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
-        return new PostingsExplorerWeight(this, this.term, TermStates.build(context, this.term,
-                scoreMode.needsScores()),
-                this.type);
+
+        float idf = 0.0f;
+        ClassicSimilarity sim = new ClassicSimilarity();
+        TermStates ctx = TermStates.build(context, this.term, scoreMode.needsScores());
+        TermStatistics tStats = searcher.termStatistics(this.term, ctx);
+        if (tStats != null) {
+            idf = sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs());
+        }
+
+        return new PostingsExplorerWeight(this, this.term, ctx, this.type, idf);
     }
 
     /**
@@ -91,7 +100,8 @@ public class PostingsExplorerQuery extends Query {
     enum Type implements CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> {
         // Extract TF from the postings
         TF((weight, terms) -> new TFScorer(weight, terms.postings(null, PostingsEnum.FREQS))),
-        TP((weight, terms) -> new TPScorer(weight, terms.postings(null, PostingsEnum.POSITIONS)));
+        TP((weight, terms) -> new TPScorer(weight, terms.postings(null, PostingsEnum.POSITIONS))),
+        IDFxTF((weight, terms) -> new IDFxTFScorer(weight, terms.postings(null, PostingsEnum.FREQS)));
 
         private final CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> func;
 
@@ -109,12 +119,14 @@ public class PostingsExplorerQuery extends Query {
         private final Term term;
         private final TermStates termStates;
         private final Type type;
+        protected final float idf;
 
-        PostingsExplorerWeight(Query query, Term term, TermStates termStates, Type type) {
+        PostingsExplorerWeight(Query query, Term term, TermStates termStates, Type type, float idf) {
             super(query);
             this.term = term;
             this.termStates = termStates;
             this.type = type;
+            this.idf = idf;
         }
 
         @Override
@@ -156,6 +168,7 @@ public class PostingsExplorerQuery extends Query {
     public abstract static class PostingsExplorerScorer extends Scorer {
         final PostingsEnum postingsEnum;
         protected String typeConditional;
+        protected float idf;
 
         PostingsExplorerScorer(Weight weight, PostingsEnum postingsEnum) {
             super(weight);
@@ -164,6 +177,10 @@ public class PostingsExplorerQuery extends Query {
 
         public void setType(String type) {
             this.typeConditional = type;
+        }
+
+        public void setIdf(float idf) {
+            this.idf = idf;
         }
 
         @Override
@@ -233,6 +250,28 @@ public class PostingsExplorerQuery extends Query {
             }
 
             return retval;
+        }
+
+        /**
+         * Return the maximum score that documents between the last {@code target}
+         * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
+         * included and {@code upTo} included.
+         */
+        @Override
+        public float getMaxScore(int upTo) throws IOException {
+            return Float.POSITIVE_INFINITY;
+        }
+    }
+
+
+    static class IDFxTFScorer extends PostingsExplorerScorer {
+        IDFxTFScorer(Weight weight, PostingsEnum postingsEnum) {
+            super(weight, postingsEnum);
+        }
+
+        @Override
+        public float score() throws IOException {
+            return this.postingsEnum.freq() * this.idf;
         }
 
         /**

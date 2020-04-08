@@ -31,16 +31,29 @@ public class ExplorerScorer extends Scorer {
         this.subScorer = subScorer;
     }
 
+    private float getPostingExplorerWeightIdf(Weight obj) {
+        float idf = 0.0f;
+
+        if (obj instanceof PostingsExplorerQuery.PostingsExplorerWeight) {
+            idf = ((PostingsExplorerQuery.PostingsExplorerWeight) obj).idf;
+        }
+
+        return idf;
+    }
+
     @Override
     public float score() throws IOException {
         StatisticsHelper tf_stats = new StatisticsHelper();
-
+        float idf;
         // Grab freq from subscorer, or the children if available
         if(subScorer.getChildren().size() > 0) {
             for(ChildScorable child : subScorer.getChildren()) {
                 assert child.child instanceof PostingsExplorerQuery.PostingsExplorerScorer;
                 if(child.child.docID() == docID()) {
                     ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).setType(type);
+                    Weight weight = ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).getWeight();
+                    idf = this.getPostingExplorerWeightIdf(weight);
+                    ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).setIdf(idf);
                     tf_stats.add(child.child.score());
                 }
             }
@@ -48,12 +61,15 @@ public class ExplorerScorer extends Scorer {
             assert subScorer instanceof PostingsExplorerQuery.PostingsExplorerScorer;
             assert subScorer.docID() == docID();
             ((PostingsExplorerQuery.PostingsExplorerScorer) subScorer).setType(type);
+            idf = this.getPostingExplorerWeightIdf(this.getWeight());
+            ((PostingsExplorerQuery.PostingsExplorerScorer) subScorer).setIdf(idf);
             tf_stats.add(subScorer.score());
         }
 
         float retval;
         switch(type) {
             case("sum_raw_tf"):
+            case("sum_idf_x_tf"):
                 retval = tf_stats.getSum();
                 break;
             case("mean_raw_tf"):
@@ -61,16 +77,20 @@ public class ExplorerScorer extends Scorer {
                 break;
             case("max_raw_tf"):
             case("max_raw_tp"):
+            case("max_idf_x_tf"):
                 retval = tf_stats.getMax();
                 break;
             case("min_raw_tf"):
             case("min_raw_tp"):
+            case("min_idf_x_tf"):
                 retval = tf_stats.getMin();
                 break;
             case("stddev_raw_tf"):
+            case("stddev_idf_x_tf"):
                 retval = tf_stats.getStdDev();
                 break;
             case("avg_raw_tp"):
+            case("avg_idf_x_tf"):
                 retval = tf_stats.getMean();
                 break;
             default:

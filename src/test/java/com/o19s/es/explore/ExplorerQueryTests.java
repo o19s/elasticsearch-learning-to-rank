@@ -287,4 +287,123 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         expectThrows(RuntimeException.class, () -> searcher.search(eq, 4));
     }
+
+    public void testQuerySumIDFxTermFrequency() throws Exception {
+        Query q = new TermQuery(new Term("text", "cow"));
+        String statsType = "sum_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 2 docs
+        assertThat(searcher.count(eq), equalTo(2));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("1.8472979 = Stat Score: sum_idf_x_tf"));
+    }
+
+    public void testQuerySumIDFxTermFrequencyWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "brown"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "sum_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(3.4069138f));
+        assertThat(docs.scoreDocs[1].score, equalTo(3.4069138f));
+        assertThat(docs.scoreDocs[2].score, equalTo(1.5596157f));
+    }
+
+    public void testQueryMinIDFxTermFrequencyWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "brown"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(1.5596157f));
+        assertThat(docs.scoreDocs[1].score, equalTo(1.5596157f));
+        assertThat(docs.scoreDocs[2].score, equalTo(1.5596157f));
+    }
+
+    public void testQueryMaxIDFxTermFrequencyWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "brown"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(1.8472979f));
+        assertThat(docs.scoreDocs[1].score, equalTo(1.8472979f));
+        assertThat(docs.scoreDocs[2].score, equalTo(1.5596157f));
+    }
+
+    public void testQueryAvgIDFxTermFrequencyWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "cow"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "brown"));
+        TermQuery tq4 = new TermQuery(new Term("text", "through"));
+        TermQuery tq5 = new TermQuery(new Term("text", "break"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+        builder.add(tq4, BooleanClause.Occur.SHOULD);
+        builder.add(tq5, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(6.7582893f));
+        assertThat(docs.scoreDocs[1].score, equalTo(1.7034569f));
+        assertThat(docs.scoreDocs[2].score, equalTo(1.7034569f));
+        assertThat(docs.scoreDocs[3].score, equalTo(1.5596157f));
+    }
+
+    public void testQueryAvgIDFxTermFrequencyWithEmptyResults() throws Exception {
+        Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
+
+        String statsType = "avg_idf_x_tf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 0 docs
+        assertThat(searcher.count(eq), equalTo(0));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 4);
+        assertThat(docs.scoreDocs.length, equalTo(0));
+    }
 }
