@@ -2,6 +2,14 @@ package com.o19s.es.ltr.ranker.normalizer;
 
 import org.elasticsearch.ElasticsearchException;
 
+/**
+ * MinMax Feature Normalization
+ * Generally following the standard laid out by sklearn:
+ *   (value / (max - min)) + min to give a normalized 0-1 feature value
+ *
+ * See
+ * https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
+ */
 public class MinMaxFeatureNormalizer implements Normalizer  {
     float maximum;
     float minimum;
@@ -18,7 +26,7 @@ public class MinMaxFeatureNormalizer implements Normalizer  {
 
     @Override
     public float normalize(float value) {
-        return value / (maximum - minimum);
+        return  (value - minimum) / (maximum - minimum);
     }
 
 

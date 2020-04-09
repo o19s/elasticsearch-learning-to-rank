@@ -11,6 +11,9 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
 
+/**
+ * Parsing and serialization for a min/max normalizer
+ */
 public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
     private float minimum;
