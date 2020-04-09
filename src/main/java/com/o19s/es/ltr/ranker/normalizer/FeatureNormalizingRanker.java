@@ -31,6 +31,10 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
 
     @Override
     public float score(FeatureVector point) {
+        for (int i: this.ftrNormSet.getNormalizedOrds()) {
+            Normalizer norm = this.ftrNormSet.getNomalizer(i);
+            point.setFeatureScore(i, norm.normalize(point.getFeatureScore(i)));
+        }
         return wrapped.score(point);
     }
 

@@ -17,6 +17,11 @@ public class NoOpFeatureNormalizerSet implements FeatureNormalizerSet {
     }
 
     @Override
+    public int[] getNormalizedOrds() {
+        return new int[0];
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         if (!(other instanceof NoOpFeatureNormalizerSet)) return false;

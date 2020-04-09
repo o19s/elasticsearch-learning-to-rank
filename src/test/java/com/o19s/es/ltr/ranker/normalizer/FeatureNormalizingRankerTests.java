@@ -18,6 +18,12 @@ public class FeatureNormalizingRankerTests extends LuceneTestCase {
                     }
                 };
             }
+
+            @Override
+            public int[] getNormalizedOrds() {
+                int[] normedOrds = {0,1};
+                return normedOrds;
+            }
         };
 
         float w1 = random().nextFloat();
@@ -35,6 +41,46 @@ public class FeatureNormalizingRankerTests extends LuceneTestCase {
         ftrVect.setFeatureScore(1, x2);
 
         float expectedScore = ((x1 + 1.0f) * w1) + ((x2 + 1.0f) * w2);
+
+        assertEquals(ftrNormRanker.score(ftrVect), expectedScore, 0.01f);
+
+    }
+
+    public void testIgnoredFeatureNormalization() {
+        FeatureNormalizerSet add1NormSet = new FeatureNormalizerSet() {
+            @Override
+            public Normalizer getNomalizer(int featureOrd) {
+                return new Normalizer() {
+                    @Override
+                    public float normalize(float val) {
+                        return 1.0f + val;
+                    }
+                };
+            }
+
+            @Override
+            public int[] getNormalizedOrds() {
+                int[] normedOrds = {0};
+                return normedOrds;
+            }
+        };
+
+        float w1 = random().nextFloat();
+        float w2 = random().nextFloat();
+
+        LtrRanker ranker = new LinearRanker(new float[]{w1, w2});
+        FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, add1NormSet);
+
+        LtrRanker.FeatureVector ftrVect = ftrNormRanker.newFeatureVector(null);
+
+        float x1 = random().nextFloat();
+        float x2 = random().nextFloat();
+
+        ftrVect.setFeatureScore(0, x1);
+        ftrVect.setFeatureScore(1, x2);
+
+        // We ignore feature 1
+        float expectedScore = ((x1 + 1.0f) * w1) + ((x2) * w2);
 
         assertEquals(ftrNormRanker.score(ftrVect), expectedScore, 0.01f);
 
