@@ -66,13 +66,12 @@ public interface LtrRanker {
         void setFeatureScore(int featureId, float score);
 
         /**
-         * Retrieve the score for the given feature-id.
+         * Retrieve the score for the given feature-id
          *
          * @param featureId the feature-id to retrieve the score for
          * @return the score computed for the given feature
          */
         float getFeatureScore(int featureId);
-
 
     }
 }
