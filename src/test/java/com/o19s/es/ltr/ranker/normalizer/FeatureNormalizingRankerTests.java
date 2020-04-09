@@ -5,84 +5,78 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import org.apache.lucene.util.LuceneTestCase;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
 public class FeatureNormalizingRankerTests extends LuceneTestCase {
 
+    private FeatureNormalizerSet getMorkFtrNormSet(int[] activeOrds) {
+        FeatureNormalizerSet add1NormSet = new FeatureNormalizerSet() {
+            @Override
+            public Normalizer getNomalizer(int featureOrd) {
+                return new Normalizer() {
+                    @Override
+                    public float normalize(float val) {
+                        return 1.0f + val;
+                    }
+                };
+            }
+
+            @Override
+            public int[] getNormalizedOrds() {
+                return activeOrds;
+            }
+        };
+
+        return add1NormSet;
+    }
+
+    private float[] castToFloatArr(double[] x) {
+        float[] floats = new float[x.length];
+        for (int i = 0; i < x.length; i++) {
+            floats[i] = (float)x[i];
+        }
+        return floats;
+    }
+
     public void testFeatureNormalization() {
-        FeatureNormalizerSet add1NormSet = new FeatureNormalizerSet() {
-            @Override
-            public Normalizer getNomalizer(int featureOrd) {
-                return new Normalizer() {
-                    @Override
-                    public float normalize(float val) {
-                        return 1.0f + val;
-                    }
-                };
+
+        int vectorSize = 5;
+
+        Set<Integer> activeOrds = new HashSet<Integer>();
+
+        for (int i = 0; i < vectorSize; i++) {
+            if (random().nextBoolean()) {
+                activeOrds.add(i);
             }
+        }
 
-            @Override
-            public int[] getNormalizedOrds() {
-                int[] normedOrds = {0,1};
-                return normedOrds;
-            }
-        };
+        int[] activeOrdsArr = activeOrds.stream().mapToInt(Integer::intValue).toArray();
 
-        float w1 = random().nextFloat();
-        float w2 = random().nextFloat();
+        FeatureNormalizerSet add1NormSet = getMorkFtrNormSet(activeOrdsArr);
 
-        LtrRanker ranker = new LinearRanker(new float[]{w1, w2});
+        float weights[] = castToFloatArr(random().doubles(vectorSize).toArray());
+
+        LtrRanker ranker = new LinearRanker(weights);
         FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, add1NormSet);
 
         LtrRanker.FeatureVector ftrVect = ftrNormRanker.newFeatureVector(null);
 
-        float x1 = random().nextFloat();
-        float x2 = random().nextFloat();
+        float values[] = castToFloatArr(random().doubles(vectorSize).toArray());
 
-        ftrVect.setFeatureScore(0, x1);
-        ftrVect.setFeatureScore(1, x2);
-
-        float expectedScore = ((x1 + 1.0f) * w1) + ((x2 + 1.0f) * w2);
+        float expectedScore = 0;
+        for (int i = 0; i < vectorSize; i++) {
+            ftrVect.setFeatureScore(i, values[i]);
+            if (activeOrds.contains(i)) {
+                expectedScore += weights[i] * (values[i] + 1.0f);
+            } else {
+                expectedScore += weights[i] * (values[i]);
+            }
+        }
 
         assertEquals(ftrNormRanker.score(ftrVect), expectedScore, 0.01f);
 
     }
 
-    public void testIgnoredFeatureNormalization() {
-        FeatureNormalizerSet add1NormSet = new FeatureNormalizerSet() {
-            @Override
-            public Normalizer getNomalizer(int featureOrd) {
-                return new Normalizer() {
-                    @Override
-                    public float normalize(float val) {
-                        return 1.0f + val;
-                    }
-                };
-            }
-
-            @Override
-            public int[] getNormalizedOrds() {
-                int[] normedOrds = {0};
-                return normedOrds;
-            }
-        };
-
-        float w1 = random().nextFloat();
-        float w2 = random().nextFloat();
-
-        LtrRanker ranker = new LinearRanker(new float[]{w1, w2});
-        FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, add1NormSet);
-
-        LtrRanker.FeatureVector ftrVect = ftrNormRanker.newFeatureVector(null);
-
-        float x1 = random().nextFloat();
-        float x2 = random().nextFloat();
-
-        ftrVect.setFeatureScore(0, x1);
-        ftrVect.setFeatureScore(1, x2);
-
-        // We ignore feature 1
-        float expectedScore = ((x1 + 1.0f) * w1) + ((x2) * w2);
-
-        assertEquals(ftrNormRanker.score(ftrVect), expectedScore, 0.01f);
-
-    }
 }
