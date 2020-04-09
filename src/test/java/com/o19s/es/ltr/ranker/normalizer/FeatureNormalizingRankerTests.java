@@ -5,7 +5,6 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import org.apache.lucene.util.LuceneTestCase;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
