@@ -8,13 +8,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A Normalizer set compiled from a model specification
+ */
 public class CompiledFeatureNormalizerSet implements FeatureNormalizerSet {
 
+    /**
+     * Normalizers indexed by ord
+     */
     private List<Normalizer> ftrNorms;
 
-    // In the off case we want our vectors to not be dense, we
-    // want to track which features we're normalizing. This is pre-build
-    // to avoid doing in a Scorer
+    /**
+     * Track which features we're normalizing. This is pre-build
+     * to avoid doing it in a Lucene Scorer or having to deal with a
+     * Set implementaiton or something
+     */
     private int[] ftrOrds;
 
     public CompiledFeatureNormalizerSet(List<Normalizer> ftrNorms)

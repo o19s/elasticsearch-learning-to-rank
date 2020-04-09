@@ -5,6 +5,10 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
+/**
+ * An LtrRanker that applies supplied normalizers to features prior
+ * to scoring
+ */
 public class FeatureNormalizingRanker implements LtrRanker, Accountable {
 
     private LtrRanker wrapped;

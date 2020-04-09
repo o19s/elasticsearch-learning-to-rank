@@ -3,6 +3,9 @@ package com.o19s.es.ltr.feature;
 import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 
+/**
+ * A Feature Norm set that does nothing to the features
+ */
 public class NoOpFeatureNormalizerSet implements FeatureNormalizerSet {
 
     private Normalizer noopNorm;
