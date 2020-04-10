@@ -33,6 +33,7 @@ import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
@@ -239,6 +240,35 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel modelUnserialized = new StoredLtrModel(input);
         assertEquals(model, modelUnserialized);
+
+        // Confirm model def serialization itself works
+
+    }
+
+    public void testSerializationModelDef() throws IOException {
+        String modelDefnJson = "{\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n"+
+                "   \"feature_normalizers\": {\n"+
+                "     \"feature_2\": { \"min_max\":" +
+                "           {\"minimum\": -1.0," +
+                "            \"maximum\": 1.25}}}}";
+
+        XContentParser xContent = jsonXContent.createParser(EMPTY,
+                LoggingDeprecationHandler.INSTANCE, modelDefnJson);
+        StoredLtrModel.LtrModelDefinition modelDef = StoredLtrModel.LtrModelDefinition.parse(xContent, null);
+
+        BytesStreamOutput out = new BytesStreamOutput();
+        modelDef.writeTo(out);
+        out.close();
+
+        BytesRef ref = out.bytes().toBytesRef();
+        StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
+
+        StoredLtrModel.LtrModelDefinition modelUnserialized = new StoredLtrModel.LtrModelDefinition(input);
+        assertEquals(modelUnserialized.getDefinition(), modelDef.getDefinition());
+        assertEquals(modelUnserialized.getType(), modelDef.getType());
+        assertEquals(modelUnserialized.getFtrNorms(), modelDef.getFtrNorms());
 
     }
 

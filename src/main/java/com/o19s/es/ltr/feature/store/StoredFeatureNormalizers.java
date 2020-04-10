@@ -177,7 +177,6 @@ public class StoredFeatureNormalizers {
 
     private  FeatureNormDefinition createFromStreamInput(StreamInput input) throws IOException {
         Type normType = Type.readFromStream(input);
-        String featureName = input.readString();
         if (normType == Type.STANDARD) {
             return new StandardFeatureNormDefinition(input);
         } else if (normType == Type.MIN_MAX) {

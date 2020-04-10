@@ -274,9 +274,7 @@ public class StoredLtrModel implements StorableElement {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
-            int numFeatureNorms = in.read();
             this.featureNormalizerSet = new StoredFeatureNormalizers(in);
-
         }
 
         @Override
@@ -307,6 +305,8 @@ public class StoredLtrModel implements StorableElement {
         public boolean isModelAsString() {
             return modelAsString;
         }
+
+        public StoredFeatureNormalizers getFtrNorms() {return this.featureNormalizerSet;}
 
         public static LtrModelDefinition parse(XContentParser parser, Void ctx) throws IOException {
             LtrModelDefinition def = PARSER.parse(parser, ctx);
