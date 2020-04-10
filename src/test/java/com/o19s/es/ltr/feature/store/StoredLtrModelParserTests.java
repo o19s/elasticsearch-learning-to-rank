@@ -21,10 +21,14 @@ import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Randomness;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.io.stream.ByteBufferStreamInput;
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -180,7 +184,6 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         StoredLtrModel model = parse(modelJson);
 
-
         StoredFeatureNormalizers ftrNormSet = model.getFeatureNormalizers();
         assertNotNull(ftrNormSet);
 
@@ -208,6 +211,35 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         String modelString = Strings.toString(srcModel.toXContent(builder, ToXContent.EMPTY_PARAMS));
         StoredLtrModel modelReparsed = parse(modelString);
         return modelReparsed;
+    }
+
+    public void testSerialization() throws IOException {
+        String modelJson = "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" + getSimpleFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n"+
+                "   \"feature_normalizers\": {\n"+
+                "     \"feature_2\": { \"min_max\":" +
+                "           {\"minimum\": -1.0," +
+                "            \"maximum\": 1.25}}}" +
+                " }" +
+                "}";
+
+        StoredLtrModel model = parse(modelJson);
+
+        BytesStreamOutput out = new BytesStreamOutput();
+        model.writeTo(out);
+        out.close();
+
+        BytesRef ref = out.bytes().toBytesRef();
+        StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
+
+        StoredLtrModel modelUnserialized = new StoredLtrModel(input);
+        assertEquals(model, modelUnserialized);
+
     }
 
 
