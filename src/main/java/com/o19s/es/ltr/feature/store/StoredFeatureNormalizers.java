@@ -111,10 +111,12 @@ public class StoredFeatureNormalizers {
 
     public StoredFeatureNormalizers(StreamInput input) throws IOException {
         this.featureNormalizers = new HashMap<>();
-        int numFeatureNorms = input.readInt();
-        for (int i = numFeatureNorms; i > 0; i--) {
-            FeatureNormDefinition norm = this.createFromStreamInput(input);
-            this.featureNormalizers.put(norm.featureName(), norm);
+        if (input.available() > 0) {
+            int numFeatureNorms = input.readInt();
+            for (int i = numFeatureNorms; i > 0; i--) {
+                FeatureNormDefinition norm = this.createFromStreamInput(input);
+                this.featureNormalizers.put(norm.featureName(), norm);
+            }
         }
     }
 

@@ -121,8 +121,7 @@ public class LtrTestUtils {
             }
         }
 
-        StoredFeatureNormalizers ftrNorms = new StoredFeatureNormalizers();
-        ftrNorms.addFeatureNormalizers(ftrNormDefns);
+        StoredFeatureNormalizers ftrNorms = new StoredFeatureNormalizers(ftrNormDefns);
         return ftrNorms;
     }
 
