@@ -1,7 +1,5 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import org.elasticsearch.ElasticsearchException;
-
 /**
  * MinMax Feature Normalization
  * Generally following the standard laid out by sklearn:
