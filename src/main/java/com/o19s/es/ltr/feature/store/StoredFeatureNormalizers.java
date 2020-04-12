@@ -102,6 +102,13 @@ public class StoredFeatureNormalizers {
         this.featureNormalizers = new HashMap<>();
     }
 
+    public StoredFeatureNormalizers(final List<FeatureNormDefinition> ftrNormDefs) {
+        this.featureNormalizers = new HashMap<>();
+        for (FeatureNormDefinition ftrNorm: ftrNormDefs) {
+            this.featureNormalizers.put(ftrNorm.featureName(), ftrNorm);
+        }
+    }
+
     public StoredFeatureNormalizers(StreamInput input) throws IOException {
         this.featureNormalizers = new HashMap<>();
         int numFeatureNorms = input.readInt();
@@ -126,13 +133,6 @@ public class StoredFeatureNormalizers {
         }
         builder.endObject(); // feature norms
         return builder;
-    }
-
-    public void addFeatureNormalizers(List<FeatureNormDefinition> ftrNormDefs) {
-        this.featureNormalizers = new HashMap<>();
-        for (FeatureNormDefinition ftrNorm: ftrNormDefs) {
-            this.featureNormalizers.put(ftrNorm.featureName(), ftrNorm);
-        }
     }
 
     public FeatureNormalizerSet compile(FeatureSet featureSet) {

@@ -67,7 +67,7 @@ public class StoredLtrModel implements StorableElement {
     }
 
     public StoredLtrModel(String name, StoredFeatureSet featureSet, LtrModelDefinition definition) {
-        this(name, featureSet, definition.type, definition.definition, definition.modelAsString, definition.featureNormalizerSet);
+        this(name, featureSet, definition.type, definition.definition, definition.modelAsString, definition.featureNormalizers);
     }
 
     public StoredLtrModel(String name, StoredFeatureSet featureSet, String rankingModelType, String rankingModel,
@@ -236,7 +236,7 @@ public class StoredLtrModel implements StorableElement {
     public static class LtrModelDefinition implements Writeable {
         private String type;
         private String definition;
-        private StoredFeatureNormalizers featureNormalizerSet;
+        private StoredFeatureNormalizers featureNormalizers;
         private boolean modelAsString;
 
         public static final ObjectParser<LtrModelDefinition, Void> PARSER;
@@ -260,21 +260,21 @@ public class StoredLtrModel implements StorableElement {
 
 
         private LtrModelDefinition() {
-            this.featureNormalizerSet = new StoredFeatureNormalizers();
+            this.featureNormalizers = new StoredFeatureNormalizers();
         }
 
         public LtrModelDefinition(String type, String definition, boolean modelAsString) {
             this.type = type;
             this.definition = definition;
             this.modelAsString = modelAsString;
-            this.featureNormalizerSet = new StoredFeatureNormalizers();
+            this.featureNormalizers = new StoredFeatureNormalizers();
         }
 
         public LtrModelDefinition(StreamInput in) throws IOException {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
-            this.featureNormalizerSet = new StoredFeatureNormalizers(in);
+            this.featureNormalizers = new StoredFeatureNormalizers(in);
         }
 
         @Override
@@ -282,7 +282,7 @@ public class StoredLtrModel implements StorableElement {
             out.writeString(type);
             out.writeString(definition);
             out.writeBoolean(modelAsString);
-            this.featureNormalizerSet.writeTo(out);
+            this.featureNormalizers.writeTo(out);
         }
 
 
@@ -295,7 +295,7 @@ public class StoredLtrModel implements StorableElement {
         }
 
         public void setNamedFeatureNormalizers(List<FeatureNormDefinition> featureNormalizers) {
-            this.featureNormalizerSet.addFeatureNormalizers(featureNormalizers);
+            this.featureNormalizers = new StoredFeatureNormalizers(featureNormalizers);
         }
 
         public String getDefinition() {
@@ -306,7 +306,7 @@ public class StoredLtrModel implements StorableElement {
             return modelAsString;
         }
 
-        public StoredFeatureNormalizers getFtrNorms() {return this.featureNormalizerSet;}
+        public StoredFeatureNormalizers getFtrNorms() {return this.featureNormalizers;}
 
         public static LtrModelDefinition parse(XContentParser parser, Void ctx) throws IOException {
             LtrModelDefinition def = PARSER.parse(parser, ctx);

@@ -16,9 +16,9 @@ public class MinMaxFeatureNormalizer implements Normalizer  {
 
     public MinMaxFeatureNormalizer(float minimum, float maximum) {
         if (minimum >= maximum) {
-            throw new ElasticsearchException("Minimum " + Double.toString(minimum) +
-                                             " must be smaller than than maximum: " +
-                                              Double.toString(maximum));
+            throw new IllegalArgumentException("Minimum " + Double.toString(minimum) +
+                                               " must be smaller than than maximum: " +
+                                                Double.toString(maximum));
         }
         this.minimum = minimum;
         this.maximum = maximum;

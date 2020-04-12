@@ -16,14 +16,14 @@ public class CompiledFeatureNormalizerSet implements FeatureNormalizerSet {
     /**
      * Normalizers indexed by ord
      */
-    private List<Normalizer> ftrNorms;
+    final private List<Normalizer> ftrNorms;
 
     /**
      * Track which features we're normalizing. This is pre-build
      * to avoid doing it in a Lucene Scorer or having to deal with a
      * Set implementaiton or something
      */
-    private int[] ftrOrds;
+    final private int[] ftrOrds;
 
     public CompiledFeatureNormalizerSet(List<Normalizer> ftrNorms)
     {
