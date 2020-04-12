@@ -176,6 +176,10 @@ public class StoredFeatureNormalizers {
         return this.featureNormalizers.hashCode();
     }
 
+    public int numNormalizers() {
+        return this.featureNormalizers.size();
+    }
+
 
     private  FeatureNormDefinition createFromStreamInput(StreamInput input) throws IOException {
         Type normType = Type.readFromStream(input);
@@ -190,7 +194,7 @@ public class StoredFeatureNormalizers {
 
     public void writeTo(StreamOutput output) throws IOException {
         output.writeInt(this.featureNormalizers.size());
-        for (Map.Entry<String, FeatureNormDefinition> featureNormEntry: this.featureNormalizers.entrySet()) {
+        for (Map.Entry<String, FeatureNormDefinition> featureNormEntry : this.featureNormalizers.entrySet()) {
             featureNormEntry.getValue().normType().writeTo(output);
             featureNormEntry.getValue().writeTo(output);
         }
