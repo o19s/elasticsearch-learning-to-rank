@@ -38,7 +38,7 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
     public MinMaxFeatureNormDefinition() {
         this.maximum = Float.MAX_VALUE;
-        this.minimum = -Float.MAX_VALUE;
+        this.minimum = 0;
     }
 
     @Override
@@ -73,14 +73,20 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
     public void setMinimum(float min) {
         if (min >= this.maximum) {
-            throw new ElasticsearchException("Minimum " + Float.toString(min) + " must be smaller than than maximum");
+            throw new IllegalArgumentException("Minimum " + Float.toString(min) + " must be smaller than than maximum");
+        }
+        if (min < 0) {
+            throw new IllegalArgumentException("Minimum " + Float.toString(min) + " must be positive");
         }
         this.minimum = min;
     }
 
     public void setMaximum(float max) {
         if (max <= this.minimum) {
-            throw new ElasticsearchException("Maximum " + Float.toString(max) + " must be larger than minimum");
+            throw new IllegalArgumentException("Maximum " + Float.toString(max) + " must be larger than minimum");
+        }
+        if (max < 0) {
+            throw new IllegalArgumentException("Maximum " + Float.toString(max) + " must be positive");
         }
         this.maximum = max;
     }

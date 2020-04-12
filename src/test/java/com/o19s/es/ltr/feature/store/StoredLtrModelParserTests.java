@@ -178,7 +178,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "   \"definition\": \"completely ignored\",\n"+
                 "   \"feature_normalizers\": {\n"+
                 "     \"feature_2\": { \"min_max\":" +
-                "           {\"minimum\": -1.0," +
+                "           {\"minimum\": 0.05," +
                 "            \"maximum\": 1.25}}}" +
                 " }" +
                 "}";
@@ -189,7 +189,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertNotNull(ftrNormSet);
 
         MinMaxFeatureNormalizer minMaxFtrNorm = (MinMaxFeatureNormalizer)ftrNormSet.getNormalizer("feature_2");
-        float expectedMin = -1.00f;
+        float expectedMin = 0.05f;
         float expectedMax = 1.25f;
 
         float testVal = Randomness.get().nextFloat();
@@ -224,7 +224,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "   \"definition\": \"completely ignored\",\n"+
                 "   \"feature_normalizers\": {\n"+
                 "     \"feature_2\": { \"min_max\":" +
-                "           {\"minimum\": -1.0," +
+                "           {\"minimum\": 1.0," +
                 "            \"maximum\": 1.25}}}" +
                 " }" +
                 "}";
@@ -251,7 +251,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
                 "   \"definition\": \"completely ignored\",\n"+
                 "   \"feature_normalizers\": {\n"+
                 "     \"feature_2\": { \"min_max\":" +
-                "           {\"minimum\": -1.0," +
+                "           {\"minimum\": 1.0," +
                 "            \"maximum\": 1.25}}}}";
 
         XContentParser xContent = jsonXContent.createParser(EMPTY,
