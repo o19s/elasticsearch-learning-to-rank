@@ -16,10 +16,12 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
+import com.o19s.es.ltr.ranker.normalizer.NormalizedFeature;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.util.BytesRef;
@@ -148,6 +150,20 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
 
         FeatureSet set = compiledModel.featureSet();
         assertEquals(set.getClass(), NormalizedFeatureSet.class);
+
+        NormalizedFeatureSet normSet = (NormalizedFeatureSet)set;
+
+        Feature f = normSet.feature(0);
+        Feature f2 = normSet.feature("feature_1");
+        assertEquals(f, f2);
+        assertEquals(f.getClass(), NormalizedFeature.class);
+
+        f = normSet.feature(1);
+        assertNotEquals(f, f2);
+
+        f2 = normSet.feature("feature_2");
+        assertEquals(f, f2);
+        assertNotEquals(f.getClass(), NormalizedFeature.class);
     }
 
     public void testFeatureStdNormParsing() throws IOException {

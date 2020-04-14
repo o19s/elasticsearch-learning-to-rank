@@ -4,6 +4,7 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.NormalizedFeatureQuery;
+import com.o19s.es.ltr.ranker.normalizer.NormalizedFeature;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.apache.lucene.search.Query;
 
@@ -78,12 +79,18 @@ public class NormalizedFeatureSet implements FeatureSet {
 
     @Override
     public Feature feature(int ord) {
-        return wrapped.feature(ord);
+        Feature wrappedFeature = wrapped.feature(ord);
+        Normalizer ftrNorm = this.normedFtrs.get(ord);
+        if (ftrNorm != null) {
+            return new NormalizedFeature(wrappedFeature, ftrNorm);
+        }
+        return wrappedFeature;
     }
 
     @Override
     public Feature feature(String featureName) {
-        return wrapped.feature(featureName);
+        int ord = featureOrdinal(featureName);
+        return this.feature(ord);
     }
 
     @Override
