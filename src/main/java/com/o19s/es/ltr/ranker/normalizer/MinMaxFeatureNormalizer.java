@@ -1,5 +1,10 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
+import org.apache.lucene.search.Explanation;
+
+import java.util.Collections;
+import java.util.List;
+
 /**
  * MinMax Feature Normalization
  * Generally following the standard laid out by sklearn:
@@ -25,6 +30,20 @@ public class MinMaxFeatureNormalizer implements Normalizer  {
     @Override
     public float normalize(float value) {
         return  (value - minimum) / (maximum - minimum);
+    }
+
+    @Override
+    public Explanation explain(Explanation wrappedQueryExplain) {
+        float val = wrappedQueryExplain.getValue().floatValue();
+        float normed = normalize(wrappedQueryExplain.getValue().floatValue());
+        String numerator = "val:" + Float.toString(val) + " - min:" + Float.toString(this.minimum);
+        String denominator = " max:" + Float.toString(maximum) + " - min:" + Float.toString(this.minimum);
+
+        List<Explanation> subExplains = Collections.singletonList(wrappedQueryExplain);
+
+        return Explanation.match(normed,
+                "Min-Max Normalized LTR Feature: " + numerator + " / " + denominator,
+                wrappedQueryExplain);
     }
 
 

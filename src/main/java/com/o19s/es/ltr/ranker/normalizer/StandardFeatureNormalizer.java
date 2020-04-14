@@ -1,5 +1,10 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
+import org.apache.lucene.search.Explanation;
+
+import java.util.Collections;
+import java.util.List;
+
 public class StandardFeatureNormalizer implements Normalizer {
 
     private float mean;
@@ -28,6 +33,18 @@ public class StandardFeatureNormalizer implements Normalizer {
 
         return true;
 
+    }
+
+    @Override
+    public Explanation explain(Explanation wrappedQueryExplain) {
+        float val = wrappedQueryExplain.getValue().floatValue();
+        float normed = normalize(wrappedQueryExplain.getValue().floatValue());
+        String numerator = "val:" + Float.toString(val) + " - mean:" + Float.toString(this.mean);
+        String denominator = " standard_deviation:" + Float.toString(stdDeviation);
+
+        return Explanation.match(normed,
+                "Std Normalized LTR Feature: " + numerator + " / " + denominator,
+                wrappedQueryExplain);
     }
 
     @Override

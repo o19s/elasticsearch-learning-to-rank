@@ -58,9 +58,7 @@ public class FeatureNormalizingRankerTests extends LuceneTestCase {
         float weights[] = castToFloatArr(random().doubles(vectorSize).toArray());
 
         LtrRanker ranker = new LinearRanker(weights);
-        FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, add1NormSet);
-
-        LtrRanker.FeatureVector ftrVect = ftrNormRanker.newFeatureVector(null);
+        LtrRanker.FeatureVector ftrVect = ranker.newFeatureVector(null);
 
         float values[] = castToFloatArr(random().doubles(vectorSize).toArray());
 
@@ -74,7 +72,7 @@ public class FeatureNormalizingRankerTests extends LuceneTestCase {
             }
         }
 
-        assertEquals(ftrNormRanker.score(ftrVect), expectedScore, 0.01f);
+        assertEquals(ranker.score(ftrVect), expectedScore, 0.01f);
 
     }
 

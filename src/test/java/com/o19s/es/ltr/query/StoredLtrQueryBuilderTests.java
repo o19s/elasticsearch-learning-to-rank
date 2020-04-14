@@ -19,7 +19,7 @@ package com.o19s.es.ltr.query;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.FeatureNormalizerSet;
-import com.o19s.es.ltr.feature.store.CompiledFeatureNormalizerSet;
+import com.o19s.es.ltr.feature.store.NormalizedFeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -27,7 +27,6 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
-import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.NoOpNormalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
@@ -52,7 +51,6 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,14 +103,11 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         store.add(set);
         LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
 
-        List<Normalizer> ftrNorms = new ArrayList<>();
-        ftrNorms.add(new NoOpNormalizer());
-        ftrNorms.add(new NoOpNormalizer());
-        ftrNorms.add(new StandardFeatureNormalizer(1.0f,0.5f));
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+        ftrNorms.put(2, new StandardFeatureNormalizer(1.0f,0.5f));
 
-        FeatureNormalizerSet ftrNormSet = new CompiledFeatureNormalizerSet(ftrNorms);
-        FeatureNormalizingRanker ftrNormRanker = new FeatureNormalizingRanker(ranker, ftrNormSet);
-        CompiledLtrModel model = new CompiledLtrModel("model1", set, ftrNormRanker);
+        NormalizedFeatureSet ftrNormSet = new NormalizedFeatureSet(set, ftrNorms);
+        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
 
@@ -203,18 +198,8 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
         // Confirm each feature normalizer when evaluating a model
         LtrRanker ranker = rquery.ranker();
-        if (queryBuilder.modelName() != null && queryBuilder.modelName().equals("model1")) {
-            assertEquals(ranker.getClass(), FeatureNormalizingRanker.class);
-            FeatureNormalizingRanker ftrNormRanker = (FeatureNormalizingRanker)ranker;
-            FeatureNormalizerSet ftrNormSet = ftrNormRanker.getFtrNormSet();
-            assertEquals(ftrNormSet.getNomalizer(0).getClass(), NoOpNormalizer.class);
-            assertEquals(ftrNormSet.getNomalizer(1).getClass(), NoOpNormalizer.class);
-            assertEquals(ftrNormSet.getNomalizer(2), new StandardFeatureNormalizer(1.0f, 0.5f));
+        assertThat(ranker, instanceOf(LinearRanker.class));
 
-        } else { // logging, no normalization should occur
-            assertNotEquals(ranker.getClass(), FeatureNormalizingRanker.class);
-            assertThat(ranker, instanceOf(LinearRanker.class));
-        }
         // Check each feature query
         assertTrue(ite.hasNext());
         Query featureQuery = ite.next();

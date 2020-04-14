@@ -137,15 +137,11 @@ public class StoredFeatureNormalizers {
         return builder;
     }
 
-    public FeatureNormalizerSet compile(FeatureSet featureSet) {
+    public FeatureSet compile(FeatureSet featureSet) {
         if (featureNormalizers.size() == 0) {
-            return new NoOpFeatureNormalizerSet();
+            return featureSet;
         }
-        List<Normalizer> ftrNorms = new ArrayList<>(featureSet.size());
-
-        for (int i = 0; i < featureSet.size(); i++) {
-            ftrNorms.add(new NoOpNormalizer());
-        }
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
 
         for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormalizers.entrySet()) {
             String featureName = ftrNormDefEntry.getValue().featureName();
@@ -157,9 +153,9 @@ public class StoredFeatureNormalizers {
             }
 
             int ord = featureSet.featureOrdinal(featureName);
-            ftrNorms.set(ord, ftrNorm);
+            ftrNorms.put(ord, ftrNorm);
         }
-        return new CompiledFeatureNormalizerSet(ftrNorms);
+        return new NormalizedFeatureSet(featureSet, ftrNorms);
     }
 
     @Override
