@@ -2,9 +2,6 @@ package com.o19s.es.ltr.ranker.normalizer;
 
 import org.apache.lucene.search.Explanation;
 
-import java.util.Collections;
-import java.util.List;
-
 public class StandardFeatureNormalizer implements Normalizer {
 
     private float mean;

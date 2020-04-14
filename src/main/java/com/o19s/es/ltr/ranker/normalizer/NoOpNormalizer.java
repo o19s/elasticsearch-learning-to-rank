@@ -1,7 +1,5 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import org.apache.lucene.search.Explanation;
-
 public class NoOpNormalizer implements Normalizer {
     @Override
     public float normalize(float val) {
