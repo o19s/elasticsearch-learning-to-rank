@@ -87,12 +87,15 @@ public class StoredFeatureNormalizers {
         }
 
         public void setFtrNormDefn(FeatureNormDefinition ftrNormDefn) {
+            if (this.ftrNormDefn != null) {
+                throw new IllegalArgumentException("Multiple feature normalizers detected for " + featureName);
+            }
             this.ftrNormDefn = ftrNormDefn;
         }
     }
 
 
-    private Map<String, FeatureNormDefinition> featureNormalizers;
+    private final Map<String, FeatureNormDefinition> featureNormalizers;
 
     public StoredFeatureNormalizers() {
         this.featureNormalizers = new HashMap<>();
