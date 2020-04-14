@@ -76,7 +76,6 @@ public class StoredFeatureNormalizers {
 
     // A temp holder for parsing out of xcontent
     private static class FeatureNormConsumer {
-        String featureName;
         FeatureNormDefinition ftrNormDefn;
 
         FeatureNormConsumer() {
@@ -88,7 +87,7 @@ public class StoredFeatureNormalizers {
 
         public void setFtrNormDefn(FeatureNormDefinition ftrNormDefn) {
             if (this.ftrNormDefn != null) {
-                throw new IllegalArgumentException("Multiple feature normalizers detected for " + featureName);
+                throw new IllegalArgumentException("Multiple feature normalizers detected ");
             }
             this.ftrNormDefn = ftrNormDefn;
         }
