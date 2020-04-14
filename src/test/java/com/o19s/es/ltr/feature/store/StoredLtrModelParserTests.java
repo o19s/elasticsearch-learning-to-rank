@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
@@ -126,6 +127,27 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         assertEquals("[\"completely ignored\"]", model.rankingModel());
         assertSame(ranker, model.compile(factory).ranker());
         assertTrue(model.featureSet().size() > 0);
+    }
+
+    public void testCompileFeatureNorms() throws IOException {
+        String modelJson = "{\n" +
+                " \"name\":\"my_model\",\n" +
+                " \"feature_set\":" + getSimpleFeatureSet() +
+                "," +
+                " \"model\": {\n" +
+                "   \"type\": \"model/dummy\",\n" +
+                "   \"definition\": \"completely ignored\",\n" +
+                "   \"feature_normalizers\": {\n" +
+                "     \"feature_1\": { \"standard\":" +
+                "           {\"mean\": 1.25," +
+                "            \"standard_deviation\": 0.25}}}" +
+                " }" +
+                "}";
+        StoredLtrModel model = parse(modelJson);
+        CompiledLtrModel compiledModel = model.compile(factory);
+
+        FeatureSet set = compiledModel.featureSet();
+        assertEquals(set.getClass(), NormalizedFeatureSet.class);
     }
 
     public void testFeatureStdNormParsing() throws IOException {
