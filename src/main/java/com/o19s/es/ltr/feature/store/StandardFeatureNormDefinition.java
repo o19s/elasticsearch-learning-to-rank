@@ -8,6 +8,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 
@@ -16,28 +17,29 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     private static final String NAME = "standard";
     private float mean;
     private float stdDeviation;
-    private String featureName;
+    private final String featureName;
 
-    public static final ObjectParser<StandardFeatureNormDefinition, Void> PARSER;
+    public static final ObjectParser<StandardFeatureNormDefinition, String> PARSER;
     private static final ParseField STD_DEVIATION = new ParseField("standard_deviation");
     private static final ParseField MEAN = new ParseField("mean");
 
 
     static {
-        PARSER = new ObjectParser<>("standard", StandardFeatureNormDefinition::new);
+        PARSER = ObjectParser.fromBuilder("standard", StandardFeatureNormDefinition::new);
         PARSER.declareFloat(StandardFeatureNormDefinition::setMean, MEAN);
         PARSER.declareFloat(StandardFeatureNormDefinition::setStdDeviation, STD_DEVIATION);
     }
 
-    public StandardFeatureNormDefinition() {
-        this.mean = 0.0f;
-        this.stdDeviation = 0.0f;
-    }
-
-    StandardFeatureNormDefinition(StreamInput input) throws IOException {
+    public StandardFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
         this.mean = input.readFloat();
         this.setStdDeviation(input.readFloat());
+    }
+
+    public StandardFeatureNormDefinition(String featureName) {
+        this.featureName = featureName;
+        this.mean = 0.0f;
+        this.stdDeviation = 0.0f;
     }
 
     public void setMean(float mean) {
@@ -50,10 +52,6 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
                                              " You passed: " + Float.toString(stdDeviation));
         }
         this.stdDeviation = stdDeviation;
-    }
-
-    public void setFeatureName(String featureName) {
-        this.featureName = featureName;
     }
 
     @Override
@@ -73,6 +71,10 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
         builder.endObject();
         builder.endObject();
         return builder;
+    }
+
+    public static StandardFeatureNormDefinition parse(XContentParser parser, String context) throws IOException {
+        return PARSER.parse(parser, context);
     }
 
     @Override

@@ -102,18 +102,15 @@ public class LtrTestUtils {
                 Feature ftr = set.feature(i);
 
                 if (random().nextBoolean()) {
-                    StandardFeatureNormDefinition stdFtrNormDefn = new StandardFeatureNormDefinition();
+                    StandardFeatureNormDefinition stdFtrNormDefn = new StandardFeatureNormDefinition(ftr.name());
                     stdFtrNormDefn.setMean(random().nextFloat());
                     stdFtrNormDefn.setStdDeviation(random().nextFloat());
-                    stdFtrNormDefn.setFeatureName(ftr.name());
                     ftrNormDefns.add(stdFtrNormDefn);
 
                 } else {
-                    MinMaxFeatureNormDefinition minMaxFtrNormDefn = new MinMaxFeatureNormDefinition();
+                    MinMaxFeatureNormDefinition minMaxFtrNormDefn = new MinMaxFeatureNormDefinition(ftr.name());
                     minMaxFtrNormDefn.setMinimum(random().nextFloat());
                     minMaxFtrNormDefn.setMaximum(1.01f + random().nextFloat());
-                    minMaxFtrNormDefn.setFeatureName(ftr.name());
-
                     ftrNormDefns.add(minMaxFtrNormDefn);
                 }
             }

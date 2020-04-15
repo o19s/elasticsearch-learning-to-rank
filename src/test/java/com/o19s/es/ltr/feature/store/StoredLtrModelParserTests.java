@@ -320,11 +320,8 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         //        String modelDefnJson = "{\n" +
         //                "   \"type\": \"model/dummy\",\n" +
         //                "   \"definition\": \"completely ignored\"}";
-
-
         String base64Encoded = "C21vZGVsL2R1bW15EmNvbXBsZXRlbHkgaWdub3JlZAE=";
         byte[] bytes = Base64.getDecoder().decode(base64Encoded);
-
         StreamInput input = ByteBufferStreamInput.wrap(bytes, 0, bytes.length);
         input.setVersion(Version.V_7_6_0);
 

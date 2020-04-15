@@ -34,23 +34,13 @@ public class StoredFeatureNormalizers {
         PARSER = (XContentParser p, Void c, String featureName) -> {
             // this seems really intended for switching on the key (here featureName) and making
             // a decision, when in reality, we want to look a layer deeper and switch on that
-            ObjectParser<FeatureNormConsumer, Void> parser = new ObjectParser<>("feature_normalizers",
+            ObjectParser<FeatureNormConsumer, String> parser = new ObjectParser<>("feature_normalizers",
                                                                                   FeatureNormConsumer::new);
 
-            BiConsumer<FeatureNormConsumer, StandardFeatureNormDefinition> setStd = (s, v) -> {
-                v.setFeatureName(featureName);
-                s.setFtrNormDefn(v);
-            };
+            parser.declareObject(FeatureNormConsumer::setFtrNormDefn, StandardFeatureNormDefinition.PARSER, STANDARD);
+            parser.declareObject(FeatureNormConsumer::setFtrNormDefn, MinMaxFeatureNormDefinition.PARSER, MIN_MAX);
 
-            BiConsumer<FeatureNormConsumer, MinMaxFeatureNormDefinition> setMinMax = (s, v) -> {
-                v.setFeatureName(featureName);
-                s.setFtrNormDefn(v);
-            };
-
-            parser.declareObject(setStd, StandardFeatureNormDefinition.PARSER, STANDARD);
-            parser.declareObject(setMinMax, MinMaxFeatureNormDefinition.PARSER, MIN_MAX);
-
-            FeatureNormConsumer parsedNorm  = parser.parse(p, c);
+            FeatureNormConsumer parsedNorm  = parser.parse(p, featureName);
             return parsedNorm.ftrNormDefn;
 
         };

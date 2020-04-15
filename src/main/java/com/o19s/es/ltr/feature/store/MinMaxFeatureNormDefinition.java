@@ -18,25 +18,26 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     private static final String NAME = "min_max";
     private float minimum;
     private float maximum;
-    private String featureName;
+    private final String featureName;
 
-    public static final ObjectParser<MinMaxFeatureNormDefinition, Void> PARSER;
+    public static final ObjectParser<MinMaxFeatureNormDefinition, String> PARSER;
     private static final ParseField MINIMUM = new ParseField("minimum");
     private static final ParseField MAXIMUM = new ParseField("maximum");
 
     static {
-        PARSER = new ObjectParser<>("min_max", MinMaxFeatureNormDefinition::new);
+        PARSER = ObjectParser.fromBuilder("min_max", MinMaxFeatureNormDefinition::new);
         PARSER.declareFloat(MinMaxFeatureNormDefinition::setMinimum, MINIMUM);
         PARSER.declareFloat(MinMaxFeatureNormDefinition::setMaximum, MAXIMUM);
     }
 
-    MinMaxFeatureNormDefinition(StreamInput input) throws IOException {
+    public MinMaxFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
         this.minimum = input.readFloat();
         this.maximum = input.readFloat();
     }
 
-    public MinMaxFeatureNormDefinition() {
+    public MinMaxFeatureNormDefinition(String featureName) {
+        this.featureName = featureName;
         this.maximum = Float.MAX_VALUE;
         this.minimum = 0;
     }
@@ -49,10 +50,6 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     @Override
     public String featureName() {
         return this.featureName;
-    }
-
-    public void setFeatureName(String featureName) {
-        this.featureName = featureName;
     }
 
     @Override
