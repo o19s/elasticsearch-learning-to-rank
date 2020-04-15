@@ -6,7 +6,6 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -21,25 +20,25 @@ import java.util.function.BiConsumer;
 public class StoredFeatureNormalizers {
 
 
-    public enum Type implements Writeable {
+    public enum Type {
         STANDARD,
         MIN_MAX;
 
 
-        public static Type readFromStream(StreamInput in) throws IOException {
-            int ord = in.readVInt();
-            for (Type type: Type.values()) {
-                if (type.ordinal() == ord) {
-                    return type;
-                }
-            }
-            throw new ElasticsearchException("unknown normalizer type during serialization [" + ord + "]");
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            out.writeVInt(this.ordinal());
-        }
+//        public static Type readFromStream(StreamInput in) throws IOException {
+//            int ord = in.readVInt();
+//            for (Type type: Type.values()) {
+//                if (type.ordinal() == ord) {
+//                    return type;
+//                }
+//            }
+//            throw new ElasticsearchException("unknown normalizer type during serialization [" + ord + "]");
+//        }
+//
+//        @Override
+//        public void writeTo(StreamOutput out) throws IOException {
+//            out.writeVInt(this.ordinal());
+//        }
     }
 
     public static final ObjectParser.NamedObjectParser<FeatureNormDefinition, Void> PARSER;
@@ -176,7 +175,7 @@ public class StoredFeatureNormalizers {
 
 
     private  FeatureNormDefinition createFromStreamInput(StreamInput input) throws IOException {
-        Type normType = Type.readFromStream(input);
+        Type normType = input.readEnum(Type.class);
         if (normType == Type.STANDARD) {
             return new StandardFeatureNormDefinition(input);
         } else if (normType == Type.MIN_MAX) {
@@ -189,7 +188,7 @@ public class StoredFeatureNormalizers {
     public void writeTo(StreamOutput output) throws IOException {
         output.writeInt(this.featureNormalizers.size());
         for (Map.Entry<String, FeatureNormDefinition> featureNormEntry : this.featureNormalizers.entrySet()) {
-            featureNormEntry.getValue().normType().writeTo(output);
+            output.writeEnum(featureNormEntry.getValue().normType());
             featureNormEntry.getValue().writeTo(output);
         }
     }

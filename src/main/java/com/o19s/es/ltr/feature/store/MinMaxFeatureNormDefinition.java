@@ -15,6 +15,7 @@ import java.io.IOException;
  */
 public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
 
+    private static final String NAME = "min_max";
     private float minimum;
     private float maximum;
     private String featureName;
@@ -89,7 +90,7 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(this.name());
+        builder.field(MinMaxFeatureNormDefinition.NAME);
         builder.startObject();
         builder.field(MINIMUM.getPreferredName(), this.minimum);
         builder.field(MAXIMUM.getPreferredName(), this.maximum);

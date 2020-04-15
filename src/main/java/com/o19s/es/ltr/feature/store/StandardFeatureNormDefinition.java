@@ -13,6 +13,7 @@ import java.io.IOException;
 
 public class StandardFeatureNormDefinition implements FeatureNormDefinition {
 
+    private static final String NAME = "standard";
     private float mean;
     private float stdDeviation;
     private String featureName;
@@ -65,13 +66,14 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(this.name());
+        builder.field(NAME);
         builder.startObject();
         builder.field(MEAN.getPreferredName(), this.mean);
         builder.field(STD_DEVIATION.getPreferredName(), this.stdDeviation);
         builder.endObject();
         builder.endObject();
-        return builder;    }
+        return builder;
+    }
 
     @Override
     public Normalizer createFeatureNorm() {
