@@ -23,22 +23,6 @@ public class StoredFeatureNormalizers {
     public enum Type {
         STANDARD,
         MIN_MAX;
-
-
-//        public static Type readFromStream(StreamInput in) throws IOException {
-//            int ord = in.readVInt();
-//            for (Type type: Type.values()) {
-//                if (type.ordinal() == ord) {
-//                    return type;
-//                }
-//            }
-//            throw new ElasticsearchException("unknown normalizer type during serialization [" + ord + "]");
-//        }
-//
-//        @Override
-//        public void writeTo(StreamOutput out) throws IOException {
-//            out.writeVInt(this.ordinal());
-//        }
     }
 
     public static final ObjectParser.NamedObjectParser<FeatureNormDefinition, Void> PARSER;
@@ -120,10 +104,7 @@ public class StoredFeatureNormalizers {
     public Normalizer getNormalizer(String featureName) {
         return this.featureNormalizers.get(featureName).createFeatureNorm();
     }
-
-    public static final String TYPE = "feature_normalizers";
-
-
+    
     public XContentBuilder toXContent(XContentBuilder builder, ToXContent.Params params) throws IOException {
         builder.startObject(); // begin feature norms
         for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormalizers.entrySet()) {
