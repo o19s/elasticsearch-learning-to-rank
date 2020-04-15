@@ -59,17 +59,6 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
         return StoredFeatureNormalizers.Type.MIN_MAX;
     }
 
-    @Override
-    public String name() {
-        return "min_max";
-    }
-
-    @Override
-    public String type() {
-        return null;
-    }
-
-
     public void setMinimum(float min) {
         if (min >= this.maximum) {
             throw new IllegalArgumentException("Minimum " + Float.toString(min) + " must be smaller than than maximum");

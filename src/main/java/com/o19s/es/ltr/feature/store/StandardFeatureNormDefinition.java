@@ -56,16 +56,6 @@ public class StandardFeatureNormDefinition implements FeatureNormDefinition {
     }
 
     @Override
-    public String name() {
-        return "standard";
-    }
-
-    @Override
-    public String type() {
-        return null;
-    }
-
-    @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(this.featureName);
         out.writeFloat(this.mean);
