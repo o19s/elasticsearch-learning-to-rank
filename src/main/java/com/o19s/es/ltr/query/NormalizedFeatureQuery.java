@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Wrap another Query and normalize it
+ * Wrap another Query and normalize it's score using provided Normalizer
  */
 public class NormalizedFeatureQuery extends Query {
 
-    private Query wrapped;
-    private Normalizer ftrNorm;
+    private final Query wrapped;
+    private final Normalizer ftrNorm;
 
     public NormalizedFeatureQuery(Query wrapped, Normalizer ftrNorm) {
         this.wrapped = wrapped;
@@ -29,24 +29,29 @@ public class NormalizedFeatureQuery extends Query {
 
     @Override
     public String toString(String field) {
-        return "Normalized by (" + ftrNorm.toString() + ") - " + wrapped.toString();
+        return "Query Normalized by (" + ftrNorm.toString() + ") - " + wrapped.toString();
     }
 
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         Weight wrappedWeight = wrapped.createWeight(searcher, scoreMode, boost);
-        return new NormalizedFeatureWeight(this, wrappedWeight);
+        return new NormalizedFeatureWeight(this, wrappedWeight, ftrNorm);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
+        if (obj.getClass() != this.getClass()) {
+            return false;
+        }
 
         NormalizedFeatureQuery that = (NormalizedFeatureQuery)obj;
-        if (!that.wrapped.equals(this.wrapped))
+        if (!that.wrapped.equals(this.wrapped)) {
             return false;
-        if (!that.ftrNorm.equals(this.ftrNorm))
+        }
+        if (!that.ftrNorm.equals(this.ftrNorm)) {
             return false;
+        }
 
         return true;
     }
@@ -56,9 +61,10 @@ public class NormalizedFeatureQuery extends Query {
         return this.wrapped.hashCode() * 31 + this.ftrNorm.hashCode();
     }
 
-    public class NormalizedFeatureWeight extends Weight {
+    public static class NormalizedFeatureWeight extends Weight {
 
-        private Weight wrapped;
+        private final Weight wrapped;
+        private final Normalizer ftrNorm;
 
         /**
          * Sole constructor, typically invoked by sub-classes.
@@ -66,9 +72,10 @@ public class NormalizedFeatureQuery extends Query {
          * @param query the parent query
          */
         protected NormalizedFeatureWeight(org.apache.lucene.search.Query query,
-                                          Weight wrapped) {
+                                          Weight wrapped, Normalizer ftrNorm) {
             super(query);
             this.wrapped = wrapped;
+            this.ftrNorm = ftrNorm;
         }
 
         @Override
@@ -93,10 +100,10 @@ public class NormalizedFeatureQuery extends Query {
         }
     }
 
-    public class NormalizedFeatureScorer extends Scorer {
+    public static class NormalizedFeatureScorer extends Scorer {
 
-        private Scorer wrapped;
-        private Normalizer ftrNorm;
+        private final Scorer wrapped;
+        private final Normalizer ftrNorm;
 
         /**
          * Constructs a Scorer

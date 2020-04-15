@@ -8,6 +8,9 @@ import org.apache.lucene.search.Query;
 
 import java.util.Map;
 
+/**
+ * A Feature that's normalized by a normalizer
+ */
 public class NormalizedFeature implements Feature {
 
     private final Feature wrapped;
@@ -36,11 +39,15 @@ public class NormalizedFeature implements Feature {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj.getClass() != this.getClass()) {
+            return false;
+        }
 
         NormalizedFeature that = (NormalizedFeature)obj;
-        if (that == null) return false;
-
         return (this.wrapped.equals(that.wrapped) && this.ftrNorm.equals(that.ftrNorm));
     }
 }
