@@ -49,7 +49,9 @@ public class ExplorerQueryTests extends LuceneTestCase {
             "how now brown cow",
             "brown is the color of cows",
             "brown cow",
-            "banana cows are yummy"
+            "banana cows are yummy",
+            "dance with monkeys and do not stop to dance",
+            "break on through to the other side... break on through to the other side... break on through to the other side"
     };
 
     @Before
@@ -105,6 +107,129 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         // Verify explain
         TopDocs docs = searcher.search(eq, 4);
+        assertThat(docs.scoreDocs.length, equalTo(0));
+    }
+
+    public void testQueryWithTermPositionAverage() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("5.0 = Stat Score: avg_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionMax() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "max_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("9.0 = Stat Score: max_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionMin() throws Exception {
+        Query q = new TermQuery(new Term("text", "dance"));
+        String statsType = "min_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(1));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 5);
+        Explanation explanation = searcher.explain(eq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("1.0 = Stat Score: min_raw_tp"));
+    }
+
+    public void testQueryWithTermPositionMinWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "min_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(3.0f));
+    }
+
+    public void testQueryWithTermPositionMaxWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "max_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(7.0f));
+    }
+
+    public void testQueryWithTermPositionAvgWithTwoTerms() throws Exception {
+        TermQuery tq1 = new TermQuery(new Term("text", "stop"));
+        TermQuery tq2 = new TermQuery(new Term("text", "hip-hop"));
+        TermQuery tq3 = new TermQuery(new Term("text", "monkeys"));
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(tq1, BooleanClause.Occur.SHOULD);
+        builder.add(tq2, BooleanClause.Occur.SHOULD);
+        builder.add(tq3, BooleanClause.Occur.SHOULD);
+
+        Query q = builder.build();
+        String statsType = "avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Verify score is 5 (5 unique terms)
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(5.0f));
+    }
+
+    public void testQueryWithTermPositionAvgWithNoTerm() throws Exception {
+        Query q = new TermQuery(new Term("text", "xxxxxxxxxxxxxxxxxx"));
+        String statsType = "avg_raw_tp";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        // Basic query check, should match 1 docs
+        assertThat(searcher.count(eq), equalTo(0));
+
+        // Verify explain
+        TopDocs docs = searcher.search(eq, 6);
+
         assertThat(docs.scoreDocs.length, equalTo(0));
     }
 
