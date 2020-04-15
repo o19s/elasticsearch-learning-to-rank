@@ -20,6 +20,7 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Strings;
@@ -83,7 +84,11 @@ public class StoredLtrModel implements StorableElement {
         rankingModelType = input.readString();
         rankingModel = input.readString();
         modelAsString = input.readBoolean();
-        this.parsedFtrNorms = new StoredFeatureNormalizers(input);
+        if (input.getVersion().onOrAfter(Version.V_7_6_1)) {
+            this.parsedFtrNorms = new StoredFeatureNormalizers(input);
+        } else {
+            this.parsedFtrNorms = new StoredFeatureNormalizers();
+        }
     }
 
     @Override
@@ -93,7 +98,9 @@ public class StoredLtrModel implements StorableElement {
         out.writeString(rankingModelType);
         out.writeString(rankingModel);
         out.writeBoolean(modelAsString);
-        parsedFtrNorms.writeTo(out);
+        if (out.getVersion().onOrAfter(Version.V_7_6_1)) {
+            parsedFtrNorms.writeTo(out);
+        }
     }
 
     public static StoredLtrModel parse(XContentParser parser) {
@@ -268,7 +275,11 @@ public class StoredLtrModel implements StorableElement {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
-            this.featureNormalizers = new StoredFeatureNormalizers(in);
+            if (in.getVersion().onOrAfter(Version.V_7_6_1)) {
+                this.featureNormalizers = new StoredFeatureNormalizers(in);
+            } else {
+                this.featureNormalizers = new StoredFeatureNormalizers();
+            }
         }
 
         @Override
@@ -276,7 +287,9 @@ public class StoredLtrModel implements StorableElement {
             out.writeString(type);
             out.writeString(definition);
             out.writeBoolean(modelAsString);
-            this.featureNormalizers.writeTo(out);
+            if (out.getVersion().onOrAfter(Version.V_7_6_1)) {
+                this.featureNormalizers.writeTo(out);
+            }
         }
 
 

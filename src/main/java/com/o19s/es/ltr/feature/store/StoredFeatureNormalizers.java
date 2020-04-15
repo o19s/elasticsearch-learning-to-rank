@@ -92,19 +92,17 @@ public class StoredFeatureNormalizers {
 
     public StoredFeatureNormalizers(StreamInput input) throws IOException {
         this.featureNormalizers = new HashMap<>();
-        if (input.available() > 0) {
-            int numFeatureNorms = input.readInt();
-            for (int i = numFeatureNorms; i > 0; i--) {
-                FeatureNormDefinition norm = this.createFromStreamInput(input);
-                this.featureNormalizers.put(norm.featureName(), norm);
-            }
+        int numFeatureNorms = input.readInt();
+        for (int i = numFeatureNorms; i > 0; i--) {
+            FeatureNormDefinition norm = this.createFromStreamInput(input);
+            this.featureNormalizers.put(norm.featureName(), norm);
         }
     }
 
     public Normalizer getNormalizer(String featureName) {
         return this.featureNormalizers.get(featureName).createFeatureNorm();
     }
-    
+
     public XContentBuilder toXContent(XContentBuilder builder, ToXContent.Params params) throws IOException {
         builder.startObject(); // begin feature norms
         for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormalizers.entrySet()) {
