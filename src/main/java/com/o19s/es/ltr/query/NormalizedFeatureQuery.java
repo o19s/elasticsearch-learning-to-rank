@@ -61,16 +61,11 @@ public class NormalizedFeatureQuery extends Query {
         return this.wrapped.hashCode() * 31 + this.ftrNorm.hashCode();
     }
 
-    public static class NormalizedFeatureWeight extends Weight {
+    private static final class NormalizedFeatureWeight extends Weight {
 
         private final Weight wrapped;
         private final Normalizer ftrNorm;
 
-        /**
-         * Sole constructor, typically invoked by sub-classes.
-         *
-         * @param query the parent query
-         */
         protected NormalizedFeatureWeight(org.apache.lucene.search.Query query,
                                           Weight wrapped, Normalizer ftrNorm) {
             super(query);
@@ -100,16 +95,11 @@ public class NormalizedFeatureQuery extends Query {
         }
     }
 
-    public static class NormalizedFeatureScorer extends Scorer {
+    private static final class NormalizedFeatureScorer extends Scorer {
 
         private final Scorer wrapped;
         private final Normalizer ftrNorm;
 
-        /**
-         * Constructs a Scorer
-         *
-         * @param weight The scorers <code>Weight</code>.
-         */
         protected NormalizedFeatureScorer(Weight weight, Scorer wrapped, Normalizer ftrNorm) {
             super(weight);
             this.wrapped = wrapped;
