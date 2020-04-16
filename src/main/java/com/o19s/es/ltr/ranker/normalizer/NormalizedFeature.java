@@ -43,7 +43,7 @@ public class NormalizedFeature implements Feature {
             return false;
         }
 
-        if (obj.getClass() != this.getClass()) {
+        if (!(obj instanceof NormalizedFeature)) {
             return false;
         }
 

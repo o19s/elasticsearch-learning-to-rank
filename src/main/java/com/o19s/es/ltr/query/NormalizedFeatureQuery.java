@@ -41,7 +41,7 @@ public class NormalizedFeatureQuery extends Query {
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
-        if (obj.getClass() != this.getClass()) {
+        if (!(obj instanceof NormalizedFeatureQuery)) {
             return false;
         }
 
