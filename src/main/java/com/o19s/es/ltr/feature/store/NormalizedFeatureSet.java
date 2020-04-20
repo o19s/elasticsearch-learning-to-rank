@@ -26,8 +26,11 @@ public class NormalizedFeatureSet implements FeatureSet {
      * Track which features we're normalizing. This is pre-build
      * to avoid doing it in a Lucene Scorer or having to deal with a
      * Set implementaiton or something
+     * @param wrapped
+     *   wrapped feature set
+     * @param normedFtrs
+     *   map of feature ord to a normalizer for that feature
      */
-
     public NormalizedFeatureSet(FeatureSet wrapped, Map<Integer, Normalizer> normedFtrs)
     {
         this.normedFtrs = normedFtrs;

@@ -34,6 +34,8 @@ public interface FeatureNormDefinition extends ToXContent {
      * Serialize to a StreamOutput
      * @param out
      *  where the ftr norm defn will be serialized
+     * @throws
+     *  IOException if issues occur with writing to output
      */
     void writeTo(StreamOutput out) throws IOException;
 }
