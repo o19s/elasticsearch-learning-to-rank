@@ -86,7 +86,11 @@ public class NormalizedFeatureQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Scorer wrappedScorer = wrapped.scorer(context);
-            return new NormalizedFeatureScorer(this, wrappedScorer, ftrNorm);
+            if (wrappedScorer != null) {
+                return new NormalizedFeatureScorer(this, wrappedScorer, ftrNorm);
+            } else {
+                return null;
+            }
         }
 
         @Override
