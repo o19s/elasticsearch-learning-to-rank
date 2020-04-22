@@ -27,11 +27,16 @@ import java.security.PrivilegedAction;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Scripting {
     private Scripting() {}
 
     public static Object compile(String scriptSource) {
+        return compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS);
+    }
+
+    public static Object compile(String scriptSource, Map<String,java.lang.reflect.Method> functions) {
         // classloader created here
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -58,7 +63,7 @@ public class Scripting {
                         };
                     }
                     // NOTE: validation is delayed to allow runtime vars, and we don't have access to per index stuff here
-                    return JavascriptCompiler.compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS, loader);
+                    return JavascriptCompiler.compile(scriptSource, functions, loader);
                 } catch (ParseException e) {
                     throw convertToScriptException("compile error", scriptSource, scriptSource, e);
                 }
