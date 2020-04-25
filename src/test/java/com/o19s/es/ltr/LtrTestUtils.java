@@ -32,6 +32,8 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
@@ -44,6 +46,7 @@ import org.elasticsearch.index.query.WrapperQueryBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -73,9 +76,12 @@ public class LtrTestUtils {
 
     public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
-        FeatureSet wrappedSet = randomFtrNorms(set).compile(set);
-        LtrRanker ranker = buildRandomRanker(wrappedSet.size());
-        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), wrappedSet,
+        Map<Integer, Normalizer> ftrNorms = randomFtrNorms(set).compileOrdToNorms(set);
+        LtrRanker ranker = buildRandomRanker(set.size());
+        if (ftrNorms.size() > 0) {
+            ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
+        }
+        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
                                                                 ranker);
     }
 

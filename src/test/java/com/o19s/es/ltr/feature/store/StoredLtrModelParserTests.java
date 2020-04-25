@@ -16,12 +16,10 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.MinMaxFeatureNormalizer;
-import com.o19s.es.ltr.ranker.normalizer.NormalizedFeature;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.util.BytesRef;
@@ -149,22 +147,21 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         StoredLtrModel model = parse(modelJson);
         CompiledLtrModel compiledModel = model.compile(factory);
 
-        FeatureSet set = compiledModel.featureSet();
-        assertEquals(set.getClass(), NormalizedFeatureSet.class);
+        LtrRanker ranker = compiledModel.ranker();
+        assertEquals(ranker.getClass(), FeatureNormalizingRanker.class);
 
-        NormalizedFeatureSet normSet = (NormalizedFeatureSet)set;
+        FeatureNormalizingRanker normRanker = (FeatureNormalizingRanker)ranker;
 
-        Feature f = normSet.feature(0);
-        Feature f2 = normSet.feature("feature_1");
-        assertEquals(f, f2);
-        assertEquals(f.getClass(), NormalizedFeature.class);
+        LtrRanker.FeatureVector ftrVector = normRanker.newFeatureVector(null);
 
-        f = normSet.feature(1);
-        assertNotEquals(f, f2);
+        ftrVector.setFeatureScore(0, 1.25f);
+        ftrVector.setFeatureScore(1, 1.25f);
 
-        f2 = normSet.feature("feature_2");
-        assertEquals(f, f2);
-        assertNotEquals(f.getClass(), NormalizedFeature.class);
+        float ftr0Before = ftrVector.getFeatureScore(0);
+        float ftr1Before = ftrVector.getFeatureScore(1);
+
+        normRanker.score(ftrVector);
+
     }
 
     public void testFeatureStdNormParsing() throws IOException {

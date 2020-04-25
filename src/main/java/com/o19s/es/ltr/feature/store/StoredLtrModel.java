@@ -18,6 +18,8 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.elasticsearch.Version;
@@ -35,6 +37,7 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
@@ -127,7 +130,10 @@ public class StoredLtrModel implements StorableElement {
         LtrRankerParser modelParser = factory.getParser(rankingModelType);
         FeatureSet optimized = featureSet.optimize();
         LtrRanker ranker = modelParser.parse(optimized, rankingModel);
-        optimized = parsedFtrNorms.compile(optimized);
+        Map<Integer, Normalizer> ordToNorms = parsedFtrNorms.compileOrdToNorms(optimized);
+        if (ordToNorms.size() > 0) {
+            ranker = new FeatureNormalizingRanker(ranker, ordToNorms);
+        }
         return new CompiledLtrModel(name, optimized, ranker);
     }
 

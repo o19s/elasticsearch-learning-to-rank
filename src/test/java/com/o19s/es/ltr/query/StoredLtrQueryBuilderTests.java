@@ -18,7 +18,6 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
-import com.o19s.es.ltr.feature.store.NormalizedFeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.MemStore;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -26,6 +25,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
@@ -103,8 +103,8 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
         Map<Integer, Normalizer> ftrNorms = new HashMap<>();
         ftrNorms.put(2, new StandardFeatureNormalizer(1.0f,0.5f));
+        ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
 
-        NormalizedFeatureSet ftrNormSet = new NormalizedFeatureSet(set, ftrNorms);
         CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
@@ -115,9 +115,9 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     @Override
     protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(store));
-        if (random().nextBoolean()) {
+        if (random().nextBoolean()) { // executing a model
             builder.modelName("model1");
-        } else {
+        } else { // logging
             builder.featureSetName("set1");
         }
         Map<String, Object> params = new HashMap<>();
@@ -196,7 +196,12 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
         // Confirm each feature normalizer when evaluating a model
         LtrRanker ranker = rquery.ranker();
-        assertThat(ranker, instanceOf(LinearRanker.class));
+        if (queryBuilder.featureSetName() != null && queryBuilder.featureSetName().equals("set1")) {
+            assertThat(ranker, instanceOf(LinearRanker.class));
+        } else {
+            assertEquals(queryBuilder.modelName(), "model1");
+            assertThat(ranker, instanceOf(FeatureNormalizingRanker.class));
+        }
 
         // Check each feature query
         assertTrue(ite.hasNext());

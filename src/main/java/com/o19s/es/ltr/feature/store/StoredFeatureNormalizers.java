@@ -102,10 +102,7 @@ public class StoredFeatureNormalizers {
         return builder;
     }
 
-    public FeatureSet compile(FeatureSet featureSet) {
-        if (featureNormalizers.size() == 0) {
-            return featureSet;
-        }
+    public Map<Integer, Normalizer> compileOrdToNorms(FeatureSet featureSet) {
         Map<Integer, Normalizer> ftrNorms = new HashMap<>();
 
         for (Map.Entry<String, FeatureNormDefinition> ftrNormDefEntry: featureNormalizers.entrySet()) {
@@ -120,7 +117,7 @@ public class StoredFeatureNormalizers {
             int ord = featureSet.featureOrdinal(featureName);
             ftrNorms.put(ord, ftrNorm);
         }
-        return new NormalizedFeatureSet(featureSet, ftrNorms);
+        return ftrNorms;
     }
 
     @Override
