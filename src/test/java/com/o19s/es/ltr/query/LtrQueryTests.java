@@ -30,6 +30,7 @@ import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.ranklib.DenseProgramaticDataPoint;
@@ -294,12 +295,18 @@ public class LtrQueryTests extends LuceneTestCase {
                                       /*The training data*/ samples
                                       /*which features to use*/, featuresToUse
                                       /*how to score ranking*/, new NDCGScorer());
-        float[] scores = {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
-                          (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
+        LtrRanker ltrRanker = toLtrRanker(features.size(), ranker);
+        float[] scores = new float[4];
+        if (ftrNorms.size() > 0) {
+            ltrRanker = new FeatureNormalizingRanker(ltrRanker, ftrNorms);
+        }
+        for (int i = 0; i < 4; i++) {
+            DenseProgramaticDataPoint dp = (DenseProgramaticDataPoint)rl.get(i);
+            scores[i] = ltrRanker.score(dp);
+        }
 
         // Ok now lets rerun that as a Lucene Query
-
-        RankerQuery ltrQuery = toRankerQuery(features, ranker);
+        RankerQuery ltrQuery = toRankerQuery(features, ltrRanker);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -316,10 +323,17 @@ public class LtrQueryTests extends LuceneTestCase {
         String modelAsStr = ranker.model();
         RankerFactory rankerFactory = new RankerFactory();
         Ranker rankerAgain = rankerFactory.loadRankerFromString(modelAsStr);
-        float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
-                (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
 
-        ltrQuery = toRankerQuery(features, rankerAgain);
+        LtrRanker ltrRankerAgain = toLtrRanker(features.size(), rankerAgain);
+        float[] scoresAgain = new float[4];
+        if (ftrNorms.size() > 0) {
+            ltrRankerAgain = new FeatureNormalizingRanker(ltrRanker, ftrNorms);
+        }
+        for (int i = 0; i < 4; i++) {
+            DenseProgramaticDataPoint dp = (DenseProgramaticDataPoint)rl.get(i);
+            scoresAgain[i] = ltrRankerAgain.score(dp);
+        }
+
         topDocs = searcherUnderTest.search(ltrQuery, 10);
         scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -350,8 +364,12 @@ public class LtrQueryTests extends LuceneTestCase {
         }
     }
 
-    private RankerQuery toRankerQuery(List<PrebuiltFeature> features, Ranker ranker) {
-        LtrRanker ltrRanker = new RanklibRanker(ranker, features.size());
+    private LtrRanker toLtrRanker(int numFeatures, Ranker ranker) {
+        LtrRanker ltrRanker = new RanklibRanker(ranker, numFeatures);
+        return ltrRanker;
+    }
+
+    private RankerQuery toRankerQuery(List<PrebuiltFeature> features, LtrRanker ltrRanker) {
         PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, features));
         return RankerQuery.build(model);
     }
