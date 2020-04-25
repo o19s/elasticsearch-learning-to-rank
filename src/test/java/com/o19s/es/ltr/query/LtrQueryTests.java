@@ -91,12 +91,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-/**
- * Created by doug on 12/24/16.
- */
+
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "RankURL does this when training models... ")
 public class LtrQueryTests extends LuceneTestCase {
     // Number of ULPs allowed when checking scores equality
@@ -234,16 +231,13 @@ public class LtrQueryTests extends LuceneTestCase {
             dp.setLabel(relevanceGradesPerDoc[docId]);
             dp.setID(String.valueOf(qid));
             vector.forEach(
-                    new BiConsumer<Integer, Float>() {
-                        @Override
-                        public void accept(Integer integer, Float aFloat) {
-                            Normalizer ftrNorm = ftrNorms.get(integer);
-                            if (ftrNorm != null) {
-                                aFloat = ftrNorm.normalize(aFloat);
-                            }
-                            dp.setFeatureScore(integer, aFloat);
-                        }
+                (Integer integer, Float aFloat) -> {
+                    Normalizer ftrNorm = ftrNorms.get(integer);
+                    if (ftrNorm != null) {
+                        aFloat = ftrNorm.normalize(aFloat);
                     }
+                    dp.setFeatureScore(integer, aFloat);
+                }
             );
             points.put(docId, dp);
         });
@@ -434,6 +428,22 @@ public class LtrQueryTests extends LuceneTestCase {
                 new PrebuiltFeature(null, blended));
 
         checkModelWithFeatures(features, null, null);
+    }
+
+    public void testMatchingNormalizedQueries() throws IOException {
+        String userQuery = "brown cow";
+
+        Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
+
+        Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
+        List<PrebuiltFeature> features = Arrays.asList(
+                new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
+                new PrebuiltFeature(null, blended));
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+        ftrNorms.put(0, new StandardFeatureNormalizer(-2, 1));
+        ftrNorms.put(0, new StandardFeatureNormalizer(-4, 1));
+
+        checkModelWithFeatures(features, null, ftrNorms);
     }
 
 
