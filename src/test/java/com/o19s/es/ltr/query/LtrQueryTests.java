@@ -240,12 +240,12 @@ public class LtrQueryTests extends LuceneTestCase {
             dp.setLabel(relevanceGradesPerDoc[docId]);
             dp.setID(String.valueOf(qid));
             vector.forEach(
-                (Integer integer, Float aFloat) -> {
-                    Normalizer ftrNorm = ftrNorms.get(integer);
+                (final Integer ftrOrd, Float score) -> {
+                    Normalizer ftrNorm = ftrNorms.get(ftrOrd);
                     if (ftrNorm != null) {
-                        aFloat = ftrNorm.normalize(aFloat);
+                        score = ftrNorm.normalize(score);
                     }
-                    dp.setFeatureScore(integer, aFloat);
+                    dp.setFeatureScore(ftrOrd, score);
                 }
             );
             points.put(docId, dp);
