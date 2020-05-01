@@ -9,14 +9,13 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermState;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.ConstantScoreScorer;
-import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
@@ -55,12 +54,6 @@ public class TermStatQuery extends Query {
 
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
-        Query rewritten = query.rewrite(reader);
-
-        if (rewritten != query) {
-            return new TermStatQuery(rewritten, expr);
-        }
-
         return this;
     }
 
@@ -73,7 +66,7 @@ public class TermStatQuery extends Query {
         IndexReaderContext context = searcher.getTopReaderContext();
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
         Term term = new Term("text", "cow");
-        return new TermStatWeight(this, term, TermStates.build(context, term, scoreMode.needsScores()));
+        return new TermStatWeight(searcher, this, term, TermStates.build(context, term, scoreMode.needsScores()));
     }
 
     public String toString(String field) {
@@ -81,11 +74,13 @@ public class TermStatQuery extends Query {
     }
 
     static class TermStatWeight extends Weight {
+        private IndexSearcher searcher;
         private final Term term;
         private final TermStates termStates;
 
-        TermStatWeight(Query query, Term term, TermStates termStates) {
+        TermStatWeight(IndexSearcher searcher, Query query, Term term, TermStates termStates) {
             super(query);
+            this.searcher = searcher;
             this.term = term;
             this.termStates = termStates;
         }
@@ -112,9 +107,13 @@ public class TermStatQuery extends Query {
             if (state == null) {
                 return null;
             } else {
+                // TODO: Build out arrays of term stats here for multiple terms support?
+                TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, true);
+                TermStatistics termStatistics = searcher.termStatistics(term, ctx);
+
                 TermsEnum terms = context.reader().terms(this.term.field()).iterator();
                 terms.seekExact(this.term.bytes(), state);
-                return new TermScorer(this, terms.postings(null, PostingsEnum.ALL));
+                return new TermScorer(this, terms.postings(null, PostingsEnum.ALL), termStatistics);
             }
         }
 
@@ -126,10 +125,12 @@ public class TermStatQuery extends Query {
 
     public abstract static class PostingsScorer extends Scorer {
         final PostingsEnum postingsEnum;
+        final TermStatistics termStatistics;
 
-        PostingsScorer(Weight weight, PostingsEnum postingsEnum) {
+        PostingsScorer(Weight weight, PostingsEnum postingsEnum, TermStatistics termStatistics) {
             super(weight);
             this.postingsEnum = postingsEnum;
+            this.termStatistics = termStatistics;
         }
 
         @Override
@@ -144,11 +145,11 @@ public class TermStatQuery extends Query {
     }
 
     static class TermScorer extends PostingsScorer {
-        TermScorer(Weight weight, PostingsEnum postingsEnum) {super(weight, postingsEnum); }
+        TermScorer(Weight weight, PostingsEnum postingsEnum, TermStatistics termStatistics) {super(weight, postingsEnum, termStatistics); }
 
         @Override
         public float score() throws IOException {
-            return postingsEnum.nextPosition();
+            return termStatistics.docFreq();
         }
 
         @Override
