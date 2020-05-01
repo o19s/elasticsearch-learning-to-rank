@@ -1,10 +1,5 @@
 package com.o19s.es.termstat;
 
-import com.o19s.es.ltr.utils.Scripting;
-import com.o19s.es.termstat.expressions.CustomFunctions;
-
-import org.apache.lucene.expressions.Expression;
-import org.apache.lucene.expressions.js.JavascriptCompiler;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -18,8 +13,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class TermStatQuery extends Query {
@@ -73,9 +66,7 @@ public class TermStatQuery extends Query {
             return searcher.createWeight(query, scoreMode, boost);
         }
 
-        Expression expression = compileExpression();
-
-        // TODO: Constant 1.0 placeholder, add expression score logic here
+        // TODO: Constant 1.0 placeholder, build out logic
         return new ConstantScoreWeight(TermStatQuery.this, 1.0f) {
             @Override
             public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -101,18 +92,5 @@ public class TermStatQuery extends Query {
 
     public String toString(String field) {
         return query.toString(field);
-    }
-
-    private Expression compileExpression() {
-        HashMap<String, Method> functions = new HashMap<>();
-        functions.putAll(JavascriptCompiler.DEFAULT_FUNCTIONS);
-
-        try {
-            functions.put("one", CustomFunctions.class.getMethod("one"));
-        } catch (NoSuchMethodException ex) {
-            // no-op
-        }
-
-        return (Expression) Scripting.compile(expr, functions);
     }
 }
