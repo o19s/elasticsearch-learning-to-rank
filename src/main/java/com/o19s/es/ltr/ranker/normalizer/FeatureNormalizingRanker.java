@@ -11,6 +11,12 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
 
     private final LtrRanker wrapped;
     private final Map<Integer, Normalizer> ftrNorms;
+    private static final long BASE_RAM_USED;
+
+    private static final long PER_FTR_NORM_RAM_USED = 8;
+    static {
+        BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(FeatureNormalizingRanker.class);
+    }
 
     public FeatureNormalizingRanker(LtrRanker wrapped, Map<Integer, Normalizer> ftrNorms) {
         this.wrapped = Objects.requireNonNull(wrapped);
@@ -66,11 +72,13 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
     @Override
     public long ramBytesUsed() {
 
-        Accountable accountable = (Accountable)this.wrapped;
-        if (accountable != null) {
-            return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + accountable.ramBytesUsed();
+        long ftrNormSize = ftrNorms.size() * (PER_FTR_NORM_RAM_USED;
+
+        if (this.wrapped instanceof Accountable) {
+            Accountable accountable = (Accountable)this.wrapped;
+            return BASE_RAM_USED + accountable.ramBytesUsed() + ftrNormSize;
         } else {
-            return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+            return BASE_RAM_USED + ftrNormSize;
         }
     }
 }
