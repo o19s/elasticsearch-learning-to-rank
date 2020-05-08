@@ -5,15 +5,16 @@ import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class FeatureNormalizingRanker implements LtrRanker, Accountable {
 
-    private LtrRanker wrapped;
-    private Map<Integer, Normalizer> ftrNorms;
+    private final LtrRanker wrapped;
+    private final Map<Integer, Normalizer> ftrNorms;
 
     public FeatureNormalizingRanker(LtrRanker wrapped, Map<Integer, Normalizer> ftrNorms) {
-        this.wrapped = wrapped;
-        this.ftrNorms = ftrNorms;
+        this.wrapped = Objects.requireNonNull(wrapped);
+        this.ftrNorms = Objects.requireNonNull(ftrNorms);
     }
 
     public Map<Integer, Normalizer> getFtrNorms() {
@@ -44,7 +45,10 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
     @Override
     public boolean equals(Object other) {
         if (other == null) return false;
-        FeatureNormalizingRanker that = (FeatureNormalizingRanker)(other);
+        if (!(other instanceof  FeatureNormalizingRanker)) {
+            return false;
+        }
+        final FeatureNormalizingRanker that = (FeatureNormalizingRanker)(other);
         if (that == null) return false;
 
         if (!that.ftrNorms.equals(this.ftrNorms)) return false;
@@ -61,6 +65,7 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
 
     @Override
     public long ramBytesUsed() {
+
         Accountable accountable = (Accountable)this.wrapped;
         if (accountable != null) {
             return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + accountable.ramBytesUsed();

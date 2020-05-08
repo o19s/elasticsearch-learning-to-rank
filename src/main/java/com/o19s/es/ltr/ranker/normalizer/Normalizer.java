@@ -7,8 +7,4 @@ import org.apache.lucene.search.Explanation;
  */
 public interface Normalizer {
     float normalize(float val);
-
-    default Explanation explain(Explanation wrappedQueryExplain) {
-        return wrappedQueryExplain;
-    }
 }

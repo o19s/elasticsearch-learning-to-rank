@@ -33,21 +33,6 @@ public class MinMaxFeatureNormalizer implements Normalizer  {
     }
 
     @Override
-    public Explanation explain(Explanation wrappedQueryExplain) {
-        float val = wrappedQueryExplain.getValue().floatValue();
-        float normed = normalize(wrappedQueryExplain.getValue().floatValue());
-        String numerator = "val:" + Float.toString(val) + " - min:" + Float.toString(this.minimum);
-        String denominator = " max:" + Float.toString(maximum) + " - min:" + Float.toString(this.minimum);
-
-        List<Explanation> subExplains = Collections.singletonList(wrappedQueryExplain);
-
-        return Explanation.match(normed,
-                "Min-Max Normalized LTR Feature: " + numerator + " / " + denominator,
-                wrappedQueryExplain);
-    }
-
-
-    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         if (!(other instanceof MinMaxFeatureNormalizer)) return false;

@@ -33,18 +33,6 @@ public class StandardFeatureNormalizer implements Normalizer {
     }
 
     @Override
-    public Explanation explain(Explanation wrappedQueryExplain) {
-        float val = wrappedQueryExplain.getValue().floatValue();
-        float normed = normalize(wrappedQueryExplain.getValue().floatValue());
-        String numerator = "val:" + Float.toString(val) + " - mean:" + Float.toString(this.mean);
-        String denominator = " standard_deviation:" + Float.toString(stdDeviation);
-
-        return Explanation.match(normed,
-                "Std Normalized LTR Feature: " + numerator + " / " + denominator,
-                wrappedQueryExplain);
-    }
-
-    @Override
     public int hashCode() {
         int hashCode = Float.hashCode(this.mean);
         hashCode += 31 * Float.hashCode(this.stdDeviation);
