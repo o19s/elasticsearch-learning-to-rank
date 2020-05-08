@@ -1,10 +1,5 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import org.apache.lucene.search.Explanation;
-
-import java.util.Collections;
-import java.util.List;
-
 /**
  * MinMax Feature Normalization
  * Generally following the standard laid out by sklearn:

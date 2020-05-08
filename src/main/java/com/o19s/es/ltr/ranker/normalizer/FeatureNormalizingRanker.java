@@ -72,7 +72,7 @@ public class FeatureNormalizingRanker implements LtrRanker, Accountable {
     @Override
     public long ramBytesUsed() {
 
-        long ftrNormSize = ftrNorms.size() * (PER_FTR_NORM_RAM_USED;
+        long ftrNormSize = ftrNorms.size() * (PER_FTR_NORM_RAM_USED);
 
         if (this.wrapped instanceof Accountable) {
             Accountable accountable = (Accountable)this.wrapped;
