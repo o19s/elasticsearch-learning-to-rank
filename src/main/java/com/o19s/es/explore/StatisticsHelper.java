@@ -23,7 +23,7 @@ public class StatisticsHelper {
     private float min = Float.MAX_VALUE;
     private float max = 0.0f;
 
-    StatisticsHelper() {
+    public StatisticsHelper() {
 
     }
 

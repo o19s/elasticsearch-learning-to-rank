@@ -66,19 +66,13 @@ public class TermStatQueryTests extends LuceneTestCase {
 
     public void testQuery() throws Exception {
         Query q = new TermQuery(new Term("text", "cow"));
-        String expr = "one()";
-
+        String expr = "tp";
         TermStatQuery tsq = new TermStatQuery(q, expr);
 
-        // Ditching the query and seeing how far we can get. should filter/query model?
-        /*
-        // Basic query check, should match 2 docs
-        assertThat(searcher.count(tsq), equalTo(2));
-        */
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
         Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("1.0 = Expression: " + expr));
+        assertThat(explanation.toString().trim(), equalTo("4.0 = weight(" + expr + " in doc 0)"));
     }
 }
