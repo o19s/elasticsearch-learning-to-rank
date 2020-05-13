@@ -39,6 +39,14 @@ public class StatisticsHelper {
         }
     }
 
+    public ArrayList<Float> getData() {
+        return data;
+    }
+
+    public int getSize(){
+        return data.size();
+    }
+
     public float getMax() {
         assert !data.isEmpty();
 

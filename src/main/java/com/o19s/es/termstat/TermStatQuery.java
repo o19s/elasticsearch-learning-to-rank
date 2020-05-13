@@ -1,5 +1,7 @@
 package com.o19s.es.termstat;
 
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -100,7 +102,8 @@ public class TermStatQuery extends Query {
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            return new TermStatScorer(this, searcher, context, terms, scoreMode);
+            Expression compiledExpression = (Expression) Scripting.compile(this.expression);
+            return new TermStatScorer(this, searcher, context, compiledExpression, terms, scoreMode);
         }
 
         @Override
