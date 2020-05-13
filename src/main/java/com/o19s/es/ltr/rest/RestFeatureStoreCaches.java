@@ -28,6 +28,10 @@ import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestActions.NodesResponseRestListener;
 import org.elasticsearch.rest.action.RestBuilderListener;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 import static org.elasticsearch.rest.RestStatus.OK;
 
 /**
@@ -42,16 +46,18 @@ import static org.elasticsearch.rest.RestStatus.OK;
  */
 public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
-    public RestFeatureStoreCaches(RestController controller) {
-        super();
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_clearcache", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_clearcache", this);
-        controller.registerHandler(RestRequest.Method.GET, "/_ltr/_cachestats", this);
-    }
-
     @Override
     public String getName() {
         return "Provides clear cached for stores";
+    }
+
+    @Override
+    public List<Route> routes() {
+        return unmodifiableList(asList(
+                new Route(RestRequest.Method.POST, "/_ltr/_clearcache"),
+                new Route(RestRequest.Method.POST, "/_ltr/{store}/_clearcache"),
+                new Route(RestRequest.Method.GET, "/_ltr/_cachestats")
+        ));
     }
 
     @Override

@@ -35,18 +35,23 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 
 import java.io.IOException;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
-
-    public RestCreateModelFromSet(RestController controller) {
-        super();
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_createmodel", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_createmodel", this);
-    }
 
     @Override
     public String getName() {
         return "Create initial models for features";
+    }
+
+    @Override
+    public List<Route> routes() {
+        return unmodifiableList(asList(
+                new Route(RestRequest.Method.POST , "/_ltr/{store}/_featureset/{name}/_createmodel"),
+                new Route(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_createmodel"        )));
     }
 
     @Override
