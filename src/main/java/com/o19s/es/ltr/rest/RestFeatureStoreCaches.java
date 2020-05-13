@@ -22,7 +22,6 @@ import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestActions.NodesResponseRestListener;
