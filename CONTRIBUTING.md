@@ -77,7 +77,7 @@ Upgrading to the latest ES version is a great way to help us out, and get your f
 
 #### Gradlew Wrapper and Java Upgrade
 
-The first thing you'll want to do when upgrading Elasticsearch LTR is upgrading your Java version. We recommend getting the latest OpenJDK from [jdk.java.net](http://jdk.java.net). Ensure your JAVA_HOME is pointed at where you unzip the JDK contents. See "Juggling Multiple Java Versions" above.
+The first thing you'll want to do when upgrading Elasticsearch LTR is upgrading your Java version. We recommend getting the latest OpenJDK from [jdk.java.net](http://jdk.java.net). Ensure your JAVA_HOME is pointed at where you unzip the JDK contents. See "Juggling Multiple Java Versions" above. Be sure to update the travis.yml to this JDK version.
 
 The gradlew / gradlew.bat also usually need to be ugpraded to latest. You'll get an error when you run `./gradlew clean check` telling you what gradle to upgrade to. Unfortunately there's a catch 22: you can't run the gradle upgrade task precisely because of the gradle error that Elastic's build system outputs. So here's what I do
 
