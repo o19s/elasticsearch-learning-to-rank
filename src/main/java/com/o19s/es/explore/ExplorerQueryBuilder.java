@@ -107,7 +107,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         if (queryRewriteContext != null) {
 
             ExplorerQueryBuilder rewritten = new ExplorerQueryBuilder();
-            boolean changed = false;
             rewritten.type = this.type;
             rewritten.query = Rewriteable.rewrite(query, queryRewriteContext);
             rewritten.boost(boost());
