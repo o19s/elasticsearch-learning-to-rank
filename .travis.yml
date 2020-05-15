@@ -4,6 +4,8 @@ dist: xenial
 
 jdk:
   - oraclejdk14
+  - openjdk14
+
 
 script:
   - ./gradlew clean check
