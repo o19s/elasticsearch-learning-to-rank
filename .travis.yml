@@ -1,9 +1,8 @@
 language: java
 install: true
-dist: bionic
+dist: xenial
 
 jdk:
-  - oraclejdk14
   - openjdk14
 
 
