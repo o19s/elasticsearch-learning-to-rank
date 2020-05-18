@@ -75,6 +75,20 @@ As a practice, we maintain a branch per Elasticsearch version, prefixed by ES. S
 
 Upgrading to the latest ES version is a great way to help us out, and get your feet wet. The first step is to open build.gradle, and change the ES version numbers in the dependencies to the version you wish to upgrade to. We recommend trying to build, (it'll likely fail) making a branch name with the es version number (ie `es_6_7`), and then sending us a "Work in Progress" PR to master. This will let us rally around the (sometimes annoyingly painful) upgrade as a team.
 
+#### Gradlew Wrapper and Java Upgrade
+
+The first thing you'll want to do when upgrading Elasticsearch LTR is upgrading your Java version. We recommend getting the latest OpenJDK from [jdk.java.net](http://jdk.java.net). Ensure your JAVA_HOME is pointed at where you unzip the JDK contents. See "Juggling Multiple Java Versions" above. Be sure to update the travis.yml to this JDK version.
+
+The gradlew / gradlew.bat also usually need to be ugpraded to latest. You'll get an error when you run `./gradlew clean check` telling you what gradle to upgrade to. Unfortunately there's a catch 22: you can't run the gradle upgrade task precisely because of the gradle error that Elastic's build system outputs. So here's what I do
+
+```
+mv build.gradle /tmp/ # Get the Elastic LTR gradle file out of the way, dont worry, you can use git to get it back!
+./gradlew stop # Stop any existing gradle daemons
+./gradlew wrapper --gradle-version 6.4 #Upgrade (here to 6.4)
+git checkout build.gradle # Restore build.gradle
+```
+
+
 #### Elasticsearch Code Spelunking!
 
 A lot of the upgrade will involve understanding how Elasticsearch's code has changed (such as from `6.6` to `6.7`)  that impacts our code base. For example, our code may inherit from some Elasticsearch base class that's changed/been refactored between versions. You'll spend a lot of your time in the [Elasticsearch repo](http://github.com/elastic/elasticsearch), going to the file (like a base class) that changed, finding the commit that caused the change, and then seeing how other, similar parts of the Elastic code base (like other plugins), responded to the change. Then we attempt to make that change to the relevant pieces of our code.

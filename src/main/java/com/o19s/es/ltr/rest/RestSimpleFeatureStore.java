@@ -54,6 +54,8 @@ import java.util.List;
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
 import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
@@ -67,31 +69,37 @@ import static org.elasticsearch.rest.RestStatus.OK;
 public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler {
     public static void register(List<RestHandler> list, RestController restController) {
         for (String type : SUPPORTED_TYPES) {
-            list.add(new RestAddOrUpdateFeature(restController, type));
-            list.add(new RestSearchStoreElements(restController, type));
+            list.add(new RestAddOrUpdateFeature(type));
+            list.add(new RestSearchStoreElements(type));
         }
-        list.add(new RestStoreManager(restController));
+        list.add(new RestStoreManager());
     }
 
     static class RestAddOrUpdateFeature extends RestSimpleFeatureStore {
         private final String type;
-        RestAddOrUpdateFeature(RestController controller, String type) {
+        RestAddOrUpdateFeature(String type) {
             this.type = type;
-            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.POST, "/_ltr/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.HEAD, "/_ltr/{store}/_" + type + "/{name}", this);
-            controller.registerHandler(RestRequest.Method.HEAD, "/_ltr/_" + type + "/{name}", this);
         }
 
         @Override
         public String getName() {
             return "Add or update a feature";
+        }
+
+        @Override
+        public List<Route> routes() {
+            return unmodifiableList(asList(
+                    new Route(RestRequest.Method.PUT, "/_ltr/{store}/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.PUT, "/_ltr/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.POST, "/_ltr/{store}/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.POST, "/_ltr/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.DELETE, "/_ltr/{store}/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.DELETE, "/_ltr/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.GET, "/_ltr/{store}/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.GET, "/_ltr/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.HEAD, "/_ltr/{store}/_" + this.type + "/{name}"),
+                    new Route(RestRequest.Method.HEAD, "/_ltr/_" + this.type + "/{name}")
+            ));
         }
 
         @Override
@@ -110,15 +118,21 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     static class RestSearchStoreElements extends RestSimpleFeatureStore {
         private final String type;
 
-        RestSearchStoreElements(RestController controller, String type) {
+        RestSearchStoreElements(String type) {
             this.type = type;
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type, this);
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type, this);
         }
 
         @Override
         public String getName() {
             return "Obtain ltr store";
+        }
+
+        @Override
+        public List<Route> routes() {
+            return unmodifiableList(asList(
+                new Route(RestRequest.Method.GET, "/_ltr/{store}/_" + type),
+                new Route(RestRequest.Method.GET, "/_ltr/_" + type)
+            ));
         }
 
         @Override
@@ -128,20 +142,23 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     }
 
     static class RestStoreManager extends RestSimpleFeatureStore {
-        RestStoreManager(RestController controller) {
-            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}", this);
-            controller.registerHandler(RestRequest.Method.PUT, "/_ltr", this);
-            controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}", this);
-            controller.registerHandler(RestRequest.Method.POST, "/_ltr", this);
-            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
-            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
-            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}", this);
-        }
-
         @Override
         public String getName() {
             return "Manage the ltr store";
+        }
+
+        @Override
+        public List<Route> routes() {
+            return unmodifiableList(asList(
+                new Route(RestRequest.Method.PUT, "/_ltr/{store}"),
+                new Route(RestRequest.Method.PUT, "/_ltr"),
+                new Route(RestRequest.Method.POST, "/_ltr/{store}"),
+                new Route(RestRequest.Method.POST, "/_ltr"),
+                new Route(RestRequest.Method.DELETE, "/_ltr/{store}"),
+                new Route(RestRequest.Method.DELETE, "/_ltr"),
+                new Route(RestRequest.Method.GET, "/_ltr"),
+                new Route(RestRequest.Method.GET, "/_ltr/{store}")
+            ));
         }
 
         /**

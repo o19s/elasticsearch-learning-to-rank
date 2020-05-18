@@ -13,7 +13,9 @@ This plugin:
 
 ## Where's the docs?
 
-We recommend taking time to [read the docs](http://elasticsearch-learning-to-rank.readthedocs.io). There's quite a bit of detailed information about learning to rank basics and how this plugin can ease learning to rank development.
+We recommend taking time to [read the docs](http://elasticsearch-learning-to-rank.readthedocs.io). There's quite a bit of detailed information about learning to rank basics and how this plugin can ease learning to rank development. 
+
+You can also participate in regular [4 hour trainings](http://opensourceconnections.com/events/training) on Elasticsearch Learning to Rank, which support the free work done on this plugin.
 
 ## I want to jump in!
 
@@ -21,9 +23,9 @@ If you want to just jump in, go straight to the demo. The demo uses [Ranklib](ht
 
 # Installing
 
-See the full list of [prebuilt versions](http://es-learn-to-rank.labs.o19s.com). If you don't see a version available, see the link below for building or file a request via [issues](https://github.com/o19s/elasticsearch-learning-to-rank/issues).
+See the full list of [prebuilt versions](http://es-learn-to-rank.labs.o19s.com) and select the version that matches your Elasticsearch version. If you don't see a version available, see the link below for building or file a request via [issues](https://github.com/o19s/elasticsearch-learning-to-rank/issues).
 
-To install, you'd run a command such as:
+To install, you'd run a command like this but replacing with the appropriate prebuilt version zip:
 
 `./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-1.0.0-es6.1.2.zip`
 

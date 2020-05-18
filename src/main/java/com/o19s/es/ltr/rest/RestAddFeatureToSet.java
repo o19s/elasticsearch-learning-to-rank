@@ -23,25 +23,30 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 
 import java.io.IOException;
 import java.util.List;
 
-public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
-    public RestAddFeatureToSet(RestController controller) {
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addfeatures/{query}", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addfeatures", this);
-        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addfeatures", this);
-    }
+public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
 
     @Override
     public String getName() {
         return "Add a feature to the set of features";
+    }
+
+    @Override
+    public List<Route> routes() {
+        return unmodifiableList(asList(
+                new Route(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addfeatures/{query}"),
+                new Route(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addfeatures/{query}"),
+                new Route(RestRequest.Method.POST, "/_ltr/_featureset/{name}/_addfeatures"),
+                new Route(RestRequest.Method.POST, "/_ltr/{store}/_featureset/{name}/_addfeatures")
+        ));
     }
 
     @Override

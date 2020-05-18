@@ -288,6 +288,7 @@ public class IndexFeatureStore implements FeatureStore {
                 .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-2")
                 .put(STORE_VERSION_PROP.getKey(), VERSION)
                 .put(IndexMetaData.SETTING_PRIORITY, Integer.MAX_VALUE)
+                .put(IndexMetaData.SETTING_INDEX_HIDDEN, true)
                 .put(Settings.builder()
                         .loadFromSource(readResourceFile(indexName, ANALYSIS_FILE), XContentType.JSON)
                         .build())

@@ -156,9 +156,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                              Supplier<DiscoveryNodes> nodesInCluster) {
         List<RestHandler> list = new ArrayList<>();
         RestSimpleFeatureStore.register(list, restController);
-        list.add(new RestFeatureStoreCaches(restController));
-        list.add(new RestCreateModelFromSet(restController));
-        list.add(new RestAddFeatureToSet(restController));
+        list.add(new RestFeatureStoreCaches());
+        list.add(new RestCreateModelFromSet());
+        list.add(new RestAddFeatureToSet());
         return unmodifiableList(list);
     }
 
@@ -221,7 +221,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                                NamedXContentRegistry xContentRegistry,
                                                Environment environment,
                                                NodeEnvironment nodeEnvironment,
-                                               NamedWriteableRegistry namedWriteableRegistry) {
+                                               NamedWriteableRegistry namedWriteableRegistry,
+                                               IndexNameExpressionResolver indexNameExpressionResolver) {
         clusterService.addListener(event -> {
             for (Index i : event.indicesDeleted()) {
                 if (IndexFeatureStore.isIndexStore(i.getName())) {
