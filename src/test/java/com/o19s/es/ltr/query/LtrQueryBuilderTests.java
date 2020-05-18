@@ -22,8 +22,6 @@ import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.Script;
@@ -197,18 +195,21 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     public void testMustRewrite() throws IOException {
         Script script = new Script(ScriptType.INLINE, "ranklib", simpleModel, Collections.emptyMap());
         List<QueryBuilder> features = new ArrayList<>();
+        QueryBuilder testedFtrRewritten = null;
         boolean mustRewrite = false;
         int idx = 0;
+        // WARNING - this test assumes MatchQueryBuilder does not rewrite,
+        // but that WrappedQueryBuilder does.
         if (randomBoolean()) {
             idx++;
-            features.add(new TermQueryBuilder("test", "test"));
+            features.add(new MatchQueryBuilder("test", "foo"));
         }
         if (randomBoolean()) {
             mustRewrite = true;
-            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "terms query feature").toString()));
+            features.add(new WrapperQueryBuilder(new MatchQueryBuilder("test", "foo3").toString()));
         }
         if (randomBoolean()) {
-            features.add(new TermQueryBuilder("test", "test"));
+            features.add(new MatchQueryBuilder("test", "foo2"));
         }
 
         LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
@@ -223,7 +224,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 if (!builder.features().isEmpty()) {
                     assertEquals(builder.features().size(), rewrite.features().size());
                     assertSame(builder.rankerScript(), rewrite.rankerScript());
-                    assertEquals(new TermsQueryBuilder("foo", "terms query feature"), rewrite.features().get(idx));
+                    assertEquals(new MatchQueryBuilder("test", "foo3"), rewrite.features().get(idx));
                 }
             } else {
                 assertSame(rewrite, builder);

@@ -26,7 +26,9 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryRewriteContext;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.Rewriteable;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -98,6 +100,23 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
         return new ExplorerQuery(query.toQuery(context), type);
+    }
+
+    @Override
+    protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
+        if (queryRewriteContext != null) {
+
+            ExplorerQueryBuilder rewritten = new ExplorerQueryBuilder();
+            rewritten.type = this.type;
+            rewritten.query = Rewriteable.rewrite(query, queryRewriteContext);
+            rewritten.boost(boost());
+            rewritten.queryName(queryName());
+
+            if (!rewritten.equals(this)) {
+                return rewritten;
+            }
+        }
+        return super.doRewrite(queryRewriteContext);
     }
 
     @Override
