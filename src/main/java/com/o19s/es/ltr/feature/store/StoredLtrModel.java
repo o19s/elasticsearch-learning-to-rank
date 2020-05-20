@@ -87,7 +87,7 @@ public class StoredLtrModel implements StorableElement {
         rankingModelType = input.readString();
         rankingModel = input.readString();
         modelAsString = input.readBoolean();
-        if (input.getVersion().onOrAfter(Version.V_7_6_2)) {
+        if (input.getVersion().onOrAfter(Version.V_7_7_0)) {
             this.parsedFtrNorms = new StoredFeatureNormalizers(input);
         } else {
             this.parsedFtrNorms = new StoredFeatureNormalizers();
@@ -101,7 +101,7 @@ public class StoredLtrModel implements StorableElement {
         out.writeString(rankingModelType);
         out.writeString(rankingModel);
         out.writeBoolean(modelAsString);
-        if (out.getVersion().onOrAfter(Version.V_7_6_2)) {
+        if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
             parsedFtrNorms.writeTo(out);
         }
     }
@@ -281,7 +281,7 @@ public class StoredLtrModel implements StorableElement {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
-            if (in.getVersion().onOrAfter(Version.V_7_6_2)) {
+            if (in.getVersion().onOrAfter(Version.V_7_7_0)) {
                 this.featureNormalizers = new StoredFeatureNormalizers(in);
             } else {
                 this.featureNormalizers = new StoredFeatureNormalizers();
@@ -293,7 +293,7 @@ public class StoredLtrModel implements StorableElement {
             out.writeString(type);
             out.writeString(definition);
             out.writeBoolean(modelAsString);
-            if (out.getVersion().onOrAfter(Version.V_7_6_2)) {
+            if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
                 this.featureNormalizers.writeTo(out);
             }
         }
