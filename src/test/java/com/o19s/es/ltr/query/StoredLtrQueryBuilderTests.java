@@ -25,6 +25,9 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
+import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
@@ -97,6 +100,11 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
         store.add(set);
         LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
+
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+        ftrNorms.put(2, new StandardFeatureNormalizer(1.0f,0.5f));
+        ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
+
         CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
         store.add(model);
     }
@@ -107,9 +115,9 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     @Override
     protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(store));
-        if (random().nextBoolean()) {
+        if (random().nextBoolean()) { // executing a model
             builder.modelName("model1");
-        } else {
+        } else { // logging
             builder.featureSetName("set1");
         }
         Map<String, Object> params = new HashMap<>();
@@ -186,6 +194,16 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
 
+        // Confirm each feature normalizer when evaluating a model
+        LtrRanker ranker = rquery.ranker();
+        if (queryBuilder.featureSetName() != null && queryBuilder.featureSetName().equals("set1")) {
+            assertThat(ranker, instanceOf(LinearRanker.class));
+        } else {
+            assertEquals(queryBuilder.modelName(), "model1");
+            assertThat(ranker, instanceOf(FeatureNormalizingRanker.class));
+        }
+
+        // Check each feature query
         assertTrue(ite.hasNext());
         Query featureQuery = ite.next();
         QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
@@ -200,7 +218,6 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         qcontext = createShardContext();
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
-
         assertTrue(ite.hasNext());
 
         featureQuery = ite.next();
@@ -212,7 +229,6 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
-        assertThat(rquery.ranker(), instanceOf(LinearRanker.class));
         assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
     }
 

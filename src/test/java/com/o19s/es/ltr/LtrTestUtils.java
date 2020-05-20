@@ -16,9 +16,15 @@
 
 package com.o19s.es.ltr;
 
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
+import com.o19s.es.ltr.feature.store.FeatureNormDefinition;
 import com.o19s.es.ltr.feature.store.MemStore;
+import com.o19s.es.ltr.feature.store.MinMaxFeatureNormDefinition;
+import com.o19s.es.ltr.feature.store.StandardFeatureNormDefinition;
 import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeatureSetParserTests;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
@@ -26,6 +32,8 @@ import com.o19s.es.ltr.query.StoredLtrQueryBuilder;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import org.apache.lucene.util.TestUtil;
@@ -36,6 +44,9 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -65,9 +76,13 @@ public class LtrTestUtils {
 
     public static CompiledLtrModel buildRandomModel() throws IOException {
         StoredFeatureSet set = StoredFeatureSetParserTests.buildRandomFeatureSet();
-        LtrRanker ranker;
-        ranker = buildRandomRanker(set.size());
-        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set, ranker);
+        Map<Integer, Normalizer> ftrNorms = randomFtrNorms(set).compileOrdToNorms(set);
+        LtrRanker ranker = buildRandomRanker(set.size());
+        if (ftrNorms.size() > 0) {
+            ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
+        }
+        return new CompiledLtrModel(TestUtil.randomSimpleString(random(), 5, 10), set,
+                                                                ranker);
     }
 
     public static StoredLtrModel randomLinearModel(String name, StoredFeatureSet set) throws IOException {
@@ -77,7 +92,38 @@ public class LtrTestUtils {
             builder.field(set.feature(i).name(), random().nextFloat());
         }
         builder.endObject();
-        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false);
+        return new StoredLtrModel(name, set, LinearRankerParser.TYPE, Strings.toString(builder), false, randomFtrNorms(set));
+    }
+
+    public static StoredFeatureNormalizers randomFtrNorms(FeatureSet set) {
+        final List<FeatureNormDefinition> ftrNormDefns = new ArrayList<>();
+
+        for (int i = 0; i < set.size(); i++) {
+
+            if (random().nextBoolean()) {
+                continue;
+            }
+            else {
+
+                Feature ftr = set.feature(i);
+
+                if (random().nextBoolean()) {
+                    StandardFeatureNormDefinition stdFtrNormDefn = new StandardFeatureNormDefinition(ftr.name());
+                    stdFtrNormDefn.setMean(random().nextFloat());
+                    stdFtrNormDefn.setStdDeviation(random().nextFloat());
+                    ftrNormDefns.add(stdFtrNormDefn);
+
+                } else {
+                    MinMaxFeatureNormDefinition minMaxFtrNormDefn = new MinMaxFeatureNormDefinition(ftr.name());
+                    minMaxFtrNormDefn.setMinimum(random().nextFloat());
+                    minMaxFtrNormDefn.setMaximum(1.01f + random().nextFloat());
+                    ftrNormDefns.add(minMaxFtrNormDefn);
+                }
+            }
+        }
+
+        StoredFeatureNormalizers ftrNorms = new StoredFeatureNormalizers(ftrNormDefns);
+        return ftrNorms;
     }
 
     public static LtrRanker buildRandomRanker(int fSize) {

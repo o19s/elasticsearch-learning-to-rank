@@ -76,7 +76,8 @@ public class RankerQuery extends Query {
      * @return the lucene query
      */
     public static RankerQuery build(PrebuiltLtrModel model) {
-        return build(model.ranker(), model.featureSet(), new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap());
+        return build(model.ranker(), model.featureSet(),
+                     new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap());
     }
 
     /**
@@ -91,7 +92,8 @@ public class RankerQuery extends Query {
         return build(model.ranker(), model.featureSet(), context, params);
     }
 
-    private static RankerQuery build(LtrRanker ranker, FeatureSet features, LtrQueryContext context, Map<String, Object> params) {
+    private static RankerQuery build(LtrRanker ranker, FeatureSet features,
+                                     LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features, ranker);
     }
@@ -99,14 +101,12 @@ public class RankerQuery extends Query {
     public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,
                                             LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
-        return new RankerQuery(queries, features, new LogLtrRanker(consumer, features.size()));
+        return new RankerQuery(queries, features,
+                               new LogLtrRanker(consumer, features.size()));
     }
 
-    public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer, boolean replaceWithNullRanker) {
-        LtrRanker newRanker = ranker;
-        if (replaceWithNullRanker && !(ranker instanceof NullRanker)) {
-            newRanker = new NullRanker(features.size());
-        }
+    public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer) {
+        NullRanker newRanker = new NullRanker(features.size());
         return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer));
     }
 
@@ -141,7 +141,6 @@ public class RankerQuery extends Query {
     Stream<Query> stream() {
         return queries.stream();
     }
-
     @Override
     public int hashCode() {
         return 31 * classHash() + Objects.hash(features, queries, ranker);
@@ -305,10 +304,9 @@ public class RankerQuery extends Query {
                     ordinal++;
                     // FIXME: Probably inefficient, again we loop over all scorers..
                     if (scorer.docID() == docID()) {
-                        float score = scorer.score();
                         // XXX: bold assumption that all models are dense
                         // do we need a some indirection to infer the featureId?
-                        fv.setFeatureScore(ordinal, score);
+                        fv.setFeatureScore(ordinal, scorer.score());
                     }
                 }
                 return ranker.score(fv);

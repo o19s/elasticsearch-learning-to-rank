@@ -21,6 +21,7 @@ import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
@@ -84,7 +85,8 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
                 IntStream.range(0, 5)
                         .mapToObj((i) -> "\"feature" + i + "\": " + random().nextFloat())
                         .collect(joining(",", "{", "}")),
-                true);
+                true,
+                new StoredFeatureNormalizers());
 
         int type = randomInt(2);
         switch (type) {
