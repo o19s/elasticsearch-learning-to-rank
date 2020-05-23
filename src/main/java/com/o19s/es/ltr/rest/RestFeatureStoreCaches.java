@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.rest;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
@@ -61,6 +62,10 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);
         } else {

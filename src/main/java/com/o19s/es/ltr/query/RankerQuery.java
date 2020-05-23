@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.query;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
@@ -171,6 +172,10 @@ public class RankerQuery extends Query {
 
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         if (!scoreMode.needsScores()) {
             // If scores are not needed simply return a constant score on all docs
             return new ConstantScoreWeight(this, boost) {

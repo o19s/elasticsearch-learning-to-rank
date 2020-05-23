@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.rest;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetRequestBuilder;
 import com.o19s.es.ltr.feature.FeatureValidation;
@@ -55,6 +56,10 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         String store = indexName(request);
         Long expectedVersion = null;
         if (request.hasParam("version")) {

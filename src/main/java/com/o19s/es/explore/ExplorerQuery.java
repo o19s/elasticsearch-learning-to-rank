@@ -16,6 +16,7 @@
 
 package com.o19s.es.explore;
 
+import com.o19s.es.ltr.LTRSettings;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -91,6 +92,10 @@ public class ExplorerQuery extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
             throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         if (!scoreMode.needsScores()) {
             return searcher.createWeight(query, scoreMode, boost);
         }

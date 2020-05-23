@@ -99,6 +99,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -205,11 +207,14 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     @Override
     public List<Setting<?>> getSettings() {
-        return unmodifiableList(asList(
+        List<Setting<?>> list1 = LTRSettings.getInstance().getSettings();
+        List<Setting<?>> list2 = asList(
                 IndexFeatureStore.STORE_VERSION_PROP,
                 Caches.LTR_CACHE_MEM_SETTING,
                 Caches.LTR_CACHE_EXPIRE_AFTER_READ,
-                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE));
+                Caches.LTR_CACHE_EXPIRE_AFTER_WRITE);
+
+        return unmodifiableList(Stream.concat(list1.stream(), list2.stream()).collect(Collectors.toList()));
     }
 
     @Override
@@ -230,6 +235,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
+        LTRSettings.getInstance().init(clusterService);
         return asList(caches, parserFactory);
     }
 

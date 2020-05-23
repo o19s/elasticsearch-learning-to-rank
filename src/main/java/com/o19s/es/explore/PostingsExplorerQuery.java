@@ -16,6 +16,7 @@
 
 package com.o19s.es.explore;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.utils.CheckedBiFunction;
 import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
@@ -78,6 +79,10 @@ public class PostingsExplorerQuery extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
             throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         IndexReaderContext context = searcher.getTopReaderContext();
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
         return new PostingsExplorerWeight(this, this.term, TermStates.build(context, this.term,

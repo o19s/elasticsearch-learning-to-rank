@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.rest;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetRequestBuilder;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -51,6 +52,10 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         String store = indexName(request);
         String setName = request.param("name");
         String routing = request.param("routing");

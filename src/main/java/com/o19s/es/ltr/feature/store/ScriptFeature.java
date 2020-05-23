@@ -1,5 +1,6 @@
 package com.o19s.es.ltr.feature.store;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
@@ -159,6 +160,10 @@ public class ScriptFeature implements Feature {
 
         @Override
         public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+            if (!LTRSettings.isLTRPluginEnabled()) {
+                throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+            }
+
             if (!scoreMode.needsScores()) {
                 return new MatchAllDocsQuery().createWeight(searcher, scoreMode, 1F);
             }

@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.feature;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
@@ -77,6 +78,10 @@ public class PrebuiltFeature extends Query implements Feature {
 
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        if (!LTRSettings.isLTRPluginEnabled()) {
+            throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+        }
+
         return query.createWeight(searcher, scoreMode, boost);
     }
 

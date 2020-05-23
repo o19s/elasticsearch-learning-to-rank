@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.rest;
 
+import com.o19s.es.ltr.LTRSettings;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
 import com.o19s.es.ltr.action.ListStoresAction;
@@ -104,6 +105,10 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
         @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+            if (!LTRSettings.isLTRPluginEnabled()) {
+                throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+            }
+
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.DELETE) {
                 return delete(client, type, indexName, request);
@@ -137,6 +142,10 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
         @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+            if (!LTRSettings.isLTRPluginEnabled()) {
+                throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+            }
+
             return search(client, type, indexName(request), request);
         }
     }
@@ -176,6 +185,10 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
          */
         @Override
         protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+            if (!LTRSettings.isLTRPluginEnabled()) {
+                throw new IllegalStateException("LTR plugin is disabled. To enable update ltr.plugin.enabled to true");
+            }
+
             String indexName = indexName(request);
             if (request.method() == RestRequest.Method.PUT) {
                 if (request.hasParam("store")) {
