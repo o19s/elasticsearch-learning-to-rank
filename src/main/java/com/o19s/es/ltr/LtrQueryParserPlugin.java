@@ -23,12 +23,14 @@ import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.CreateModelFromSetAction;
 import com.o19s.es.ltr.action.FeatureStoreAction;
+import com.o19s.es.ltr.action.LTRStatsAction;
 import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.action.TransportAddFeatureToSetAction;
 import com.o19s.es.ltr.action.TransportCacheStatsAction;
 import com.o19s.es.ltr.action.TransportClearCachesAction;
 import com.o19s.es.ltr.action.TransportCreateModelFromSetAction;
 import com.o19s.es.ltr.action.TransportFeatureStoreAction;
+import com.o19s.es.ltr.action.TransportLTRStatsAction;
 import com.o19s.es.ltr.action.TransportListStoresAction;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
@@ -53,7 +55,15 @@ import com.o19s.es.ltr.rest.RestSearchStoreElements;
 import com.o19s.es.ltr.rest.RestStoreManager;
 import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
+import com.o19s.es.ltr.rest.RestLTRStats;
+import com.o19s.es.ltr.stats.LTRStat;
+import com.o19s.es.ltr.stats.LTRStats;
+import com.o19s.es.ltr.stats.StatName;
+import com.o19s.es.ltr.stats.suppliers.CacheStatsOnNodeSupplier;
+import com.o19s.es.ltr.stats.suppliers.PluginHealthStatusSupplier;
+import com.o19s.es.ltr.stats.suppliers.StoreStatsSupplier;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import com.o19s.es.ltr.utils.StoreUtils;
 import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
@@ -100,16 +110,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
 
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin, AnalysisPlugin {
     private final LtrRankerParserFactory parserFactory;
     private final Caches caches;
+    private LTRStats ltrStats;
+    private Client client;
+    private ClusterService clusterService;
 
     public LtrQueryParserPlugin(Settings settings) {
         caches = new Caches(settings);
@@ -168,6 +184,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         list.add(new RestFeatureStoreCaches());
         list.add(new RestCreateModelFromSet());
         list.add(new RestAddFeatureToSet());
+        list.add(new RestLTRStats(ltrStats));
         return unmodifiableList(list);
     }
 
@@ -179,7 +196,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new ActionHandler<>(ClearCachesAction.INSTANCE, TransportClearCachesAction.class),
                 new ActionHandler<>(AddFeaturesToSetAction.INSTANCE, TransportAddFeatureToSetAction.class),
                 new ActionHandler<>(CreateModelFromSetAction.INSTANCE, TransportCreateModelFromSetAction.class),
-                new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class)));
+                new ActionHandler<>(ListStoresAction.INSTANCE, TransportListStoresAction.class),
+                new ActionHandler<>(LTRStatsAction.INSTANCE, TransportLTRStatsAction.class)));
     }
 
     @Override
@@ -240,7 +258,20 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
-        return asList(caches, parserFactory);
+        ltrStats = getStats();
+        return asList(caches, parserFactory, ltrStats);
+    }
+
+    private LTRStats getStats() {
+        Map<String, LTRStat<?>> stats = new HashMap<>();
+        StoreUtils storeUtils = new StoreUtils(client, clusterService);
+        stats.put(StatName.CACHE.getName(),
+                new LTRStat<>(false, new CacheStatsOnNodeSupplier(caches)));
+        stats.put(StatName.STORES.getName(),
+                new LTRStat<>(true, new StoreStatsSupplier(storeUtils)));
+        stats.put(StatName.PLUGIN_STATUS.getName(),
+                new LTRStat<>(true, new PluginHealthStatusSupplier(storeUtils)));
+        return new LTRStats(unmodifiableMap(stats));
     }
 
     protected FeatureStoreLoader getFeatureStoreLoader() {

@@ -170,4 +170,47 @@ public class LtrTestUtils {
     public static FeatureStoreLoader wrapMemStore(MemStore store) {
         return (storeName, client) -> store;
     }
+
+
+    public static String testFeatureSetString() {
+        return "{\n" +
+                "\"name\": \"movie_features\",\n" +
+                "\"type\": \"featureset\",\n" +
+                "\"featureset\": {\n" +
+                "    \"name\": \"movie_features\",\n" +
+                "    \"features\": [\n" +
+                "        {\n" +
+                "            \"name\": \"1\",\n" +
+                "            \"params\": [\n" +
+                "                \"keywords\"\n" +
+                "            ],\n" +
+                "            \"template_language\": \"mustache\",\n" +
+                "            \"template\": {\n" +
+                "                \"match\": {\n" +
+                "                    \"title\": \"{{keywords}}\"\n" +
+                "                }\n" +
+                "            }\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"name\": \"2\",\n" +
+                "            \"params\": [\n" +
+                "                \"keywords\"\n" +
+                "            ],\n" +
+                "            \"template_language\": \"mustache\",\n" +
+                "            \"template\": {\n" +
+                "                \"match\": {\n" +
+                "                    \"overview\": \"{{keywords}}\"\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}\n}";
+    }
+
+    public static String testModelString() {
+        return "{\n" +
+                "\"name\": \"movie_model\",\n" +
+                "\"type\": \"model\"" +
+                "\n}";
+    }
 }
