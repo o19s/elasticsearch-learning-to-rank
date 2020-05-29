@@ -4,7 +4,6 @@ import com.o19s.es.ltr.action.LTRStatsAction;
 import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesRequest;
 import com.o19s.es.ltr.stats.LTRStats;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
@@ -14,7 +13,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
@@ -57,48 +59,52 @@ public class RestLTRStats extends BaseRestHandler {
     }
 
     private LTRStatsNodesRequest getRequest(RestRequest request) {
-        Set<String> validStats = ltrStats.getStats().keySet();
-        LTRStatsNodesRequest ltrStatsRequest =
-                new LTRStatsNodesRequest(splitCommaSeparatedParam(request, "nodeId"));
+        LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(
+                splitCommaSeparatedParam(request, "nodeId").orElse(null));
         ltrStatsRequest.timeout(request.param("timeout"));
 
-        String[] stats = splitCommaSeparatedParam(request, "stat");
-        Set<String> statsSet = stats != null ? new HashSet<>(Arrays.asList(stats)) : Collections.emptySet();
+        List<String> requestedStats =
+                splitCommaSeparatedParam(request, "stat")
+                        .map(Arrays::asList)
+                        .orElseGet(Collections::emptyList);
 
-        if (isAllStatsRequested(statsSet)) {
+        Set<String> validStats = ltrStats.getStats().keySet();
+        if (isAllStatsRequested(requestedStats)) {
             ltrStatsRequest.addAll(validStats);
         } else {
-            if (statsSet.contains(LTRStatsNodesRequest.ALL_STATS_KEY)) {
-                throw new IllegalArgumentException(
-                        "Request " + request.path() + " contains " + LTRStatsNodesRequest.ALL_STATS_KEY + " and individual stats");
-            }
-            Set<String> invalidStats = new HashSet<>();
-            for (String stat : statsSet) {
-                if (validStats.contains(stat)) {
-                    ltrStatsRequest.addStat(stat);
-                } else {
-                    invalidStats.add(stat);
-                }
-            }
-            if (!invalidStats.isEmpty()) {
-                throw new IllegalArgumentException(
-                        unrecognized(request, invalidStats, ltrStatsRequest.getStatsToBeRetrieved(), "stat"));
-            }
+            ltrStatsRequest.addAll(getStatsToBeRetrieved(request, validStats, requestedStats));
         }
+
         return ltrStatsRequest;
     }
 
-    private boolean isAllStatsRequested(Set<String> statsSet) {
+    private Set<String> getStatsToBeRetrieved(
+            RestRequest request, Set<String> validStats, List<String> requestedStats) {
+        if (requestedStats.contains(LTRStatsNodesRequest.ALL_STATS_KEY)) {
+            throw new IllegalArgumentException(
+                    String.format(Locale.getDefault(), "Request %s contains both %s and individual stats",
+                            request.path(), LTRStatsNodesRequest.ALL_STATS_KEY));
+        }
+
+        Set<String> invalidStats =
+                requestedStats.stream()
+                        .filter(s -> !validStats.contains(s))
+                        .collect(Collectors.toSet());
+
+        if (!invalidStats.isEmpty()) {
+            throw new IllegalArgumentException(
+                    unrecognized(request, invalidStats, new HashSet<>(requestedStats), "stat"));
+        }
+        return new HashSet<>(requestedStats);
+    }
+
+    private boolean isAllStatsRequested(List<String> statsSet) {
         return statsSet.isEmpty()
                 || (statsSet.size() == 1 && statsSet.contains(LTRStatsNodesRequest.ALL_STATS_KEY));
     }
 
-    private String[] splitCommaSeparatedParam(RestRequest request, String paramName) {
-        String[] arr = null;
-        String str = request.param(paramName);
-        if (!Strings.isEmpty(str)) {
-            arr = str.split(",");
-        }
-        return arr;
+    private Optional<String[]> splitCommaSeparatedParam(RestRequest request, String paramName) {
+        return Optional.ofNullable(request.param(paramName))
+                .map(s -> s.split(","));
     }
 }
