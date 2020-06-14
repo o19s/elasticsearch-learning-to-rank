@@ -71,8 +71,8 @@ public class TermStatQueryTests extends LuceneTestCase {
 
     public void testQuery() throws Exception {
         String expr = "df";
-        AggrType aggr = AggrType.valueOf("MIN");
-        AggrType pos_aggr = AggrType.valueOf("MAX");
+        AggrType aggr = AggrType.MIN;
+        AggrType pos_aggr = AggrType.MAX;
 
         TermStatQuery tsq = new TermStatQuery(expr, aggr, pos_aggr, simpleTerms);
 
