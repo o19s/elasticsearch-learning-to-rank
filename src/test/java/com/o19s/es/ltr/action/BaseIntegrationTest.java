@@ -54,9 +54,10 @@ import static com.o19s.es.ltr.feature.store.ScriptFeature.FEATURE_VECTOR;
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
     public static final ScriptContext<ScoreScript.Factory> AGGS_CONTEXT = new ScriptContext<>("aggs", ScoreScript.Factory.class);
+
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class, InjectionScriptPlugin.class);
     }
 
     public void createStore(String name) throws Exception {
@@ -126,6 +127,77 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
         return response;
     }
 
+    /*
+        This is a mock scripting plugin to test out the injection behaviors of the ScriptFeature
+     */
+    public static class InjectionScriptPlugin extends Plugin implements ScriptPlugin {
+        public static final String FEATURE_EXTRACTOR = "feature_extractor";
+
+        @Override
+        public ScriptEngine getScriptEngine(Settings settings, Collection<ScriptContext<?>> contexts) {
+            return new ScriptEngine() {
+                /**
+                 * The language name used in the script APIs to refer to this scripting backend.
+                 */
+                @Override
+                public String getType() {
+                    return "inject";
+                }
+
+                /**
+                 * Compiles a script.
+                 *
+                 * @param scriptName   the name of the script. {@code null} if it is anonymous (inline).
+                 *                     For a stored script, its the identifier.
+                 * @param scriptSource    actual source of the script
+                 * @param context the context this script will be used for
+                 * @param params  compile-time parameters (such as flags to the compiler)
+                 * @return A compiled script of the FactoryType from {@link ScriptContext}
+                 */
+                @SuppressWarnings("unchecked")
+                @Override
+                public <FactoryType> FactoryType compile(String scriptName, String scriptSource,
+                                                         ScriptContext<FactoryType> context, Map<String, String> params) {
+                    if (!context.equals(ScoreScript.CONTEXT) && (!context.equals(AGGS_CONTEXT))) {
+                        throw new IllegalArgumentException(getType() + " scripts cannot be used for context [" + context.name
+                                + "]");
+                    }
+                    // we use the script "source" as the script identifier
+                    ScoreScript.Factory factory = (p, lookup) ->
+                            new ScoreScript.LeafFactory() {
+                                @Override
+                                public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
+                                    return new ScoreScript(p, lookup, ctx) {
+                                        @Override
+                                        public double execute(ExplanationHolder explainationHolder) {
+                                            // TODO: Placeholder, testing the inject loopback
+                                            if(p.containsKey("sample_inject")) {
+                                                return 5.0;
+                                            } else {
+                                                return 0.0;
+                                            }
+                                        }
+                                    };
+                                }
+
+                                @Override
+                                public boolean needs_score() {
+                                    return false;
+                                }
+                            };
+
+                    return context.factoryClazz.cast(factory);
+                }
+
+                @Override
+                public Set<ScriptContext<?>> getSupportedContexts() {
+                    return Collections.singleton(RankLibScriptEngine.CONTEXT);
+                }
+            };
+        }
+    }
+
+
     public static class NativeScriptPlugin extends Plugin implements ScriptPlugin {
         public static final String FEATURE_EXTRACTOR = "feature_extractor";
 
@@ -166,7 +238,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     final String dependentFeature;
                                     double extraMultiplier = 0.0d;
 
-                                    public static final String DEPDENDENT_FEATURE = "dependent_feature";
+                                    public static final String DEPENDENT_FEATURE = "dependent_feature";
                                     public static final String EXTRA_SCRIPT_PARAM = "extra_multiplier";
 
                                     {
@@ -176,14 +248,14 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         if (!p.containsKey(EXTRA_LOGGING)) {
                                             throw new IllegalArgumentException("Missing parameter [" + EXTRA_LOGGING + "]");
                                         }
-                                        if (!p.containsKey(DEPDENDENT_FEATURE)) {
+                                        if (!p.containsKey(DEPENDENT_FEATURE)) {
                                             throw new IllegalArgumentException("Missing parameter [depdendent_feature ]");
                                         }
                                         if (p.containsKey(EXTRA_SCRIPT_PARAM)) {
                                             extraMultiplier = Double.valueOf(p.get(EXTRA_SCRIPT_PARAM).toString());
                                         }
                                         featureSupplier = (Map<String, Float>) p.get(FEATURE_VECTOR);
-                                        dependentFeature = p.get(DEPDENDENT_FEATURE).toString();
+                                        dependentFeature = p.get(DEPENDENT_FEATURE).toString();
                                     }
 
                                     @Override

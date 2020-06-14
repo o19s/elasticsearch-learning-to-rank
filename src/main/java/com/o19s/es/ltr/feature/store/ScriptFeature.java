@@ -26,12 +26,7 @@ import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ScriptFeature implements Feature {
@@ -112,6 +107,22 @@ public class ScriptFeature implements Feature {
         FeatureSupplier supplier = new FeatureSupplier(featureSet);
         ExtraLoggingSupplier extraLoggingSupplier = new ExtraLoggingSupplier();
         Map<String, Object> nparams = new HashMap<>();
+
+        // Inject term stats if set
+        if (baseScriptParams.containsKey("term_stat")) {
+            // TODO: Is there a cleaner way of doing this cast?
+            @SuppressWarnings("unchecked")
+            HashMap<String, String> termspec = (HashMap<String, String>) baseScriptParams.get("term_stat");
+
+            // The key is the field name, the value is the key we use to pull the substitute out of params
+            Set<Term> terms = new HashSet<>();
+            for (Map.Entry<String, String> entry : termspec.entrySet()) {
+                terms.add(new Term(entry.getKey(), (String) queryTimeParams.get(entry.getValue())));
+            }
+
+            nparams.put("sample_inject", 5.0f);
+        }
+
         nparams.putAll(baseScriptParams);
         nparams.putAll(queryTimeParams);
         nparams.putAll(extraQueryTimeParams);
