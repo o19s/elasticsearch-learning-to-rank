@@ -23,8 +23,21 @@ public class StatisticsHelper {
     private float min = Float.MAX_VALUE;
     private float max = 0.0f;
 
-    public enum AggrTypes {
-        MAX, MIN, AVG, STDDEV
+    public enum AggrType {
+        AVG("avg"),
+        MAX("max"),
+        MIN("min"),
+        STDDEV("stddev");
+
+        private String type;
+
+        AggrType(String type){
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
     }
 
     public StatisticsHelper() {
@@ -97,7 +110,7 @@ public class StatisticsHelper {
         return (float) Math.sqrt(getVariance());
     }
 
-    public float getAggr(AggrTypes type) {
+    public float getAggr(AggrType type) {
         switch(type) {
             case AVG:
                 return getMean();

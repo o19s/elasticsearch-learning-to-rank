@@ -1,6 +1,7 @@
 package com.o19s.es.termstat;
 
-import com.o19s.es.termstat.TermStatQuery;
+import com.o19s.es.explore.StatisticsHelper.AggrType;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
@@ -11,8 +12,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
@@ -72,11 +71,10 @@ public class TermStatQueryTests extends LuceneTestCase {
 
     public void testQuery() throws Exception {
         String expr = "df";
-        String aggr = "min";
-        String pos_aggr = "max";
+        AggrType aggr = AggrType.valueOf("MIN");
+        AggrType pos_aggr = AggrType.valueOf("MAX");
 
         TermStatQuery tsq = new TermStatQuery(expr, aggr, pos_aggr, simpleTerms);
-
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);

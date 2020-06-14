@@ -10,7 +10,8 @@
  */
 package com.o19s.es.termstat;
 
-import com.o19s.es.explore.StatisticsHelper;
+import com.o19s.es.explore.StatisticsHelper.AggrType;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -18,11 +19,9 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
@@ -39,8 +38,8 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     private static final ParseField TERMS_NAME = new ParseField("terms");
 
     private String expr;
-    private String aggr;
-    private String pos_aggr;
+    private AggrType aggr;
+    private AggrType pos_aggr;
     private Set<Term> terms;
 
     public TermStatQueryBuilder() {
@@ -49,8 +48,8 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     public TermStatQueryBuilder(StreamInput in) throws IOException {
         super(in);
         expr = in.readString();
-        aggr = in.readString();
-        pos_aggr = in.readString();
+        aggr = AggrType.valueOf(in.readString().toUpperCase());
+        pos_aggr = AggrType.valueOf(in.readString().toUpperCase());
 
         // Read in all terms
         terms = new HashSet<Term>();
@@ -65,8 +64,8 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         float boost = 0.0f;
 
         String expr = null;
-        String aggr = null;
-        String pos_aggr = null;
+        AggrType aggr = null;
+        AggrType pos_aggr = null;
         String queryName = null;
         Set<Term> terms = new HashSet<>();
 
@@ -100,9 +99,9 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
                 if (EXPR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
                     expr = parser.text();
                 } else if(AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                    aggr = parser.text();
+                    aggr = AggrType.valueOf(parser.text().toUpperCase());
                 } else if(POS_AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                    pos_aggr = parser.text();
+                    pos_aggr = AggrType.valueOf(parser.text().toUpperCase());
                 } else if(AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     queryName = parser.text();
                 } else {
@@ -139,12 +138,12 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
         // Default aggr to mean if none specified
         if (builder.aggr == null) {
-            builder.aggr(StatisticsHelper.AggrTypes.AVG.toString().toLowerCase());
+            builder.aggr(AggrType.AVG);
         }
 
         // Default pos_aggr to mean if none specified
         if (builder.pos_aggr == null) {
-            builder.posAggr(StatisticsHelper.AggrTypes.AVG.toString().toLowerCase());
+            builder.posAggr(AggrType.AVG);
         }
 
         return builder;
@@ -153,8 +152,8 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     @Override
     protected void doWriteTo(StreamOutput out) throws IOException {
         out.writeString(expr);
-        out.writeString(aggr);
-        out.writeString(pos_aggr);
+        out.writeString(aggr.getType());
+        out.writeString(pos_aggr.getType());
 
         // Output all terms
         for (Term t : terms) {
@@ -210,20 +209,20 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         return this;
     }
 
-    public String aggr() {
+    public AggrType aggr() {
         return aggr;
     }
 
-    public TermStatQueryBuilder aggr(String aggr) {
+    public TermStatQueryBuilder aggr(AggrType aggr) {
         this.aggr = aggr;
         return this;
     }
 
-    public String posAggr() {
+    public AggrType posAggr() {
         return pos_aggr;
     }
 
-    public TermStatQueryBuilder posAggr(String pos_aggr) {
+    public TermStatQueryBuilder posAggr(AggrType pos_aggr) {
         this.pos_aggr = pos_aggr;
         return this;
     }

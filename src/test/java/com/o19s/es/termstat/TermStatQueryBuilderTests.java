@@ -1,13 +1,12 @@
 package com.o19s.es.termstat;
 
+import com.o19s.es.explore.StatisticsHelper.AggrType;
+
 import com.o19s.es.ltr.LtrQueryParserPlugin;
-import com.o19s.es.termstat.TermStatQuery;
-import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
@@ -31,8 +30,8 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
         Set<Term> terms = new HashSet<Term>();
         terms.add(new Term("text", "cow"));
         builder.expr("tf");
-        builder.aggr("avg");
-        builder.posAggr("avg");
+        builder.aggr(AggrType.AVG);
+        builder.posAggr(AggrType.AVG);
         builder.terms(terms);
 
         return builder;
@@ -51,8 +50,8 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
         TermStatQueryBuilder builder = (TermStatQueryBuilder) parseQuery(query);
 
         assertEquals(builder.expr(), "tf");
-        assertEquals(builder.aggr(), "min");
-        assertEquals(builder.posAggr(), "max");
+        assertEquals(builder.aggr().getType(), "min");
+        assertEquals(builder.posAggr().getType(), "max");
 
     }
 

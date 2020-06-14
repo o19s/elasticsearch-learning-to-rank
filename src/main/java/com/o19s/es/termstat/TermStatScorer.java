@@ -1,6 +1,7 @@
 package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper;
+import com.o19s.es.explore.StatisticsHelper.AggrType;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
@@ -26,18 +27,23 @@ public class TermStatScorer extends Scorer {
     private final DocIdSetIterator iter;
     private final Expression compiledExpression;
 
+    private AggrType aggr;
+    private AggrType posAggr;
+
     private final LeafReaderContext context;
     private final IndexSearcher searcher;
     private final Set<Term> terms;
     private final ScoreMode scoreMode;
 
-    public TermStatScorer(TermStatQuery.TermStatWeight weight, IndexSearcher searcher, LeafReaderContext context, Expression compiledExpression, Set<Term> terms, ScoreMode scoreMode) {
+    public TermStatScorer(TermStatQuery.TermStatWeight weight, IndexSearcher searcher, LeafReaderContext context, Expression compiledExpression, Set<Term> terms, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
         super(weight);
         this.context = context;
         this.compiledExpression = compiledExpression;
         this.searcher = searcher;
         this.terms = terms;
         this.scoreMode = scoreMode;
+        this.aggr = aggr;
+        this.posAggr = posAggr;
 
         this.iter = DocIdSetIterator.all(context.reader().maxDoc());
     }
@@ -96,8 +102,7 @@ public class TermStatScorer extends Scorer {
                     for (int i = 0; i < postingsEnum.freq(); i++) {
                         positions.add((float) postingsEnum.nextPosition() + 1);
                     }
-                    // TODO: Add modifier support for positions
-                    tp_stats.add(positions.getMean());
+                    tp_stats.add(positions.getAggr(posAggr));
                 } else {
                     tp_stats.add(0.0f);
                 }
@@ -133,8 +138,7 @@ public class TermStatScorer extends Scorer {
             computed.add((float) values.doubleValue());
         }
 
-        // TODO: Stat type needs to be a parameter
-        return computed.getMean();
+        return computed.getAggr(aggr);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.o19s.es.termstat;
 
+import com.o19s.es.explore.StatisticsHelper;
+import com.o19s.es.explore.StatisticsHelper.AggrType;
 import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.IndexReader;
@@ -13,20 +15,19 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class TermStatQuery extends Query {
     private String expr;
-    private String aggr;
-    private String pos_aggr;
+    private StatisticsHelper.AggrType aggr;
+    private StatisticsHelper.AggrType posAggr;
     private Set<Term> terms;
 
-    public TermStatQuery(String expr, String aggr, String pos_aggr, Set<Term> terms) {
+    public TermStatQuery(String expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
         this.expr = expr;
         this.aggr = aggr;
-        this.pos_aggr = pos_aggr;
+        this.posAggr = posAggr;
         this.terms = terms;
     }
 
@@ -34,8 +35,8 @@ public class TermStatQuery extends Query {
     public String getExpr() {
         return this.expr;
     }
-    public String getAggr() { return this.aggr; }
-    public String getPosAggr() { return this.pos_aggr; }
+    public AggrType getAggr() { return this.aggr; }
+    public AggrType getPosAggr() { return this.posAggr; }
     public Set<Term> getTerms() { return this.terms; }
 
 
@@ -49,7 +50,7 @@ public class TermStatQuery extends Query {
     private boolean equalsTo(TermStatQuery other) {
         return Objects.equals(expr, other.expr)
                 && Objects.equals(aggr, other.aggr)
-                && Objects.equals(pos_aggr, other.pos_aggr)
+                && Objects.equals(posAggr, other.posAggr)
                 && Objects.equals(terms, other.terms);
     }
 
@@ -59,7 +60,7 @@ public class TermStatQuery extends Query {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(expr, aggr, pos_aggr, terms); }
+    public int hashCode() { return Objects.hash(expr, aggr, posAggr, terms); }
 
     @Override
     public String toString(String field) {
@@ -71,7 +72,7 @@ public class TermStatQuery extends Query {
             throws IOException {
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
 
-        return new TermStatWeight(searcher, this, terms, scoreMode);
+        return new TermStatWeight(searcher, this, terms, scoreMode, aggr, posAggr);
     }
 
     static class TermStatWeight extends Weight {
@@ -80,12 +81,17 @@ public class TermStatQuery extends Query {
         private final Set<Term> terms;
         private final ScoreMode scoreMode;
 
-        TermStatWeight(IndexSearcher searcher, TermStatQuery query, Set<Term> terms, ScoreMode scoreMode) {
+        private AggrType aggr;
+        private AggrType posAggr;
+
+        TermStatWeight(IndexSearcher searcher, TermStatQuery query, Set<Term> terms, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
             super(query);
             this.searcher = searcher;
             this.expression = query.expr;
             this.terms = terms;
             this.scoreMode = scoreMode;
+            this.aggr = aggr;
+            this.posAggr = posAggr;
         }
 
         @Override
@@ -105,7 +111,7 @@ public class TermStatQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Expression compiledExpression = (Expression) Scripting.compile(this.expression);
-            return new TermStatScorer(this, searcher, context, compiledExpression, terms, scoreMode);
+            return new TermStatScorer(this, searcher, context, compiledExpression, terms, scoreMode, aggr, posAggr);
         }
 
         @Override
