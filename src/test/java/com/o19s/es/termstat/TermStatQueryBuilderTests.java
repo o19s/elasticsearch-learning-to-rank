@@ -3,6 +3,7 @@ package com.o19s.es.termstat;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.termstat.TermStatQuery;
 import com.o19s.es.termstat.TermStatQueryBuilder;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.QueryShardContext;
@@ -13,6 +14,8 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -24,47 +27,41 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
     @Override
     protected TermStatQueryBuilder doCreateTestQueryBuilder() {
         TermStatQueryBuilder builder = new TermStatQueryBuilder();
-        builder.query(new TermQueryBuilder("foo", "bar"));
-        builder.expr("1.0");
+
+        Set<Term> terms = new HashSet<Term>();
+        terms.add(new Term("text", "cow"));
+        builder.expr("tf");
+        builder.aggr("avg");
+        builder.posAggr("avg");
+        builder.terms(terms);
+
         return builder;
     }
 
     public void testParse() throws Exception {
         String query = " {" +
                 "  \"term_stat\": {" +
-                "    \"query\": {" +
-                "      \"match\": {" +
-                "        \"title\": \"test\"" +
-                "      }" +
-                "    }," +
-                "   \"expr\": \"1.0\"" +
+                "   \"expr\": \"tf\"" +
+                "   \"aggr\": \"min\"" +
+                "   \"pos_aggr\": \"max\"" +
+                "   \"terms\": {}" +
                 "  }" +
                 "}";
 
         TermStatQueryBuilder builder = (TermStatQueryBuilder) parseQuery(query);
 
-        assertNotNull(builder.query());
-        assertEquals(builder.expr(), "1.0");
-    }
+        assertEquals(builder.expr(), "tf");
+        assertEquals(builder.aggr(), "min");
+        assertEquals(builder.posAggr(), "max");
 
-    public void testMissingQuery() throws Exception {
-        String query = " {" +
-                "  \"term_stat\": {" +
-                "   \"expr\": \"1.0\"" +
-                "  }" +
-                "}";
-
-        expectThrows(ParsingException.class, () -> parseQuery(query));
     }
 
     public void testMissingExpr() throws Exception {
         String query = " {" +
                 "  \"term_stat\": {" +
-                "    \"query\": {" +
-                "      \"match\": {" +
-                "        \"title\": \"test\"" +
-                "      }" +
-                "    }" +
+                "   \"aggr\": \"min\"" +
+                "   \"pos_aggr\": \"max\"" +
+                "   \"terms\": {}" +
                 "  }" +
                 "}";
 

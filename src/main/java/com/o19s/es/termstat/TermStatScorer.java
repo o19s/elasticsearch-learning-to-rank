@@ -86,17 +86,24 @@ public class TermStatScorer extends Scorer {
             TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
             termsEnum.seekExact(term.bytes(), state);
             postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.ALL);
-            postingsEnum.advance(docID());
-            tf_stats.add(postingsEnum.freq());
 
-            if(postingsEnum.freq() > 0) {
-                StatisticsHelper positions = new StatisticsHelper();
-                for (int i = 0; i < postingsEnum.freq(); i++) {
-                    positions.add((float) postingsEnum.nextPosition() + 1);
+            // Verify document is in postings
+            if (postingsEnum.advance(docID()) == docID()){
+                tf_stats.add(postingsEnum.freq());
+
+                if(postingsEnum.freq() > 0) {
+                    StatisticsHelper positions = new StatisticsHelper();
+                    for (int i = 0; i < postingsEnum.freq(); i++) {
+                        positions.add((float) postingsEnum.nextPosition() + 1);
+                    }
+                    // TODO: Add modifier support for positions
+                    tp_stats.add(positions.getMean());
+                } else {
+                    tp_stats.add(0.0f);
                 }
-                // TODO: Add modifier support for positions
-                tp_stats.add(positions.getMean());
+            // If document isn't in postings default to 0 for tf/tp
             } else {
+                tf_stats.add(0.0f);
                 tp_stats.add(0.0f);
             }
         }

@@ -18,22 +18,26 @@ import java.util.Objects;
 import java.util.Set;
 
 public class TermStatQuery extends Query {
-    private final Query query;
     private String expr;
+    private String aggr;
+    private String pos_aggr;
+    private Set<Term> terms;
 
-    public TermStatQuery(Query query, String expr) {
-        this.query = query;
+    public TermStatQuery(String expr, String aggr, String pos_aggr, Set<Term> terms) {
         this.expr = expr;
+        this.aggr = aggr;
+        this.pos_aggr = pos_aggr;
+        this.terms = terms;
     }
 
-
-    public Query getQuery() {
-        return this.query;
-    }
 
     public String getExpr() {
         return this.expr;
     }
+    public String getAggr() { return this.aggr; }
+    public String getPosAggr() { return this.pos_aggr; }
+    public Set<Term> getTerms() { return this.terms; }
+
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -43,8 +47,10 @@ public class TermStatQuery extends Query {
     }
 
     private boolean equalsTo(TermStatQuery other) {
-        return Objects.equals(query, other.query)
-                && Objects.equals(expr, other.expr);
+        return Objects.equals(expr, other.expr)
+                && Objects.equals(aggr, other.aggr)
+                && Objects.equals(pos_aggr, other.pos_aggr)
+                && Objects.equals(terms, other.terms);
     }
 
     @Override
@@ -53,23 +59,19 @@ public class TermStatQuery extends Query {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(query, expr); }
+    public int hashCode() { return Objects.hash(expr, aggr, pos_aggr, terms); }
+
+    @Override
+    public String toString(String field) {
+        return null;
+    }
 
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
             throws IOException {
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
 
-        // TODO: Parse terms from a param, basic whitespace tokenizer?
-        HashSet<Term> terms = new HashSet<>();
-        terms.add(new Term("text", "cow"));
-
-
         return new TermStatWeight(searcher, this, terms, scoreMode);
-    }
-
-    public String toString(String field) {
-        return query.toString(field);
     }
 
     static class TermStatWeight extends Weight {

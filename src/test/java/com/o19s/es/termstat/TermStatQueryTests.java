@@ -21,6 +21,9 @@ import org.elasticsearch.common.lucene.Lucene;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.hamcrest.Matchers.equalTo;
 
 public class TermStatQueryTests extends LuceneTestCase {
@@ -28,6 +31,7 @@ public class TermStatQueryTests extends LuceneTestCase {
     private IndexReader reader;
     private IndexSearcher searcher;
 
+    private Set<Term> simpleTerms = new HashSet<Term>();
     // Some simple documents to index
     private final String[] docs = new String[] {
             "how now brown cow",
@@ -53,6 +57,8 @@ public class TermStatQueryTests extends LuceneTestCase {
 
         reader = DirectoryReader.open(dir);
         searcher = new IndexSearcher(reader);
+
+        simpleTerms.add(new Term("text", "cow"));
     }
 
     @After
@@ -65,14 +71,16 @@ public class TermStatQueryTests extends LuceneTestCase {
     }
 
     public void testQuery() throws Exception {
-        Query q = new TermQuery(new Term("text", "cow"));
-        String expr = "tp";
-        TermStatQuery tsq = new TermStatQuery(q, expr);
+        String expr = "df";
+        String aggr = "min";
+        String pos_aggr = "max";
+
+        TermStatQuery tsq = new TermStatQuery(expr, aggr, pos_aggr, simpleTerms);
 
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
         Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
-        assertThat(explanation.toString().trim(), equalTo("4.0 = weight(" + expr + " in doc 0)"));
+        assertThat(explanation.toString().trim(), equalTo("2.0 = weight(" + expr + " in doc 0)"));
     }
 }

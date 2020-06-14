@@ -23,6 +23,10 @@ public class StatisticsHelper {
     private float min = Float.MAX_VALUE;
     private float max = 0.0f;
 
+    public enum AggrTypes {
+        MAX, MIN, AVG, STDDEV
+    }
+
     public StatisticsHelper() {
 
     }
@@ -91,5 +95,20 @@ public class StatisticsHelper {
         assert !data.isEmpty();
 
         return (float) Math.sqrt(getVariance());
+    }
+
+    public float getAggr(AggrTypes type) {
+        switch(type) {
+            case AVG:
+                return getMean();
+            case MAX:
+                return getMax();
+            case MIN:
+                return getMin();
+            case STDDEV:
+                return getStdDev();
+            default:
+                return 0.0f;
+        }
     }
 }
