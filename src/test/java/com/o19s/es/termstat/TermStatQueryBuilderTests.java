@@ -41,9 +41,9 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
     public void testParse() throws Exception {
         String query = " {" +
                 "  \"term_stat\": {" +
-                "   \"expr\": \"tf\"" +
-                "   \"aggr\": \"min\"" +
-                "   \"pos_aggr\": \"max\"" +
+                "   \"expr\": \"tf\"," +
+                "   \"aggr\": \"min\"," +
+                "   \"pos_aggr\": \"max\"," +
                 "   \"terms\": {}" +
                 "  }" +
                 "}";
@@ -59,8 +59,8 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
     public void testMissingExpr() throws Exception {
         String query = " {" +
                 "  \"term_stat\": {" +
-                "   \"aggr\": \"min\"" +
-                "   \"pos_aggr\": \"max\"" +
+                "   \"aggr\": \"min\"," +
+                "   \"pos_aggr\": \"max\"," +
                 "   \"terms\": {}" +
                 "  }" +
                 "}";

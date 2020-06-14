@@ -62,28 +62,59 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     public static TermStatQueryBuilder fromXContent(XContentParser parser) throws IOException {
+        float boost = 0.0f;
+
         String expr = null;
         String aggr = null;
         String pos_aggr = null;
-        Set<Term> terms = null;
+        String queryName = null;
+        Set<Term> terms = new HashSet<>();
 
         String currentFieldName = null;
         XContentParser.Token token;
+        // TODO: Can we just use the simpler ObjectParser method here? Revisit after playing with the terms DSL
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            // Read in current field name inside the main object
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
+            // Parse an object
             } else if (token == XContentParser.Token.START_OBJECT) {
                 while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-                    if (EXPR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                        expr = parser.text();
-                    } else if(AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                        aggr = parser.text();
-                    } else if(POS_AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                        pos_aggr = parser.text();
-                    } else if (TERMS_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                        // TODO: How to avoid DRY when parsing terms...
-                        // terms = TermParser.parseTerms(parser); // would this work?
+                    if (TERMS_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
+                        try {
+                            String fieldName = parser.currentName();
+                            parser.nextToken();
+                            String termText = parser.text();
+                            terms.add(new Term(fieldName, termText));
+                        } catch (Exception ex) {
+                            throw new ParsingException(parser.getTokenLocation(),
+                                    "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]");
+                        }
+                    } else {
+                        throw new ParsingException(parser.getTokenLocation(),
+                                "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]");
                     }
+                }
+            // Parse out value strings
+            } else if (token == XContentParser.Token.VALUE_STRING) {
+                if (EXPR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    expr = parser.text();
+                } else if(AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    aggr = parser.text();
+                } else if(POS_AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    pos_aggr = parser.text();
+                } else if(AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
+                    queryName = parser.text();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(),
+                            "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]");
+                }
+            } else if (token == XContentParser.Token.VALUE_NUMBER) {
+                if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
+                    boost = parser.floatValue();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(),
+                            "[" + NAME + "] unknown token [" + token + "] after [" + currentFieldName + "]");
                 }
             }
         }
@@ -92,8 +123,10 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         builder
             .expr(expr)
             .aggr(aggr)
-            .posAggr(aggr)
-            .terms(terms);
+            .posAggr(pos_aggr)
+            .terms(terms)
+            .queryName(queryName)
+            .boost(boost);
 
 
         if (builder.expr == null) {
@@ -203,7 +236,4 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         this.terms = terms;
         return this;
     }
-
-
-
 }
