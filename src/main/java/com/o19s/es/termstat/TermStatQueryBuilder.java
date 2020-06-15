@@ -1,13 +1,3 @@
-/*
-    4/22/2020: DLW - Trying to take better notes of my progress.  This sets up a new query builder
-    that utilizes a query and an expression string.
-
-    I may need to update how the expression is parsed. Treating it as a string in this layer for now.
-
-    TODO:
-    - Replace query object with a list of terms, sticking with query now as I'm building off the
-    explorer query code with plans of modifying later.
- */
 package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper.AggrType;
