@@ -121,6 +121,11 @@
                 definition:
                     feature1: 1.2
                     feature2: 0.2
+                feature_normalizers:
+                  feature1:
+                    standard:
+                      standard_deviation: 0.2
+                      mean: 0.5
 
   - match: { _index:   .ltrstore_mystore }
   - match: { _id:      model-my_model }
@@ -133,6 +138,8 @@
 
   - match: { _source.name: my_model }
   - match: { _source.model.model.definition.feature1: 1.2 }
+  - match: { _source.model.model.feature_normalizers.feature1.standard.standard_deviation: 0.2 }
+  - match: { _source.model.model.feature_normalizers.feature1.standard.mean: 0.5 }
 
   - do:
         catch: /Element of type \[model\] are not updatable, please create a new one instead./

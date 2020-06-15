@@ -19,6 +19,7 @@ package com.o19s.es.ltr.feature.store.index;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.StoredFeature;
+import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.apache.lucene.util.BytesRef;
@@ -54,7 +55,8 @@ public class IndexFeatureStoreTests extends LuceneTestCase {
                 LtrTestUtils.randomFeatureSet(),
                 randomSimpleString(random(), 5, 10),
                 randomRealisticUnicodeString(random(), 5, 1000),
-                true));
+                true,
+                new StoredFeatureNormalizers()));
     }
 
     public void testIsIndexName() {
