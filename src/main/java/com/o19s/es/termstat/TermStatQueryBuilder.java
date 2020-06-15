@@ -16,6 +16,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -38,8 +39,8 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     public TermStatQueryBuilder(StreamInput in) throws IOException {
         super(in);
         expr = in.readString();
-        aggr = AggrType.valueOf(in.readString().toUpperCase());
-        pos_aggr = AggrType.valueOf(in.readString().toUpperCase());
+        aggr = AggrType.valueOf(in.readString().toUpperCase(Locale.getDefault()));
+        pos_aggr = AggrType.valueOf(in.readString().toUpperCase(Locale.getDefault()));
 
         // Read in all terms
         terms = new HashSet<Term>();
@@ -89,9 +90,9 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
                 if (EXPR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
                     expr = parser.text();
                 } else if(AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                    aggr = AggrType.valueOf(parser.text().toUpperCase());
+                    aggr = AggrType.valueOf(parser.text().toUpperCase(Locale.getDefault()));
                 } else if(POS_AGGR_NAME.match(currentFieldName, parser.getDeprecationHandler())) {
-                    pos_aggr = AggrType.valueOf(parser.text().toUpperCase());
+                    pos_aggr = AggrType.valueOf(parser.text().toUpperCase(Locale.getDefault()));
                 } else if(AbstractQueryBuilder.NAME_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
                     queryName = parser.text();
                 } else {

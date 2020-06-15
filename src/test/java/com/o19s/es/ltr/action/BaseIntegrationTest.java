@@ -40,7 +40,13 @@ import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
@@ -168,7 +174,8 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         public double execute(ExplanationHolder explainationHolder) {
                                             // For testing purposes just look for the "terms" key and see if stats were injected
                                             if(p.containsKey("terms")) {
-                                                AbstractMap<String, ArrayList<Float>> termStats = (AbstractMap<String, ArrayList<Float>>) p.get("terms");
+                                                AbstractMap<String, ArrayList<Float>> termStats = (AbstractMap<String,
+                                                        ArrayList<Float>>) p.get("terms");
                                                 ArrayList<Float> dfStats = termStats.get("df");
                                                 return dfStats.size() > 0 ? dfStats.get(0) : 0.0;
                                             } else {
