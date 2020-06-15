@@ -35,7 +35,14 @@ public class TermStatScorer extends Scorer {
     private final Set<Term> terms;
     private final ScoreMode scoreMode;
 
-    public TermStatScorer(TermStatQuery.TermStatWeight weight, IndexSearcher searcher, LeafReaderContext context, Expression compiledExpression, Set<Term> terms, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
+    public TermStatScorer(TermStatQuery.TermStatWeight weight,
+                          IndexSearcher searcher,
+                          LeafReaderContext context,
+                          Expression compiledExpression,
+                          Set<Term> terms,
+                          ScoreMode scoreMode,
+                          AggrType aggr,
+                          AggrType posAggr) {
         super(weight);
         this.context = context;
         this.compiledExpression = compiledExpression;

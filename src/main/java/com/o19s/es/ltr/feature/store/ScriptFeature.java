@@ -27,7 +27,13 @@ import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ScriptFeature implements Feature {
@@ -149,7 +155,11 @@ public class ScriptFeature implements Feature {
         private final TermStatSupplier termStatSupplier;
         private final Set<Term> terms;
 
-        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier, ExtraLoggingSupplier extraLoggingSupplier, TermStatSupplier termStatSupplier, Set<Term> terms) {
+        LtrScript(ScriptScoreFunction function,
+                  FeatureSupplier supplier,
+                  ExtraLoggingSupplier extraLoggingSupplier,
+                  TermStatSupplier termStatSupplier,
+                  Set<Term> terms) {
             this.function = function;
             this.supplier = supplier;
             this.extraLoggingSupplier = extraLoggingSupplier;
@@ -205,7 +215,11 @@ public class ScriptFeature implements Feature {
         private final TermStatSupplier termStatSupplier;
         private final Set<Term> terms;
 
-        LtrScriptWeight(Query query, ScriptScoreFunction function, TermStatSupplier termStatSupplier, Set<Term> terms, IndexSearcher searcher, ScoreMode scoreMode) {
+        LtrScriptWeight(Query query, ScriptScoreFunction function,
+                        TermStatSupplier termStatSupplier,
+                        Set<Term> terms,
+                        IndexSearcher searcher,
+                        ScoreMode scoreMode) {
             super(query);
             this.function = function;
             this.termStatSupplier = termStatSupplier;

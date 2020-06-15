@@ -2,14 +2,26 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.ReaderUtil;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.TermState;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 
 public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
@@ -27,7 +39,9 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
         this.tp_stats = new StatisticsHelper();
     }
 
-    public void bump (IndexSearcher searcher, LeafReaderContext context, int docID, Set<Term> terms, ScoreMode scoreMode) throws IOException {
+    public void bump (IndexSearcher searcher, LeafReaderContext context,
+                      int docID, Set<Term> terms,
+                      ScoreMode scoreMode) throws IOException {
         df_stats.getData().clear();
         idf_stats.getData().clear();
         tf_stats.getData().clear();
