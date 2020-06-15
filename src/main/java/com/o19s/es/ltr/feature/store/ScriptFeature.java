@@ -6,6 +6,7 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.LtrRewritableQuery;
 import com.o19s.es.ltr.query.LtrRewriteContext;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
+import com.o19s.es.termstat.TermStatSupplier;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
     public static final String FEATURE_VECTOR = "feature_vector";
+    public static final String TERM_STAT = "terms";
     public static final String EXTRA_LOGGING = "extra_logging";
     public static final String EXTRA_SCRIPT_PARAMS = "extra_script_params";
 
@@ -106,21 +108,22 @@ public class ScriptFeature implements Feature {
 
         FeatureSupplier supplier = new FeatureSupplier(featureSet);
         ExtraLoggingSupplier extraLoggingSupplier = new ExtraLoggingSupplier();
+        TermStatSupplier termstatSupplier = new TermStatSupplier();
         Map<String, Object> nparams = new HashMap<>();
 
-        // Inject term stats if set
+        // Parse terms if set
+        Set<Term> terms = new HashSet<>();
         if (baseScriptParams.containsKey("term_stat")) {
             // TODO: Is there a cleaner way of doing this cast?
             @SuppressWarnings("unchecked")
             HashMap<String, String> termspec = (HashMap<String, String>) baseScriptParams.get("term_stat");
 
             // The key is the field name, the value is the key we use to pull the substitute out of params
-            Set<Term> terms = new HashSet<>();
             for (Map.Entry<String, String> entry : termspec.entrySet()) {
                 terms.add(new Term(entry.getKey(), (String) queryTimeParams.get(entry.getValue())));
             }
 
-            nparams.put("sample_inject", 5.0f);
+            nparams.put(TERM_STAT, termstatSupplier);
         }
 
         nparams.putAll(baseScriptParams);
@@ -136,17 +139,22 @@ public class ScriptFeature implements Feature {
                 context.getQueryShardContext().index().getName(),
                 context.getQueryShardContext().getShardId(),
                 context.getQueryShardContext().indexVersionCreated());
-        return new LtrScript(function, supplier, extraLoggingSupplier);
+        return new LtrScript(function, supplier, extraLoggingSupplier, termstatSupplier, terms);
     }
 
     static class LtrScript extends Query implements LtrRewritableQuery {
         private final ScriptScoreFunction function;
         private final FeatureSupplier supplier;
         private final ExtraLoggingSupplier extraLoggingSupplier;
-        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier, ExtraLoggingSupplier extraLoggingSupplier) {
+        private final TermStatSupplier termStatSupplier;
+        private final Set<Term> terms;
+
+        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier, ExtraLoggingSupplier extraLoggingSupplier, TermStatSupplier termStatSupplier, Set<Term> terms) {
             this.function = function;
             this.supplier = supplier;
             this.extraLoggingSupplier = extraLoggingSupplier;
+            this.termStatSupplier = termStatSupplier;
+            this.terms = terms;
         }
 
         @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -173,7 +181,7 @@ public class ScriptFeature implements Feature {
             if (!scoreMode.needsScores()) {
                 return new MatchAllDocsQuery().createWeight(searcher, scoreMode, 1F);
             }
-            return new LtrScriptWeight(this, this.function);
+            return new LtrScriptWeight(this, this.function, termStatSupplier, terms, searcher, scoreMode);
         }
 
         @Override
@@ -191,11 +199,19 @@ public class ScriptFeature implements Feature {
     }
 
     static class LtrScriptWeight extends Weight {
+        private final IndexSearcher searcher;
+        private final ScoreMode scoreMode;
         private final ScriptScoreFunction function;
+        private final TermStatSupplier termStatSupplier;
+        private final Set<Term> terms;
 
-        LtrScriptWeight(Query query, ScriptScoreFunction function) {
+        LtrScriptWeight(Query query, ScriptScoreFunction function, TermStatSupplier termStatSupplier, Set<Term> terms, IndexSearcher searcher, ScoreMode scoreMode) {
             super(query);
             this.function = function;
+            this.termStatSupplier = termStatSupplier;
+            this.terms = terms;
+            this.searcher = searcher;
+            this.scoreMode = scoreMode;
         }
 
         @Override
@@ -215,6 +231,11 @@ public class ScriptFeature implements Feature {
 
                 @Override
                 public float score() throws IOException {
+                    // Do the terms magic if the user asked for it
+                    if (terms.size() > 0) {
+                        termStatSupplier.bump(searcher, context, docID(), terms, scoreMode);
+                    }
+
                     return (float) leafScoreFunction.score(iterator.docID(), 0F);
                 }
 
