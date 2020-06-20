@@ -106,8 +106,8 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         RankerQuery query2 = buildQuery("bar");
         LoggingFetchSubPhase.HitLogConsumer logger1 = new LoggingFetchSubPhase.HitLogConsumer("logger1", query1.featureSet(), true);
         LoggingFetchSubPhase.HitLogConsumer logger2 = new LoggingFetchSubPhase.HitLogConsumer("logger2", query2.featureSet(), false);
-        query1 = query1.toLoggerQuery(logger1, true);
-        query2 = query2.toLoggerQuery(logger2, true);
+        query1 = query1.toLoggerQuery(logger1);
+        query2 = query2.toLoggerQuery(logger2);
         BooleanQuery query = new BooleanQuery.Builder()
                 .add(new BooleanClause(query1, BooleanClause.Occur.MUST))
                 .add(new BooleanClause(query2, BooleanClause.Occur.MUST))

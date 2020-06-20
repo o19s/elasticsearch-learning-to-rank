@@ -30,6 +30,7 @@ public final class Suppliers {
 
     /**
      * @param supplier the original supplier to store
+     * @param <E> the supplied type
      * @return a supplier storing and returning the same instance
      */
     public static <E> Supplier<E> memoize(Supplier<E> supplier) {

@@ -20,10 +20,11 @@ import java.util.Map;
 
 public class LogLtrRanker implements LtrRanker {
     private final LogConsumer logger;
-    private final LtrRanker ranker;
+    private final NullRanker ranker;
 
-    public LogLtrRanker(LtrRanker ranker, LogConsumer consumer) {
+    public LogLtrRanker(NullRanker ranker, LogConsumer consumer) {
         this.ranker = ranker;
+        assert(this.ranker.getClass() == NullRanker.class);
         this.logger = consumer;
     }
 

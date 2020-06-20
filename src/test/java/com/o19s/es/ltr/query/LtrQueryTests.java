@@ -24,11 +24,15 @@ import ciir.umass.edu.learning.RankerFactory;
 import ciir.umass.edu.learning.RankerTrainer;
 import ciir.umass.edu.metric.NDCGScorer;
 import ciir.umass.edu.utilities.MyThreadPool;
+import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
+import com.o19s.es.ltr.ranker.normalizer.Normalizer;
+import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.ranklib.DenseProgramaticDataPoint;
 import com.o19s.es.ltr.ranker.ranklib.RanklibRanker;
 import org.apache.lucene.document.Document;
@@ -90,9 +94,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-/**
- * Created by doug on 12/24/16.
- */
+
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "RankURL does this when training models... ")
 public class LtrQueryTests extends LuceneTestCase {
     // Number of ULPs allowed when checking scores equality
@@ -163,11 +165,16 @@ public class LtrQueryTests extends LuceneTestCase {
         searcherUnderTest.setSimilarity(similarity);
     }
 
-    public Map<String, Map<Integer, Float>> getFeatureScores(List<PrebuiltFeature> features) throws IOException {
+    public Map<String, Map<Integer, Float>> getFeatureScores(List<PrebuiltFeature> features, final float missingScore) throws IOException {
         Map<String, Map<Integer, Float>> featuresPerDoc = new HashMap<>();
-        PrebuiltFeatureSet set = new PrebuiltFeatureSet("test", features);
+
+        FeatureSet set = new PrebuiltFeatureSet("test", features);
 
         Map<Integer, Float> collectedScores = new HashMap<>();
+        for (int i = 0; i < features.size(); i++) {
+            collectedScores.put(i, missingScore);
+        }
+
         LogLtrRanker.LogConsumer logger = new LogLtrRanker.LogConsumer() {
             @Override
             public void accept(int featureOrdinal, float score) {
@@ -177,6 +184,9 @@ public class LtrQueryTests extends LuceneTestCase {
             @Override
             public void reset() {
                 collectedScores.clear();
+                for (int i = 0; i < features.size(); i++) {
+                    collectedScores.put(i, missingScore);
+                }
             }
         };
         RankerQuery query = RankerQuery.buildLogQuery(logger, set, null, Collections.emptyMap());
@@ -217,7 +227,8 @@ public class LtrQueryTests extends LuceneTestCase {
     public List<DataPoint> makeQueryJudgements(int qid,
                                                Map<String, Map<Integer,Float>> featuresPerDoc,
                                                int modelSize,
-                                               Float[] relevanceGradesPerDoc) {
+                                               Float[] relevanceGradesPerDoc,
+                                               Map<Integer, Normalizer> ftrNorms) {
         assert(featuresPerDoc.size() == docs.length);
         assert(relevanceGradesPerDoc.length == docs.length);
 
@@ -228,7 +239,15 @@ public class LtrQueryTests extends LuceneTestCase {
             int docId = Integer.decode(doc);
             dp.setLabel(relevanceGradesPerDoc[docId]);
             dp.setID(String.valueOf(qid));
-            vector.forEach(dp::setFeatureScore);
+            vector.forEach(
+                (final Integer ftrOrd, Float score) -> {
+                    Normalizer ftrNorm = ftrNorms.get(ftrOrd);
+                    if (ftrNorm != null) {
+                        score = ftrNorm.normalize(score);
+                    }
+                    dp.setFeatureScore(ftrOrd, score);
+                }
+            );
             points.put(docId, dp);
         });
         points.forEach((k, v) -> rVal.add(v));
@@ -254,15 +273,23 @@ public class LtrQueryTests extends LuceneTestCase {
         }
     }
 
-    public void checkModelWithFeatures(List<PrebuiltFeature> features, int[] modelFeatures) throws IOException {
+    public void checkModelWithFeatures(List<PrebuiltFeature> features, int[] modelFeatures,
+                                       Map<Integer, Normalizer> ftrNorms) throws IOException {
         // Each RankList needed for training corresponds to one query,
         // or that apperas how RankLib wants the data
         List<RankList> samples = new ArrayList<>();
 
-        Map<String, Map<Integer,Float>> featuresPerDoc = getFeatureScores(features);
+        Map<String, Map<Integer,Float>> rawFeaturesPerDoc = getFeatureScores(features, 0.0f);
 
-        RankList rl = new RankList(makeQueryJudgements(0, featuresPerDoc, features.size(),
-                new Float[] {3.0f, 2.0f, 4.0f, 0.0f}));
+        if (ftrNorms == null) {
+            ftrNorms = new HashMap<>();
+        }
+        // Normalize prior to training
+
+
+        // these ranklists have been normalized for training
+        RankList rl = new RankList(makeQueryJudgements(0, rawFeaturesPerDoc, features.size(),
+                new Float[] {3.0f, 2.0f, 4.0f, 0.0f}, ftrNorms));
         samples.add(rl);
 
         int[] featuresToUse = modelFeatures;
@@ -277,14 +304,11 @@ public class LtrQueryTests extends LuceneTestCase {
                                       /*The training data*/ samples
                                       /*which features to use*/, featuresToUse
                                       /*how to score ranking*/, new NDCGScorer());
-        float[] scores = new float[] {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
+        float[] scores = {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
                 (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
 
-
-
         // Ok now lets rerun that as a Lucene Query
-
-        RankerQuery ltrQuery = toRankerQuery(features, ranker);
+        RankerQuery ltrQuery = toRankerQuery(features, ranker, ftrNorms);
         TopDocs topDocs = searcherUnderTest.search(ltrQuery, 10);
         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -301,10 +325,9 @@ public class LtrQueryTests extends LuceneTestCase {
         String modelAsStr = ranker.model();
         RankerFactory rankerFactory = new RankerFactory();
         Ranker rankerAgain = rankerFactory.loadRankerFromString(modelAsStr);
-        float[] scoresAgain = new float[] {(float)rankerAgain.eval(rl.get(0)), (float)rankerAgain.eval(rl.get(1)),
-                (float)rankerAgain.eval(rl.get(2)), (float)rankerAgain.eval(rl.get(3))};
+        float[] scoresAgain = {(float)ranker.eval(rl.get(0)), (float)ranker.eval(rl.get(1)),
+                (float)ranker.eval(rl.get(2)), (float)ranker.eval(rl.get(3))};
 
-        ltrQuery = toRankerQuery(features, rankerAgain);
         topDocs = searcherUnderTest.search(ltrQuery, 10);
         scoreDocs = topDocs.scoreDocs;
         assert(scoreDocs.length == docs.length);
@@ -335,8 +358,11 @@ public class LtrQueryTests extends LuceneTestCase {
         }
     }
 
-    private RankerQuery toRankerQuery(List<PrebuiltFeature> features, Ranker ranker) {
+    private RankerQuery toRankerQuery(List<PrebuiltFeature> features, Ranker ranker, Map<Integer, Normalizer> ftrNorms) {
         LtrRanker ltrRanker = new RanklibRanker(ranker, features.size());
+        if (ftrNorms.size() > 0) {
+            ltrRanker = new FeatureNormalizingRanker(ltrRanker, ftrNorms);
+        }
         PrebuiltLtrModel model = new PrebuiltLtrModel(ltrRanker.name(), ltrRanker, new PrebuiltFeatureSet(null, features));
         return RankerQuery.build(model);
     }
@@ -346,7 +372,7 @@ public class LtrQueryTests extends LuceneTestCase {
         List<Query> features = Arrays.asList(
                 new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                 new PhraseQuery("field", userQuery.split(" ")));
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null);
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null, null);
     }
 
     public void testSubsetFeaturesFuncScore() throws IOException {
@@ -359,7 +385,7 @@ public class LtrQueryTests extends LuceneTestCase {
                 new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                 new PhraseQuery("field", userQuery.split(" ")),
                 new FunctionScoreQuery(baseQuery, new WeightFactorFunction(1.0f))  );
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1});
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1}, null);
     }
 
     public void testSubsetFeaturesTermQ() throws IOException {
@@ -372,7 +398,7 @@ public class LtrQueryTests extends LuceneTestCase {
                 new TermQuery(new Term("field",  userQuery.split(" ")[0])),
                 new PhraseQuery("field", userQuery.split(" ")),
                 new PhraseQuery(1, "field", userQuery.split(" ") ));
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1});
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), new int[] {1}, null);
     }
 
 
@@ -382,7 +408,7 @@ public class LtrQueryTests extends LuceneTestCase {
         List<PrebuiltFeature> features = Arrays.asList(
                 new PrebuiltFeature("funky_term_q", new TermQuery(new Term("field",  userQuery.split(" ")[0]))),
                 new PrebuiltFeature("funky_phrase_q", new PhraseQuery("field", userQuery.split(" "))));
-        checkModelWithFeatures(features, null);
+        checkModelWithFeatures(features, null, null);
     }
 
     public void testOnRewrittenQueries() throws IOException {
@@ -393,7 +419,7 @@ public class LtrQueryTests extends LuceneTestCase {
         Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
         List<Query> features = Arrays.asList(new TermQuery(new Term("field",  userQuery.split(" ")[0])), blended);
 
-        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null);
+        checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null, null);
     }
 
     private List<PrebuiltFeature> toPrebuildFeatureWithNoName(List<Query> features) {
@@ -412,7 +438,32 @@ public class LtrQueryTests extends LuceneTestCase {
                 new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
                 new PrebuiltFeature(null, blended));
 
-        checkModelWithFeatures(features, null);
+        checkModelWithFeatures(features, null, null);
+    }
+
+    public void testMatchingNormalizedQueries() throws IOException {
+        String userQuery = "brown cow";
+
+        List<PrebuiltFeature> features = Arrays.asList(
+                new PrebuiltFeature(null, new TermQuery(new Term("field",  "brown"))),
+                new PrebuiltFeature(null, new TermQuery(new Term("field",  "cow"))));
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+        ftrNorms.put(0, new StandardFeatureNormalizer(1, 0.5f));
+        ftrNorms.put(1, new StandardFeatureNormalizer(1, 0.5f));
+
+        checkModelWithFeatures(features, null, ftrNorms);
+    }
+
+
+    public void testNoMatchNormalizedQueries() throws IOException {
+        List<PrebuiltFeature> features = Arrays.asList(
+                new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
+                new PrebuiltFeature(null, new TermQuery(new Term("field",  "othermissingterm"))));
+        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+        ftrNorms.put(0, new StandardFeatureNormalizer(0.5f, 1));
+        ftrNorms.put(1, new StandardFeatureNormalizer(0.7f, 0.2f));
+
+        checkModelWithFeatures(features, null, ftrNorms);
     }
 
     @After
