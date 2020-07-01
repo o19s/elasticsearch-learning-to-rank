@@ -1,0 +1,47 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Tag and publish a release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set release version Name
+      run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+    - name: Set up JDK 14.0
+      uses: actions/setup-java@v1
+      with:
+        java-version: 14.0
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      run: ./gradlew build
+    - name: Rename build assets
+      run: mv ./build/distributions/ltr-*.zip ./ltr-plugin-${{ env.RELEASE_VERSION }}.zip
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.RELEASE_VERSION }}
+        release_name: Release ${{ env.RELEASE_VERSION }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}         
+        asset_path: ./ltr-plugin-${{ env.RELEASE_VERSION }}.zip
+        asset_name: ltr-plugin-${{ env.RELEASE_VERSION }}.zip
+        asset_content_type: application/zip
