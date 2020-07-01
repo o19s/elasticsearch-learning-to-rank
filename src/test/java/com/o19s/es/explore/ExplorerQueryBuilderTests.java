@@ -24,16 +24,18 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQueryBuilder> {
+    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singletonList(LtrQueryParserPlugin.class);
+        return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override
