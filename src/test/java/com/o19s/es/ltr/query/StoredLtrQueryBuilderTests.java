@@ -68,7 +68,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+        return Arrays.asList(TestPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     /**

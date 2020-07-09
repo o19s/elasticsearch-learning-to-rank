@@ -59,7 +59,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     @Override
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class,  NativeScriptPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     public void createStore(String name) throws Exception {
