@@ -172,8 +172,13 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 if (hits.size() < minHits || (random().nextBoolean() && hits.size() < maxHits)) {
                     Document d = context.reader().document(doc);
                     String id = d.get("id");
-                    SearchHit hit = new SearchHit(doc+context.docBase, id,
-                            new Text("text"), random().nextBoolean() ? new HashMap<>() : null);
+                    SearchHit hit = new SearchHit(
+                        doc+context.docBase,
+                        id,
+                        new Text("text"),
+                        random().nextBoolean() ? new HashMap<>() : null,
+                        null
+                    );
                     hits.add(hit);
                 }
             }

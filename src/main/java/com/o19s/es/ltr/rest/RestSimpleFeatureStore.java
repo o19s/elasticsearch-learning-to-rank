@@ -83,7 +83,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
         @Override
         public String getName() {
-            return "Add or update a feature";
+            return "Add or update a " + type;
         }
 
         @Override
@@ -124,7 +124,7 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
 
         @Override
         public String getName() {
-            return "Obtain ltr store";
+            return "Search for " + type + " elements in the LTR feature store";
         }
 
         @Override

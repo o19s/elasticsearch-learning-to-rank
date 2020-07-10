@@ -37,6 +37,7 @@ import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
 import org.elasticsearch.test.ESSingleNodeTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -54,9 +55,11 @@ import static com.o19s.es.ltr.feature.store.ScriptFeature.FEATURE_VECTOR;
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
     public static final ScriptContext<ScoreScript.Factory> AGGS_CONTEXT = new ScriptContext<>("aggs", ScoreScript.Factory.class);
+
     @Override
+    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     public void createStore(String name) throws Exception {

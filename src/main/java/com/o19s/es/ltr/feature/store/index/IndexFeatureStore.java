@@ -32,8 +32,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.cluster.metadata.MetaDataCreateIndexService;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
+import org.elasticsearch.cluster.metadata.MetadataCreateIndexService;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -284,11 +284,11 @@ public class IndexFeatureStore implements FeatureStore {
 
     private static Settings storeIndexSettings(String indexName) {
         return Settings.builder()
-                .put(IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
-                .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-2")
+                .put(IndexMetadata.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
+                .put(IndexMetadata.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-2")
                 .put(STORE_VERSION_PROP.getKey(), VERSION)
-                .put(IndexMetaData.SETTING_PRIORITY, Integer.MAX_VALUE)
-                .put(IndexMetaData.SETTING_INDEX_HIDDEN, true)
+                .put(IndexMetadata.SETTING_PRIORITY, Integer.MAX_VALUE)
+                .put(IndexMetadata.SETTING_INDEX_HIDDEN, true)
                 .put(Settings.builder()
                         .loadFromSource(readResourceFile(indexName, ANALYSIS_FILE), XContentType.JSON)
                         .build())
@@ -306,7 +306,7 @@ public class IndexFeatureStore implements FeatureStore {
         if (INVALID_NAMES.matcher(storeName).matches()) {
             throw new IllegalArgumentException("A featurestore name cannot be based on the words [feature], [featureset] and [model]");
         }
-        MetaDataCreateIndexService.validateIndexOrAliasName(storeName,
+        MetadataCreateIndexService.validateIndexOrAliasName(storeName,
                 (name, error) -> new IllegalArgumentException("Invalid feature store name [" + name + "]: " + error));
     }
 }
