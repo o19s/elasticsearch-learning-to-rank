@@ -64,7 +64,6 @@ import com.o19s.es.ltr.stats.suppliers.CacheStatsOnNodeSupplier;
 import com.o19s.es.ltr.stats.suppliers.PluginHealthStatusSupplier;
 import com.o19s.es.ltr.stats.suppliers.StoreStatsSupplier;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
-import com.o19s.es.ltr.utils.StoreUtils;
 import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
@@ -261,13 +260,12 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
 
     private LTRStats getStats(Client client, ClusterService clusterService) {
         Map<String, LTRStat<?>> stats = new HashMap<>();
-        StoreUtils storeUtils = new StoreUtils(client, clusterService);
         stats.put(StatName.CACHE.getName(),
                 new LTRStat<>(false, new CacheStatsOnNodeSupplier(caches)));
         stats.put(StatName.STORES.getName(),
-                new LTRStat<>(true, new StoreStatsSupplier(storeUtils)));
+                new LTRStat<>(true, new StoreStatsSupplier(client, clusterService)));
         stats.put(StatName.PLUGIN_STATUS.getName(),
-                new LTRStat<>(true, new PluginHealthStatusSupplier(storeUtils)));
+                new LTRStat<>(true, new PluginHealthStatusSupplier(clusterService)));
         return new LTRStats(unmodifiableMap(stats));
     }
 

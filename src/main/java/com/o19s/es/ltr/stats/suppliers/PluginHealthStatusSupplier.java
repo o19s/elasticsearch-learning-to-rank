@@ -1,8 +1,13 @@
 package com.o19s.es.ltr.stats.suppliers;
 
-import com.o19s.es.ltr.utils.StoreUtils;
+import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
+import org.elasticsearch.cluster.health.ClusterIndexHealth;
+import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.cluster.service.ClusterService;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -13,10 +18,12 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
     private static final String STATUS_YELLOW = "yellow";
     private static final String STATUS_RED = "red";
 
-    private final StoreUtils storeUtils;
+    private final ClusterService clusterService;
+    private final IndexNameExpressionResolver indexNameExpressionResolver;
 
-    public PluginHealthStatusSupplier(StoreUtils storeUtils) {
-        this.storeUtils = storeUtils;
+    public PluginHealthStatusSupplier(ClusterService clusterService) {
+        this.clusterService = clusterService;
+        this.indexNameExpressionResolver = new IndexNameExpressionResolver();
     }
 
     // currently it combines the store statuses to get the overall health
@@ -28,9 +35,12 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
     }
 
     private String getAggregateStoresStatus() {
-        List<String> storeNames = storeUtils.getAllLtrStoreNames();
-        return storeNames.stream()
-                .map(storeUtils::getLtrStoreHealthStatus)
+        String[] names = indexNameExpressionResolver.concreteIndexNames(clusterService.state(),
+                new ClusterStateRequest().indices(
+                        IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
+        return Arrays.stream(names)
+                .filter(IndexFeatureStore::isIndexStore)
+                .map(this::getLtrStoreHealthStatus)
                 .reduce(STATUS_GREEN, this::combineStatuses);
     }
 
@@ -42,5 +52,14 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
         } else {
             return STATUS_GREEN;
         }
+    }
+
+    public String getLtrStoreHealthStatus(String storeName) {
+        ClusterIndexHealth indexHealth = new ClusterIndexHealth(
+                clusterService.state().metadata().index(storeName),
+                clusterService.state().getRoutingTable().index(storeName)
+        );
+
+        return indexHealth.getStatus().name().toLowerCase(Locale.getDefault());
     }
 }

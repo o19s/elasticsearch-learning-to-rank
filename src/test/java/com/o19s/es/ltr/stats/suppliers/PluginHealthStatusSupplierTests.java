@@ -1,7 +1,6 @@
 package com.o19s.es.ltr.stats.suppliers;
 
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import com.o19s.es.ltr.utils.StoreUtils;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Before;
 
@@ -11,7 +10,7 @@ public class PluginHealthStatusSupplierTests extends ESIntegTestCase {
     @Before
     public void setup() {
         pluginHealthStatusSupplier =
-                new PluginHealthStatusSupplier(new StoreUtils(client(), clusterService()));
+                new PluginHealthStatusSupplier(clusterService());
     }
 
     public void testPluginHealthStatusNoLtrStore() {

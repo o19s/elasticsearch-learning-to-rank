@@ -3,7 +3,6 @@ package com.o19s.es.ltr.stats.suppliers;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.stats.StatName;
-import com.o19s.es.ltr.utils.StoreUtils;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Before;
 
@@ -14,7 +13,7 @@ public class StoreStatsSupplierTests extends ESIntegTestCase {
 
     @Before
     public void setup() {
-        storeStatsSupplier = new StoreStatsSupplier(new StoreUtils(client(), clusterService()));
+        storeStatsSupplier = new StoreStatsSupplier(client(), clusterService());
     }
 
     public void testGetStoreStatsNoLtrStore() {
