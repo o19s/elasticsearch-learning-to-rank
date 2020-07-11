@@ -54,7 +54,7 @@ public class TransportLTRStatsActionTests extends ESIntegTestCase {
     public void testNewResponse() {
         String[] nodeIds = null;
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(nodeIds);
-        ltrStatsRequest.addAll(ltrStats.getStats().keySet());
+        ltrStatsRequest.setStatsToBeRetrieved(ltrStats.getStats().keySet());
 
         List<LTRStatsNodeResponse> responses = new ArrayList<>();
         List<FailedNodeException> failures = new ArrayList<>();
@@ -66,7 +66,7 @@ public class TransportLTRStatsActionTests extends ESIntegTestCase {
     public void testNodeOperation() {
         String[] nodeIds = null;
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(nodeIds);
-        ltrStatsRequest.addAll(ltrStats.getStats().keySet());
+        ltrStatsRequest.setStatsToBeRetrieved(ltrStats.getStats().keySet());
 
         LTRStatsNodeResponse response = action.nodeOperation(new LTRStatsNodeRequest(ltrStatsRequest));
 

@@ -2,7 +2,7 @@ package com.o19s.es.ltr.rest;
 
 import com.o19s.es.ltr.action.LTRStatsAction;
 import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesRequest;
-import com.o19s.es.ltr.stats.LTRStats;
+import com.o19s.es.ltr.stats.StatName;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
@@ -27,11 +27,6 @@ import static java.util.Collections.unmodifiableList;
 public class RestLTRStats extends BaseRestHandler {
     public static final String LTR_STATS_BASE_URI = "/_ltr/stats";
     private static final String NAME = "learning_to_rank_stats";
-    private final LTRStats ltrStats;
-
-    public RestLTRStats(LTRStats ltrStats) {
-        this.ltrStats = ltrStats;
-    }
 
     @Override
     public String getName() {
@@ -49,13 +44,12 @@ public class RestLTRStats extends BaseRestHandler {
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client)
             throws IOException {
         LTRStatsNodesRequest ltrStatsRequest = getRequest(request);
         return (channel) -> client.execute(LTRStatsAction.INSTANCE,
                 ltrStatsRequest,
-                new RestActions.NodesResponseRestListener(channel));
+                new RestActions.NodesResponseRestListener<>(channel));
     }
 
     private LTRStatsNodesRequest getRequest(RestRequest request) {
@@ -68,11 +62,11 @@ public class RestLTRStats extends BaseRestHandler {
                         .map(Arrays::asList)
                         .orElseGet(Collections::emptyList);
 
-        Set<String> validStats = ltrStats.getStats().keySet();
+        Set<String> validStats = StatName.getTopLevelStatNames();
         if (isAllStatsRequested(requestedStats)) {
-            ltrStatsRequest.addAll(validStats);
+            ltrStatsRequest.setStatsToBeRetrieved(validStats);
         } else {
-            ltrStatsRequest.addAll(getStatsToBeRetrieved(request, validStats, requestedStats));
+            ltrStatsRequest.setStatsToBeRetrieved(getStatsToBeRetrieved(request, validStats, requestedStats));
         }
 
         return ltrStatsRequest;

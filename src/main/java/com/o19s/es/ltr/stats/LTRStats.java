@@ -20,10 +20,11 @@ public class LTRStats {
     }
 
     public LTRStat<?> getStat(String key) throws IllegalArgumentException {
-        if (!stats.containsKey(key)) {
+        LTRStat<?> stat = stats.get(key);
+        if (stat == null) {
             throw new IllegalArgumentException("Stat=\"" + key + "\" does not exist");
         }
-        return stats.get(key);
+        return stat;
     }
 
     public Map<String, LTRStat<?>> getNodeStats() {

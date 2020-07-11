@@ -107,7 +107,7 @@ public class LTRStatsActionIT extends BaseIntegrationTest {
         LTRStatsRequestBuilder builder = new LTRStatsRequestBuilder(client());
         Set<String> statsToBeRetrieved = new HashSet<>(Arrays.asList(
                 StatName.PLUGIN_STATUS.getName(), StatName.CACHE.getName(), StatName.STORES.getName()));
-        builder.request().addAll(statsToBeRetrieved);
+        builder.request().setStatsToBeRetrieved(statsToBeRetrieved);
         return builder.execute().get();
     }
 }

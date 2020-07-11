@@ -124,9 +124,6 @@ import static java.util.Collections.unmodifiableMap;
 public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, ScriptPlugin, ActionPlugin, AnalysisPlugin {
     private final LtrRankerParserFactory parserFactory;
     private final Caches caches;
-    private LTRStats ltrStats;
-    private Client client;
-    private ClusterService clusterService;
 
     public LtrQueryParserPlugin(Settings settings) {
         caches = new Caches(settings);
@@ -185,7 +182,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
         list.add(new RestFeatureStoreCaches());
         list.add(new RestCreateModelFromSet());
         list.add(new RestAddFeatureToSet());
-        list.add(new RestLTRStats(ltrStats));
+        list.add(new RestLTRStats());
         return unmodifiableList(list);
     }
 
@@ -252,9 +249,6 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                                NamedWriteableRegistry namedWriteableRegistry,
                                                IndexNameExpressionResolver indexNameExpressionResolver,
                                                Supplier<RepositoriesService> repositoriesServiceSupplier) {
-        this.client = client;
-        this.clusterService = clusterService;
-
         clusterService.addListener(event -> {
             for (Index i : event.indicesDeleted()) {
                 if (IndexFeatureStore.isIndexStore(i.getName())) {
@@ -262,11 +256,10 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
-        ltrStats = getStats();
-        return asList(caches, parserFactory, ltrStats);
+        return asList(caches, parserFactory, getStats(client, clusterService));
     }
 
-    private LTRStats getStats() {
+    private LTRStats getStats(Client client, ClusterService clusterService) {
         Map<String, LTRStat<?>> stats = new HashMap<>();
         StoreUtils storeUtils = new StoreUtils(client, clusterService);
         stats.put(StatName.CACHE.getName(),

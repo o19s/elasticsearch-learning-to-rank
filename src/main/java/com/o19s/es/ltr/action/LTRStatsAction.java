@@ -76,10 +76,6 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
             this.statsMap = statsToValues;
         }
 
-        public static LTRStatsNodeResponse readStats(StreamInput in) throws IOException {
-            return new LTRStatsNodeResponse(in);
-        }
-
         public Map<String, Object> getStatsMap() {
             return statsMap;
         }
@@ -115,12 +111,8 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
             statsToBeRetrieved = new HashSet<>();
         }
 
-        public void addStat(String stat) {
-            statsToBeRetrieved.add(stat);
-        }
-
-        public void addAll(Set<String> statsToBeAdded) {
-            statsToBeRetrieved.addAll(statsToBeAdded);
+        public void setStatsToBeRetrieved(Set<String> statsToBeRetrieved) {
+            this.statsToBeRetrieved = statsToBeRetrieved;
         }
 
         public Set<String> getStatsToBeRetrieved() {
@@ -132,10 +124,6 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
             super.writeTo(out);
             out.writeStringCollection(statsToBeRetrieved);
         }
-
-        public LTRStatsNodesRequest() {
-            super((String[]) null);
-        }
     }
 
     public static class LTRStatsNodesResponse extends BaseNodesResponse<LTRStatsNodeResponse> implements ToXContent {
@@ -143,7 +131,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
         private final Map<String, Object> clusterStats;
 
         public LTRStatsNodesResponse(StreamInput in) throws IOException {
-            super(new ClusterName(in), in.readList(LTRStatsNodeResponse::readStats), in.readList(FailedNodeException::new));
+            super(in);
             clusterStats = in.readMap();
         }
 
@@ -159,7 +147,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
 
         @Override
         protected List<LTRStatsNodeResponse> readNodesFrom(StreamInput in) throws IOException {
-            return in.readList(LTRStatsNodeResponse::readStats);
+            return in.readList(LTRStatsNodeResponse::new);
         }
 
         @Override
