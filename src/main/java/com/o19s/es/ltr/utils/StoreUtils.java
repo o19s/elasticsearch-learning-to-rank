@@ -51,7 +51,7 @@ public class StoreUtils {
             throw new IndexNotFoundException(storeName);
         }
         ClusterIndexHealth indexHealth = new ClusterIndexHealth(
-                clusterService.state().metaData().index(storeName),
+                clusterService.state().metadata().index(storeName),
                 clusterService.state().getRoutingTable().index(storeName)
         );
 
