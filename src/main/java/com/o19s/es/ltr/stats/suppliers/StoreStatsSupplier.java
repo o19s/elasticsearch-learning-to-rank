@@ -1,28 +1,35 @@
 package com.o19s.es.ltr.stats.suppliers;
 
-import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.stats.StatName;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.search.MultiSearchRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterIndexHealth;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A supplier which provides information on all feature stores. It provides basic
@@ -30,10 +37,8 @@ import java.util.stream.Collectors;
  * models in the store.
  */
 public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Object>>> {
-    private static final String FEATURE_SET_KEY = "featureset";
-    private static final String FEATURE_SET_NAME_KEY = "name";
-    private static final String FEATURES_KEY = "features";
-
+    private static final Logger LOG = LogManager.getLogger(StoreStatsSupplier.class);
+    private static final String AGG_FIELD = "type";
     private final Client client;
     private final ClusterService clusterService;
     private final IndexNameExpressionResolver indexNameExpressionResolver;
@@ -49,27 +54,69 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         String[] names = indexNameExpressionResolver.concreteIndexNames(clusterService.state(),
                 new ClusterStateRequest().indices(
                         IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
-
-        return Arrays.stream(names)
+        final MultiSearchRequestBuilder requestBuilder = client.prepareMultiSearch();
+        List<String> indices = new ArrayList<>();
+        Stream.of(names)
                 .filter(IndexFeatureStore::isIndexStore)
-                .collect(Collectors
-                        .collectingAndThen(
-                                Collectors.toMap(Function.identity(), this::getStoreStat),
-                                Collections::unmodifiableMap));
+                .map(s -> clusterService.state().metadata().index(s))
+                .filter(Objects::nonNull)
+                .map(IndexMetadata::getIndex)
+                .map(Index::getName)
+                .forEach(idx -> {
+                    indices.add(idx);
+                    requestBuilder.add(countSearchRequest(idx));
+                });
+        return createStoreStatsResponse(requestBuilder, indices);
     }
 
-    private Map<String, Object> getStoreStat(String storeName) {
-        Map<String, Object> storeStat = new HashMap<>();
-        storeStat.put(StatName.STORE_STATUS.getName(), getLtrStoreHealthStatus(storeName));
+    private Map<String, Map<String, Object>> createStoreStatsResponse(MultiSearchRequestBuilder requestBuilder,
+                                                                      List<String> indices) {
+        try {
+            MultiSearchResponse msr = requestBuilder.execute().get();
+            assert indices.size() == msr.getResponses().length;
+            Map<String, Map<String, Object>> stats = new ConcurrentHashMap<>(indices.size());
 
-        //-----------------------------------
-        //TODO OPTIMIZE
-        Map<String, Integer> featureSets = getFeatureCountPerFeatureSet(storeName);
-        storeStat.put(StatName.STORE_FEATURE_COUNT.getName(), featureSets.values().stream().reduce(0, Integer::sum));
-        storeStat.put(StatName.STORE_FEATURE_SET_COUNT.getName(), featureSets.size());
-        storeStat.put(StatName.STORE_MODEL_COUNT.getName(), getModelCount(storeName));
-        //-------------------------------------
+            Iterator<String> indicesItr = indices.iterator();
+            Iterator<MultiSearchResponse.Item> responseItr = msr.iterator();
+            while (indicesItr.hasNext() && responseItr.hasNext()) {
+                MultiSearchResponse.Item it = responseItr.next();
+                String index = indicesItr.next();
+                Map<String, Object> storeStat = initStoreStat(index);
+                stats.put(IndexFeatureStore.storeName(index), storeStat);
+                if (!it.isFailure()) {
+                    Terms aggs = it.getResponse()
+                            .getAggregations()
+                            .get(AGG_FIELD);
+                    aggs.getBuckets()
+                            .stream()
+                            .filter(Objects::nonNull)
+                            .forEach(bucket -> updateCount(bucket, storeStat));
+                }
+            }
+            return stats;
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.error("Error retrieving store stats", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<String, Object> initStoreStat(String index) {
+        Map<String, Object> storeStat = new HashMap<>();
+        storeStat.put(StatName.STORE_STATUS.getName(), getLtrStoreHealthStatus(index));
+        storeStat.put(StatName.STORE_FEATURE_COUNT.getName(), 0);
+        storeStat.put(StatName.STORE_FEATURE_SET_COUNT.getName(), 0);
+        storeStat.put(StatName.STORE_MODEL_COUNT.getName(), 0);
         return storeStat;
+    }
+
+    private void updateCount(Terms.Bucket bucket, Map<String, Object> storeStat) {
+        storeStat.computeIfPresent(
+                typeToStatName(bucket.getKeyAsString()),
+                (k, v) -> bucket.getDocCount());
+    }
+
+    private String typeToStatName(String type) {
+        return type + "_count";
     }
 
     public String getLtrStoreHealthStatus(String storeName) {
@@ -81,32 +128,11 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         return indexHealth.getStatus().name().toLowerCase(Locale.getDefault());
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Integer> getFeatureCountPerFeatureSet(String storeName) {
-        Map<String, Integer> featureSets = new HashMap<>();
-        SearchResponse response = searchStore(storeName, StoredFeatureSet.TYPE);
-        for (SearchHit hit : response.getHits()) {
-            Map<String, Object> sourceMap = hit.getSourceAsMap();
-            if (sourceMap != null && sourceMap.containsKey(FEATURE_SET_KEY)) {
-                Map<String, Object> fs = (Map<String, Object>) sourceMap.get(FEATURE_SET_KEY);
-                if (fs != null && fs.containsKey(FEATURES_KEY)) {
-                    List<String> features = (List<String>) fs.get(FEATURES_KEY);
-                    featureSets.put((String) fs.get(FEATURE_SET_NAME_KEY), features.size());
-                }
-            }
-        }
-        return featureSets;
+    private SearchRequestBuilder countSearchRequest(String index) {
+        return client.prepareSearch(index)
+                .setQuery(QueryBuilders.matchAllQuery())
+                .setSize(0)
+                .addAggregation(
+                        AggregationBuilders.terms(AGG_FIELD).field(AGG_FIELD).size(100));
     }
-
-    public long getModelCount(String storeName) {
-        return searchStore(storeName, StoredLtrModel.TYPE).getHits().getTotalHits().value;
-    }
-
-    private SearchResponse searchStore(String storeName, String docType) {
-        return client.prepareSearch(storeName)
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.termQuery("type", docType))
-                .get();
-    }
-
 }

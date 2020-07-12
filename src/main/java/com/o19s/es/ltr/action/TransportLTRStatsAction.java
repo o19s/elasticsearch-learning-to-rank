@@ -5,12 +5,14 @@ import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodeResponse;
 import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesRequest;
 import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesResponse;
 import com.o19s.es.ltr.stats.LTRStats;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -38,7 +40,13 @@ public class TransportLTRStatsAction extends
     }
 
     @Override
-    protected LTRStatsNodesResponse newResponse(LTRStatsNodesRequest request, List<LTRStatsNodeResponse> nodeResponses,
+    protected void doExecute(Task task, LTRStatsNodesRequest request, ActionListener<LTRStatsNodesResponse> listener) {
+        super.doExecute(task, request, listener);
+    }
+
+    @Override
+    protected LTRStatsNodesResponse newResponse(LTRStatsNodesRequest request,
+                                                List<LTRStatsNodeResponse> nodeResponses,
                                                 List<FailedNodeException> failures) {
         Set<String> statsToBeRetrieved = request.getStatsToBeRetrieved();
         Map<String, Object> clusterStats =

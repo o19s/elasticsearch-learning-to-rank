@@ -13,11 +13,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static com.o19s.es.ltr.LtrTestUtils.randomFeature;
 import static com.o19s.es.ltr.LtrTestUtils.randomFeatureSet;
 import static com.o19s.es.ltr.LtrTestUtils.randomLinearModel;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.indexName;
 
 public class LTRStatsActionIT extends BaseIntegrationTest {
+    private static final String DEFAULT_STORE_NAME =
+            IndexFeatureStore.storeName(IndexFeatureStore.DEFAULT_STORE);
 
     @SuppressWarnings("unchecked")
     public void testStatsNoStore() throws Exception {
@@ -42,12 +45,11 @@ public class LTRStatsActionIT extends BaseIntegrationTest {
 
         Map<String, Object> stores = (Map<String, Object>) clusterStats.get(StatName.STORES.getName());
         assertEquals(1, stores.size());
-        assertTrue(stores.containsKey(IndexFeatureStore.DEFAULT_STORE));
-
-        Map<String, Object> storeStat = (Map<String, Object>) stores.get(IndexFeatureStore.DEFAULT_STORE);
-        assertEquals(0, (int) storeStat.get(StatName.STORE_FEATURE_COUNT.getName()));
-        assertEquals(0, (int) storeStat.get(StatName.STORE_FEATURE_SET_COUNT.getName()));
-        assertEquals(0, (long) storeStat.get(StatName.STORE_MODEL_COUNT.getName()));
+        assertTrue(stores.containsKey(DEFAULT_STORE_NAME));
+        Map<String, Object> storeStat = (Map<String, Object>) stores.get(DEFAULT_STORE_NAME);
+        assertEquals(0, storeStat.get(StatName.STORE_FEATURE_COUNT.getName()));
+        assertEquals(0, storeStat.get(StatName.STORE_FEATURE_SET_COUNT.getName()));
+        assertEquals(0, storeStat.get(StatName.STORE_MODEL_COUNT.getName()));
 
         Map<String, Object> nodeStats = response.getNodes().get(0).getStatsMap();
         assertFalse(nodeStats.isEmpty());
@@ -81,14 +83,15 @@ public class LTRStatsActionIT extends BaseIntegrationTest {
 
         Map<String, Object> stores = (Map<String, Object>) clusterStats.get(StatName.STORES.getName());
         assertEquals(2, stores.size());
-        assertTrue(stores.containsKey(IndexFeatureStore.DEFAULT_STORE));
-        assertTrue(stores.containsKey(indexName("test1")));
+        assertTrue(stores.containsKey(DEFAULT_STORE_NAME));
+        assertTrue(stores.containsKey(IndexFeatureStore.storeName(indexName("test1"))));
     }
 
     @SuppressWarnings("unchecked")
     public void testStoreStats() throws ExecutionException, InterruptedException, IOException {
         StoredFeatureSet featureSet = randomFeatureSet("featureset1");
         addElement(featureSet);
+        addElement(randomFeature("feature1"));
         addElement(randomLinearModel("model1", featureSet));
 
         LTRStatsNodesResponse response = executeRequest();
@@ -97,10 +100,10 @@ public class LTRStatsActionIT extends BaseIntegrationTest {
         Map<String, Object> clusterStats = response.getClusterStats();
         Map<String, Object> stores = (Map<String, Object>) clusterStats.get(StatName.STORES.getName());
 
-        Map<String, Object> storeStat = (Map<String, Object>) stores.get(IndexFeatureStore.DEFAULT_STORE);
-        assertTrue((int) storeStat.get(StatName.STORE_FEATURE_COUNT.getName()) > 0);
-        assertEquals(1, (int) storeStat.get(StatName.STORE_FEATURE_SET_COUNT.getName()));
-        assertEquals(1, (long) storeStat.get(StatName.STORE_MODEL_COUNT.getName()));
+        Map<String, Object> storeStat = (Map<String, Object>) stores.get(DEFAULT_STORE_NAME);
+        assertEquals(1L, storeStat.get(StatName.STORE_FEATURE_SET_COUNT.getName()));
+        assertEquals(1L, storeStat.get(StatName.STORE_FEATURE_COUNT.getName()));
+        assertEquals(1L, storeStat.get(StatName.STORE_MODEL_COUNT.getName()));
     }
 
     private LTRStatsNodesResponse executeRequest() throws ExecutionException, InterruptedException {

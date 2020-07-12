@@ -26,7 +26,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
     public static final String NAME = "cluster:admin/ltr/stats";
     public static final LTRStatsAction INSTANCE = new LTRStatsAction();
 
-    protected LTRStatsAction() {
+    public LTRStatsAction() {
         super(NAME, LTRStatsNodesResponse::new);
     }
 
@@ -141,7 +141,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
             this.clusterStats = clusterStats;
         }
 
-        Map<String, Object> getClusterStats() {
+        public Map<String, Object> getClusterStats() {
             return clusterStats;
         }
 
