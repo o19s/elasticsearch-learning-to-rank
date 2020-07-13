@@ -212,3 +212,65 @@ If (and only if) the extra logging Map is accessed, it will be returned as an ad
             }
         ]
     }
+
+=============================
+Stats
+=============================
+The stats API gives the overall plugin status and statistics::
+
+    GET /_ltr/stats
+
+    {
+        "_nodes": {
+            "total": 1,
+            "successful": 1,
+            "failed": 0
+        },
+        "cluster_name": "es-cluster",
+        "stores": {
+            "_default_": {
+                "model_count": 10,
+                "featureset_count": 1,
+                "feature_count": 0,
+                "status": "green"
+            }
+        },
+        "status": "green",
+        "nodes": {
+            "2QtMvxMvRoOTymAsoQbxhw": {
+                "cache": {
+                    "feature": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    },
+                    "featureset": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    },
+                    "model": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    }
+                }
+            }
+        }
+    }
+
+You can also use filters to retrieve a single stat::
+
+    GET /_ltr/stats/{stat}
+
+Also you can limit the information to a single node in the cluster::
+
+    GET /_ltr/stats/nodes/{nodeId}
+
+    GET /_ltr/stats/{stat}/nodes/{nodeId}
