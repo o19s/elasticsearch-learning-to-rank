@@ -12,7 +12,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.elasticsearch.index.query.QueryBuilder;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -101,8 +100,7 @@ public class TermStatQuery extends Query {
 
         @Override
         public void extractTerms(Set<Term> terms) {
-            // TODO: Play with visitor interface, try to find best place to link up to this call.
-            terms.addAll(terms);
+            // No-op for now since this is being deprecated
         }
 
         @Override
