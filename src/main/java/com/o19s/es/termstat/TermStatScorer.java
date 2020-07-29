@@ -140,6 +140,11 @@ public class TermStatScorer extends Scorer {
             }
         };
 
+        // If no values found return 0
+        if (tf_stats.getSize() == 0) {
+            return 0.0f;
+        }
+
         for(int i = 0; i < tf_stats.getSize(); i++) {
             // Update the term stat dictionary for the current term
             termStatDict.put("df", df_stats.getData().get(i));
