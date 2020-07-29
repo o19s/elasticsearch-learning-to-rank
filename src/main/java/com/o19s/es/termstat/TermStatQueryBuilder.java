@@ -2,6 +2,8 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 
+import com.o19s.es.ltr.utils.Scripting;
+import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -173,7 +175,9 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        return new TermStatQuery(expr, aggr, pos_aggr, terms);
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+
+        return new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
     }
 
     @Override

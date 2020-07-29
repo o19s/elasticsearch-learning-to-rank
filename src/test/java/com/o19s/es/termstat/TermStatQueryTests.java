@@ -2,9 +2,11 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 
+import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -74,7 +76,8 @@ public class TermStatQueryTests extends LuceneTestCase {
         AggrType aggr = AggrType.MIN;
         AggrType pos_aggr = AggrType.MAX;
 
-        TermStatQuery tsq = new TermStatQuery(expr, aggr, pos_aggr, simpleTerms);
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, simpleTerms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);

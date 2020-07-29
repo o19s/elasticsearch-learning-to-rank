@@ -2,7 +2,6 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
-import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -19,12 +18,12 @@ import java.util.Objects;
 import java.util.Set;
 
 public class TermStatQuery extends Query {
-    private String expr;
+    private Expression expr;
     private StatisticsHelper.AggrType aggr;
     private StatisticsHelper.AggrType posAggr;
     private Set<Term> terms;
 
-    public TermStatQuery(String expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
+    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
         this.expr = expr;
         this.aggr = aggr;
         this.posAggr = posAggr;
@@ -32,7 +31,7 @@ public class TermStatQuery extends Query {
     }
 
 
-    public String getExpr() {
+    public Expression getExpr() {
         return this.expr;
     }
     public AggrType getAggr() { return this.aggr; }
@@ -48,7 +47,7 @@ public class TermStatQuery extends Query {
     }
 
     private boolean equalsTo(TermStatQuery other) {
-        return Objects.equals(expr, other.expr)
+        return Objects.equals(expr.sourceText, other.expr.sourceText)
                 && Objects.equals(aggr, other.aggr)
                 && Objects.equals(posAggr, other.posAggr)
                 && Objects.equals(terms, other.terms);
@@ -60,7 +59,7 @@ public class TermStatQuery extends Query {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(expr, aggr, posAggr, terms); }
+    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, terms); }
 
     @Override
     public String toString(String field) {
@@ -76,7 +75,7 @@ public class TermStatQuery extends Query {
     }
 
     static class TermStatWeight extends Weight {
-        private final String expression;
+        private final Expression expression;
         private IndexSearcher searcher;
         private final Set<Term> terms;
         private final ScoreMode scoreMode;
@@ -103,15 +102,14 @@ public class TermStatQuery extends Query {
             int newDoc = scorer.iterator().advance(doc);
             if (newDoc == doc) {
                 return Explanation
-                        .match(scorer.score(), "weight(" + this.expression + " in doc " + newDoc + ")");
+                        .match(scorer.score(), "weight(" + this.expression.sourceText + " in doc " + newDoc + ")");
             }
             return Explanation.noMatch("no matching term");
         }
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            Expression compiledExpression = (Expression) Scripting.compile(this.expression);
-            return new TermStatScorer(this, searcher, context, compiledExpression, terms, scoreMode, aggr, posAggr);
+            return new TermStatScorer(this, searcher, context, expression, terms, scoreMode, aggr, posAggr);
         }
 
         @Override
