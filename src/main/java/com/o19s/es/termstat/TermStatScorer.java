@@ -11,16 +11,13 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermState;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.DoubleValues;
-import org.apache.lucene.search.DoubleValuesSource;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 public class TermStatScorer extends Scorer {
@@ -32,14 +29,14 @@ public class TermStatScorer extends Scorer {
 
     private final LeafReaderContext context;
     private final IndexSearcher searcher;
-    private final Set<Term> terms;
+    private final Query query;
     private final ScoreMode scoreMode;
 
     public TermStatScorer(TermStatQuery.TermStatWeight weight,
                           IndexSearcher searcher,
                           LeafReaderContext context,
                           Expression compiledExpression,
-                          Set<Term> terms,
+                          Query query,
                           ScoreMode scoreMode,
                           AggrType aggr,
                           AggrType posAggr) {
@@ -47,7 +44,7 @@ public class TermStatScorer extends Scorer {
         this.context = context;
         this.compiledExpression = compiledExpression;
         this.searcher = searcher;
-        this.terms = terms;
+        this.query = query;
         this.scoreMode = scoreMode;
         this.aggr = aggr;
         this.posAggr = posAggr;
@@ -73,8 +70,21 @@ public class TermStatScorer extends Scorer {
         StatisticsHelper tf_stats = new StatisticsHelper();
         StatisticsHelper tp_stats = new StatisticsHelper();
 
+        Set<Term> terms = new HashSet<>();
+        QueryVisitor visitor = new QueryVisitor() {
+            @Override
+            public void consumeTerms(Query query, Term... ts) {
+                terms.addAll(Arrays.asList(ts));
+            }
+            @Override
+            public QueryVisitor getSubVisitor(BooleanClause.Occur occur, Query parent) {
+                return this;
+            }
+        };
+        query.visit(visitor);
+
         PostingsEnum postingsEnum = null;
-        for (Term term : this.terms) {
+        for (Term term : terms) {
             if (docID() == DocIdSetIterator.NO_MORE_DOCS) {
                 break;
             }

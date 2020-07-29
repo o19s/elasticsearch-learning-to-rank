@@ -6,7 +6,10 @@ import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
@@ -30,9 +33,9 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
         Set<Term> terms = new HashSet<Term>();
         terms.add(new Term("text", "cow"));
         builder.expr("tf");
-        builder.aggr(AggrType.AVG);
-        builder.posAggr(AggrType.AVG);
-        builder.terms(terms);
+        builder.aggr(AggrType.AVG.getType());
+        builder.posAggr(AggrType.AVG.getType());
+        builder.query(new TermQueryBuilder("text", "cow"));
 
         return builder;
     }
@@ -43,15 +46,15 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "   \"expr\": \"tf\"," +
                 "   \"aggr\": \"min\"," +
                 "   \"pos_aggr\": \"max\"," +
-                "   \"terms\": {}" +
+                "   \"query\": { \"match\": {\"text\": \"cow\"}}" +
                 "  }" +
                 "}";
 
         TermStatQueryBuilder builder = (TermStatQueryBuilder) parseQuery(query);
 
         assertEquals(builder.expr(), "tf");
-        assertEquals(builder.aggr().getType(), "min");
-        assertEquals(builder.posAggr().getType(), "max");
+        assertEquals(builder.aggr(), "min");
+        assertEquals(builder.posAggr(), "max");
 
     }
 
@@ -60,11 +63,24 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "  \"term_stat\": {" +
                 "   \"aggr\": \"min\"," +
                 "   \"pos_aggr\": \"max\"," +
-                "   \"terms\": {}" +
+                "   \"query\": { \"match\": {\"text\": \"cow\"}}" +
                 "  }" +
                 "}";
 
         expectThrows(ParsingException.class, () -> parseQuery(query));
+    }
+
+    @Override
+    public void testMustRewrite() throws IOException {
+        QueryShardContext context = createShardContext();
+        context.setAllowUnmappedFields(true);
+        TermStatQueryBuilder queryBuilder = createTestQueryBuilder();
+        queryBuilder.boost(AbstractQueryBuilder.DEFAULT_BOOST);
+        QueryBuilder rewritten = queryBuilder.rewrite(context);
+
+        assertThat(rewritten, instanceOf(TermStatQueryBuilder.class));
+        Query q = rewritten.toQuery(context);
+        assertThat(q, instanceOf(TermStatQuery.class));
     }
 
     @Override

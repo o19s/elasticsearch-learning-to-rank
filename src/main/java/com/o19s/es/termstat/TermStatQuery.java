@@ -12,6 +12,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.elasticsearch.index.query.QueryBuilder;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -21,13 +22,13 @@ public class TermStatQuery extends Query {
     private Expression expr;
     private StatisticsHelper.AggrType aggr;
     private StatisticsHelper.AggrType posAggr;
-    private Set<Term> terms;
+    private Query query;
 
-    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
+    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Query query) {
         this.expr = expr;
         this.aggr = aggr;
         this.posAggr = posAggr;
-        this.terms = terms;
+        this.query = query;
     }
 
 
@@ -36,8 +37,7 @@ public class TermStatQuery extends Query {
     }
     public AggrType getAggr() { return this.aggr; }
     public AggrType getPosAggr() { return this.posAggr; }
-    public Set<Term> getTerms() { return this.terms; }
-
+    public Query getQuery() { return this.query; }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -50,16 +50,22 @@ public class TermStatQuery extends Query {
         return Objects.equals(expr.sourceText, other.expr.sourceText)
                 && Objects.equals(aggr, other.aggr)
                 && Objects.equals(posAggr, other.posAggr)
-                && Objects.equals(terms, other.terms);
+                && Objects.equals(query, other.query);
     }
 
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
+        Query rewritten = query.rewrite(reader);
+
+        if (rewritten != query) {
+            return new TermStatQuery(expr, aggr, posAggr, rewritten);
+        }
+
         return this;
     }
 
     @Override
-    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, terms); }
+    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, query); }
 
     @Override
     public String toString(String field) {
@@ -71,30 +77,33 @@ public class TermStatQuery extends Query {
             throws IOException {
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
 
-        return new TermStatWeight(searcher, this, terms, scoreMode, aggr, posAggr);
+        return new TermStatWeight(searcher, this, query, scoreMode, aggr, posAggr);
     }
 
     static class TermStatWeight extends Weight {
         private final Expression expression;
         private IndexSearcher searcher;
-        private final Set<Term> terms;
+        private final Query query;
         private final ScoreMode scoreMode;
 
         private AggrType aggr;
         private AggrType posAggr;
 
-        TermStatWeight(IndexSearcher searcher, TermStatQuery query, Set<Term> terms, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
-            super(query);
+        TermStatWeight(IndexSearcher searcher, TermStatQuery tsq, Query query, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
+            super(tsq);
             this.searcher = searcher;
-            this.expression = query.expr;
-            this.terms = terms;
+            this.expression = tsq.expr;
+            this.query = query;
             this.scoreMode = scoreMode;
             this.aggr = aggr;
             this.posAggr = posAggr;
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) { terms.addAll(terms); }
+        public void extractTerms(Set<Term> terms) {
+            // TODO: Play with visitor interface, try to find best place to link up to this call.
+            terms.addAll(terms);
+        }
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -109,7 +118,7 @@ public class TermStatQuery extends Query {
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            return new TermStatScorer(this, searcher, context, expression, terms, scoreMode, aggr, posAggr);
+            return new TermStatScorer(this, searcher, context, expression, query, scoreMode, aggr, posAggr);
         }
 
         @Override

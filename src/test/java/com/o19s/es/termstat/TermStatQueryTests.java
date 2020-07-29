@@ -12,18 +12,15 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
+
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -32,7 +29,7 @@ public class TermStatQueryTests extends LuceneTestCase {
     private IndexReader reader;
     private IndexSearcher searcher;
 
-    private Set<Term> simpleTerms = new HashSet<Term>();
+    private Query query;
     // Some simple documents to index
     private final String[] docs = new String[] {
             "how now brown cow",
@@ -59,7 +56,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         reader = DirectoryReader.open(dir);
         searcher = new IndexSearcher(reader);
 
-        simpleTerms.add(new Term("text", "cow"));
+        query = new TermQuery(new Term("text", "cow"));
     }
 
     @After
@@ -77,7 +74,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         AggrType pos_aggr = AggrType.MAX;
 
         Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, simpleTerms);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, query);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
