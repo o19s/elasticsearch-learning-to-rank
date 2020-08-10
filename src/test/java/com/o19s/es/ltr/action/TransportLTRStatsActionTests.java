@@ -7,7 +7,6 @@ import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesResponse;
 import com.o19s.es.ltr.stats.LTRStat;
 import com.o19s.es.ltr.stats.LTRStats;
 import com.o19s.es.ltr.stats.StatName;
-import com.o19s.es.ltr.stats.suppliers.CounterSupplier;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.test.ESIntegTestCase;
@@ -25,20 +24,15 @@ public class TransportLTRStatsActionTests extends ESIntegTestCase {
 
     private TransportLTRStatsAction action;
     private LTRStats ltrStats;
-    private Map<String, LTRStat<?>> statsMap;
-    private StatName clusterStatName;
-    private StatName nodeStatName;
+    private Map<String, LTRStat> statsMap;
 
     @Before
     public void setup() throws Exception {
         super.setUp();
 
-        clusterStatName = StatName.PLUGIN_STATUS;
-        nodeStatName = StatName.CACHE;
-
         statsMap = new HashMap<>();
-        statsMap.put(clusterStatName.getName(), new LTRStat<>(false, new CounterSupplier()));
-        statsMap.put(nodeStatName.getName(), new LTRStat<>(true, () -> "test"));
+        statsMap.put(StatName.PLUGIN_STATUS.getName(), new LTRStat(false, () -> "cluster_stat"));
+        statsMap.put(StatName.CACHE.getName(), new LTRStat(true, () -> "node_stat"));
 
         ltrStats = new LTRStats(statsMap);
 

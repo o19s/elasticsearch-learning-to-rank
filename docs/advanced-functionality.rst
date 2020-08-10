@@ -218,7 +218,7 @@ Stats
 =============================
 The stats API gives the overall plugin status and statistics::
 
-    GET /_ltr/stats
+    GET /_ltr/_stats
 
     {
         "_nodes": {
@@ -267,10 +267,10 @@ The stats API gives the overall plugin status and statistics::
 
 You can also use filters to retrieve a single stat::
 
-    GET /_ltr/stats/{stat}
+    GET /_ltr/_stats/{stat}
 
 Also you can limit the information to a single node in the cluster::
 
-    GET /_ltr/stats/nodes/{nodeId}
+    GET /_ltr/_stats/nodes/{nodeId}
 
-    GET /_ltr/stats/{stat}/nodes/{nodeId}
+    GET /_ltr/_stats/{stat}/nodes/{nodeId}

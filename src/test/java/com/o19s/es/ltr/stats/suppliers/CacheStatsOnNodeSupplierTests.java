@@ -7,7 +7,6 @@ import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.index.CachedFeatureStore;
 import com.o19s.es.ltr.feature.store.index.Caches;
-import com.o19s.es.ltr.stats.StatName;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
 import org.hamcrest.collection.IsMapContaining;
@@ -15,6 +14,8 @@ import org.junit.Before;
 
 import java.io.IOException;
 import java.util.Map;
+
+import static com.o19s.es.ltr.stats.suppliers.CacheStatsOnNodeSupplier.Stat;
 
 public class CacheStatsOnNodeSupplierTests extends ESTestCase {
     private MemStore memStore;
@@ -31,9 +32,9 @@ public class CacheStatsOnNodeSupplierTests extends ESTestCase {
 
     public void testGetCacheStatsInitialState() {
         Map<String, Map<String, Object>> stats = cacheStatsOnNodeSupplier.get();
-        assertCacheStats(stats.get(StatName.CACHE_FEATURE.getName()), 0, 0, 0, 0);
-        assertCacheStats(stats.get(StatName.CACHE_FEATURE_SET.getName()), 0, 0, 0, 0);
-        assertCacheStats(stats.get(StatName.CACHE_MODEL.getName()), 0, 0, 0, 0);
+        assertCacheStats(stats.get(Stat.CACHE_FEATURE.getName()), 0, 0, 0, 0);
+        assertCacheStats(stats.get(Stat.CACHE_FEATURE_SET.getName()), 0, 0, 0, 0);
+        assertCacheStats(stats.get(Stat.CACHE_MODEL.getName()), 0, 0, 0, 0);
     }
 
     public void testGetCacheStats() throws IOException {
@@ -67,26 +68,26 @@ public class CacheStatsOnNodeSupplierTests extends ESTestCase {
 
         Map<String, Map<String, Object>> stats = cacheStatsOnNodeSupplier.get();
 
-        assertCacheStats(stats.get(StatName.CACHE_FEATURE.getName()), 1, 2, 0, 2);
-        assertCacheStats(stats.get(StatName.CACHE_FEATURE_SET.getName()), 0, 1, 0, 1);
-        assertCacheStats(stats.get(StatName.CACHE_MODEL.getName()), 2, 2, 1, 1);
+        assertCacheStats(stats.get(Stat.CACHE_FEATURE.getName()), 1, 2, 0, 2);
+        assertCacheStats(stats.get(Stat.CACHE_FEATURE_SET.getName()), 0, 1, 0, 1);
+        assertCacheStats(stats.get(Stat.CACHE_MODEL.getName()), 2, 2, 1, 1);
         assertMemoryUsage(stats);
     }
 
     private void assertCacheStats(Map<String, Object> stat, long hits,
                                   long misses, long evictions, int entries) {
-        assertThat(stat, IsMapContaining.hasEntry(StatName.CACHE_HIT_COUNT.getName(), hits));
-        assertThat(stat, IsMapContaining.hasEntry(StatName.CACHE_MISS_COUNT.getName(), misses));
-        assertThat(stat, IsMapContaining.hasEntry(StatName.CACHE_EVICTION_COUNT.getName(), evictions));
-        assertThat(stat, IsMapContaining.hasEntry(StatName.CACHE_ENTRY_COUNT.getName(), entries));
+        assertThat(stat, IsMapContaining.hasEntry(Stat.CACHE_HIT_COUNT.getName(), hits));
+        assertThat(stat, IsMapContaining.hasEntry(Stat.CACHE_MISS_COUNT.getName(), misses));
+        assertThat(stat, IsMapContaining.hasEntry(Stat.CACHE_EVICTION_COUNT.getName(), evictions));
+        assertThat(stat, IsMapContaining.hasEntry(Stat.CACHE_ENTRY_COUNT.getName(), entries));
     }
 
     private void assertMemoryUsage(Map<String, Map<String, Object>> stats) {
-        assertTrue((long) stats.get(StatName.CACHE_FEATURE.getName())
-                .get(StatName.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
-        assertTrue((long) stats.get(StatName.CACHE_FEATURE_SET.getName())
-                .get(StatName.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
-        assertTrue((long) stats.get(StatName.CACHE_MODEL.getName())
-                .get(StatName.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
+        assertTrue((long) stats.get(Stat.CACHE_FEATURE.getName())
+                .get(Stat.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
+        assertTrue((long) stats.get(Stat.CACHE_FEATURE_SET.getName())
+                .get(Stat.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
+        assertTrue((long) stats.get(Stat.CACHE_MODEL.getName())
+                .get(Stat.CACHE_MEMORY_USAGE_IN_BYTES.getName()) > 0);
     }
 }

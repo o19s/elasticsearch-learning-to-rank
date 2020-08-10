@@ -49,7 +49,6 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
-import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
 import com.o19s.es.ltr.rest.RestFeatureManager;
 import com.o19s.es.ltr.rest.RestSearchStoreElements;
@@ -259,13 +258,13 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     private LTRStats getStats(Client client, ClusterService clusterService) {
-        Map<String, LTRStat<?>> stats = new HashMap<>();
+        Map<String, LTRStat> stats = new HashMap<>();
         stats.put(StatName.CACHE.getName(),
-                new LTRStat<>(false, new CacheStatsOnNodeSupplier(caches)));
+                new LTRStat(false, new CacheStatsOnNodeSupplier(caches)));
         stats.put(StatName.STORES.getName(),
-                new LTRStat<>(true, new StoreStatsSupplier(client, clusterService)));
+                new LTRStat(true, new StoreStatsSupplier(client, clusterService)));
         stats.put(StatName.PLUGIN_STATUS.getName(),
-                new LTRStat<>(true, new PluginHealthStatusSupplier(clusterService)));
+                new LTRStat(true, new PluginHealthStatusSupplier(clusterService)));
         return new LTRStats(unmodifiableMap(stats));
     }
 

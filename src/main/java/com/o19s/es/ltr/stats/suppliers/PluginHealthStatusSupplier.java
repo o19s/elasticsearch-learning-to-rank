@@ -45,7 +45,7 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
     }
 
     private String combineStatuses(String s1, String s2) {
-        if (s2 == null || STATUS_RED.equals(s1) || STATUS_RED.equals(s2)) {
+        if (STATUS_RED.equals(s1) || STATUS_RED.equals(s2)) {
             return STATUS_RED;
         } else if (STATUS_YELLOW.equals(s1) || STATUS_YELLOW.equals(s2)) {
             return STATUS_YELLOW;
@@ -60,6 +60,6 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
                 clusterService.state().getRoutingTable().index(storeName)
         );
 
-        return indexHealth.getStatus().name().toLowerCase(Locale.getDefault());
+        return indexHealth.getStatus().name().toLowerCase(Locale.ROOT);
     }
 }

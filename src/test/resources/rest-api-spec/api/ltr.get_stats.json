@@ -4,13 +4,13 @@
     "url": {
       "paths": [
         {
-          "path": "/_ltr/stats",
+          "path": "/_ltr/_stats",
           "methods": [
             "GET"
           ]
         },
         {
-          "path": "/_ltr/stats/nodes/{nodeId}",
+          "path": "/_ltr/_stats/nodes/{nodeId}",
           "parts": {
             "nodeId": {
               "required": false,
@@ -23,7 +23,7 @@
           ]
         },
         {
-          "path": "/_ltr/stats/{stat}",
+          "path": "/_ltr/_stats/{stat}",
           "parts": {
             "stat": {
               "required": false,
@@ -36,7 +36,7 @@
           ]
         },
         {
-          "path": "/_ltr/stats/{stat}/nodes/{nodeId}",
+          "path": "/_ltr/_stats/{stat}/nodes/{nodeId}",
           "parts": {
             "nodeId": {
               "required": false,

@@ -1,7 +1,6 @@
 package com.o19s.es.ltr.stats.suppliers;
 
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import com.o19s.es.ltr.stats.StatName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -42,6 +40,23 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
     private final Client client;
     private final ClusterService clusterService;
     private final IndexNameExpressionResolver indexNameExpressionResolver;
+
+    public enum Stat {
+        STORE_STATUS("status"),
+        STORE_FEATURE_COUNT("feature_count"),
+        STORE_FEATURE_SET_COUNT("featureset_count"),
+        STORE_MODEL_COUNT("model_count");
+
+        private final String name;
+
+        Stat(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
     public StoreStatsSupplier(Client client, ClusterService clusterService) {
         this.client = client;
@@ -74,7 +89,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         try {
             MultiSearchResponse msr = requestBuilder.execute().get();
             assert indices.size() == msr.getResponses().length;
-            Map<String, Map<String, Object>> stats = new ConcurrentHashMap<>(indices.size());
+            Map<String, Map<String, Object>> stats = new HashMap<>(indices.size());
 
             Iterator<String> indicesItr = indices.iterator();
             Iterator<MultiSearchResponse.Item> responseItr = msr.iterator();
@@ -102,17 +117,17 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
 
     private Map<String, Object> initStoreStat(String index) {
         Map<String, Object> storeStat = new HashMap<>();
-        storeStat.put(StatName.STORE_STATUS.getName(), getLtrStoreHealthStatus(index));
-        storeStat.put(StatName.STORE_FEATURE_COUNT.getName(), 0);
-        storeStat.put(StatName.STORE_FEATURE_SET_COUNT.getName(), 0);
-        storeStat.put(StatName.STORE_MODEL_COUNT.getName(), 0);
+        storeStat.put(Stat.STORE_STATUS.getName(), getLtrStoreHealthStatus(index));
+        storeStat.put(Stat.STORE_FEATURE_COUNT.getName(), 0L);
+        storeStat.put(Stat.STORE_FEATURE_SET_COUNT.getName(), 0L);
+        storeStat.put(Stat.STORE_MODEL_COUNT.getName(), 0L);
         return storeStat;
     }
 
     private void updateCount(Terms.Bucket bucket, Map<String, Object> storeStat) {
         storeStat.computeIfPresent(
                 typeToStatName(bucket.getKeyAsString()),
-                (k, v) -> bucket.getDocCount());
+                (k, v) -> bucket.getDocCount() + (long) v);
     }
 
     private String typeToStatName(String type) {
@@ -125,7 +140,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
                         clusterService.state().metadata().index(storeName),
                         clusterService.state().getRoutingTable().index(storeName));
 
-        return indexHealth.getStatus().name().toLowerCase(Locale.getDefault());
+        return indexHealth.getStatus().name().toLowerCase(Locale.ROOT);
     }
 
     private SearchRequestBuilder countSearchRequest(String index) {

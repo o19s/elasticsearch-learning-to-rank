@@ -25,7 +25,7 @@ import static java.util.Collections.unmodifiableList;
  * APIs to retrieve stats on the plugin usage and performance.
  */
 public class RestLTRStats extends BaseRestHandler {
-    public static final String LTR_STATS_BASE_URI = "/_ltr/stats";
+    public static final String LTR_STATS_BASE_URI = "/_ltr/_stats";
     private static final String NAME = "learning_to_rank_stats";
 
     @Override
@@ -76,7 +76,7 @@ public class RestLTRStats extends BaseRestHandler {
             RestRequest request, Set<String> validStats, List<String> requestedStats) {
         if (requestedStats.contains(LTRStatsNodesRequest.ALL_STATS_KEY)) {
             throw new IllegalArgumentException(
-                    String.format(Locale.getDefault(), "Request %s contains both %s and individual stats",
+                    String.format(Locale.ROOT, "Request %s contains both %s and individual stats",
                             request.path(), LTRStatsNodesRequest.ALL_STATS_KEY));
         }
 
