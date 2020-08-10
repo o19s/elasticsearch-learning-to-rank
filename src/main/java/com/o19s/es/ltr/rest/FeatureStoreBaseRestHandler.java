@@ -21,7 +21,10 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
 
 public abstract class FeatureStoreBaseRestHandler extends BaseRestHandler {
-    protected FeatureStoreBaseRestHandler() {
+
+    protected boolean getErrorTrace(RestRequest request)
+    {
+        return request.paramAsBoolean("error_trace", false);
     }
 
     protected String indexName(RestRequest request) {

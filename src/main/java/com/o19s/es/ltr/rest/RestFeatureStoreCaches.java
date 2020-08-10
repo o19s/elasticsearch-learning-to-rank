@@ -53,14 +53,16 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
     @Override
     public List<Route> routes() {
         return unmodifiableList(asList(
-                new Route(RestRequest.Method.POST, "/_ltr/_clearcache"),
-                new Route(RestRequest.Method.POST, "/_ltr/{store}/_clearcache"),
-                new Route(RestRequest.Method.GET, "/_ltr/_cachestats")
+            new Route(RestRequest.Method.POST, "/_ltr/_clearcache"),
+            new Route(RestRequest.Method.POST, "/_ltr/{store}/_clearcache"),
+            new Route(RestRequest.Method.GET, "/_ltr/_cachestats")
         ));
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+        boolean errorTrace = getErrorTrace(request);
+
         if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);
         } else {

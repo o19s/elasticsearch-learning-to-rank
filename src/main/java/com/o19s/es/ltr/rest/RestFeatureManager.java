@@ -27,16 +27,16 @@ import static java.util.Collections.unmodifiableList;
 import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
 import static org.elasticsearch.rest.RestStatus.OK;
 
-class RestAddOrUpdateFeature extends RestSimpleFeatureStore {
+public class RestFeatureManager extends FeatureStoreBaseRestHandler {
     private final String type;
 
-    RestAddOrUpdateFeature(String type) {
+    public RestFeatureManager(String type) {
         this.type = type;
     }
 
     @Override
     public String getName() {
-        return "Add or update a " + type;
+        return "Add, update or delete a " + type;
     }
 
     @Override
