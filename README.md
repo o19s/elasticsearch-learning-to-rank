@@ -19,7 +19,7 @@ You can also participate in regular [trainings](http://opensourceconnections.com
 
 ## I want to jump in!
 
-If you want to just jump in, go straight to the demo. The demo uses [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/), a relatively straightforward Java Learning to Rank library, to train models. Follow the directions in the [demo README](demo/README.md), edit code, and have fun!
+Go straight to the demo, which lives in the [Hello LTR](https://github.com/o19s/hello-ltr) repo. The Hello LTR repo is set up to run via Docker and Jupyter Notebooks. The examples are organzized by search engine (b/c we love Solr too) in the `notebooks/` directory. The first notebook to try is [tmdb/hello-ltr.ipynb](https://github.com/o19s/hello-ltr/blob/master/notebooks/elasticsearch/tmdb/hello-ltr%20(ES).ipynb).
 
 # Installing
 
