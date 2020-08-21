@@ -245,7 +245,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             DocumentField logs = hit.getFields().get(FIELD_NAME);
             if (logs == null) {
                 logs = newLogField();
-                hit.setField(FIELD_NAME, logs);
+                hit.setDocumentField(FIELD_NAME, logs);
             }
             Map<String, List<Map<String, Object>>> entries = logs.getValue();
             rebuild();
