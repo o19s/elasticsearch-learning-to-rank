@@ -36,8 +36,6 @@ public class RestSearchStoreElements extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
-        boolean errorTrace = getErrorTrace(request);
-
         return search(client, type, indexName(request), request);
     }
 

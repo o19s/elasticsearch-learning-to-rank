@@ -16,6 +16,7 @@ version = "${ltrVersion}-es${elasticsearchVersion}"
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'elasticsearch.rest-resources'
 
 // license of this project
 licenseFile = rootProject.file('LICENSE.txt')

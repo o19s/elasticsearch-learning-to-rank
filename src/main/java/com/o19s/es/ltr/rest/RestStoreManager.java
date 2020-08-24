@@ -54,7 +54,6 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
      */
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
-        boolean errorTrace = getErrorTrace(request);
         String indexName = indexName(request);
 
         if (request.method() == RestRequest.Method.PUT) {

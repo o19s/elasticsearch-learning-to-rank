@@ -61,8 +61,6 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
-        boolean errorTrace = getErrorTrace(request);
-
         if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);
         } else {
