@@ -47,10 +47,12 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.parser.XGBoostJsonParser;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.ranker.ranklib.RanklibModelParser;
-import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestCreateModelFromSet;
+import com.o19s.es.ltr.rest.RestFeatureManager;
+import com.o19s.es.ltr.rest.RestSearchStoreElements;
+import com.o19s.es.ltr.rest.RestStoreManager;
+import com.o19s.es.ltr.rest.RestAddFeatureToSet;
 import com.o19s.es.ltr.rest.RestFeatureStoreCaches;
-import com.o19s.es.ltr.rest.RestSimpleFeatureStore;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
@@ -156,7 +158,13 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                              SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
                                              Supplier<DiscoveryNodes> nodesInCluster) {
         List<RestHandler> list = new ArrayList<>();
-        RestSimpleFeatureStore.register(list, restController);
+
+        for (String type : ValidatingLtrQueryBuilder.SUPPORTED_TYPES) {
+            list.add(new RestFeatureManager(type));
+            list.add(new RestSearchStoreElements(type));
+        }
+        list.add(new RestStoreManager());
+
         list.add(new RestFeatureStoreCaches());
         list.add(new RestCreateModelFromSet());
         list.add(new RestAddFeatureToSet());

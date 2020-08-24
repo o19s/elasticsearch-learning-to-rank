@@ -16,6 +16,7 @@ version = "${ltrVersion}-es${elasticsearchVersion}"
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'elasticsearch.rest-resources'
 
 // license of this project
 licenseFile = rootProject.file('LICENSE.txt')
@@ -50,10 +51,10 @@ repositories {
 
 dependencies {
   compile "org.apache.lucene:lucene-expressions:${luceneVersion}"
-  compile 'org.antlr:antlr4-runtime:4.5.1-1'
-  compile 'org.ow2.asm:asm:5.0.4'
-  compile 'org.ow2.asm:asm-commons:5.0.4'
-  compile 'org.ow2.asm:asm-tree:5.0.4'
+  compile "org.antlr:antlr4-runtime:${antlrVersion}"
+  compile "org.ow2.asm:asm:${ow2Version}"
+  compile "org.ow2.asm:asm-commons:${ow2Version}"
+  compile "org.ow2.asm:asm-tree:${ow2Version}"
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
 }

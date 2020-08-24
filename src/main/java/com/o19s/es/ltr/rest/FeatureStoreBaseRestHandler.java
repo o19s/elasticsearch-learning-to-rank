@@ -21,8 +21,6 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
 
 public abstract class FeatureStoreBaseRestHandler extends BaseRestHandler {
-    protected FeatureStoreBaseRestHandler() {
-    }
 
     protected String indexName(RestRequest request) {
         if (request.hasParam("store")) {
