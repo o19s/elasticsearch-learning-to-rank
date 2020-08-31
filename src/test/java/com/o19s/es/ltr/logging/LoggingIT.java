@@ -104,7 +104,9 @@ public class LoggingIT extends BaseIntegrationTest {
     public void prepareScriptFeatures() throws Exception {
         List<StoredFeature> features = new ArrayList<>(3);
         features.add(new StoredFeature("test_inject", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
-                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { \"field1\": \"query\" } } }"));
+                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
+                    "\"terms\": [\"found\"], " +
+                    "\"fields\": [\"field1\"] } } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
         addElement(set);
@@ -359,7 +361,7 @@ public class LoggingIT extends BaseIntegrationTest {
         List<Map<String, Object>> log = logs.get("first_log");
 
         assertEquals(log.get(0).get("name"), "test_inject");
-        assertTrue((Float)log.get(0).get("value") > 0F);
+        assertTrue((Float)log.get(0).get("value") > 0.0F);
     }
 
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {

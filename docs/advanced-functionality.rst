@@ -258,7 +258,7 @@ The following optional parameters are supported:
 - :code:`pos_aggr` -- Since each term by itself can have multiple positions, you need to decide which aggregation to apply.  This supports the same values as :code:`aggr` and defaults to AVG
 
 
-Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with scripts if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` you can access the raw values directly in a custom script.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
+Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
 
 
 

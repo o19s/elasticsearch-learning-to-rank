@@ -7,6 +7,9 @@ import com.o19s.es.ltr.query.LtrRewritableQuery;
 import com.o19s.es.ltr.query.LtrRewriteContext;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
 import com.o19s.es.termstat.TermStatSupplier;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -27,6 +30,7 @@ import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -120,13 +124,47 @@ public class ScriptFeature implements Feature {
         // Parse terms if set
         Set<Term> terms = new HashSet<>();
         if (baseScriptParams.containsKey("term_stat")) {
-            // TODO: Is there a cleaner way of doing this cast?
             @SuppressWarnings("unchecked")
-            HashMap<String, String> termspec = (HashMap<String, String>) baseScriptParams.get("term_stat");
+            HashMap<String, Object> termspec = (HashMap<String, Object>) baseScriptParams.get("term_stat");
 
-            // The key is the field name, the value is the key we use to pull the substitute out of params
-            for (Map.Entry<String, String> entry : termspec.entrySet()) {
-                terms.add(new Term(entry.getKey(), (String) queryTimeParams.get(entry.getValue())));
+            @SuppressWarnings("unchecked")
+            ArrayList<String> fields = (ArrayList<String>) termspec.get("fields");
+
+            @SuppressWarnings("unchecked")
+            ArrayList<String> termList = (ArrayList<String>) termspec.get("terms");
+
+            String analyzerName = (String) termspec.get("analyzer");
+
+            if (fields == null || termList == null) {
+                throw new IllegalArgumentException("Term Stats injection requires fields and terms");
+            }
+
+            Analyzer analyzer = null;
+            for(String field : fields) {
+                if (analyzerName == null) {
+                    analyzer = context.getQueryShardContext().getMapperService().fieldType(field).searchAnalyzer();
+                } else if (analyzer == null) {
+                    analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
+                }
+
+                if (analyzer == null) {
+                    throw new IllegalArgumentException("No analyzer found for [" + analyzerName + "]");
+                }
+
+                for (String termString : termList) {
+                    TokenStream ts = analyzer.tokenStream(field, termString);
+                    TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
+
+                    try {
+                        ts.reset();
+                        while (ts.incrementToken()) {
+                            terms.add(new Term(field, termAtt.getBytesRef()));
+                        }
+                        ts.close();
+                    } catch (IOException ex) {
+                        // No-op
+                    }
+                }
             }
 
             nparams.put(TERM_STAT, termstatSupplier);
