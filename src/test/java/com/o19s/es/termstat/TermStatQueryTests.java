@@ -118,6 +118,5 @@ public class TermStatQueryTests extends LuceneTestCase {
         TopDocs docs = searcher.search(tsq, 4);
         Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
         assertThat(explanation.toString().trim(), equalTo("1.8472979 = weight(" + expr + " in doc 0)"));
-
     }
 }

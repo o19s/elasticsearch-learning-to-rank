@@ -44,7 +44,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     static {
         PARSER = new ObjectParser<>(NAME, TermStatQueryBuilder::new);
-        PARSER.declareString(TermStatQueryBuilder::terms, TERMS_NAME);
+        PARSER.declareStringArray(TermStatQueryBuilder::terms, TERMS_NAME);
         PARSER.declareStringArray(TermStatQueryBuilder::fields, FIELDS_NAME);
         PARSER.declareStringOrNull(TermStatQueryBuilder::analyzer, ANALYZER_NAME);
         PARSER.declareString(TermStatQueryBuilder::expr, EXPR_NAME);
@@ -53,7 +53,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         declareStandardFields(PARSER);
     }
 
-    private String terms;
+    private String[] terms;
     private String[] fields;
     private String analyzerName;
     private String expr;
@@ -69,7 +69,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         expr = in.readString();
         aggr = in.readString();
         pos_aggr = in.readOptionalString();
-        terms = in.readString();
+        terms = in.readStringArray();
         fields = in.readStringArray();
         analyzerName = in.readOptionalString();
     }
@@ -114,7 +114,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         out.writeString(expr);
         out.writeString(aggr);
         out.writeOptionalString(pos_aggr);
-        out.writeString(terms);
+        out.writeStringArray(terms);
         out.writeStringArray(fields);
         out.writeOptionalString(analyzerName);
     }
@@ -126,7 +126,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         builder.field(EXPR_NAME.getPreferredName(), expr);
         builder.field(AGGR_NAME.getPreferredName(), aggr);
         builder.field(POS_AGGR_NAME.getPreferredName(), pos_aggr);
-        builder.field(TERMS_NAME.getPreferredName(), terms);
+        builder.array(TERMS_NAME.getPreferredName(), terms);
         builder.array(FIELDS_NAME.getPreferredName(), fields);
         builder.field(ANALYZER_NAME.getPreferredName(), analyzerName);
 
@@ -154,14 +154,16 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
                 throw new IllegalArgumentException("No analyzer found for [" + analyzerName + "]");
             }
 
-            TokenStream ts = analyzer.tokenStream(field, terms);
-            TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
+            for (String termString : terms) {
+                TokenStream ts = analyzer.tokenStream(field, termString);
+                TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
 
-            ts.reset();
-            while(ts.incrementToken()) {
-                termSet.add(new Term(field, termAtt.getBytesRef()));
+                ts.reset();
+                while (ts.incrementToken()) {
+                    termSet.add(new Term(field, termAtt.getBytesRef()));
+                }
+                ts.close();
             }
-            ts.close();
         }
 
         return new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
@@ -177,14 +179,14 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     @Override
-    protected int doHashCode() { return Objects.hash(expr, aggr, pos_aggr, terms, Arrays.hashCode(fields), analyzerName);}
+    protected int doHashCode() { return Objects.hash(expr, aggr, pos_aggr, Arrays.hashCode(terms), Arrays.hashCode(fields), analyzerName);}
 
     @Override
     protected boolean doEquals(TermStatQueryBuilder other) {
         return Objects.equals(expr, other.expr)
                 && Objects.equals(aggr, other.aggr)
                 && Objects.equals(pos_aggr, other.pos_aggr)
-                && Objects.equals(terms, other.terms)
+                && Arrays.equals(terms, other.terms)
                 && Arrays.equals(fields, other.fields)
                 && Objects.equals(analyzerName, other.analyzerName);
     }
@@ -236,9 +238,13 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         return this;
     }
 
-    public String terms() { return terms; }
-    public TermStatQueryBuilder terms(String terms) {
+    public String[] terms() { return terms; }
+    public TermStatQueryBuilder terms(String[] terms) {
         this.terms = terms;
+        return this;
+    }
+    public TermStatQueryBuilder terms(List<String> terms) {
+        this.terms = terms.toArray(new String[]{});
         return this;
     }
 }

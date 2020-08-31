@@ -29,7 +29,7 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
         builder.aggr(AggrType.AVG.getType());
         builder.posAggr(AggrType.AVG.getType());
         builder.fields(new String[]{"text"});
-        builder.terms("cow");
+        builder.terms(new String[]{"cow"});
 
         return builder;
     }
@@ -41,7 +41,7 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "   \"aggr\": \"min\"," +
                 "   \"pos_aggr\": \"max\"," +
                 "   \"fields\": [\"text\"]," +
-                "   \"terms\":  \"cow\"" +
+                "   \"terms\":  [\"cow\"]" +
                 "  }" +
                 "}";
 
@@ -59,7 +59,7 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "   \"aggr\": \"min\"," +
                 "   \"pos_aggr\": \"max\"," +
                 "   \"fields\": [\"text\"]," +
-                "   \"terms\": \"cow\"" +
+                "   \"terms\": [\"cow\"]" +
                 "  }" +
                 "}";
 
