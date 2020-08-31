@@ -298,11 +298,11 @@ the same data as the `ExplorerQuery` but it allows the user to specify a custom 
 
 The :code:`expr` parameter is the Lucene expression you want to run on a per term basis.  This can simply be a stat type, or a custom formula containing multiple stat types, for example: :code:`(tf * idf) / 2`.  The following stat types are injected into the Lucene expression context for your usage:
 
-- :code:`df` -- the direct document frequency for a term. So if rambo occurs in 3 movie titles, this is 3.
+- :code:`df` -- the direct document frequency for a term. So if rambo occurs in 3 movie titles across multiple documents, this is 3.
 - :code:`idf` -- the IDF calculation of the classic similarity :code:`log((NUM_DOCS+1)/(raw_df+1)) + 1`.
-- :code:`tf` -- the term frequency for a document. So if rambo occurs in 3 in movie synopsis in same document, this is 3.
-- :code:`tp` -- the term positions for a document. Because multiple positions can come back, review the behavior of :code:`pos_aggr` 
-- :code:`ttf` -- the total term frequency for the term across the index. So if rambo is mentioned a total of 100 times in the overview field, this would be 100.
+- :code:`tf` -- the term frequency for a document. So if rambo occurs in 3x in movie synopsis in same document, this is 3.
+- :code:`tp` -- the term positions for a document. Because multiple positions can come back for a single term, review the behavior of :code:`pos_aggr` 
+- :code:`ttf` -- the total term frequency for the term across the index. So if rambo is mentioned a total of 100 times in the overview field across all documents, this would be 100.
 
 The :code:`aggr` parameter tells the query what type of aggregation you want over the collected statistics from the :code:`expr`.  For the example terms of :code:`rambo rocky` we will get stats for both terms.  Since we can only return one value you need to decide what statistical calculation you would like.
 
@@ -325,4 +325,4 @@ Optional Features
 Script Injection
 ----------------
 
-Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
+Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
