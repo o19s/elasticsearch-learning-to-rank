@@ -32,6 +32,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -47,7 +48,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -57,8 +57,9 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
             .register(LinearRankerParser.TYPE, LinearRankerParser::new)
             .build();
 
+    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return singletonList(LtrQueryParserPlugin.class);
+        return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override

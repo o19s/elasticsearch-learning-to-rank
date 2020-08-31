@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.Script;
 
@@ -142,7 +143,8 @@ public class ScriptFeature implements Feature {
             Analyzer analyzer = null;
             for(String field : fields) {
                 if (analyzerName == null) {
-                    analyzer = context.getQueryShardContext().getMapperService().fieldType(field).searchAnalyzer();
+                    MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
+                    analyzer = context.getQueryShardContext().getSearchAnalyzer(fieldType);
                 } else if (analyzer == null) {
                     analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
                 }

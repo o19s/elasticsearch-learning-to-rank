@@ -207,7 +207,7 @@ Place this alongside the feature set. You'll see below we have a malformed :code
                     ],
                     "template_language": "mustache",
                     "template": {
-                        "mooch": {
+                        "match": {
                             "title": "{{keywords}}"
                         }
                     }

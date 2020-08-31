@@ -15,7 +15,7 @@ This plugin:
 
 We recommend taking time to [read the docs](http://elasticsearch-learning-to-rank.readthedocs.io). There's quite a bit of detailed information about learning to rank basics and how this plugin can ease learning to rank development. 
 
-You can also participate in regular [4 hour trainings](http://opensourceconnections.com/events/training) on Elasticsearch Learning to Rank, which support the free work done on this plugin.
+You can also participate in regular [trainings](http://opensourceconnections.com/events/training) on Elasticsearch Learning to Rank, which support the free work done on this plugin.
 
 ## I want to jump in!
 

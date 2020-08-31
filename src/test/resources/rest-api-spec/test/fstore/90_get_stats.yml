@@ -1,0 +1,174 @@
+---
+setup:
+  - do:
+      indices.create:
+        index:  test
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     1
+        body:   { "field1": "v1", "field2": "v2", "field3": "some text", "user_rating": 5.2  }
+
+  - do:
+      index:
+        index:  test
+        type:   test
+        id:     2
+        body:   { "field1": "v1 aoeu", "field2": " ua u v2", "field3": "foo bar text", "user_rating": 0.0  }
+
+  - do:
+      ltr.create_store: {}
+  - do:
+      ltr.create_feature:
+        name: feature1
+        body:
+          feature:
+            params:
+              - query_string
+            template:
+              match:
+                field1: "{{query_string}}"
+  - do:
+      ltr.create_feature:
+        name: feature2
+        body:
+          feature:
+            params:
+              - query_string
+            template:
+              match:
+                field2: "{{query_string}}"
+  - do:
+      ltr.create_featureset:
+        name: my_featureset
+        body:
+          featureset:
+            name: my_featureset
+  - do:
+      ltr.add_features_to_set:
+        name: my_featureset
+        query: feature1
+  - do:
+      ltr.add_features_to_set:
+        name: my_featureset
+        query: feature2
+  - do:
+      ltr.add_features_to_set:
+        name: my_featureset
+        body:
+          features:
+            - name: user_rating
+              params: query_string
+              template:  {"function_score": { "functions": [ {"field_value_factor": { "field": "user_rating" } }], "query": {"match_all": {}}}}
+
+  - do:
+      ltr.add_features_to_set:
+        name: my_featureset
+        body:
+          features:
+            - name: no_param_feature
+              params: []
+              template:  {"function_score": { "functions": [ {"field_value_factor": { "field": "user_rating" } }], "query": {"match_all": {}}}}
+
+  - do:
+      indices.refresh: {}
+
+  - do:
+      ltr.create_model_from_set:
+        name: my_featureset
+        body:
+          model:
+            name: single_feature_ranklib_model
+            model:
+              type: model/ranklib
+              definition: |
+                ## LambdaMART
+                ## No. of trees = 1
+                ## No. of leaves = 1
+                ## No. of threshold candidates = 256
+                ## Learning rate = 0.1
+                ## Stop early = 100
+
+                <ensemble>
+                  <tree id="1" weight="0.1">
+                    <split>
+                      <feature> 1 </feature>
+                      <threshold> 1.0 </threshold>
+                      <split pos="left">
+                        <output> 2.0 </output>
+                      </split>
+                      <split pos="right">
+                       <output> 4.0 </output>
+                      </split>
+                    </split>
+                  </tree>
+                </ensemble>
+
+
+  - do:
+      ltr.create_model_from_set:
+        name: my_featureset
+        body:
+          model:
+            name: single_feature_linear_model
+            model:
+              type: model/linear
+              definition:
+                feature1: 1.3
+
+  # Model that uses three features.
+  - do:
+      ltr.create_model_from_set:
+        name: my_featureset
+        body:
+          model:
+            name: three_feature_linear_model
+            model:
+              type: model/linear
+              definition:
+                feature1: 1.3
+                feature2: 2.3
+                no_param_feature: 3.0
+
+  - do:
+      indices.refresh: {}
+
+---
+"Get all stats":
+  - do:
+      ltr.get_stats: {}
+  - set:
+      nodes._arbitrary_key_: node_id
+  - match: { status: "green" }
+  - length: { stores: 1 }
+  - match: { stores._default_.status: "green" }
+  - match: { stores._default_.featureset_count: 1 }
+  - match: { stores._default_.feature_count: 2 }
+  - match: { stores._default_.model_count: 3 }
+  - is_true: nodes.$node_id.cache
+  - is_true: nodes.$node_id.cache.feature
+  - is_true: nodes.$node_id.cache.featureset
+  - is_true: nodes.$node_id.cache.model
+  - gte: {nodes.$node_id.cache.feature.hit_count: 0 }
+  - gte: {nodes.$node_id.cache.feature.miss_count: 0 }
+  - gte: {nodes.$node_id.cache.feature.eviction_count: 0 }
+  - gte: {nodes.$node_id.cache.feature.entry_count: 0 }
+  - gte: {nodes.$node_id.cache.feature.memory_usage_in_bytes: 0 }
+  - gte: {nodes.$node_id.cache.featureset.hit_count: 0 }
+  - gte: {nodes.$node_id.cache.featureset.miss_count: 0 }
+  - gte: {nodes.$node_id.cache.featureset.eviction_count: 0 }
+  - gte: {nodes.$node_id.cache.featureset.entry_count: 0 }
+  - gte: {nodes.$node_id.cache.featureset.memory_usage_in_bytes: 0 }
+  - gte: {nodes.$node_id.cache.model.hit_count: 0 }
+  - gte: {nodes.$node_id.cache.model.miss_count: 0 }
+  - gte: {nodes.$node_id.cache.model.eviction_count: 0 }
+  - gte: {nodes.$node_id.cache.model.entry_count: 0 }
+  - gte: {nodes.$node_id.cache.model.memory_usage_in_bytes: 0 }
+---
+"Get an individual stat - plugin status":
+  - do:
+      ltr.get_stats:
+        stat: "status"
+  - match: { status: "green" }

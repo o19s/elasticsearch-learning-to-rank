@@ -29,7 +29,7 @@ import org.elasticsearch.action.support.master.TransportMasterNodeReadAction;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.collect.Tuple;
@@ -88,7 +88,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
         final List<Tuple<String, Integer>> versions = new ArrayList<>();
         Stream.of(names)
                 .filter(IndexFeatureStore::isIndexStore)
-                .map((s) -> clusterService.state().metaData().getIndices().get(s))
+                .map((s) -> clusterService.state().metadata().getIndices().get(s))
                 .filter(Objects::nonNull)
                 .filter((im) -> STORE_VERSION_PROP.exists(im.getSettings()))
                 .forEach((m) -> {
@@ -103,7 +103,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     }
 
 
-    private SearchRequestBuilder countSearchRequest(IndexMetaData meta) {
+    private SearchRequestBuilder countSearchRequest(IndexMetadata meta) {
         return client.prepareSearch(meta.getIndex().getName())
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSize(0)
@@ -138,7 +138,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
         if (!IndexFeatureStore.isIndexStore(s)) {
             return null;
         }
-        IndexMetaData index = clusterService.state().metaData().getIndices().get(s);
+        IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
 
         if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
             return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));

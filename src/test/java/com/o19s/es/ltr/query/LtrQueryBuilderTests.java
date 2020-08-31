@@ -27,6 +27,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,8 +43,9 @@ import static org.hamcrest.CoreMatchers.instanceOf;
  */
 public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder> {
 
+    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singletonList(LtrQueryParserPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     private static final String simpleModel = "## LambdaMART\\n" +

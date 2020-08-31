@@ -1,0 +1,60 @@
+{
+  "ltr.get_stats": {
+    "stability": "stable",
+    "url": {
+      "paths": [
+        {
+          "path": "/_ltr/_stats",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "path": "/_ltr/_stats/nodes/{nodeId}",
+          "parts": {
+            "nodeId": {
+              "required": false,
+              "type": "string",
+              "description": "id of an individual node in the cluster"
+            }
+          },
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "path": "/_ltr/_stats/{stat}",
+          "parts": {
+            "stat": {
+              "required": false,
+              "type": "string",
+              "description": "name of the individual statistics."
+            }
+          },
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "path": "/_ltr/_stats/{stat}/nodes/{nodeId}",
+          "parts": {
+            "nodeId": {
+              "required": false,
+              "type": "string",
+              "description": "id of an individual node in the cluster."
+            },
+            "stat": {
+              "required": false,
+              "type": "string",
+              "description": "name of the individual statistics."
+            }
+          },
+          "methods": [
+            "GET"
+          ]
+        }
+      ]
+    },
+    "body": null
+  }
+}

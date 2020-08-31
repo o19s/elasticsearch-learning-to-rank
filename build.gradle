@@ -6,57 +6,57 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:7.7.0"
+    classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
   }
 }
 
 group = 'com.o19s'
-version = '1.2.1-es7.7.0'
+version = "${ltrVersion}-es${elasticsearchVersion}"
 
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'elasticsearch.rest-resources'
 
 // license of this project
 licenseFile = rootProject.file('LICENSE.txt')
 // copyright notices
 noticeFile = rootProject.file('NOTICE.txt')
 
+// disable uploadArchives task for now, no upload happening currently
+uploadArchives.enabled = false
+
 esplugin {
   name 'ltr'
   description 'Learning to Rank Query w/ RankLib Models'
   classname 'com.o19s.es.ltr.LtrQueryParserPlugin'
-  // license of this project
+  // license of the plugin, may be different than the above license
   licenseFile = rootProject.file('LICENSE.txt')
-  // copyright notices
+  // copyright notices, may be different than the above notice
   noticeFile = rootProject.file('NOTICE.txt')
 }
 
-
 // In this section you declare the dependencies for your production and test code
-// Note, the two dependencies are not really needed as the buildscript dependency gets them in already
-// they are just here as an example
+// Elasticsearch dependency is included due to the build-tools, test-framework as well
 repositories {
-    mavenCentral()
-    mavenLocal()
-    jcenter{
-    	url "https://jcenter.bintray.com/"
-	metadataSources{
-		artifact()
-	}
+  mavenCentral()
+  mavenLocal()
+  jcenter {
+    url "https://jcenter.bintray.com/"
+    metadataSources{
+      artifact()
     }
+  }
 }
 
 dependencies {
-  compile "org.apache.lucene:lucene-expressions:8.3.0"
-  compile 'org.antlr:antlr4-runtime:4.5.1-1'
-  compile 'org.ow2.asm:asm:5.0.4'
-  compile 'org.ow2.asm:asm-commons:5.0.4'
-  compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:7.7.0'
+  compile "org.apache.lucene:lucene-expressions:${luceneVersion}"
+  compile "org.antlr:antlr4-runtime:${antlrVersion}"
+  compile "org.ow2.asm:asm:${ow2Version}"
+  compile "org.ow2.asm:asm-commons:${ow2Version}"
+  compile "org.ow2.asm:asm-tree:${ow2Version}"
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:7.7.0'
 }
 
 dependencyLicenses {
@@ -78,3 +78,6 @@ thirdPartyAudit.enabled = false
 
 // Uncomment this to skip license header checks
 licenseHeaders.enabled = false
+
+// No need to validate POM, as we do not upload to sonatype
+validateNebulaPom.enabled = false

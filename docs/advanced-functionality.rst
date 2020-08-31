@@ -214,6 +214,69 @@ If (and only if) the extra logging Map is accessed, it will be returned as an ad
     }
 
 =============================
+Stats
+=============================
+The stats API gives the overall plugin status and statistics::
+
+    GET /_ltr/_stats
+
+    {
+        "_nodes": {
+            "total": 1,
+            "successful": 1,
+            "failed": 0
+        },
+        "cluster_name": "es-cluster",
+        "stores": {
+            "_default_": {
+                "model_count": 10,
+                "featureset_count": 1,
+                "feature_count": 0,
+                "status": "green"
+            }
+        },
+        "status": "green",
+        "nodes": {
+            "2QtMvxMvRoOTymAsoQbxhw": {
+                "cache": {
+                    "feature": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    },
+                    "featureset": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    },
+                    "model": {
+                        "eviction_count": 0,
+                        "miss_count": 0,
+                        "hit_count": 0,
+                        "entry_count": 0,
+                        "memory_usage_in_bytes": 0
+                    }
+                }
+            }
+        }
+    }
+
+You can also use filters to retrieve a single stat::
+
+    GET /_ltr/_stats/{stat}
+
+Also you can limit the information to a single node in the cluster::
+
+    GET /_ltr/_stats/nodes/{nodeId}
+
+    GET /_ltr/_stats/{stat}/nodes/{nodeId}
+
+
+=============================
 TermStat Query
 =============================
 
@@ -231,6 +294,7 @@ the same data as the `ExplorerQuery` but it allows the user to specify a custom 
             }
         }
     }
+
 
 The :code:`expr` parameter is the Lucene expression you want to run on a per term basis.  This can simply be a stat type, or a custom formula containing multiple stat types, for example: :code:`(tf * idf) / 2`.  The following stat types are injected into the Lucene expression context for your usage:
 
@@ -252,13 +316,13 @@ The :code:`terms` parameter is array of terms to gather statistics for.  Current
 
 The :code:`fields` parameter specifies which fields to check for the specified :code:`terms`.  Note if no :code:`analyzer` is specified then we use the analyzer specified for the field.
 
-The following optional parameters are supported:
+Optional Features
+-----------------
 
 - :code:`analyzer` -- if specified this analyzer will be used instead of the configured :code:`search_analyzer` for each field
 - :code:`pos_aggr` -- Since each term by itself can have multiple positions, you need to decide which aggregation to apply.  This supports the same values as :code:`aggr` and defaults to AVG
 
+Script Injection
+----------------
 
 Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
-
-
-

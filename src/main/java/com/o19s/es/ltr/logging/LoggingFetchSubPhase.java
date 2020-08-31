@@ -242,11 +242,11 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         void nextDoc(SearchHit hit) {
-            if (hit.fieldsOrNull() == null) {
-                hit.fields(new HashMap<>());
+            DocumentField logs = hit.getFields().get(FIELD_NAME);
+            if (logs == null) {
+                logs = newLogField();
+                hit.setDocumentField(FIELD_NAME, logs);
             }
-            DocumentField logs = hit.getFields()
-                    .computeIfAbsent(FIELD_NAME, (k) -> newLogField());
             Map<String, List<Map<String, Object>>> entries = logs.getValue();
             rebuild();
             currentHit = hit;
