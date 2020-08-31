@@ -5,19 +5,17 @@ import com.o19s.es.explore.StatisticsHelper.AggrType;
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.ReaderUtil;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermState;
-import org.apache.lucene.index.TermStates;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.ClassicSimilarity;
+
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.DoubleValues;
+import org.apache.lucene.search.DoubleValuesSource;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 public class TermStatScorer extends Scorer {
@@ -29,14 +27,14 @@ public class TermStatScorer extends Scorer {
 
     private final LeafReaderContext context;
     private final IndexSearcher searcher;
-    private final Query query;
+    private final Set<Term> terms;
     private final ScoreMode scoreMode;
 
     public TermStatScorer(TermStatQuery.TermStatWeight weight,
                           IndexSearcher searcher,
                           LeafReaderContext context,
                           Expression compiledExpression,
-                          Query query,
+                          Set<Term> terms,
                           ScoreMode scoreMode,
                           AggrType aggr,
                           AggrType posAggr) {
@@ -44,7 +42,7 @@ public class TermStatScorer extends Scorer {
         this.context = context;
         this.compiledExpression = compiledExpression;
         this.searcher = searcher;
-        this.query = query;
+        this.terms = terms;
         this.scoreMode = scoreMode;
         this.aggr = aggr;
         this.posAggr = posAggr;
@@ -63,72 +61,10 @@ public class TermStatScorer extends Scorer {
 
     @Override
     public float score() throws IOException {
-        ClassicSimilarity sim = new ClassicSimilarity();
-        StatisticsHelper df_stats = new StatisticsHelper();
-        StatisticsHelper idf_stats = new StatisticsHelper();
-        StatisticsHelper ttf_stats = new StatisticsHelper();
-        StatisticsHelper tf_stats = new StatisticsHelper();
-        StatisticsHelper tp_stats = new StatisticsHelper();
+        TermStatSupplier tsq = new TermStatSupplier();
 
-        Set<Term> terms = new HashSet<>();
-        QueryVisitor visitor = new QueryVisitor() {
-            @Override
-            public void consumeTerms(Query query, Term... ts) {
-                terms.addAll(Arrays.asList(ts));
-            }
-            @Override
-            public QueryVisitor getSubVisitor(BooleanClause.Occur occur, Query parent) {
-                return this;
-            }
-        };
-        query.visit(visitor);
-
-        PostingsEnum postingsEnum = null;
-        for (Term term : terms) {
-            if (docID() == DocIdSetIterator.NO_MORE_DOCS) {
-                break;
-            }
-
-            TermStates termStates = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
-
-            assert termStates != null && termStates
-                    .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
-
-            TermState state = termStates.get(context);
-
-            if (state == null) {
-                continue;
-            }
-
-            // Collection Statistics
-            df_stats.add(termStates.docFreq());
-            idf_stats.add(sim.idf(termStates.docFreq(), searcher.getIndexReader().numDocs()));
-            ttf_stats.add(termStates.totalTermFreq());
-
-            // Doc specifics
-            TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
-            termsEnum.seekExact(term.bytes(), state);
-            postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.ALL);
-
-            // Verify document is in postings
-            if (postingsEnum.advance(docID()) == docID()){
-                tf_stats.add(postingsEnum.freq());
-
-                if(postingsEnum.freq() > 0) {
-                    StatisticsHelper positions = new StatisticsHelper();
-                    for (int i = 0; i < postingsEnum.freq(); i++) {
-                        positions.add((float) postingsEnum.nextPosition() + 1);
-                    }
-                    tp_stats.add(positions.getAggr(posAggr));
-                } else {
-                    tp_stats.add(0.0f);
-                }
-            // If document isn't in postings default to 0 for tf/tp
-            } else {
-                tf_stats.add(0.0f);
-                tp_stats.add(0.0f);
-            }
-        }
+        // Refresh the term stats
+        tsq.bump(searcher, context, docID(), terms, scoreMode);
 
         // Prepare computed statistics
         StatisticsHelper computed = new StatisticsHelper();
@@ -141,18 +77,19 @@ public class TermStatScorer extends Scorer {
         };
 
         // If no values found return 0
-        if (tf_stats.getSize() == 0) {
+        if (tsq.size() == 0) {
             return 0.0f;
         }
 
-        for(int i = 0; i < tf_stats.getSize(); i++) {
+        for(int i = 0; i < tsq.size(); i++) {
             // Update the term stat dictionary for the current term
-            termStatDict.put("df", df_stats.getData().get(i));
-            termStatDict.put("idf", idf_stats.getData().get(i));
-            termStatDict.put("tf", tf_stats.getData().get(i));
-            termStatDict.put("tp", tp_stats.getData().get(i));
-            termStatDict.put("ttf", ttf_stats.getData().get(i));
+            termStatDict.put("df", tsq.get("df").get(i));
+            termStatDict.put("idf", tsq.get("idf").get(i));
+            termStatDict.put("tf", tsq.get("tf").get(i));
+            termStatDict.put("tp", tsq.get("tp").get(i));
+            termStatDict.put("ttf", tsq.get("ttf").get(i));
 
+            // Run the expression and store the result in computed
             DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource(bindings);
             DoubleValues values = dvSrc.getValues(context, null);
 

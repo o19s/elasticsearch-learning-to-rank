@@ -21,13 +21,13 @@ public class TermStatQuery extends Query {
     private Expression expr;
     private StatisticsHelper.AggrType aggr;
     private StatisticsHelper.AggrType posAggr;
-    private Query query;
+    private Set<Term> terms;
 
-    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Query query) {
+    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
         this.expr = expr;
         this.aggr = aggr;
         this.posAggr = posAggr;
-        this.query = query;
+        this.terms = terms;
     }
 
 
@@ -36,7 +36,7 @@ public class TermStatQuery extends Query {
     }
     public AggrType getAggr() { return this.aggr; }
     public AggrType getPosAggr() { return this.posAggr; }
-    public Query getQuery() { return this.query; }
+    public Set<Term> getTerms() { return this.terms; }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -49,22 +49,16 @@ public class TermStatQuery extends Query {
         return Objects.equals(expr.sourceText, other.expr.sourceText)
                 && Objects.equals(aggr, other.aggr)
                 && Objects.equals(posAggr, other.posAggr)
-                && Objects.equals(query, other.query);
+                && Objects.equals(terms, other.terms);
     }
 
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
-        Query rewritten = query.rewrite(reader);
-
-        if (rewritten != query) {
-            return new TermStatQuery(expr, aggr, posAggr, rewritten);
-        }
-
         return this;
     }
 
     @Override
-    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, query); }
+    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, terms); }
 
     @Override
     public String toString(String field) {
@@ -76,23 +70,23 @@ public class TermStatQuery extends Query {
             throws IOException {
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
 
-        return new TermStatWeight(searcher, this, query, scoreMode, aggr, posAggr);
+        return new TermStatWeight(searcher, this, terms, scoreMode, aggr, posAggr);
     }
 
     static class TermStatWeight extends Weight {
         private final Expression expression;
-        private IndexSearcher searcher;
-        private final Query query;
+        private final IndexSearcher searcher;
         private final ScoreMode scoreMode;
 
-        private AggrType aggr;
-        private AggrType posAggr;
+        private final AggrType aggr;
+        private final AggrType posAggr;
+        private final Set<Term> terms;
 
-        TermStatWeight(IndexSearcher searcher, TermStatQuery tsq, Query query, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
+        TermStatWeight(IndexSearcher searcher, TermStatQuery tsq, Set<Term> terms, ScoreMode scoreMode, AggrType aggr, AggrType posAggr) {
             super(tsq);
             this.searcher = searcher;
             this.expression = tsq.expr;
-            this.query = query;
+            this.terms = terms;
             this.scoreMode = scoreMode;
             this.aggr = aggr;
             this.posAggr = posAggr;
@@ -100,7 +94,7 @@ public class TermStatQuery extends Query {
 
         @Override
         public void extractTerms(Set<Term> terms) {
-            // No-op for now since this is being deprecated
+            terms.addAll(terms);
         }
 
         @Override
@@ -116,7 +110,7 @@ public class TermStatQuery extends Query {
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            return new TermStatScorer(this, searcher, context, expression, query, scoreMode, aggr, posAggr);
+            return new TermStatScorer(this, searcher, context, expression, terms, scoreMode, aggr, posAggr);
         }
 
         @Override

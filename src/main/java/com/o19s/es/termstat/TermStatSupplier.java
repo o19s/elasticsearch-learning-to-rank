@@ -89,7 +89,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 } else {
                     tp_stats.add(0.0f);
                 }
-                // If document isn't in postings default to 0 for tf/tp
+            // If document isn't in postings default to 0 for tf/tp
             } else {
                 tf_stats.add(0.0f);
                 tp_stats.add(0.0f);

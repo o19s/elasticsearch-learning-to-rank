@@ -12,7 +12,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
@@ -22,6 +24,9 @@ import org.junit.After;
 import org.junit.Before;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.hamcrest.Matchers.equalTo;
 
 public class TermStatQueryTests extends LuceneTestCase {
@@ -29,7 +34,6 @@ public class TermStatQueryTests extends LuceneTestCase {
     private IndexReader reader;
     private IndexSearcher searcher;
 
-    private Query query;
     // Some simple documents to index
     private final String[] docs = new String[] {
             "how now brown cow",
@@ -55,8 +59,6 @@ public class TermStatQueryTests extends LuceneTestCase {
 
         reader = DirectoryReader.open(dir);
         searcher = new IndexSearcher(reader);
-
-        query = new TermQuery(new Term("text", "cow"));
     }
 
     @After
@@ -73,12 +75,49 @@ public class TermStatQueryTests extends LuceneTestCase {
         AggrType aggr = AggrType.MIN;
         AggrType pos_aggr = AggrType.MAX;
 
+        Set<Term> terms = new HashSet<>();
+        terms.add(new Term("text", "cow"));
+
         Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, query);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
         Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
         assertThat(explanation.toString().trim(), equalTo("2.0 = weight(" + expr + " in doc 0)"));
+    }
+
+    public void testEmptyTerms() throws Exception {
+        String expr = "df";
+        AggrType aggr = AggrType.MIN;
+        AggrType pos_aggr = AggrType.MAX;
+
+        Set<Term> terms = new HashSet<>();
+
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+
+        // Verify explain
+        TopDocs docs = searcher.search(tsq, 4);
+        Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("0.0 = weight(" + expr + " in doc 0)"));
+    }
+
+    public void testBasicFormula() throws Exception {
+        String expr = "tf * idf";
+        AggrType aggr = AggrType.AVG;
+        AggrType pos_aggr = AggrType.AVG;
+
+        Set<Term> terms = new HashSet<>();
+        terms.add(new Term("text", "cow"));
+
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+
+        // Verify explain
+        TopDocs docs = searcher.search(tsq, 4);
+        Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("1.8472979 = weight(" + expr + " in doc 0)"));
+
     }
 }
