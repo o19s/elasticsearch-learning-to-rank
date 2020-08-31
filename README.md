@@ -19,7 +19,7 @@ You can also participate in regular [4 hour trainings](http://opensourceconnecti
 
 ## I want to jump in!
 
-If you want to just jump in, go straight to the demo. The demo uses [Ranklib](https://sourceforge.net/p/lemur/wiki/RankLib/), a relatively straightforward Java Learning to Rank library, to train models. Follow the directions in the [demo README](demo/README.md), edit code, and have fun!
+The demo lives in another repo now, [Hello LTR](https://github.com/o19s/hello-ltr) and it has both ES and Solr example. Follow the directions for Elasticsearch in the README to set up the environment and start with the [notebooks/elasticsearch/tmdb/hello-ltr.ipynb](https://github.com/o19s/hello-ltr/blob/master/notebooks/elasticsearch/tmdb/hello-ltr%20(ES).ipynb). Have fun!
 
 # Installing
 
