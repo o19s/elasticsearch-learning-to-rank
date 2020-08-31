@@ -280,8 +280,7 @@ Also you can limit the information to a single node in the cluster::
 TermStat Query
 =============================
 
-The :code:`TermStat` query is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms, more freedom to experiment with features and ultimately better performance.  This query surfaces
-the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
+The :code:`TermStat` query is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms, more freedom to experiment with features and ultimately better performance.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
 
     POST tmdb/_search
     {
