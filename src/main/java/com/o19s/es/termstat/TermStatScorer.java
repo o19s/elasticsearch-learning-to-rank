@@ -64,6 +64,7 @@ public class TermStatScorer extends Scorer {
         TermStatSupplier tsq = new TermStatSupplier();
 
         // Refresh the term stats
+        tsq.setPosAggr(posAggr);
         tsq.bump(searcher, context, docID(), terms, scoreMode);
 
         // Prepare computed statistics

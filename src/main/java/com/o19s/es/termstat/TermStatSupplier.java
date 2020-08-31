@@ -26,6 +26,7 @@ import java.util.Set;
 
 public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
     private final List<String> ACCEPTED_KEYS = Arrays.asList(new String[]{"df", "idf", "tf", "ttf", "tp"});
+    private AggrType posAggrType = AggrType.AVG;
 
     private ClassicSimilarity sim;
     private StatisticsHelper df_stats, idf_stats, tf_stats, ttf_stats, tp_stats;
@@ -84,8 +85,8 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                     for (int i = 0; i < postingsEnum.freq(); i++) {
                         positions.add((float) postingsEnum.nextPosition() + 1);
                     }
-                    // TODO: Can I return an ArrayList of ArrayLists? going to default to avg for now
-                    tp_stats.add(positions.getAggr(AggrType.AVG));
+                    // TODO: Can we return an array of arrays for the ScriptFeature injection usage?
+                    tp_stats.add(positions.getAggr(posAggrType));
                 } else {
                     tp_stats.add(0.0f);
                 }
@@ -192,6 +193,10 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 return idf_stats.getData().size();
             }
         };
+    }
+
+    public void setPosAggr(AggrType type) {
+        this.posAggrType = type;
     }
 }
 
