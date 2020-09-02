@@ -165,9 +165,9 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         } else {
             assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
-            float[] weitghs = new float[set.size()];
-            Arrays.fill(weitghs, 1F);
-            LinearRanker ranker = new LinearRanker(weitghs);
+            float[] weights = new float[set.size()];
+            Arrays.fill(weights, 1F);
+            LinearRanker ranker = new LinearRanker(weights);
             CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
             validateActiveFeatures(model.featureSet(), ltrQueryContext);
             return RankerQuery.build(model, ltrQueryContext, params);
