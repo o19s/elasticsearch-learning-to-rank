@@ -64,6 +64,7 @@ import com.o19s.es.ltr.stats.suppliers.PluginHealthStatusSupplier;
 import com.o19s.es.ltr.stats.suppliers.StoreStatsSupplier;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
 import com.o19s.es.ltr.utils.Suppliers;
+import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
@@ -143,6 +144,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 new QuerySpec<>(StoredLtrQueryBuilder.NAME,
                         (input) -> new StoredLtrQueryBuilder(getFeatureStoreLoader(), input),
                         (ctx) -> StoredLtrQueryBuilder.fromXContent(getFeatureStoreLoader(), ctx)),
+                new QuerySpec<>(TermStatQueryBuilder.NAME, TermStatQueryBuilder::new, TermStatQueryBuilder::fromXContent),
                 new QuerySpec<>(ValidatingLtrQueryBuilder.NAME,
                         (input) -> new ValidatingLtrQueryBuilder(input, parserFactory),
                         (ctx) -> ValidatingLtrQueryBuilder.fromXContent(ctx, parserFactory)));

@@ -274,3 +274,54 @@ Also you can limit the information to a single node in the cluster::
     GET /_ltr/_stats/nodes/{nodeId}
 
     GET /_ltr/_stats/{stat}/nodes/{nodeId}
+
+
+=============================
+TermStat Query
+=============================
+
+The :code:`TermStat` query is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms, more freedom to experiment with features and ultimately better performance.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
+
+    POST tmdb/_search
+    {
+        "query": {
+            "term_stat": {
+                "expr": "df",
+                "aggr": "max",
+                "terms": ["rambo,  "rocky"],
+                "fields": ["title"]
+            }
+        }
+    }
+
+
+The :code:`expr` parameter is the Lucene expression you want to run on a per term basis.  This can simply be a stat type, or a custom formula containing multiple stat types, for example: :code:`(tf * idf) / 2`.  The following stat types are injected into the Lucene expression context for your usage:
+
+- :code:`df` -- the direct document frequency for a term. So if rambo occurs in 3 movie titles across multiple documents, this is 3.
+- :code:`idf` -- the IDF calculation of the classic similarity :code:`log((NUM_DOCS+1)/(raw_df+1)) + 1`.
+- :code:`tf` -- the term frequency for a document. So if rambo occurs in 3x in movie synopsis in same document, this is 3.
+- :code:`tp` -- the term positions for a document. Because multiple positions can come back for a single term, review the behavior of :code:`pos_aggr` 
+- :code:`ttf` -- the total term frequency for the term across the index. So if rambo is mentioned a total of 100 times in the overview field across all documents, this would be 100.
+
+The :code:`aggr` parameter tells the query what type of aggregation you want over the collected statistics from the :code:`expr`.  For the example terms of :code:`rambo rocky` we will get stats for both terms.  Since we can only return one value you need to decide what statistical calculation you would like.
+
+Supported aggregation types are:
+- :code:`min` -- the minimum 
+- :code:`max` -- the maximum
+- :code:`avg` -- the mean
+- :code:`stddev` -- the standard deviation 
+
+The :code:`terms` parameter is array of terms to gather statistics for.  Currently only single terms are supported, there is not support for phrases or span queries. Note: If your field is tokenized you can pass multiple terms in one string in the array.
+
+The :code:`fields` parameter specifies which fields to check for the specified :code:`terms`.  Note if no :code:`analyzer` is specified then we use the analyzer specified for the field.
+
+Optional Features
+-----------------
+
+- :code:`analyzer` -- if specified this analyzer will be used instead of the configured :code:`search_analyzer` for each field
+- :code:`pos_aggr` -- Since each term by itself can have multiple positions, you need to decide which aggregation to apply.  This supports the same values as :code:`aggr` and defaults to AVG
+
+Script Injection
+----------------
+
+Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 

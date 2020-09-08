@@ -23,7 +23,24 @@ public class StatisticsHelper {
     private float min = Float.MAX_VALUE;
     private float max = 0.0f;
 
-    StatisticsHelper() {
+    public enum AggrType {
+        AVG("avg"),
+        MAX("max"),
+        MIN("min"),
+        STDDEV("stddev");
+
+        private String type;
+
+        AggrType(String type){
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
+    public StatisticsHelper() {
 
     }
 
@@ -37,6 +54,14 @@ public class StatisticsHelper {
         if(val > this.max) {
             this.max = val;
         }
+    }
+
+    public ArrayList<Float> getData() {
+        return data;
+    }
+
+    public int getSize(){
+        return data.size();
     }
 
     public float getMax() {
@@ -83,5 +108,20 @@ public class StatisticsHelper {
         assert !data.isEmpty();
 
         return (float) Math.sqrt(getVariance());
+    }
+
+    public float getAggr(AggrType type) {
+        switch(type) {
+            case AVG:
+                return getMean();
+            case MAX:
+                return getMax();
+            case MIN:
+                return getMin();
+            case STDDEV:
+                return getStdDev();
+            default:
+                return 0.0f;
+        }
     }
 }
