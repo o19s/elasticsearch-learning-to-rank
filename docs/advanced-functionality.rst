@@ -280,7 +280,7 @@ Also you can limit the information to a single node in the cluster::
 TermStat Query
 =============================
 
-The :code:`TermStat` query is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms, more freedom to experiment with features and ultimately better performance.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
+The :code:`TermStatQuery` is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms, more freedom to experiment with features and ultimately better performance.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
 
     POST tmdb/_search
     {
@@ -315,7 +315,7 @@ The :code:`terms` parameter is array of terms to gather statistics for.  Current
 
 The :code:`fields` parameter specifies which fields to check for the specified :code:`terms`.  Note if no :code:`analyzer` is specified then we use the analyzer specified for the field.
 
-Optional Features
+Optional Parameters
 -----------------
 
 - :code:`analyzer` -- if specified this analyzer will be used instead of the configured :code:`search_analyzer` for each field
