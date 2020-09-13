@@ -103,12 +103,11 @@ public class LoggingIT extends BaseIntegrationTest {
     }
     public void prepareScriptFeatures() throws Exception {
         List<StoredFeature> features = new ArrayList<>(3);
-        features.add(new StoredFeature("test_inject", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
-                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
-                    "\"terms\": [\"found\"], " +
-                    "\"fields\": [\"field1\"] } } }"));
+        features.add(new StoredFeature("test_inject", Arrays.asList(), ScriptFeature.TEMPLATE_LANGUAGE,
+                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": {} } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
+        set.optimize();
         addElement(set);
     }
 
@@ -331,7 +330,13 @@ public class LoggingIT extends BaseIntegrationTest {
         Map<String, Doc> docs = buildIndex();
 
         Map<String, Object> params = new HashMap<>();
-        params.put("query", "found");
+        ArrayList<String> terms = new ArrayList<>();
+        terms.add("found");
+        params.put("terms", terms);
+
+        ArrayList<String> fields = new ArrayList<>();
+        fields.add("field1");
+        params.put("fields", fields);
 
         List<String> idsColl = new ArrayList<>(docs.keySet());
         Collections.shuffle(idsColl, random());

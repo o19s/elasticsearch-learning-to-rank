@@ -76,6 +76,7 @@ public class ScriptFeature implements Feature {
         try {
             XContentParser xContentParser = XContentType.JSON.xContent().createParser(NamedXContentRegistry.EMPTY,
                     LoggingDeprecationHandler.INSTANCE, feature.template());
+
             return new ScriptFeature(feature.name(), Script.parse(xContentParser, "native"), feature.queryParams());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -94,6 +95,7 @@ public class ScriptFeature implements Feature {
      * Transform this feature into a lucene query
      */
     @Override
+    @SuppressWarnings("unchecked")
     public Query doToQuery(LtrQueryContext context, FeatureSet featureSet, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
                 .filter((x) -> !params.containsKey(x))
@@ -116,7 +118,6 @@ public class ScriptFeature implements Feature {
             }
         }
 
-
         FeatureSupplier supplier = new FeatureSupplier(featureSet);
         ExtraLoggingSupplier extraLoggingSupplier = new ExtraLoggingSupplier();
         TermStatSupplier termstatSupplier = new TermStatSupplier();
@@ -125,16 +126,23 @@ public class ScriptFeature implements Feature {
         // Parse terms if set
         Set<Term> terms = new HashSet<>();
         if (baseScriptParams.containsKey("term_stat")) {
-            @SuppressWarnings("unchecked")
             HashMap<String, Object> termspec = (HashMap<String, Object>) baseScriptParams.get("term_stat");
-
-            @SuppressWarnings("unchecked")
             ArrayList<String> fields = (ArrayList<String>) termspec.get("fields");
-
-            @SuppressWarnings("unchecked")
             ArrayList<String> termList = (ArrayList<String>) termspec.get("terms");
-
             String analyzerName = (String) termspec.get("analyzer");
+
+            // Support reading terms/fields from query time parameters to better support stored feature usage
+            if (termList == null && params.containsKey("terms")) {
+                termList = (ArrayList<String>) params.get("terms");
+            }
+
+            if (fields == null && params.containsKey("fields")) {
+                fields = (ArrayList<String>) params.get("fields");
+            }
+
+            if (analyzerName == null && params.containsKey("analyzer")) {
+                analyzerName = (String) params.get("analyzer");
+            }
 
             if (fields == null || termList == null) {
                 throw new IllegalArgumentException("Term Stats injection requires fields and terms");
