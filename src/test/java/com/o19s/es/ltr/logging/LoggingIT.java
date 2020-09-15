@@ -418,6 +418,36 @@ public class LoggingIT extends BaseIntegrationTest {
         assertTrue((Float)log.get(0).get("value") > 0.0F);
     }
 
+    public void testScriptLogInvalidExternalParams() throws Exception {
+        prepareExternalScriptFeatures();
+        Map<String, Doc> docs = buildIndex();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query", "found");
+
+        List<String> idsColl = new ArrayList<>(docs.keySet());
+        Collections.shuffle(idsColl, random());
+        String[] ids = idsColl.subList(0, TestUtil.nextInt(random(), 5, 15)).toArray(new String[0]);
+        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test")
+                .boost(random().nextInt(3));
+
+        QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)));
+
+        assertExcWithMessage(() -> client().prepareSearch("test_index")
+                        .setTypes("test")
+                        .setSource(sourceBuilder).get(),
+                IllegalArgumentException.class, "Term Stats injection requires fields and terms");
+    }
 
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {
         for (SearchHit hit: resp.getHits()) {
