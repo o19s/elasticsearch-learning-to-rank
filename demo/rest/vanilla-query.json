@@ -1,8 +1,0 @@
-{
-    "_source": ["original_title"],
-    "query": {
-        "match": {
-            "_all": "rambo"
-        }
-    }
-}

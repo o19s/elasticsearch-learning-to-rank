@@ -1,3 +1,0 @@
-0 na q
-1 tmdb_title q
-2 tmdb_multi q
