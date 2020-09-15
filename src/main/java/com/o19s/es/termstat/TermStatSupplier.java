@@ -63,6 +63,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
             TermState state = termStates.get(context);
 
             if (state == null) {
+                insertZeroes(); // Zero out stats for terms we don't know about in the index
                 continue;
             }
 
@@ -197,6 +198,14 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
 
     public void setPosAggr(AggrType type) {
         this.posAggrType = type;
+    }
+
+    private void insertZeroes() {
+        df_stats.add(0.0f);
+        idf_stats.add(0.0f);
+        tf_stats.add(0.0f);
+        ttf_stats.add(0.0f);
+        tp_stats.add(0.0f);
     }
 }
 

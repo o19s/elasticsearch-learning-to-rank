@@ -118,7 +118,7 @@ public class LoggingIT extends BaseIntegrationTest {
         features.add(new StoredFeature("test_inject", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
                 "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
                         "\"analyzer\": \"!standard\", " +
-                        "\"terms\": [\"found find\"], " +
+                        "\"terms\": [\"found\"], " +
                         "\"fields\": [\"field1\"] } } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
@@ -383,7 +383,7 @@ public class LoggingIT extends BaseIntegrationTest {
 
         Map<String, Object> params = new HashMap<>();
         ArrayList<String> terms = new ArrayList<>();
-        terms.add("found find");
+        terms.add("found");
         params.put("termsParam", terms);
 
         ArrayList<String> fields = new ArrayList<>();
