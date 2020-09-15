@@ -341,6 +341,7 @@ You have the following options for sending in parameters to scripts.  If you alw
                "source": "params.termStats['df'].size()",
                "params": {
                  "term_stat": {
+                    "analyzer": "!standard"
                     "terms": ["rambo rocky"],
                     "fields": ["overview"]
                  }
@@ -351,7 +352,34 @@ You have the following options for sending in parameters to scripts.  If you alw
        }
     }
 
-You can also pass in parameters at query time, query time parameters will take priority over parameters saved with the script::
+    Note: Analyzer names must be prefixed with a bang(!) if specifying locally, otherwise it will treat the value as a parameter lookup.
+
+To set parameter lookups simply pass the name of the parameter to pull the value from like so::
+
+    POST _ltr/_featureset/test
+    {
+       "featureset": {
+         "features": [
+           {
+             "name": "injection",
+             "template_language": "script_feature",
+             "template": {
+               "lang": "painless",
+               "source": "params.termStats['df'].size()",
+               "params": {
+                 "term_stat": {
+                    "analyzer": "analyzerParam"
+                    "terms": "termsParam",
+                    "fields": "fieldsParam"
+                 }
+               }
+             }
+           }
+         ]
+       }
+    }
+
+The following example shows how to set the parameters at query time::
 
     POST tmdb/_search
     {
@@ -368,8 +396,9 @@ You can also pass in parameters at query time, query time parameters will take p
                             "_name": "logged_featureset",
                             "featureset": "test",
                             "params": {
-                              "terms": ["troutman"],
-                              "fields": ["overview"]
+                              "analyzerParam": "standard",
+                              "termsParam": ["troutman"],
+                              "fieldsParam": ["overview"]
                             }
                     }}
                 ]

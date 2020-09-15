@@ -104,10 +104,12 @@ public class LoggingIT extends BaseIntegrationTest {
     public void prepareExternalScriptFeatures() throws Exception {
         List<StoredFeature> features = new ArrayList<>(3);
         features.add(new StoredFeature("test_inject", Arrays.asList(), ScriptFeature.TEMPLATE_LANGUAGE,
-                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": {} } }"));
+                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
+                        "\"analyzer\": \"analyzerParam\", " +
+                        "\"terms\": \"termsParam\", " +
+                        "\"fields\": \"fieldsParam\" } } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
-        set.optimize();
         addElement(set);
     }
 
@@ -115,7 +117,8 @@ public class LoggingIT extends BaseIntegrationTest {
         List<StoredFeature> features = new ArrayList<>(3);
         features.add(new StoredFeature("test_inject", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
                 "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
-                        "\"terms\": [\"found\"], " +
+                        "\"analyzer\": \"!standard\", " +
+                        "\"terms\": [\"found find\"], " +
                         "\"fields\": [\"field1\"] } } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
@@ -380,12 +383,14 @@ public class LoggingIT extends BaseIntegrationTest {
 
         Map<String, Object> params = new HashMap<>();
         ArrayList<String> terms = new ArrayList<>();
-        terms.add("found");
-        params.put("terms", terms);
+        terms.add("found find");
+        params.put("termsParam", terms);
 
         ArrayList<String> fields = new ArrayList<>();
         fields.add("field1");
-        params.put("fields", fields);
+        params.put("fieldsParam", fields);
+
+        params.put("analyzerParam", "standard");
 
         List<String> idsColl = new ArrayList<>(docs.keySet());
         Collections.shuffle(idsColl, random());

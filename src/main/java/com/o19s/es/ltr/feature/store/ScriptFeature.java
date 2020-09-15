@@ -127,21 +127,41 @@ public class ScriptFeature implements Feature {
         Set<Term> terms = new HashSet<>();
         if (baseScriptParams.containsKey("term_stat")) {
             HashMap<String, Object> termspec = (HashMap<String, Object>) baseScriptParams.get("term_stat");
-            ArrayList<String> fields = (ArrayList<String>) termspec.get("fields");
-            ArrayList<String> termList = (ArrayList<String>) termspec.get("terms");
-            String analyzerName = (String) termspec.get("analyzer");
 
-            // Support reading terms/fields from query time parameters to better support stored feature usage
-            if (params.containsKey("terms")) {
-                termList = (ArrayList<String>) params.get("terms");
+            String analyzerName = null;
+            ArrayList<String> fields = null;
+            ArrayList<String> termList = null;
+
+            final Object analyzerNameObj = termspec.get("analyzer");
+            final Object fieldsObj = termspec.get("fields");
+            final Object termListObj = termspec.get("terms");
+
+            // Support lookup via params or direct assignment
+            if (analyzerNameObj != null) {
+                if (analyzerNameObj instanceof String) {
+                    // Support direct assignment by prefixing analyzer with a bang
+                    if (((String)analyzerNameObj).startsWith("!")) {
+                        analyzerName = ((String) analyzerNameObj).substring(1);
+                    } else {
+                        analyzerName = (String) params.get(analyzerNameObj);
+                    }
+                }
             }
 
-            if (params.containsKey("fields")) {
-                fields = (ArrayList<String>) params.get("fields");
+            if (fieldsObj != null) {
+                if (fieldsObj instanceof String) {
+                    fields = (ArrayList<String>) params.get(fieldsObj);
+                } else if (fieldsObj instanceof ArrayList) {
+                    fields = (ArrayList<String>) fieldsObj;
+                }
             }
 
-            if (params.containsKey("analyzer")) {
-                analyzerName = (String) params.get("analyzer");
+            if (termListObj != null) {
+                if (termListObj instanceof String) {
+                    termList = (ArrayList<String>) params.get(termListObj);
+                } else if (termListObj instanceof ArrayList) {
+                    termList = (ArrayList<String>) termListObj;
+                }
             }
 
             if (fields == null || termList == null) {
@@ -153,7 +173,7 @@ public class ScriptFeature implements Feature {
                 if (analyzerName == null) {
                     MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
                     analyzer = context.getQueryShardContext().getSearchAnalyzer(fieldType);
-                } else if (analyzer == null) {
+                } else {
                     analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
                 }
 
