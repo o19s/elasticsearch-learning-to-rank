@@ -176,9 +176,9 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         @Override
                                         public double execute(ExplanationHolder explainationHolder) {
                                             // For testing purposes just look for the "terms" key and see if stats were injected
-                                            if(p.containsKey("terms")) {
+                                            if(p.containsKey("termStats")) {
                                                 AbstractMap<String, ArrayList<Float>> termStats = (AbstractMap<String,
-                                                        ArrayList<Float>>) p.get("terms");
+                                                        ArrayList<Float>>) p.get("termStats");
                                                 ArrayList<Float> dfStats = termStats.get("df");
                                                 return dfStats.size() > 0 ? dfStats.get(0) : 0.0;
                                             } else {
