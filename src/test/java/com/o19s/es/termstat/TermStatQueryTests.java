@@ -119,4 +119,42 @@ public class TermStatQueryTests extends LuceneTestCase {
         Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
         assertThat(explanation.toString().trim(), equalTo("1.8472979 = weight(" + expr + " in doc 0)"));
     }
+
+    public void testMatchCount() throws Exception {
+        String expr = "matches";
+        AggrType aggr = AggrType.AVG;
+        AggrType pos_aggr = AggrType.AVG;
+
+        Set<Term> terms = new HashSet<>();
+        terms.add(new Term("text", "brown"));
+        terms.add(new Term("text", "cow"));
+        terms.add(new Term("text", "horse"));
+
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+
+        // Verify explain
+        TopDocs docs = searcher.search(tsq, 4);
+        Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("2.0 = weight(" + expr + " in doc 0)"));
+    }
+
+    public void testUniqueCount() throws Exception {
+        String expr = "unique";
+        AggrType aggr = AggrType.AVG;
+        AggrType pos_aggr = AggrType.AVG;
+
+        Set<Term> terms = new HashSet<>();
+        terms.add(new Term("text", "brown"));
+        terms.add(new Term("text", "cow"));
+        terms.add(new Term("text", "horse"));
+
+        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+
+        // Verify explain
+        TopDocs docs = searcher.search(tsq, 4);
+        Explanation explanation = searcher.explain(tsq, docs.scoreDocs[0].doc);
+        assertThat(explanation.toString().trim(), equalTo("3.0 = weight(" + expr + " in doc 0)"));
+    }
 }

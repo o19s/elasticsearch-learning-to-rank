@@ -27,7 +27,9 @@ public class StatisticsHelper {
         AVG("avg"),
         MAX("max"),
         MIN("min"),
-        STDDEV("stddev");
+        SUM("sum"),
+        STDDEV("stddev"),
+        MATCHES("matches");
 
         private String type;
 
@@ -118,6 +120,8 @@ public class StatisticsHelper {
                 return getMax();
             case MIN:
                 return getMin();
+            case SUM:
+                return getSum();
             case STDDEV:
                 return getStdDev();
             default:

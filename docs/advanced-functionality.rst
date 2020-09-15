@@ -280,6 +280,8 @@ Also you can limit the information to a single node in the cluster::
 TermStat Query
 =============================
 
+**Experimental** - This query is currently in an experimental stage and the DSL may change as the code advances.  For stable term statistic access please see the `ExplorerQuery`.
+
 The :code:`TermStatQuery` is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms and more freedom to experiment.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
 
     POST tmdb/_search
@@ -309,7 +311,12 @@ Supported aggregation types are:
 - :code:`min` -- the minimum 
 - :code:`max` -- the maximum
 - :code:`avg` -- the mean
+- :code:`sum` -- the sum
 - :code:`stddev` -- the standard deviation 
+
+Additionally the following counts are available:
+- :code:`matches` -- The number of terms that matched in the current document
+- :code:`unique` -- The unique number of terms that were passed in
 
 The :code:`terms` parameter is array of terms to gather statistics for.  Currently only single terms are supported, there is not support for phrases or span queries. Note: If your field is tokenized you can pass multiple terms in one string in the array.
 
@@ -324,4 +331,96 @@ Optional Parameters
 Script Injection
 ----------------
 
-Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
+Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`termStats`.  This provides for advanced feature engineering when you need to look at all the data to make decisions.
+
+Scripts access matching and unique counts slightly differently than inside the TermStatQuery:
+
+To access the count of matched tokens: `params.matchCount.get()`
+To access the count of unique tokens: `params.uniqueTerms`
+
+You have the following options for sending in parameters to scripts.  If you always want to find stats about the same terms (i.e. stopwords or other common terms in your index) you can hardcode the parameters along with your script::
+
+    POST _ltr/_featureset/test
+    {
+       "featureset": {
+         "features": [
+           {
+             "name": "injection",
+             "template_language": "script_feature",
+             "template": {
+               "lang": "painless",
+               "source": "params.termStats['df'].size()",
+               "params": {
+                 "term_stat": {
+                    "analyzer": "!standard"
+                    "terms": ["rambo rocky"],
+                    "fields": ["overview"]
+                 }
+               }
+             }
+           }
+         ]
+       }
+    }
+
+    Note: Analyzer names must be prefixed with a bang(!) if specifying locally, otherwise it will treat the value as a parameter lookup.
+
+To set parameter lookups simply pass the name of the parameter to pull the value from like so::
+
+    POST _ltr/_featureset/test
+    {
+       "featureset": {
+         "features": [
+           {
+             "name": "injection",
+             "template_language": "script_feature",
+             "template": {
+               "lang": "painless",
+               "source": "params.termStats['df'].size()",
+               "params": {
+                 "term_stat": {
+                    "analyzer": "analyzerParam"
+                    "terms": "termsParam",
+                    "fields": "fieldsParam"
+                 }
+               }
+             }
+           }
+         ]
+       }
+    }
+
+The following example shows how to set the parameters at query time::
+
+    POST tmdb/_search
+    {
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "terms": {
+                            "_id": ["7555", "1370", "1369"]
+                        }
+                    },
+                    {
+                        "sltr": {
+                            "_name": "logged_featureset",
+                            "featureset": "test",
+                            "params": {
+                              "analyzerParam": "standard",
+                              "termsParam": ["troutman"],
+                              "fieldsParam": ["overview"]
+                            }
+                    }}
+                ]
+            }
+        },
+        "ext": {
+            "ltr_log": {
+                "log_specs": {
+                    "name": "log_entry1",
+                    "named_query": "logged_featureset"
+                }
+            }
+        }
+    }

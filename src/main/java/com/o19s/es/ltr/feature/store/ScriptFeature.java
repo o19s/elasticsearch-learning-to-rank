@@ -44,7 +44,9 @@ import java.util.stream.Collectors;
 public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
     public static final String FEATURE_VECTOR = "feature_vector";
-    public static final String TERM_STAT = "terms";
+    public static final String TERM_STAT = "termStats";
+    public static final String MATCH_COUNT = "matchCount";
+    public static final String UNIQUE_TERMS = "uniqueTerms";
     public static final String EXTRA_LOGGING = "extra_logging";
     public static final String EXTRA_SCRIPT_PARAMS = "extra_script_params";
 
@@ -76,6 +78,7 @@ public class ScriptFeature implements Feature {
         try {
             XContentParser xContentParser = XContentType.JSON.xContent().createParser(NamedXContentRegistry.EMPTY,
                     LoggingDeprecationHandler.INSTANCE, feature.template());
+
             return new ScriptFeature(feature.name(), Script.parse(xContentParser, "native"), feature.queryParams());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -94,6 +97,7 @@ public class ScriptFeature implements Feature {
      * Transform this feature into a lucene query
      */
     @Override
+    @SuppressWarnings("unchecked")
     public Query doToQuery(LtrQueryContext context, FeatureSet featureSet, Map<String, Object> params) {
         List<String> missingParams = queryParams.stream()
                 .filter((x) -> !params.containsKey(x))
@@ -116,7 +120,6 @@ public class ScriptFeature implements Feature {
             }
         }
 
-
         FeatureSupplier supplier = new FeatureSupplier(featureSet);
         ExtraLoggingSupplier extraLoggingSupplier = new ExtraLoggingSupplier();
         TermStatSupplier termstatSupplier = new TermStatSupplier();
@@ -125,16 +128,43 @@ public class ScriptFeature implements Feature {
         // Parse terms if set
         Set<Term> terms = new HashSet<>();
         if (baseScriptParams.containsKey("term_stat")) {
-            @SuppressWarnings("unchecked")
             HashMap<String, Object> termspec = (HashMap<String, Object>) baseScriptParams.get("term_stat");
 
-            @SuppressWarnings("unchecked")
-            ArrayList<String> fields = (ArrayList<String>) termspec.get("fields");
+            String analyzerName = null;
+            ArrayList<String> fields = null;
+            ArrayList<String> termList = null;
 
-            @SuppressWarnings("unchecked")
-            ArrayList<String> termList = (ArrayList<String>) termspec.get("terms");
+            final Object analyzerNameObj = termspec.get("analyzer");
+            final Object fieldsObj = termspec.get("fields");
+            final Object termListObj = termspec.get("terms");
 
-            String analyzerName = (String) termspec.get("analyzer");
+            // Support lookup via params or direct assignment
+            if (analyzerNameObj != null) {
+                if (analyzerNameObj instanceof String) {
+                    // Support direct assignment by prefixing analyzer with a bang
+                    if (((String)analyzerNameObj).startsWith("!")) {
+                        analyzerName = ((String) analyzerNameObj).substring(1);
+                    } else {
+                        analyzerName = (String) params.get(analyzerNameObj);
+                    }
+                }
+            }
+
+            if (fieldsObj != null) {
+                if (fieldsObj instanceof String) {
+                    fields = (ArrayList<String>) params.get(fieldsObj);
+                } else if (fieldsObj instanceof ArrayList) {
+                    fields = (ArrayList<String>) fieldsObj;
+                }
+            }
+
+            if (termListObj != null) {
+                if (termListObj instanceof String) {
+                    termList = (ArrayList<String>) params.get(termListObj);
+                } else if (termListObj instanceof ArrayList) {
+                    termList = (ArrayList<String>) termListObj;
+                }
+            }
 
             if (fields == null || termList == null) {
                 throw new IllegalArgumentException("Term Stats injection requires fields and terms");
@@ -143,9 +173,9 @@ public class ScriptFeature implements Feature {
             Analyzer analyzer = null;
             for(String field : fields) {
                 if (analyzerName == null) {
-                    MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
+                    final MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
                     analyzer = context.getQueryShardContext().getSearchAnalyzer(fieldType);
-                } else if (analyzer == null) {
+                } else {
                     analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
                 }
 
@@ -154,8 +184,8 @@ public class ScriptFeature implements Feature {
                 }
 
                 for (String termString : termList) {
-                    TokenStream ts = analyzer.tokenStream(field, termString);
-                    TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
+                    final TokenStream ts = analyzer.tokenStream(field, termString);
+                    final TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
 
                     try {
                         ts.reset();
@@ -170,6 +200,8 @@ public class ScriptFeature implements Feature {
             }
 
             nparams.put(TERM_STAT, termstatSupplier);
+            nparams.put(MATCH_COUNT, termstatSupplier.getMatchedTermCountSupplier());
+            nparams.put(UNIQUE_TERMS, terms.size());
         }
 
         nparams.putAll(baseScriptParams);
