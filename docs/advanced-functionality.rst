@@ -280,6 +280,8 @@ Also you can limit the information to a single node in the cluster::
 TermStat Query
 =============================
 
+**Experimental** - This query is currently in an experimental stage and the DSL may change as the code advances.  For stable term statistic access please see the `ExplorerQuery`.
+
 The :code:`TermStatQuery` is a re-imagination of the legacy :code:`ExplorerQuery` which offers clearer specification of terms and more freedom to experiment.  This query surfaces the same data as the `ExplorerQuery` but it allows the user to specify a custom Lucene expression for the type of data they would like to retrieve.  For example::
 
     POST tmdb/_search
