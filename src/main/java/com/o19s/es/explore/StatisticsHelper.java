@@ -28,7 +28,8 @@ public class StatisticsHelper {
         MAX("max"),
         MIN("min"),
         SUM("sum"),
-        STDDEV("stddev");
+        STDDEV("stddev"),
+        MATCHES("matches");
 
         private String type;
 

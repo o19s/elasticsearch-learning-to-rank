@@ -89,6 +89,8 @@ public class TermStatScorer extends Scorer {
             termStatDict.put("tf", tsq.get("tf").get(i));
             termStatDict.put("tp", tsq.get("tp").get(i));
             termStatDict.put("ttf", tsq.get("ttf").get(i));
+            termStatDict.put("matches", (float) tsq.getMatchedTermCount());
+            termStatDict.put("unique", (float) terms.size());
 
             // Run the expression and store the result in computed
             DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource(bindings);

@@ -45,6 +45,8 @@ public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
     public static final String FEATURE_VECTOR = "feature_vector";
     public static final String TERM_STAT = "termStats";
+    public static final String MATCH_COUNT = "matchCount";
+    public static final String UNIQUE_TERMS = "uniqueTerms";
     public static final String EXTRA_LOGGING = "extra_logging";
     public static final String EXTRA_SCRIPT_PARAMS = "extra_script_params";
 
@@ -171,7 +173,7 @@ public class ScriptFeature implements Feature {
             Analyzer analyzer = null;
             for(String field : fields) {
                 if (analyzerName == null) {
-                    MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
+                    final MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
                     analyzer = context.getQueryShardContext().getSearchAnalyzer(fieldType);
                 } else {
                     analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
@@ -182,8 +184,8 @@ public class ScriptFeature implements Feature {
                 }
 
                 for (String termString : termList) {
-                    TokenStream ts = analyzer.tokenStream(field, termString);
-                    TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
+                    final TokenStream ts = analyzer.tokenStream(field, termString);
+                    final TermToBytesRefAttribute termAtt = ts.getAttribute(TermToBytesRefAttribute.class);
 
                     try {
                         ts.reset();
@@ -198,6 +200,8 @@ public class ScriptFeature implements Feature {
             }
 
             nparams.put(TERM_STAT, termstatSupplier);
+            nparams.put(MATCH_COUNT, termstatSupplier.getMatchedTermCountSupplier());
+            nparams.put(UNIQUE_TERMS, terms.size());
         }
 
         nparams.putAll(baseScriptParams);

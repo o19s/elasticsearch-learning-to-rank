@@ -2,6 +2,7 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
+import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.ReaderUtil;
@@ -28,10 +29,14 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
     private final List<String> ACCEPTED_KEYS = Arrays.asList(new String[]{"df", "idf", "tf", "ttf", "tp"});
     private AggrType posAggrType = AggrType.AVG;
 
-    private ClassicSimilarity sim;
-    private StatisticsHelper df_stats, idf_stats, tf_stats, ttf_stats, tp_stats;
+    private final ClassicSimilarity sim;
+    private final StatisticsHelper df_stats, idf_stats, tf_stats, ttf_stats, tp_stats;
+    private final Suppliers.MutableSupplier<Integer> matchedCountSupplier;
+
+    private int matchedTermCount = 0;
 
     public TermStatSupplier() {
+        this.matchedCountSupplier = new Suppliers.MutableSupplier<>();
         this.sim = new ClassicSimilarity();
         this.df_stats = new StatisticsHelper();
         this.idf_stats = new StatisticsHelper();
@@ -48,6 +53,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
         tf_stats.getData().clear();
         ttf_stats.getData().clear();
         tp_stats.getData().clear();
+        matchedTermCount = 0;
 
         PostingsEnum postingsEnum = null;
         for (Term term : terms) {
@@ -79,6 +85,8 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
 
             // Verify document is in postings
             if (postingsEnum.advance(docID) == docID){
+                matchedTermCount++;
+
                 tf_stats.add(postingsEnum.freq());
 
                 if(postingsEnum.freq() > 0) {
@@ -97,6 +105,8 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 tp_stats.add(0.0f);
             }
         }
+
+        matchedCountSupplier.set(matchedTermCount);
     }
 
     /**
@@ -194,6 +204,14 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 return idf_stats.getData().size();
             }
         };
+    }
+
+    public int getMatchedTermCount() {
+        return matchedTermCount;
+    }
+
+    public Suppliers.MutableSupplier<Integer> getMatchedTermCountSupplier() {
+        return matchedCountSupplier;
     }
 
     public void setPosAggr(AggrType type) {

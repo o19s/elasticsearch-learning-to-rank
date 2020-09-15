@@ -314,6 +314,10 @@ Supported aggregation types are:
 - :code:`sum` -- the sum
 - :code:`stddev` -- the standard deviation 
 
+Additionally the following counts are available:
+- :code:`matches` -- The number of terms that matched in the current document
+- :code:`unique` -- The unique number of terms that were passed in
+
 The :code:`terms` parameter is array of terms to gather statistics for.  Currently only single terms are supported, there is not support for phrases or span queries. Note: If your field is tokenized you can pass multiple terms in one string in the array.
 
 The :code:`fields` parameter specifies which fields to check for the specified :code:`terms`.  Note if no :code:`analyzer` is specified then we use the analyzer specified for the field.
@@ -328,6 +332,11 @@ Script Injection
 ----------------
 
 Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`termStats`.  This provides for advanced feature engineering when you need to look at all the data to make decisions.
+
+Scripts access matching and unique counts slightly differently than inside the TermStatQuery:
+
+To access the count of matched tokens: `params.matchCount.get()`
+To access the count of unique tokens: `params.uniqueTerms`
 
 You have the following options for sending in parameters to scripts.  If you always want to find stats about the same terms (i.e. stopwords or other common terms in your index) you can hardcode the parameters along with your script::
 
