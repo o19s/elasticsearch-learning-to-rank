@@ -309,6 +309,7 @@ Supported aggregation types are:
 - :code:`min` -- the minimum 
 - :code:`max` -- the maximum
 - :code:`avg` -- the mean
+- :code:`sum` -- the sum
 - :code:`stddev` -- the standard deviation 
 
 The :code:`terms` parameter is array of terms to gather statistics for.  Currently only single terms are supported, there is not support for phrases or span queries. Note: If your field is tokenized you can pass multiple terms in one string in the array.
