@@ -324,4 +324,62 @@ Optional Parameters
 Script Injection
 ----------------
 
-Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`terms`.  This provides for advanced feature engineering when you need to look at all the data to make decisions. 
+Finally, one last addition that this functionality provides is the ability to inject term statistics into a scripting context.  When working with :code:`ScriptFeatures` if you pass a :code:`term_stat` object in with the :code:`terms`, :code:`fields` and :code:`analyzer` parameters you can access the raw values directly in a custom script via an injected variable named :code:`termStats`.  This provides for advanced feature engineering when you need to look at all the data to make decisions.
+
+You have the following options for sending in parameters to scripts.  If you always want to find stats about the same terms (i.e. stopwords or other common terms in your index) you can hardcode the parameters along with your script::
+
+    POST _ltr/_featureset/test
+    {
+       "featureset": {
+         "features": [
+           {
+             "name": "injection",
+             "template_language": "script_feature",
+             "template": {
+               "lang": "painless",
+               "source": "params.termStats['df'].size()",
+               "params": {
+                 "term_stat": {
+                    "terms": ["rambo rocky"],
+                    "fields": ["overview"]
+                 }
+               }
+             }
+           }
+         ]
+       }
+    }
+
+You can also pass in parameters at query time, query time parameters will take priority over parameters saved with the script::
+
+    POST tmdb/_search
+    {
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "terms": {
+                            "_id": ["7555", "1370", "1369"]
+                        }
+                    },
+                    {
+                        "sltr": {
+                            "_name": "logged_featureset",
+                            "featureset": "test",
+                            "params": {
+                              "terms": ["troutman"],
+                              "fields": ["overview"]
+                            }
+                    }}
+                ]
+            }
+        },
+        "ext": {
+            "ltr_log": {
+                "log_specs": {
+                    "name": "log_entry1",
+                    "named_query": "logged_featureset"
+                }
+            }
+        }
+    }

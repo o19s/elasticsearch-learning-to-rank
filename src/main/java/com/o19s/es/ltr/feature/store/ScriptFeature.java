@@ -132,15 +132,15 @@ public class ScriptFeature implements Feature {
             String analyzerName = (String) termspec.get("analyzer");
 
             // Support reading terms/fields from query time parameters to better support stored feature usage
-            if (termList == null && params.containsKey("terms")) {
+            if (params.containsKey("terms")) {
                 termList = (ArrayList<String>) params.get("terms");
             }
 
-            if (fields == null && params.containsKey("fields")) {
+            if (params.containsKey("fields")) {
                 fields = (ArrayList<String>) params.get("fields");
             }
 
-            if (analyzerName == null && params.containsKey("analyzer")) {
+            if (params.containsKey("analyzer")) {
                 analyzerName = (String) params.get("analyzer");
             }
 

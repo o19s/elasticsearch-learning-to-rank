@@ -101,13 +101,24 @@ public class LoggingIT extends BaseIntegrationTest {
                         LinearRankerParserTests.generateRandomModelString(set), true));
         addElement(model);
     }
-    public void prepareScriptFeatures() throws Exception {
+    public void prepareExternalScriptFeatures() throws Exception {
         List<StoredFeature> features = new ArrayList<>(3);
         features.add(new StoredFeature("test_inject", Arrays.asList(), ScriptFeature.TEMPLATE_LANGUAGE,
                 "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": {} } }"));
 
         StoredFeatureSet set = new StoredFeatureSet("my_set", features);
         set.optimize();
+        addElement(set);
+    }
+
+    public void prepareInternalScriptFeatures() throws Exception {
+        List<StoredFeature> features = new ArrayList<>(3);
+        features.add(new StoredFeature("test_inject", Arrays.asList("query"), ScriptFeature.TEMPLATE_LANGUAGE,
+                "{\"lang\": \"inject\", \"source\": \"df\", \"params\": {\"term_stat\": { " +
+                        "\"terms\": [\"found\"], " +
+                        "\"fields\": [\"field1\"] } } }"));
+
+        StoredFeatureSet set = new StoredFeatureSet("my_set", features);
         addElement(set);
     }
 
@@ -325,8 +336,46 @@ public class LoggingIT extends BaseIntegrationTest {
         assertSearchHitsExtraLogging(docs, resp3);
     }
 
-    public void testScriptLog() throws Exception {
-        prepareScriptFeatures();
+    public void testScriptLogInternalParams() throws Exception {
+        prepareInternalScriptFeatures();
+        Map<String, Doc> docs = buildIndex();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query", "found");
+
+        List<String> idsColl = new ArrayList<>(docs.keySet());
+        Collections.shuffle(idsColl, random());
+        String[] ids = idsColl.subList(0, TestUtil.nextInt(random(), 5, 15)).toArray(new String[0]);
+        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test")
+                .boost(random().nextInt(3));
+
+        QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)));
+
+        SearchResponse resp = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+
+        SearchHits hits = resp.getHits();
+        SearchHit testHit = hits.getAt(0);
+        Map<String, List<Map<String, Object>>> logs = testHit.getFields().get("_ltrlog").getValue();
+
+        assertTrue(logs.containsKey("first_log"));
+        List<Map<String, Object>> log = logs.get("first_log");
+
+        assertEquals(log.get(0).get("name"), "test_inject");
+        assertTrue((Float)log.get(0).get("value") > 0.0F);
+    }
+
+    public void testScriptLogExternalParams() throws Exception {
+        prepareExternalScriptFeatures();
         Map<String, Doc> docs = buildIndex();
 
         Map<String, Object> params = new HashMap<>();
@@ -368,6 +417,7 @@ public class LoggingIT extends BaseIntegrationTest {
         assertEquals(log.get(0).get("name"), "test_inject");
         assertTrue((Float)log.get(0).get("value") > 0.0F);
     }
+
 
     protected void assertSearchHits(Map<String, Doc> docs, SearchResponse resp) {
         for (SearchHit hit: resp.getHits()) {
