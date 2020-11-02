@@ -11,7 +11,7 @@ Elasticsearch Learning to Rank: the documentation
 Get started
 -------------------------------
 
-- Want a quickstart? Check out the `demo <https://github.com/o19s/elasticsearch-learning-to-rank/tree/master/demo>`_. 
+- Want a quickstart? Check out the demo in `hello-ltr <https://github.com/o19s/hello-ltr>`_. 
 - Brand new to learning to rank? head to :doc:`core-concepts`. 
 - Otherwise, start with :doc:`fits-in`
 
