@@ -32,16 +32,14 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.search.fetch.subphase.InnerHitsContext;
-import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
+import org.elasticsearch.search.fetch.FetchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,79 +47,103 @@ import java.util.Optional;
 
 public class LoggingFetchSubPhase implements FetchSubPhase {
     @Override
-    public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
+    public FetchSubPhaseProcessor getProcessor(FetchContext context) throws IOException {
         LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
         if (ext == null) {
-            return;
+            return null;
         }
 
-        // Use a boolean query with all the models to log
-        // This way we reuse existing code to advance through multiple scorers/iterators
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         List<HitLogConsumer> loggers = new ArrayList<>();
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
-        if (!(context instanceof InnerHitsContext.InnerHitSubContext)) {
-            ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
-                Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
-                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-                loggers.add(query.v2());
-            });
 
-            ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-                Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-                loggers.add(query.v2());
-            });
-        }
 
-        doLog(builder.build(), loggers, context.searcher(), hits);
+        //TODO: Bring back the type check before logging;
+        ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
+            Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
+            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+            loggers.add(query.v2());
+        });
 
+        ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+            Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+            loggers.add(query.v2());
+        });
+
+        return new FetchSubPhaseProcessor() {
+            @Override
+            public void setNextReader(LeafReaderContext readerContext) {
+            }
+           
+            @Override
+            public void process(HitContext hitContext) throws IOException {
+                doLog(builder.build(), loggers, context.searcher(), hitContext.hit());
+            }
+        };
     }
+    // public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
+    //     LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
+    //     if (ext == null) {
+    //         return;
+    //     }
+
+    //     // Use a boolean query with all the models to log
+    //     // This way we reuse existing code to advance through multiple scorers/iterators
+    //     BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    //     List<HitLogConsumer> loggers = new ArrayList<>();
+    //     Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
+    //     if (!(context instanceof InnerHitsContext.InnerHitSubContext)) {
+    //         ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
+    //             Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
+    //             builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+    //             loggers.add(query.v2());
+    //         });
+
+    //         ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+    //             Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+    //             builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+    //             loggers.add(query.v2());
+    //         });
+    //     }
+
+    //     doLog(builder.build(), loggers, context.searcher(), hits);
+
+    // }
 
     void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
-        // Reorder hits by id so we can scan all the docs belonging to the same
-        // segment by reusing the same scorer.
-        SearchHit[] reordered = new SearchHit[hits.length];
-        System.arraycopy(hits, 0, reordered, 0, hits.length);
-        Arrays.sort(reordered, Comparator.comparingInt(SearchHit::docId));
+       for (SearchHit hit: hits) {
+           doLog(query, loggers, searcher, hit);
+       }
+    }
 
-        int hitUpto = 0;
-        int readerUpto = -1;
-        int endDoc = 0;
-        int docBase = 0;
+    void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit hit) throws IOException {
         Scorer scorer = null;
+
         Weight weight = searcher.createWeight(searcher.rewrite(query), ScoreMode.COMPLETE, 1F);
-        // Loop logic borrowed from lucene QueryRescorer
-        while (hitUpto < reordered.length) {
-            SearchHit hit = reordered[hitUpto];
-            int docID = hit.docId();
-            loggers.forEach((l) -> l.nextDoc(hit));
-            LeafReaderContext readerContext = null;
-            while (docID >= endDoc) {
-                readerUpto++;
-                readerContext = searcher.getTopReaderContext().leaves().get(readerUpto);
-                endDoc = readerContext.docBase + readerContext.reader().maxDoc();
-            }
+        int docID = hit.docId();
+        loggers.forEach((l) -> l.nextDoc(hit));
 
-            if (readerContext != null) {
-                // We advanced to another segment:
-                docBase = readerContext.docBase;
-                scorer = weight.scorer(readerContext);
-            }
+        LeafReaderContext readerContext = null;
+        int endDoc = 0;
+        int readerUpto = -1;
+        while (docID >= endDoc) {
+            readerUpto++;
+            readerContext = searcher.getTopReaderContext().leaves().get(readerUpto);
+            endDoc = readerContext.docBase + readerContext.reader().maxDoc();
+        }
 
-            if (scorer != null) {
-                int targetDoc = docID - docBase;
-                int actualDoc = scorer.docID();
-                if (actualDoc < targetDoc) {
-                    actualDoc = scorer.iterator().advance(targetDoc);
-                }
-                if (actualDoc == targetDoc) {
-                    // Scoring will trigger log collection
-                    scorer.score();
-                }
-            }
+        if (readerContext != null) {
+            scorer = weight.scorer(readerContext);
+        }
 
-            hitUpto++;
+        if (scorer != null) {
+            int targetDoc = docID;
+            int actualDoc = scorer.iterator().advance(targetDoc);
+            if (actualDoc == targetDoc) {
+                // Scoring will trigger log collection
+                scorer.score();
+            }
         }
     }
 
