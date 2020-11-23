@@ -16,6 +16,7 @@ version = "${ltrVersion}-es${elasticsearchVersion}"
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'elasticsearch.java-rest-test'
 apply plugin: 'elasticsearch.rest-resources'
 
 // license of this project
@@ -64,6 +65,13 @@ dependencyLicenses {
   mapping from: /asm-.*/, to: 'asm'
   mapping from: /Ranky-.*/, to: 'lucene'
   mapping from: /compiler-.*/, to: 'lucene'
+}
+
+sourceSets {
+  javaRestTest {
+    compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
+    runtimeClasspath += output + compileClasspath
+  }
 }
 
 // Set to false to not use elasticsearch checkstyle rules
