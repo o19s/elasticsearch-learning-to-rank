@@ -34,6 +34,8 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
 import org.elasticsearch.search.fetch.FetchContext;
+import org.elasticsearch.search.fetch.subphase.InnerHitsContext;
+import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
 
@@ -58,18 +60,20 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
 
 
-        //TODO: Bring back the type check before logging;
-        ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
-            Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
-            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-            loggers.add(query.v2());
-        });
+        //TODO: Need help verifying the type of the context
+        if (context.innerHits().getInnerHits().size() == 0) {
+            ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
+                Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
+                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+                loggers.add(query.v2());
+            });
 
-        ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-            Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-            loggers.add(query.v2());
-        });
+            ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+                Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+                loggers.add(query.v2());
+            });
+        }
 
         return new FetchSubPhaseProcessor() {
             @Override
@@ -125,6 +129,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         loggers.forEach((l) -> l.nextDoc(hit));
 
         LeafReaderContext readerContext = null;
+        int docBase = 0;
         int endDoc = 0;
         int readerUpto = -1;
         while (docID >= endDoc) {
@@ -134,11 +139,12 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         if (readerContext != null) {
+            docBase = readerContext.docBase;
             scorer = weight.scorer(readerContext);
         }
 
         if (scorer != null) {
-            int targetDoc = docID;
+            int targetDoc = docID - docBase;
             int actualDoc = scorer.iterator().advance(targetDoc);
             if (actualDoc == targetDoc) {
                 // Scoring will trigger log collection
