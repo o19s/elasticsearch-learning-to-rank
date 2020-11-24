@@ -34,8 +34,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
 import org.elasticsearch.search.fetch.FetchContext;
-import org.elasticsearch.search.fetch.subphase.InnerHitsContext;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
 
@@ -60,8 +58,9 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
 
 
-        //TODO: Need help verifying the type of the context
-        if (context.innerHits().getInnerHits().size() == 0) {
+        //TODO: Need help verifying the type of the context, SearchContext was moved inside of FetchContext
+        // context instanceof InnerHitsContext.InnerHitSubContext seems to no longer be accessible
+        if (namedQueries.size() > 0) {
             ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
                 Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
                 builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
