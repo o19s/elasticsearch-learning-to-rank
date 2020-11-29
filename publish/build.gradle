@@ -1,0 +1,51 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+publishing {
+  publications {
+    ltr(MavenPublication) {
+      from components.java
+
+      pom {
+        name = 'Elasticsearch Learning to Rank plugin'
+        artifactId = 'elasticsearch-learning-to-rank'
+        description = 'Learing to Rank Query w/ RankLib Models'
+        url = 'https://elasticsearch-learning-to-rank.readthedocs.io/'
+
+        licenses {
+          license {
+            name = 'The Apache Software License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+
+        scm {
+          url = 'https://github.com/o19s/elasticsearch-learning-to-rank'
+          connection = 'scm:git:git://github.com/o19s/elasticsearch-learning-to-rank.git'
+          developerConnection = 'scm:git:https://github.com/o19s/elasticsearch-learning-to-rank.git'
+        }
+      }
+    }
+  }
+
+  repositories {
+    maven {
+      name = "MavenCentral"
+      url = System.getenv('SONATYPE_REPO_URL')
+
+        credentials {
+          username = System.getenv('SONATYPE_USER')
+          password = System.getenv('SONATYPE_PASS')
+        }
+    }
+  }
+}
+
+signing {
+  required { gradle.taskGraph.hasTask('publish') }
+  def signingKey = System.getenv('GPG_SIGNING_KEY')
+  def signingPass = System.getenv('GPG_SIGNING_PASS')
+
+  useInMemoryPgpKeys(signingKey, signingPass)
+  sign publishing.publications.ltr
+}

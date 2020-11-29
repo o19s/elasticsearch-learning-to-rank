@@ -45,3 +45,11 @@ jobs:
         asset_path: ./ltr-plugin-${{ env.RELEASE_VERSION }}.zip
         asset_name: ltr-plugin-${{ env.RELEASE_VERSION }}.zip
         asset_content_type: application/zip
+    - name: Publish to Maven Central
+      env:
+        SONATYPE_REPO_URL: ${{ secrets.SONATYPE_REPO_URL }}
+        SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+        SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
+        GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        GPG_SIGNING_PASS: ${{ secrets.GPG_SIGNING_PASS }}
+      run: ./gradlew publish

@@ -1,2 +1,3 @@
 rootProject.name = 'ltr'
 include ':rest-api-spec'
+include 'publish'
