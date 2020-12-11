@@ -10,10 +10,23 @@ buildscript {
   }
 }
 
-group = 'com.o19s'
-version = "${ltrVersion}-es${elasticsearchVersion}"
+allprojects {
+  group = 'com.o19s'
+  version = "${ltrVersion}-es${elasticsearchVersion}"
 
-apply plugin: 'java'
+  apply plugin: 'java'
+
+  dependencies {
+    compile "org.apache.lucene:lucene-expressions:${luceneVersion}"
+    compile "org.antlr:antlr4-runtime:${antlrVersion}"
+    compile "org.ow2.asm:asm:${ow2Version}"
+    compile "org.ow2.asm:asm-commons:${ow2Version}"
+    compile "org.ow2.asm:asm-tree:${ow2Version}"
+    compile 'com.o19s:RankyMcRankFace:0.1.1'
+    compile "com.github.spullara.mustache.java:compiler:0.9.3"
+  }
+}
+
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'elasticsearch.rest-resources'
@@ -47,16 +60,6 @@ repositories {
       artifact()
     }
   }
-}
-
-dependencies {
-  compile "org.apache.lucene:lucene-expressions:${luceneVersion}"
-  compile "org.antlr:antlr4-runtime:${antlrVersion}"
-  compile "org.ow2.asm:asm:${ow2Version}"
-  compile "org.ow2.asm:asm-commons:${ow2Version}"
-  compile "org.ow2.asm:asm-tree:${ow2Version}"
-  compile 'com.o19s:RankyMcRankFace:0.1.1'
-  compile "com.github.spullara.mustache.java:compiler:0.9.3"
 }
 
 dependencyLicenses {
