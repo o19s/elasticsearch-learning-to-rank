@@ -19,6 +19,14 @@ publishing {
           }
         }
 
+        developers {
+          developer {
+            id = 'osc'
+            name = 'Oscar'
+            email = 'oscar@o19s.com'
+          }
+        }
+
         scm {
           url = 'https://github.com/o19s/elasticsearch-learning-to-rank'
           connection = 'scm:git:git://github.com/o19s/elasticsearch-learning-to-rank.git'
