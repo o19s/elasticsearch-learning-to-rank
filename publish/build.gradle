@@ -9,7 +9,7 @@ publishing {
       pom {
         name = 'Elasticsearch Learning to Rank plugin'
         artifactId = 'elasticsearch-learning-to-rank'
-        description = 'Learing to Rank Query w/ RankLib Models'
+        description = 'Learning to Rank Query w/ RankLib Models'
         url = 'https://elasticsearch-learning-to-rank.readthedocs.io/'
 
         licenses {
