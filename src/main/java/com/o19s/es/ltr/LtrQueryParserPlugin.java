@@ -256,17 +256,17 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
-        return asList(caches, parserFactory, getStats(client, clusterService));
+        return asList(caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
     }
 
-    private LTRStats getStats(Client client, ClusterService clusterService) {
+    private LTRStats getStats(Client client, ClusterService clusterService, IndexNameExpressionResolver indexNameExpressionResolver) {
         Map<String, LTRStat> stats = new HashMap<>();
         stats.put(StatName.CACHE.getName(),
                 new LTRStat(false, new CacheStatsOnNodeSupplier(caches)));
         stats.put(StatName.STORES.getName(),
-                new LTRStat(true, new StoreStatsSupplier(client, clusterService)));
+                new LTRStat(true, new StoreStatsSupplier(client, clusterService, indexNameExpressionResolver)));
         stats.put(StatName.PLUGIN_STATUS.getName(),
-                new LTRStat(true, new PluginHealthStatusSupplier(clusterService)));
+                new LTRStat(true, new PluginHealthStatusSupplier(clusterService, indexNameExpressionResolver)));
         return new LTRStats(unmodifiableMap(stats));
     }
 

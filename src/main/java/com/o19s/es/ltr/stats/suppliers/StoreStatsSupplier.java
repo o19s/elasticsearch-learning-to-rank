@@ -16,8 +16,6 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.common.settings.Settings;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,11 +58,10 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         }
     }
 
-    public StoreStatsSupplier(Client client, ClusterService clusterService) {
+    public StoreStatsSupplier(Client client, ClusterService clusterService, IndexNameExpressionResolver indexNameExpressionResolver) {
         this.client = client;
         this.clusterService = clusterService;
-        ThreadContext threadContext = new ThreadContext(Settings.EMPTY);
-        this.indexNameExpressionResolver = new IndexNameExpressionResolver(threadContext);
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     @Override
