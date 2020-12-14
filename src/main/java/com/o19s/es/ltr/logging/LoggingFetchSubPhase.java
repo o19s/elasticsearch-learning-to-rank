@@ -91,34 +91,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             }
         };
     }
-    // public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
-    //     LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
-    //     if (ext == null) {
-    //         return;
-    //     }
-
-    //     // Use a boolean query with all the models to log
-    //     // This way we reuse existing code to advance through multiple scorers/iterators
-    //     BooleanQuery.Builder builder = new BooleanQuery.Builder();
-    //     List<HitLogConsumer> loggers = new ArrayList<>();
-    //     Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
-    //     if (!(context instanceof InnerHitsContext.InnerHitSubContext)) {
-    //         ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
-    //             Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
-    //             builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-    //             loggers.add(query.v2());
-    //         });
-
-    //         ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-    //             Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-    //             builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-    //             loggers.add(query.v2());
-    //         });
-    //     }
-
-    //     doLog(builder.build(), loggers, context.searcher(), hits);
-
-    // }
 
     void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
        for (SearchHit hit: hits) {
