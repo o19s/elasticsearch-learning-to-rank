@@ -19,6 +19,7 @@ package com.o19s.es.ltr.logging;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.logging.LoggingFetchSubPhase.LoggingFetchSubPhaseProcessor;
 import com.o19s.es.ltr.query.RankerQuery;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
@@ -39,6 +40,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
@@ -46,16 +48,17 @@ import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.index.Index;
 import org.elasticsearch.index.fielddata.plain.SortedNumericIndexFieldData;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.fetch.FetchSubPhase;
+import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
+import org.elasticsearch.search.lookup.SourceLookup;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,8 +116,11 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 .add(new BooleanClause(query2, BooleanClause.Occur.MUST))
                 .build();
         LoggingFetchSubPhase subPhase = new LoggingFetchSubPhase();
-        SearchHit[] hits = selectRandomHits();
-        subPhase.doLog(query, Arrays.asList(logger1, logger2), searcher, hits);
+        Weight weight = searcher.createWeight(query, ScoreMode.COMPLETE, 1.0F);
+        List<LoggingFetchSubPhase.HitLogConsumer> loggers = Arrays.asList(logger1, logger2);
+        LoggingFetchSubPhaseProcessor processor = new LoggingFetchSubPhaseProcessor(weight, loggers);
+
+        SearchHit[] hits = preprocessRandomHits(processor);
         for (SearchHit hit : hits) {
             assertTrue(docs.containsKey(hit.getId()));
             Document d = docs.get(hit.getId());
@@ -146,7 +152,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         }
     }
 
-    public SearchHit[] selectRandomHits() throws IOException {
+    public SearchHit[] preprocessRandomHits(FetchSubPhaseProcessor processor) throws IOException {
         int minHits = TestUtil.nextInt(random(), 5, 10);
         int maxHits = TestUtil.nextInt(random(), minHits, minHits+10);
         List<SearchHit> hits = new ArrayList<>(maxHits);
@@ -165,6 +171,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
             protected void doSetNextReader(LeafReaderContext context) throws IOException {
                 super.doSetNextReader(context);
                 this.context = context;
+                processor.setNextReader(context);
             }
 
             @Override
@@ -173,19 +180,19 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                     Document d = context.reader().document(doc);
                     String id = d.get("id");
                     SearchHit hit = new SearchHit(
-                        doc+context.docBase,
+                        doc,
                         id,
                         new Text("text"),
                         random().nextBoolean() ? new HashMap<>() : null,
                         null
                     );
+                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, new SourceLookup(), new HashMap<>()));
                     hits.add(hit);
                 }
             }
 
         });
         assert hits.size() >= minHits;
-        Collections.shuffle(hits, random());
         return hits.toArray(new SearchHit[0]);
     }
 
@@ -210,8 +217,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
 
     public Query buildFunctionScore() {
         FieldValueFactorFunction fieldValueFactorFunction = new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
-                new SortedNumericIndexFieldData(new Index("test", "123"),
-                        "score", FLOAT));
+                new SortedNumericIndexFieldData("score", FLOAT));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }

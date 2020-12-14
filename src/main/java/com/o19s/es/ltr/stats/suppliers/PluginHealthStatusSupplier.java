@@ -5,6 +5,7 @@ import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
 import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -21,9 +22,10 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
     private final ClusterService clusterService;
     private final IndexNameExpressionResolver indexNameExpressionResolver;
 
-    public PluginHealthStatusSupplier(ClusterService clusterService) {
+    public PluginHealthStatusSupplier(ClusterService clusterService, IndexNameExpressionResolver indexNameExpressionResolver) {
         this.clusterService = clusterService;
-        this.indexNameExpressionResolver = new IndexNameExpressionResolver();
+        ThreadContext threadContext = new ThreadContext(clusterService.getSettings());
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     // currently it combines the store statuses to get the overall health

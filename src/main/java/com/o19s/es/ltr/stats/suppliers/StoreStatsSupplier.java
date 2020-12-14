@@ -58,10 +58,10 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         }
     }
 
-    public StoreStatsSupplier(Client client, ClusterService clusterService) {
+    public StoreStatsSupplier(Client client, ClusterService clusterService, IndexNameExpressionResolver indexNameExpressionResolver) {
         this.client = client;
         this.clusterService = clusterService;
-        this.indexNameExpressionResolver = new IndexNameExpressionResolver();
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     @Override

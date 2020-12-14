@@ -29,6 +29,7 @@ allprojects {
 
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'elasticsearch.java-rest-test'
 apply plugin: 'elasticsearch.rest-resources'
 
 // license of this project
@@ -69,6 +70,13 @@ dependencyLicenses {
   mapping from: /compiler-.*/, to: 'lucene'
 }
 
+sourceSets {
+  javaRestTest {
+    compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
+    runtimeClasspath += output + compileClasspath
+  }
+}
+
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true
 checkstyleTest.enabled = true
@@ -84,3 +92,7 @@ licenseHeaders.enabled = false
 
 // No need to validate POM, as we do not upload to sonatype
 validateNebulaPom.enabled = false
+
+// Elastic tried to remove the logging requirement for plugins, but didn't get it quite right so this is a short term fix until 7.11
+// https://github.com/elastic/elasticsearch/issues/65247
+loggerUsageCheck.enabled = false

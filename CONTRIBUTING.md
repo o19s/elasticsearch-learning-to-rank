@@ -73,7 +73,7 @@ As a practice, we maintain a branch per Elasticsearch version, prefixed by ES. S
 
 ### Upgrading to latest Elasticsearch major/minor version (ie `es_6_7`)
 
-Upgrading to the latest ES version is a great way to help us out, and get your feet wet. The first step is to open build.gradle, and change the ES version numbers in the dependencies to the version you wish to upgrade to. We recommend trying to build, (it'll likely fail) making a branch name with the es version number (ie `es_6_7`), and then sending us a "Work in Progress" PR to master. This will let us rally around the (sometimes annoyingly painful) upgrade as a team.
+Upgrading to the latest ES version is a great way to help us out, and get your feet wet. The first step is to open `gradle.properties`, and change the ES/Lucene version numbers in the dependencies to the version you wish to upgrade to. We recommend trying to build, (it'll likely fail) making a branch name with the es version number (ie `es_6_7`), and then sending us a "Work in Progress" PR to master. This will let us rally around the (sometimes annoyingly painful) upgrade as a team.
 
 #### Gradlew Wrapper and Java Upgrade
 
@@ -132,4 +132,4 @@ Most people come to this plugin, unfamiliar with the basic Learning to Rank work
 
 # Other questions? Get in touch!
 
-Please [email Doug Turnbull](mailto:dturnbull@opensourceconnections.com) to ask any questions about contributing not covered by this document. If there's a "bug" in this document, please feel free to file an issue.
+Please open an issue to ask any questions about contributing not covered by this document. If there's a "bug" in this document, please feel free to file PR, typos are the wosrt.

@@ -23,7 +23,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
@@ -31,17 +30,15 @@ import org.apache.lucene.search.Weight;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.fetch.FetchContext;
 import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.search.fetch.subphase.InnerHitsContext;
-import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,18 +46,18 @@ import java.util.Optional;
 
 public class LoggingFetchSubPhase implements FetchSubPhase {
     @Override
-    public void hitsExecute(SearchContext context, SearchHit[] hits) throws IOException {
+    public FetchSubPhaseProcessor getProcessor(FetchContext context) throws IOException {
         LoggingSearchExtBuilder ext = (LoggingSearchExtBuilder) context.getSearchExt(LoggingSearchExtBuilder.NAME);
         if (ext == null) {
-            return;
+            return null;
         }
 
-        // Use a boolean query with all the models to log
-        // This way we reuse existing code to advance through multiple scorers/iterators
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         List<HitLogConsumer> loggers = new ArrayList<>();
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
-        if (!(context instanceof InnerHitsContext.InnerHitSubContext)) {
+
+
+        if (namedQueries.size() > 0) {
             ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
                 Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
                 builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
@@ -74,58 +71,15 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             });
         }
 
-        doLog(builder.build(), loggers, context.searcher(), hits);
 
+
+        Weight w = context.searcher().rewrite(builder.build()).createWeight(context.searcher(), ScoreMode.COMPLETE, 1.0F);
+
+        return new LoggingFetchSubPhaseProcessor(w, loggers);
     }
 
-    void doLog(Query query, List<HitLogConsumer> loggers, IndexSearcher searcher, SearchHit[] hits) throws IOException {
-        // Reorder hits by id so we can scan all the docs belonging to the same
-        // segment by reusing the same scorer.
-        SearchHit[] reordered = new SearchHit[hits.length];
-        System.arraycopy(hits, 0, reordered, 0, hits.length);
-        Arrays.sort(reordered, Comparator.comparingInt(SearchHit::docId));
-
-        int hitUpto = 0;
-        int readerUpto = -1;
-        int endDoc = 0;
-        int docBase = 0;
-        Scorer scorer = null;
-        Weight weight = searcher.createWeight(searcher.rewrite(query), ScoreMode.COMPLETE, 1F);
-        // Loop logic borrowed from lucene QueryRescorer
-        while (hitUpto < reordered.length) {
-            SearchHit hit = reordered[hitUpto];
-            int docID = hit.docId();
-            loggers.forEach((l) -> l.nextDoc(hit));
-            LeafReaderContext readerContext = null;
-            while (docID >= endDoc) {
-                readerUpto++;
-                readerContext = searcher.getTopReaderContext().leaves().get(readerUpto);
-                endDoc = readerContext.docBase + readerContext.reader().maxDoc();
-            }
-
-            if (readerContext != null) {
-                // We advanced to another segment:
-                docBase = readerContext.docBase;
-                scorer = weight.scorer(readerContext);
-            }
-
-            if (scorer != null) {
-                int targetDoc = docID - docBase;
-                int actualDoc = scorer.docID();
-                if (actualDoc < targetDoc) {
-                    actualDoc = scorer.iterator().advance(targetDoc);
-                }
-                if (actualDoc == targetDoc) {
-                    // Scoring will trigger log collection
-                    scorer.score();
-                }
-            }
-
-            hitUpto++;
-        }
-    }
-
-    private Tuple<RankerQuery, HitLogConsumer> extractQuery(LoggingSearchExtBuilder.LogSpec logSpec, Map<String, Query> namedQueries) {
+    private Tuple<RankerQuery, HitLogConsumer> extractQuery(LoggingSearchExtBuilder.LogSpec
+                                                                    logSpec, Map<String, Query> namedQueries) {
         Query q = namedQueries.get(logSpec.getNamedQuery());
         if (q == null) {
             throw new IllegalArgumentException("No query named [" + logSpec.getNamedQuery() + "] found");
@@ -172,6 +126,31 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         query = query.toLoggerQuery(consumer);
         return new Tuple<>(query, consumer);
     }
+    static class LoggingFetchSubPhaseProcessor implements FetchSubPhaseProcessor {
+        private final Weight weight;
+        private final List<HitLogConsumer> loggers;
+        private Scorer scorer;
+
+        LoggingFetchSubPhaseProcessor(Weight weight, List<HitLogConsumer> loggers) {
+            this.weight = weight;
+            this.loggers = loggers;
+        }
+
+
+        @Override
+        public void setNextReader(LeafReaderContext readerContext) throws IOException {
+            scorer = weight.scorer(readerContext);
+        }
+
+        @Override
+        public void process(HitContext hitContext) throws IOException {
+            if (scorer != null && scorer.iterator().advance(hitContext.docId()) == hitContext.docId()) {
+                loggers.forEach((l) -> l.nextDoc(hitContext.hit()));
+                // Scoring will trigger log collection
+                scorer.score();
+            }
+        }
+    }
 
     static class HitLogConsumer implements LogLtrRanker.LogConsumer {
         private static final String FIELD_NAME = "_ltrlog";
@@ -191,7 +170,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         // ]
         private List<Map<String, Object>> currentLog;
         private SearchHit currentHit;
-        private Map<String,Object> extraLogging;
+        private Map<String, Object> extraLogging;
 
 
         HitLogConsumer(String name, FeatureSet set, boolean missingAsZero) {
@@ -226,14 +205,14 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
         /**
          * Return Map to store additional logging information returned with the feature values.
-         *
+         * <p>
          * The Map is created on first access.
          */
         @Override
-        public Map<String,Object> getExtraLoggingMap() {
+        public Map<String, Object> getExtraLoggingMap() {
             if (extraLogging == null) {
                 extraLogging = new HashMap<>();
-                Map<String,Object> logEntry = new HashMap<>();
+                Map<String, Object> logEntry = new HashMap<>();
                 logEntry.put("name", EXTRA_LOGGING_NAME);
                 logEntry.put("value", extraLogging);
                 currentLog.add(logEntry);
