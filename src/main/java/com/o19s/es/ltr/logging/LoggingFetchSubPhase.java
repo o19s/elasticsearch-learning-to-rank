@@ -58,8 +58,14 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
 
 
-        //TODO: Need help verifying the type of the context, SearchContext was moved inside of FetchContext
-        // context instanceof InnerHitsContext.InnerHitSubContext seems to no longer be accessible
+        /*
+         * TODO: ES 7.10 restricts our access to the search context so we can't verify the innerhits instance
+         *
+         * Keep a lookout for FetchContext::getQueryShardContext in a future release as we should be able
+         * to clean this up
+         *
+         * context.getQueryShardContext() instanceof InnerHitsContext.InnerHitSubContext
+         */
         if (namedQueries.size() > 0) {
             ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
                 Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
