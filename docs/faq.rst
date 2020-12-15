@@ -21,5 +21,5 @@ If you've been fighting with the plugin it's entirely possible you've encountere
 I'm still stuck!
 =============================
 
-We'd love to hear from you!  Consider joining the `Relevance Slack Community <https://opensourceconnections.com/slack>`_ and join the #elasticsearch-learning-to-rank channel. 
+We'd love to hear from you!  Consider joining the `Relevance Slack Community <https://opensourceconnections.com/slack>`_ and join the #es-learn-to-rank channel. 
 
