@@ -48,6 +48,7 @@ Contents
    searching-with-your-model
    x-pack
    advanced-functionality
+   faq
    :caption: Contents:
 
 
