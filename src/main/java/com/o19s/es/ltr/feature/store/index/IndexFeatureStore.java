@@ -110,12 +110,20 @@ public class IndexFeatureStore implements FeatureStore {
 
     @Override
     public Feature load(String name) throws IOException {
-        return getAndParse(name, StoredFeature.class, StoredFeature.TYPE).optimize();
+        Feature feature = getAndParse(name, StoredFeature.class, StoredFeature.TYPE);
+        if (feature == null) {
+            throw new IllegalArgumentException("Unknown feature [" + name + "]");
+        }
+        return feature.optimize();
     }
 
     @Override
     public FeatureSet loadSet(String name) throws IOException {
-        return getAndParse(name, StoredFeatureSet.class, StoredFeatureSet.TYPE).optimize();
+        FeatureSet featureSet = getAndParse(name, StoredFeatureSet.class, StoredFeatureSet.TYPE);
+        if (featureSet == null) {
+            throw new IllegalArgumentException("Unknown featureset [" + name + "]");
+        }
+        return featureSet.optimize();
     }
 
     /**
