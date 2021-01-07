@@ -4,7 +4,7 @@ apply plugin: 'signing'
 publishing {
   publications {
     ltr(MavenPublication) {
-      from components.java
+      from project(':').components.java
 
       pom {
         name = 'Elasticsearch Learning to Rank plugin'
