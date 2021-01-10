@@ -77,6 +77,11 @@ sourceSets {
   }
 }
 
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true
 checkstyleTest.enabled = true
