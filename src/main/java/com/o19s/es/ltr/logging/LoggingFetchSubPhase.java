@@ -63,14 +63,13 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                 builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
                 loggers.add(query.v2());
             });
-
-            ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-                Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-                loggers.add(query.v2());
-            });
         }
 
+        ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+            Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+            loggers.add(query.v2());
+        });
 
 
         Weight w = context.searcher().rewrite(builder.build()).createWeight(context.searcher(), ScoreMode.COMPLETE, 1.0F);
