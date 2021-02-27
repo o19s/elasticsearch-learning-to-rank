@@ -290,7 +290,7 @@ The :code:`TermStatQuery` is a re-imagination of the legacy :code:`ExplorerQuery
             "term_stat": {
                 "expr": "df",
                 "aggr": "max",
-                "terms": ["rambo,  "rocky"],
+                "terms": ["rambo",  "rocky"],
                 "fields": ["title"]
             }
         }
