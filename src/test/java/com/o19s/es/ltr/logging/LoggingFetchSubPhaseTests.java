@@ -186,7 +186,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                         random().nextBoolean() ? new HashMap<>() : null,
                         null
                     );
-                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, new SourceLookup(), new HashMap<>()));
+                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, new SourceLookup()));
                     hits.add(hit);
                 }
             }
