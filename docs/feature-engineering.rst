@@ -7,7 +7,7 @@ You've seen how to add features to feature sets. We want to show you how to addr
 Getting Raw Term Statistics
 ======================
 
-Many learning to rank solutions use raw term statistics in training. For example, the total term frequency for a term, the document frequency, and other statistics. Luckily, Elasticsearch LTR comes with a query primitive, :code:`match_explorer`, that extracts these statistics for you for a set of terms. In it's simplest form, :code:`match_explorer` you specify a statistic you're interested in and a match you'd like to explore. For example::
+Many learning to rank solutions use raw term statistics in training. For example, the total term frequency for a term, the document frequency, and other statistics. Luckily, Elasticsearch LTR comes with a query primitive, :code:`match_explorer`, that extracts these statistics for you for a set of terms. In its simplest form, :code:`match_explorer` lets you specify a statistic you're interested in and a match you'd like to explore. For example::
 
     POST tmdb/_search
     {
