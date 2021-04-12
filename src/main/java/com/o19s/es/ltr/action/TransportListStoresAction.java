@@ -61,20 +61,14 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     private final Client client;
 
     @Inject
-    public TransportListStoresAction(Settings settings, TransportService transportService,ClusterService clusterService,
-                                     ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
+    public TransportListStoresAction(Settings settings, TransportService transportService,
+                                     ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
+                                     IndexNameExpressionResolver indexNameExpressionResolver, String executor, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
-            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver);
+            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new, ThreadPool.Names.SAME);
         this.client = client;
     }
     
-    @Override
-    protected String executor() {
-        return ThreadPool.Names.SAME;
-    }
-
-    @Override
     protected ListStoresActionResponse read(StreamInput in) throws IOException {
         return new ListStoresActionResponse(in);
     }
