@@ -68,7 +68,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
             actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new, ThreadPool.Names.SAME);
         this.client = client;
     }
-    
+
     protected ListStoresActionResponse read(StreamInput in) throws IOException {
         return new ListStoresActionResponse(in);
     }
