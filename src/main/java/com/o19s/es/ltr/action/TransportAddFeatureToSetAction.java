@@ -73,6 +73,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         this.featureStoreAction = featureStoreAction;
     }
 
+    @Override
     protected void doExecute(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
         if (!clusterService.state().routingTable().hasIndex(request.getStore())) {
             throw new IllegalArgumentException("Store [" + request.getStore() + "] does not exist, please create it first.");
