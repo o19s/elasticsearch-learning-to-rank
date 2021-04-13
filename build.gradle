@@ -27,6 +27,7 @@ allprojects {
   }
 }
 
+apply plugin: 'checkstyle'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'elasticsearch.java-rest-test'
@@ -39,6 +40,10 @@ noticeFile = rootProject.file('NOTICE.txt')
 
 // disable uploadArchives task for now, no upload happening currently
 uploadArchives.enabled = false
+
+checkstyle {
+  configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
 
 esplugin {
   name 'ltr'
@@ -83,8 +88,8 @@ java {
 }
 
 // Set to false to not use elasticsearch checkstyle rules
-// checkstyleMain.enabled = true
-// checkstyleTest.enabled = true
+checkstyleMain.enabled = true
+checkstyleTest.enabled = true
 
 // // FIXME dependency license check needs to be enabled
 // dependencyLicenses.enabled = false
