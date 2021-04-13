@@ -34,7 +34,6 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
@@ -59,13 +58,12 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     private final Client client;
 
     @Inject
-    public TransportListStoresAction(Settings settings, TransportService transportService,
+    public TransportListStoresAction(TransportService transportService,
                                      ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, String executor, Client client) {
+                                     IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
             actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new, ThreadPool.Names.SAME);
         this.client = client;
-
     }
 
     @Override
