@@ -1,6 +1,7 @@
 {
   "ltr.list_stores": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

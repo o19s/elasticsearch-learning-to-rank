@@ -1,6 +1,7 @@
 {
   "ltr.get_store": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

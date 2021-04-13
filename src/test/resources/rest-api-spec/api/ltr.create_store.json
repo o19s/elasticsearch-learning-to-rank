@@ -1,6 +1,7 @@
 {
   "ltr.create_store": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

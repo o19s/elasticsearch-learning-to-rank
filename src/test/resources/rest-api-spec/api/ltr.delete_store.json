@@ -1,6 +1,7 @@
 {
   "ltr.delete_store": {
     "stability": "stable",
+    "visibility": "private",
     "url": {
       "paths": [
         {

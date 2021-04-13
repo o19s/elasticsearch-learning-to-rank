@@ -1,6 +1,7 @@
 {
   "ltr.cache_stats": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

@@ -1,6 +1,7 @@
 {
   "ltr.update_model": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

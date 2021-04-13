@@ -1,6 +1,7 @@
 {
   "ltr.get_model": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

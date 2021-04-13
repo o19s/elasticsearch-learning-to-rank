@@ -1,6 +1,7 @@
 {
   "ltr.get_feature": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {
