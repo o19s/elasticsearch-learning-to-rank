@@ -52,7 +52,7 @@ For more information on helping us out (we need your help!), developing with the
 ## Elastic Release Support
 Due to the frequent nature of Elasticsearch release cycles we welcome any assistance in maintaining compatibility as new versions are created.
 
-We do our best to officially support `\*.\*.1` releases of Elasticsearch.  If you have a need for "dot-oh" compatibility or a version we don't support please consider submitting a PR.
+We do our best to officially support `*.*.1` releases of Elasticsearch.  If you have a need for "dot-oh" compatibility or a version we don't support please consider submitting a PR.
 
  
 # Who built this?
