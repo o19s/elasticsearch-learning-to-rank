@@ -38,7 +38,7 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.QueryShardException;
 
 import java.io.IOException;
@@ -158,9 +158,9 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
     }
 
     @Override
-    protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
+    protected Query doToQuery(SearchExecutionContext searchExecutionContext) throws IOException {
         //TODO: should we be passing activeFeatures here?
-        LtrQueryContext context = new LtrQueryContext(queryShardContext);
+        LtrQueryContext context = new LtrQueryContext(searchExecutionContext);
         if (StoredFeature.TYPE.equals(element.type())) {
             Feature feature = ((StoredFeature) element).optimize();
             if (feature instanceof PrecompiledExpressionFeature) {
@@ -178,7 +178,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);
             return RankerQuery.build(model, context, validation.getParams());
         } else {
-            throw new QueryShardException(queryShardContext, "Unknown element type [" + element.type() + "]");
+            throw new QueryShardException(searchExecutionContext, "Unknown element type [" + element.type() + "]");
         }
     }
 

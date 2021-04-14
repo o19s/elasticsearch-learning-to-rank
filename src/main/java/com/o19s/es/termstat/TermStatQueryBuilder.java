@@ -19,7 +19,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -134,7 +134,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     @Override
-    protected Query doToQuery(QueryShardContext context) throws IOException {
+    protected Query doToQuery(SearchExecutionContext context) throws IOException {
         Expression compiledExpression = (Expression) Scripting.compile(expr);
         AggrType aggrType = AggrType.valueOf(aggr.toUpperCase(Locale.getDefault()));
         AggrType posAggrType = AggrType.valueOf(pos_aggr.toUpperCase(Locale.getDefault()));
@@ -169,12 +169,12 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         return new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
     }
 
-    private Analyzer getAnalyzerForField(QueryShardContext context, String fieldName) {
+    private Analyzer getAnalyzerForField(SearchExecutionContext context, String fieldName) {
         MappedFieldType fieldType = context.getFieldType(fieldName);
         return fieldType.getTextSearchInfo().getSearchAnalyzer();
     }
 
-    private Analyzer getAnalyzerByName(QueryShardContext context, String analyzerName) {
+    private Analyzer getAnalyzerByName(SearchExecutionContext context, String analyzerName) {
         return context.getIndexAnalyzers().get(analyzerName);
     }
 

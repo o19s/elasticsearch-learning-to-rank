@@ -29,7 +29,7 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
@@ -125,7 +125,8 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     }
 
     @Override
-    protected void doAssertLuceneQuery(ValidatingLtrQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(ValidatingLtrQueryBuilder queryBuilder, Query query,
+                                       SearchExecutionContext context) throws IOException {
         if (StoredFeature.TYPE.equals(queryBuilder.getElement().type())) {
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
         } else if (StoredFeatureSet.TYPE.equals(queryBuilder.getElement().type())) {

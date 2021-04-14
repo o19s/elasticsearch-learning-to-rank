@@ -173,10 +173,10 @@ public class ScriptFeature implements Feature {
             Analyzer analyzer = null;
             for(String field : fields) {
                 if (analyzerName == null) {
-                    final MappedFieldType fieldType = context.getQueryShardContext().getFieldType(field);
+                    final MappedFieldType fieldType = context.getSearchExecutionContext().getFieldType(field);
                     analyzer = fieldType.getTextSearchInfo().getSearchAnalyzer();
                 } else {
-                    analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
+                    analyzer = context.getSearchExecutionContext().getIndexAnalyzers().get(analyzerName);
                 }
 
                 if (analyzer == null) {
@@ -211,12 +211,12 @@ public class ScriptFeature implements Feature {
         nparams.put(EXTRA_LOGGING, extraLoggingSupplier);
         Script script = new Script(this.script.getType(), this.script.getLang(),
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
-        ScoreScript.Factory factoryFactory  = context.getQueryShardContext().compile(script, ScoreScript.CONTEXT);
-        ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getQueryShardContext().lookup());
+        ScoreScript.Factory factoryFactory  = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
+        ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
         ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
-                context.getQueryShardContext().index().getName(),
-                context.getQueryShardContext().getShardId(),
-                context.getQueryShardContext().indexVersionCreated());
+                context.getSearchExecutionContext().index().getName(),
+                context.getSearchExecutionContext().getShardId(),
+                context.getSearchExecutionContext().indexVersionCreated());
         return new LtrScript(function, supplier, extraLoggingSupplier, termstatSupplier, terms);
     }
 

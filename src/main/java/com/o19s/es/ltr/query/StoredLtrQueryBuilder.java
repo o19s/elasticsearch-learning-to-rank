@@ -33,7 +33,7 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     }
 
     /**
-     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(QueryShardContext)}
+     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(SearchExecutionContext)}
      */
     private final transient FeatureStoreLoader storeLoader;
     private String modelName;
@@ -153,7 +153,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     }
 
     @Override
-    protected RankerQuery doToQuery(QueryShardContext context) throws IOException {
+    protected RankerQuery doToQuery(SearchExecutionContext context) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
         FeatureStore store = storeLoader.load(indexName, context::getClient);
         LtrQueryContext ltrQueryContext = new LtrQueryContext(context,

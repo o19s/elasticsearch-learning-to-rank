@@ -21,7 +21,7 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.Script;
@@ -125,7 +125,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "   } " +
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
-        QueryShardContext context = createShardContext();
+        SearchExecutionContext context = createSearchExecutionContext();
         RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
         assertEquals(query.getFeature(0).name(), "bar_query");
         assertEquals(query.getFeature(1).name(), "sham_query");
@@ -152,7 +152,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 "   } " +
                 "}";
         LtrQueryBuilder queryBuilder = (LtrQueryBuilder)parseQuery(ltrQuery);
-        QueryShardContext context = createShardContext();
+        SearchExecutionContext context = createSearchExecutionContext();
         RankerQuery query = (RankerQuery)queryBuilder.toQuery(context);
         assertNull(query.getFeature(0).name());
         assertEquals(query.getFeature(1).name(), "");
@@ -167,9 +167,9 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     @Override
     public void testCacheability() throws IOException {
         LtrQueryBuilder queryBuilder = createTestQueryBuilder();
-        QueryShardContext context = createShardContext();
+        SearchExecutionContext context = createSearchExecutionContext();
         assert context.isCacheable();
-        QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
+        QueryBuilder rewritten = rewriteQuery(queryBuilder, new SearchExecutionContext(context));
         assertNotNull(rewritten.toQuery(context));
         assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
@@ -215,7 +215,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         }
 
         LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
-        QueryBuilder rewritten = builder.rewrite(createShardContext());
+        QueryBuilder rewritten = builder.rewrite(createSearchExecutionContext());
         if (!mustRewrite && features.isEmpty()) {
             // if it's empty we rewrite to match all
             assertEquals(rewritten, new MatchAllQueryBuilder());
@@ -235,7 +235,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     }
 
     @Override
-    protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchExecutionContext context) throws IOException {
         assertThat(query, instanceOf(RankerQuery.class));
     }
 
