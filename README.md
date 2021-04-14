@@ -50,8 +50,6 @@ Notes if you want to dig into the code or build for a version there's no build f
 For more information on helping us out (we need your help!), developing with the plugin, creating docs, etc please read [CONTRIBUTING.md](/CONTRIBUTING.md).
 
 ## Elastic Release Support
-Due to the frequent nature of Elasticsearch release cycles we welcome any assistance in maintaining compatibility as new versions are created.
-
 We do our best to officially support `*.*.1` releases of Elasticsearch.  If you have a need for "dot-oh" compatibility or a version we don't support please consider submitting a PR.
 
  
