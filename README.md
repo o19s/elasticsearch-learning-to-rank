@@ -49,6 +49,12 @@ Notes if you want to dig into the code or build for a version there's no build f
 
 For more information on helping us out (we need your help!), developing with the plugin, creating docs, etc please read [CONTRIBUTING.md](/CONTRIBUTING.md).
 
+## Elastic Release Support
+Due to the frequent nature of Elasticsearch release cycles we welcome any assistance in maintaining compatibility as new versions are created.
+
+We do our best to officially support `\*.\*.1` releases of Elasticsearch.  If you have a need for "dot-oh" compatibility or a version we don't support please consider submitting a PR.
+
+ 
 # Who built this?
 - [Initially developed](http://opensourceconnections.com/blog/2017/02/14/elasticsearch-learning-to-rank/) at [OpenSource Connections](http://opensourceconnections.com).
 - Significant contributions by [Wikimedia Foundation](https://wikimediafoundation.org/wiki/Home), [Snagajob Engineering](https://engineering.snagajob.com/), [Bonsai](https://bonsai.io/), and [Yelp Engineering](https://engineeringblog.yelp.com/)
