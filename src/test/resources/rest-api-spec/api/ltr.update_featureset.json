@@ -1,6 +1,7 @@
 {
   "ltr.update_featureset": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

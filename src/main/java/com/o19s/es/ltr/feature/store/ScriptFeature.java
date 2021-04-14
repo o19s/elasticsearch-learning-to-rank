@@ -173,8 +173,8 @@ public class ScriptFeature implements Feature {
             Analyzer analyzer = null;
             for(String field : fields) {
                 if (analyzerName == null) {
-                    final MappedFieldType fieldType = context.getQueryShardContext().getMapperService().fieldType(field);
-                    analyzer = context.getQueryShardContext().getSearchAnalyzer(fieldType);
+                    final MappedFieldType fieldType = context.getQueryShardContext().getFieldType(field);
+                    analyzer = fieldType.getTextSearchInfo().getSearchAnalyzer();
                 } else {
                     analyzer = context.getQueryShardContext().getIndexAnalyzers().get(analyzerName);
                 }

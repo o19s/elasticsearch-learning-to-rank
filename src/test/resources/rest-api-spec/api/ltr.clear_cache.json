@@ -1,6 +1,7 @@
 {
   "ltr.clear_cache": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

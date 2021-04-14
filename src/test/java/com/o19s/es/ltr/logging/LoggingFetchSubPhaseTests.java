@@ -52,7 +52,6 @@ import org.elasticsearch.index.fielddata.plain.SortedNumericIndexFieldData;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
-import org.elasticsearch.search.lookup.SourceLookup;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -186,7 +185,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                         random().nextBoolean() ? new HashMap<>() : null,
                         null
                     );
-                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, new SourceLookup()));
+                    processor.process(new FetchSubPhase.HitContext(hit, context, doc));
                     hits.add(hit);
                 }
             }

@@ -1,6 +1,7 @@
 {
   "ltr.add_features_to_set": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

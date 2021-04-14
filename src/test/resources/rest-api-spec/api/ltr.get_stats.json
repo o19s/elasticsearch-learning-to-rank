@@ -1,6 +1,7 @@
 {
   "ltr.get_stats": {
     "stability": "stable",
+    "visibility": "public",
     "url": {
       "paths": [
         {

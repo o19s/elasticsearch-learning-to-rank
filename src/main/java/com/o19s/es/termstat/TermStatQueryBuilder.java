@@ -170,12 +170,12 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     private Analyzer getAnalyzerForField(QueryShardContext context, String fieldName) {
-        MappedFieldType fieldType = context.getMapperService().fieldType(fieldName);
-        return context.getSearchAnalyzer(fieldType);
+        MappedFieldType fieldType = context.getFieldType(fieldName);
+        return fieldType.getTextSearchInfo().getSearchAnalyzer();
     }
 
     private Analyzer getAnalyzerByName(QueryShardContext context, String analyzerName) {
-        return context.getMapperService().getIndexAnalyzers().get(analyzerName);
+        return context.getIndexAnalyzers().get(analyzerName);
     }
 
     @Override
