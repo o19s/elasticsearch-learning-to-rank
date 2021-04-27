@@ -93,14 +93,15 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
         String query = MustacheUtils.execute(template, params);
         try {
             XContentParser parser = XContentFactory.xContent(query)
-                    .createParser(context.getQueryShardContext().getXContentRegistry(),
+                    .createParser(context.getSearchExecutionContext().getXContentRegistry(),
                             LoggingDeprecationHandler.INSTANCE, query);
             QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
-            return Rewriteable.rewrite(queryBuilder, context.getQueryShardContext()).toQuery(context.getQueryShardContext());
+            return Rewriteable.rewrite(queryBuilder, context.getSearchExecutionContext()).toQuery(context.getSearchExecutionContext());
         } catch (IOException | ParsingException | IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
-            throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name + "]", e);
+            throw new QueryShardException(context.getSearchExecutionContext(),
+                    "Cannot create query while parsing feature [" + name + "]", e);
         }
     }
 

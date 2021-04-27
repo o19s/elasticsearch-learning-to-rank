@@ -40,7 +40,7 @@ import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
@@ -132,13 +132,13 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
         builder.modelName("model1");
 
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
                 equalTo("Missing required param(s): [query_string]"));
 
         Map<String, Object> params = new HashMap<>();
         params.put("query_string2", "a wonderful query");
         builder.params(params);
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
                 equalTo("Missing required param(s): [query_string]"));
 
     }
@@ -147,7 +147,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
         builder.modelName("model1");
         builder.activeFeatures(Collections.singletonList("non_existent_feature"));
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createShardContext())).getMessage(),
+        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
                 equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
     }
 
@@ -184,14 +184,14 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
             builder.activeFeatures(Arrays.asList("match1", "match2"));
         }
 
-        RankerQuery rankerQuery = builder.doToQuery(createShardContext());
+        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext());
         List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
         assertEquals(clazz, queries.get(2).getClass());
     }
 
     @Override
     protected void doAssertLuceneQuery(StoredLtrQueryBuilder queryBuilder,
-                                       Query query, QueryShardContext context) throws IOException {
+                                       Query query, SearchExecutionContext context) throws IOException {
         assertThat(query, instanceOf(RankerQuery.class));
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
@@ -209,7 +209,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assertTrue(ite.hasNext());
         Query featureQuery = ite.next();
         QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
-        QueryShardContext qcontext = createShardContext();
+        SearchExecutionContext qcontext = createSearchExecutionContext();
 
         Query expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
@@ -217,7 +217,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assertTrue(ite.hasNext());
         featureQuery = ite.next();
         builder = new MatchQueryBuilder("field2", queryBuilder.params().get("query_string"));
-        qcontext = createShardContext();
+        qcontext = createSearchExecutionContext();
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
         assertTrue(ite.hasNext());
@@ -227,7 +227,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
                 .factor(1.2F)
                 .modifier(FieldValueFactorFunction.Modifier.LN2P)
                 .missing(0F));
-        qcontext = createShardContext();
+        qcontext = createSearchExecutionContext();
         expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
         assertEquals(expected, featureQuery);
 
@@ -237,9 +237,9 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
     @Override
     public void testCacheability() throws IOException {
         StoredLtrQueryBuilder queryBuilder = createTestQueryBuilder();
-        QueryShardContext context = createShardContext();
+        SearchExecutionContext context = createSearchExecutionContext();
         assert context.isCacheable();
-        QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
+        QueryBuilder rewritten = rewriteQuery(queryBuilder, new SearchExecutionContext(context));
         assertNotNull(rewritten.toQuery(context));
         assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }

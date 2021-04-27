@@ -16,7 +16,7 @@
 
 package com.o19s.es.ltr;
 
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 
 import java.util.Collections;
 import java.util.Set;
@@ -25,19 +25,19 @@ import java.util.Set;
  * LTR queryShardContext used to track information needed for building lucene queries
  */
 public class LtrQueryContext {
-    private final QueryShardContext queryShardContext;
+    private final SearchExecutionContext queryShardContext;
     private final Set<String> activeFeatures;
 
-    public LtrQueryContext(QueryShardContext context) {
+    public LtrQueryContext(SearchExecutionContext context) {
         this(context, Collections.emptySet());
     }
 
-    public LtrQueryContext(QueryShardContext context, Set<String> activeFeatures) {
+    public LtrQueryContext(SearchExecutionContext context, Set<String> activeFeatures) {
         this.queryShardContext = context;
         this.activeFeatures = activeFeatures;
     }
 
-    public QueryShardContext getQueryShardContext() {
+    public SearchExecutionContext getSearchExecutionContext() {
         return queryShardContext;
     }
 

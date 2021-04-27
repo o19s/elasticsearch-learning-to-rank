@@ -5,7 +5,7 @@ import com.o19s.es.explore.StatisticsHelper.AggrType;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
@@ -69,7 +69,7 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
     }
 
     @Override
-    protected void doAssertLuceneQuery(TermStatQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(TermStatQueryBuilder queryBuilder, Query query, SearchExecutionContext context) throws IOException {
         assertThat(query, instanceOf(TermStatQuery.class));
     }
 }

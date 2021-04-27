@@ -20,7 +20,7 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
@@ -66,7 +66,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
 
     @Override
     public void testMustRewrite() throws IOException {
-        QueryShardContext context = createShardContext();
+        SearchExecutionContext context = createSearchExecutionContext();
         context.setAllowUnmappedFields(true);
         ExplorerQueryBuilder queryBuilder = createTestQueryBuilder();
         queryBuilder.boost(AbstractQueryBuilder.DEFAULT_BOOST);
@@ -104,7 +104,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
     }
 
     @Override
-    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, SearchExecutionContext context) throws IOException {
         assertThat(query, instanceOf(ExplorerQuery.class));
     }
 }

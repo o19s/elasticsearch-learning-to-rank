@@ -210,10 +210,11 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         // TODO: verify that this actually works, it does not feel right
         ScriptQueryBuilder builder = new ScriptQueryBuilder(new Script(ScriptType.INLINE, templateLanguage, template, params));
         try {
-            return builder.toQuery(context.getQueryShardContext());
+            return builder.toQuery(context.getSearchExecutionContext());
         } catch (IOException | ParsingException | IllegalArgumentException e) {
             // wrap common exceptions as well so we can attach the feature's name to the stack
-            throw new QueryShardException(context.getQueryShardContext(), "Cannot create query while parsing feature [" + name + "]", e);
+            throw new QueryShardException(context.getSearchExecutionContext(),
+                    "Cannot create query while parsing feature [" + name + "]", e);
         }
     }
 
