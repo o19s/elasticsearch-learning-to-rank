@@ -171,7 +171,7 @@ Or filter by prefix in case you have many feature sets::
 
 You can also delete a featureset to start over::
 
-    DELETE _ltr/_featurset/more_movie_features
+    DELETE _ltr/_featureset/more_movie_features
 
 
 ===================
