@@ -23,11 +23,11 @@ The demo lives in another repo now, [Hello LTR](https://github.com/o19s/hello-lt
 
 # Installing
 
-See the full list of [prebuilt versions](http://es-learn-to-rank.labs.o19s.com) and select the version that matches your Elasticsearch version. If you don't see a version available, see the link below for building or file a request via [issues](https://github.com/o19s/elasticsearch-learning-to-rank/issues).
+See the full list of [prebuilt versions](https://github.com/o19s/elasticsearch-learning-to-rank/releases) and select the version that matches your Elasticsearch version. If you don't see a version available, see the link below for building or file a request via [issues](https://github.com/o19s/elasticsearch-learning-to-rank/issues).
 
 To install, you'd run a command like this but replacing with the appropriate prebuilt version zip:
 
-`./bin/elasticsearch-plugin install http://es-learn-to-rank.labs.o19s.com/ltr-1.0.0-es6.1.2.zip`
+`./bin/elasticsearch-plugin install https://github.com/o19s/elasticsearch-learning-to-rank/releases/download/v1.5.4-es7.11.2/ltr-plugin-v1.5.4-es7.11.2.zip`
 
 (It's expected you'll confirm some security exceptions, you can pass `-b` to `elasticsearch-plugin` to automatically install)
 
