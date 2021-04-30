@@ -18,6 +18,7 @@ package com.o19s.es.ltr.utils;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.elasticsearch.Assertions;
+import org.elasticsearch.common.CheckedSupplier;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -93,6 +94,30 @@ public final class Suppliers {
         public void set(LtrRanker.FeatureVector obj) {
             assert threadId == Thread.currentThread().getId();
             super.set(obj);
+        }
+    }
+
+    /**
+     * memoize the return value of the checked supplier (thread unsafe)
+     */
+    public static <R, E extends Exception> CheckedSupplier<R, E> memoizeCheckedSupplier(CheckedSupplier<R, E> supplier) {
+        return new CheckedMemoizeSupplier<R, E>(supplier);
+    }
+
+    private static class CheckedMemoizeSupplier<R, E extends Exception> implements CheckedSupplier<R, E> {
+        private final CheckedSupplier<R, E> supplier;
+        private R value;
+
+        private CheckedMemoizeSupplier(CheckedSupplier<R, E> supplier) {
+            this.supplier = supplier;
+        }
+
+        @Override
+        public R get() throws E {
+            if (value == null) {
+                value = supplier.get();
+            }
+            return value;
         }
     }
 }

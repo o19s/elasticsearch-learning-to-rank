@@ -19,6 +19,7 @@ package com.o19s.es.ltr.logging;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.RankerQuery;
 import com.o19s.es.ltr.ranker.LogLtrRanker;
+import com.o19s.es.ltr.utils.Suppliers;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -27,6 +28,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.elasticsearch.common.CheckedSupplier;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
@@ -52,29 +54,29 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             return null;
         }
 
-        BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        List<HitLogConsumer> loggers = new ArrayList<>();
-        Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
-
-
-        if (namedQueries.size() > 0) {
+        // NOTE: we do not support logging on nested hits but sadly at this point we cannot know
+        // if we are going to run on top level hits or nested hits.
+        // Delegate creation of the loggers until we know the hits checking for SearchHit#getNestedIdentity
+        CheckedSupplier<Tuple<Weight, List<HitLogConsumer>>, IOException> weigthtAndLogSpecsSupplier = () -> {
+            List<HitLogConsumer> loggers = new ArrayList<>();
+            Map<String, Query> namedQueries = context.parsedQuery().namedFilters();
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
             ext.logSpecsStream().filter((l) -> l.getNamedQuery() != null).forEach((l) -> {
                 Tuple<RankerQuery, HitLogConsumer> query = extractQuery(l, namedQueries);
                 builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
                 loggers.add(query.v2());
             });
-        }
+            ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
+                Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
+                builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
+                loggers.add(query.v2());
+            });
+            Weight w = context.searcher().rewrite(builder.build()).createWeight(context.searcher(), ScoreMode.COMPLETE, 1.0F);
+            return new Tuple<>(w, loggers);
+        };
 
-        ext.logSpecsStream().filter((l) -> l.getRescoreIndex() != null).forEach((l) -> {
-            Tuple<RankerQuery, HitLogConsumer> query = extractRescore(l, context.rescore());
-            builder.add(new BooleanClause(query.v1(), BooleanClause.Occur.MUST));
-            loggers.add(query.v2());
-        });
 
-
-        Weight w = context.searcher().rewrite(builder.build()).createWeight(context.searcher(), ScoreMode.COMPLETE, 1.0F);
-
-        return new LoggingFetchSubPhaseProcessor(w, loggers);
+        return new LoggingFetchSubPhaseProcessor(Suppliers.memoizeCheckedSupplier(weigthtAndLogSpecsSupplier));
     }
 
     private Tuple<RankerQuery, HitLogConsumer> extractQuery(LoggingSearchExtBuilder.LogSpec
@@ -126,23 +128,32 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         return new Tuple<>(query, consumer);
     }
     static class LoggingFetchSubPhaseProcessor implements FetchSubPhaseProcessor {
-        private final Weight weight;
-        private final List<HitLogConsumer> loggers;
+        private final CheckedSupplier<Tuple<Weight, List<HitLogConsumer>>, IOException> loggersSupplier;
         private Scorer scorer;
+        private LeafReaderContext currentContext;
 
-        LoggingFetchSubPhaseProcessor(Weight weight, List<HitLogConsumer> loggers) {
-            this.weight = weight;
-            this.loggers = loggers;
+        LoggingFetchSubPhaseProcessor(CheckedSupplier<Tuple<Weight, List<HitLogConsumer>>, IOException> loggersSupplier) {
+            this.loggersSupplier = loggersSupplier;
         }
 
 
         @Override
         public void setNextReader(LeafReaderContext readerContext) throws IOException {
-            scorer = weight.scorer(readerContext);
+            currentContext = readerContext;
+            scorer = null;
         }
 
         @Override
         public void process(HitContext hitContext) throws IOException {
+            if (hitContext.hit().getNestedIdentity() != null) {
+                // we do not support logging nested docs
+                return;
+            }
+            Tuple<Weight, List<HitLogConsumer>> weightAndLoggers = loggersSupplier.get();
+            if (scorer == null) {
+                scorer = weightAndLoggers.v1().scorer(currentContext);
+            }
+            List<HitLogConsumer> loggers = weightAndLoggers.v2();
             if (scorer != null && scorer.iterator().advance(hitContext.docId()) == hitContext.docId()) {
                 loggers.forEach((l) -> l.nextDoc(hitContext.hit()));
                 // Scoring will trigger log collection

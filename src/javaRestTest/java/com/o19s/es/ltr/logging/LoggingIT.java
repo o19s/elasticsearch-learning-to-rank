@@ -332,8 +332,6 @@ public class LoggingIT extends BaseIntegrationTest {
         SearchResponse resp2 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
         assertSearchHitsExtraLogging(docs, resp2);
 
-        // FIXME
-        /*
         query = QueryBuilders.boolQuery()
                 .must(new WrapperQueryBuilder(sbuilder.toString()))
                 .must(
@@ -353,7 +351,6 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addRescoreLogging("second_log", 0, true)));
         SearchResponse resp3 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
         assertSearchHitsExtraLogging(docs, resp3);
-         */
     }
 
     public void testScriptLogInternalParams() throws Exception {

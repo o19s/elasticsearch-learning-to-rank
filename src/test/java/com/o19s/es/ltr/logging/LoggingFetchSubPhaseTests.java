@@ -44,6 +44,7 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
@@ -114,10 +115,9 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                 .add(new BooleanClause(query1, BooleanClause.Occur.MUST))
                 .add(new BooleanClause(query2, BooleanClause.Occur.MUST))
                 .build();
-        LoggingFetchSubPhase subPhase = new LoggingFetchSubPhase();
         Weight weight = searcher.createWeight(query, ScoreMode.COMPLETE, 1.0F);
         List<LoggingFetchSubPhase.HitLogConsumer> loggers = Arrays.asList(logger1, logger2);
-        LoggingFetchSubPhaseProcessor processor = new LoggingFetchSubPhaseProcessor(weight, loggers);
+        LoggingFetchSubPhaseProcessor processor = new LoggingFetchSubPhaseProcessor(() -> new Tuple<>(weight, loggers));
 
         SearchHit[] hits = preprocessRandomHits(processor);
         for (SearchHit hit : hits) {
@@ -195,7 +195,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         return hits.toArray(new SearchHit[0]);
     }
 
-    public static Document buildDoc(String text, float value) throws IOException {
+    public static Document buildDoc(String text, float value) {
         String id = UUID.randomUUID().toString();
         Document d = new Document();
         d.add(newStringField("id", id, Field.Store.YES));
