@@ -215,8 +215,8 @@ public class ScriptFeature implements Feature {
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
         ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
                 context.getSearchExecutionContext().index().getName(),
-                context.getSearchExecutionContext().getShardId(),
-                context.getSearchExecutionContext().indexVersionCreated());
+                context.getSearchExecutionContext().getShardId()
+                );
         return new LtrScript(function, supplier, extraLoggingSupplier, termstatSupplier, terms);
     }
 

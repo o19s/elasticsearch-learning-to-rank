@@ -4,6 +4,7 @@ import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.indices.EmptySystemIndices;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Before;
 
@@ -13,7 +14,8 @@ public class PluginHealthStatusSupplierTests extends ESIntegTestCase {
     @Before
     public void setup() {
         pluginHealthStatusSupplier =
-                new PluginHealthStatusSupplier(clusterService(), new IndexNameExpressionResolver(new ThreadContext(Settings.EMPTY)));
+                new PluginHealthStatusSupplier(clusterService(), new IndexNameExpressionResolver(new ThreadContext(Settings.EMPTY),
+                        EmptySystemIndices.INSTANCE));
     }
 
     public void testPluginHealthStatusNoLtrStore() {
