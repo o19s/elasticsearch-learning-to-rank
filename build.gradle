@@ -14,16 +14,16 @@ allprojects {
   group = 'com.o19s'
   version = "${ltrVersion}-es${elasticsearchVersion}"
 
-  apply plugin: 'java-library'
+  apply plugin: 'java'
 
   dependencies {
-    api "org.apache.lucene:lucene-expressions:${luceneVersion}"
-    api "org.antlr:antlr4-runtime:${antlrVersion}"
-    api "org.ow2.asm:asm:${ow2Version}"
-    api "org.ow2.asm:asm-commons:${ow2Version}"
-    api "org.ow2.asm:asm-tree:${ow2Version}"
-    api 'com.o19s:RankyMcRankFace:0.1.1'
-    api "com.github.spullara.mustache.java:compiler:0.9.3"
+    implementation "org.apache.lucene:lucene-expressions:${luceneVersion}"
+    implementation "org.antlr:antlr4-runtime:${antlrVersion}"
+    implementation "org.ow2.asm:asm:${ow2Version}"
+    implementation "org.ow2.asm:asm-commons:${ow2Version}"
+    implementation "org.ow2.asm:asm-tree:${ow2Version}"
+    implementation 'com.o19s:RankyMcRankFace:0.1.1'
+    implementation "com.github.spullara.mustache.java:compiler:0.9.3"
   }
 }
 
