@@ -17,13 +17,13 @@ allprojects {
   apply plugin: 'java'
 
   dependencies {
-    compile "org.apache.lucene:lucene-expressions:${luceneVersion}"
-    compile "org.antlr:antlr4-runtime:${antlrVersion}"
-    compile "org.ow2.asm:asm:${ow2Version}"
-    compile "org.ow2.asm:asm-commons:${ow2Version}"
-    compile "org.ow2.asm:asm-tree:${ow2Version}"
-    compile 'com.o19s:RankyMcRankFace:0.1.1'
-    compile "com.github.spullara.mustache.java:compiler:0.9.3"
+    implementation "org.apache.lucene:lucene-expressions:${luceneVersion}"
+    implementation "org.antlr:antlr4-runtime:${antlrVersion}"
+    implementation "org.ow2.asm:asm:${ow2Version}"
+    implementation "org.ow2.asm:asm-commons:${ow2Version}"
+    implementation "org.ow2.asm:asm-tree:${ow2Version}"
+    implementation 'com.o19s:RankyMcRankFace:0.1.1'
+    implementation "com.github.spullara.mustache.java:compiler:0.9.3"
   }
 }
 
@@ -37,9 +37,6 @@ apply plugin: 'elasticsearch.rest-resources'
 licenseFile = rootProject.file('LICENSE.txt')
 // copyright notices
 noticeFile = rootProject.file('NOTICE.txt')
-
-// disable uploadArchives task for now, no upload happening currently
-uploadArchives.enabled = false
 
 checkstyle {
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
@@ -84,5 +81,4 @@ java {
 checkstyleMain.enabled = true
 checkstyleTest.enabled = true
 
-// // No need to validate POM, as we do not upload to sonatype
-validateNebulaPom.enabled = false
+validateElasticPom.enabled = false
