@@ -3,6 +3,7 @@ buildscript {
     mavenCentral()
     jcenter()
     mavenLocal()
+    gradlePluginPortal()
   }
 
   dependencies {
