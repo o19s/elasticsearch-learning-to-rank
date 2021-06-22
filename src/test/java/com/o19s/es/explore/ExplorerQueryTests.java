@@ -34,11 +34,11 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.lessThan;
 
 public class ExplorerQueryTests extends LuceneTestCase {
     private Directory dir;
@@ -306,7 +306,8 @@ public class ExplorerQueryTests extends LuceneTestCase {
          Prior to PR #378, the wrong doc count was being supplied for idf
 
          Before the fix, the idf for the first document would be over 1.98
+         Computed idf for text:cow = 1.8472
          */
-        assertThat(docs.scoreDocs[0].score, lessThan(1.98f));
+        assertThat((double) docs.scoreDocs[0].score, Matchers.closeTo(1.8472, .01));
     }
 }
