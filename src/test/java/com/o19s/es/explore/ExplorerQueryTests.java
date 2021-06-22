@@ -310,4 +310,14 @@ public class ExplorerQueryTests extends LuceneTestCase {
          */
         assertThat((double) docs.scoreDocs[0].score, closeTo(1.8472, .01));
     }
+
+    public void testNonExistentVocab() throws Exception {
+        Query q = new TermQuery(new Term("text", "chicken"));
+        String statsType = "min_raw_df";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
+    }
 }
