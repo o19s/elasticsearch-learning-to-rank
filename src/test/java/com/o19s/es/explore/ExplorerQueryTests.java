@@ -34,10 +34,10 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ExplorerQueryTests extends LuceneTestCase {
@@ -308,6 +308,6 @@ public class ExplorerQueryTests extends LuceneTestCase {
          Before the fix, the idf for the first document would be over 1.98
          Computed idf for text:cow = 1.8472
          */
-        assertThat((double) docs.scoreDocs[0].score, Matchers.closeTo(1.8472, .01));
+        assertThat((double) docs.scoreDocs[0].score, closeTo(1.8472, .01));
     }
 }
