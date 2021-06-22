@@ -108,7 +108,7 @@ public class ExplorerQuery extends Query {
                 TermStatistics tStats = searcher.termStatistics(term, ctx);
                 if(tStats != null){
                     df_stats.add(tStats.docFreq());
-                    idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
+                    idf_stats.add(sim.idf(tStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
                     ttf_stats.add(tStats.totalTermFreq());
 
                 }
