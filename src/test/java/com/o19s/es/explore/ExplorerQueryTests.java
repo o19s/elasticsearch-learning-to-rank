@@ -37,6 +37,7 @@ import org.elasticsearch.common.lucene.Lucene;
 import org.junit.After;
 import org.junit.Before;
 
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ExplorerQueryTests extends LuceneTestCase {
@@ -65,6 +66,11 @@ public class ExplorerQueryTests extends LuceneTestCase {
                 doc.add(newTextField("text", docs[i], Field.Store.YES));
                 indexWriter.addDocument(doc);
             }
+
+            // Add a junk doc to validate IDF doc count
+            Document doc = new Document();
+            doc.add(new Field("_id", Integer.toString(docs.length + 1), StoredField.TYPE));
+            indexWriter.addDocument(doc);
         }
 
         reader = DirectoryReader.open(dir);
@@ -286,5 +292,32 @@ public class ExplorerQueryTests extends LuceneTestCase {
         ExplorerQuery eq = new ExplorerQuery(q, statsType);
 
         expectThrows(RuntimeException.class, () -> searcher.search(eq, 4));
+    }
+
+    public void testIdfComputation() throws Exception {
+        Query q = new TermQuery(new Term("text", "cow"));
+        String statsType = "mean_classic_idf";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+
+        TopDocs docs = searcher.search(eq, 4);
+
+        /*
+         Prior to PR #378, the wrong doc count was being supplied for idf
+
+         Before the fix, the idf for the first document would be over 1.98
+         Computed idf for text:cow = 1.8472
+         */
+        assertThat((double) docs.scoreDocs[0].score, closeTo(1.8472, .01));
+    }
+
+    public void testNonExistentVocab() throws Exception {
+        Query q = new TermQuery(new Term("text", "chicken"));
+        String statsType = "min_raw_df";
+
+        ExplorerQuery eq = new ExplorerQuery(q, statsType);
+        TopDocs docs = searcher.search(eq, 4);
+
+        assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
     }
 }

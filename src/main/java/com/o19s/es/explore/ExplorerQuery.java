@@ -24,7 +24,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
@@ -105,12 +104,11 @@ public class ExplorerQuery extends Query {
 
             for (Term term : terms) {
                 TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
-                TermStatistics tStats = searcher.termStatistics(term, ctx);
-                if(tStats != null){
-                    df_stats.add(tStats.docFreq());
-                    idf_stats.add(sim.idf(tStats.docFreq(), searcher.getIndexReader().numDocs()));
-                    ttf_stats.add(tStats.totalTermFreq());
 
+                if(ctx != null){
+                    df_stats.add(ctx.docFreq());
+                    idf_stats.add(sim.idf(ctx.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
+                    ttf_stats.add(ctx.totalTermFreq());
                 }
             }
 

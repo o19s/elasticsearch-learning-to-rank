@@ -75,7 +75,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
 
             // Collection Statistics
             df_stats.add(termStates.docFreq());
-            idf_stats.add(sim.idf(termStates.docFreq(), searcher.getIndexReader().numDocs()));
+            idf_stats.add(sim.idf(termStates.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
             ttf_stats.add(termStates.totalTermFreq());
 
             // Doc specifics
