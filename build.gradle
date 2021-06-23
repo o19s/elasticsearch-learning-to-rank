@@ -1,8 +1,5 @@
 buildscript {
   repositories {
-    mavenCentral()
-    jcenter()
-    mavenLocal()
     gradlePluginPortal()
   }
 
@@ -16,6 +13,13 @@ allprojects {
   version = "${ltrVersion}-es${elasticsearchVersion}"
 
   apply plugin: 'java'
+
+  repositories {
+    mavenCentral()
+    jcenter()
+    mavenLocal()
+    gradlePluginPortal()
+  }
 
   dependencies {
     implementation "org.apache.lucene:lucene-expressions:${luceneVersion}"
