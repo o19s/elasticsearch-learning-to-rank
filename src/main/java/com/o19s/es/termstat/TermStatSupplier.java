@@ -76,7 +76,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
             }
 
             // Attempt to get index wide stats
-            TermStatistics indexStats = searcher.termStatistics(term, termStates.docFreq(), termStates.docFreq());
+            TermStatistics indexStats = searcher.termStatistics(term, termStates.docFreq(), termStates.totalTermFreq());
 
             // Collection Statistics
             df_stats.add(indexStats.docFreq());
