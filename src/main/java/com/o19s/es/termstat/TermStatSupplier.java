@@ -13,6 +13,7 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
@@ -61,6 +62,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 break;
             }
 
+            // Shard level stats
             TermStates termStates = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
 
             assert termStates != null && termStates
@@ -68,15 +70,18 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
 
             TermState state = termStates.get(context);
 
-            if (state == null) {
+            if (state == null || termStates.docFreq() == 0) {
                 insertZeroes(); // Zero out stats for terms we don't know about in the index
                 continue;
             }
 
+            // Attempt to get index wide stats
+            TermStatistics indexStats = searcher.termStatistics(term, termStates.docFreq(), termStates.docFreq());
+
             // Collection Statistics
-            df_stats.add(termStates.docFreq());
-            idf_stats.add(sim.idf(termStates.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
-            ttf_stats.add(termStates.totalTermFreq());
+            df_stats.add(indexStats.docFreq());
+            idf_stats.add(sim.idf(indexStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
+            ttf_stats.add(indexStats.totalTermFreq());
 
             // Doc specifics
             TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
