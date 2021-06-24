@@ -320,5 +320,4 @@ public class ExplorerQueryTests extends LuceneTestCase {
 
         assertThat(docs.scoreDocs[0].score, equalTo(0.0f));
     }
-
 }
