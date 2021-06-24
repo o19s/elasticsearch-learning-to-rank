@@ -110,6 +110,11 @@ public class ExplorerQuery extends Query {
                     df_stats.add(tStats.docFreq());
                     idf_stats.add(sim.idf(tStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
                     ttf_stats.add(tStats.totalTermFreq());
+                // Default to 0 if term is not in our dictionary
+                } else {
+                    df_stats.add(0.0f);
+                    idf_stats.add(0.0f);
+                    ttf_stats.add(0.0f);
                 }
             }
 
