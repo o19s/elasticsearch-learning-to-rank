@@ -1,6 +1,7 @@
 package com.o19s.es.ltr;
 
 import com.o19s.es.explore.ExplorerQueryBuilder;
+import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -71,6 +72,48 @@ public class ShardStatsIT extends ESIntegTestCase {
         final SearchResponse r = client().prepareSearch("idx")
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(eq).get();
+
+        assertSearchResponse(r);
+
+        SearchHits hits = r.getHits();
+        assertThat(hits.getAt(0).getScore(), equalTo(2.0f));
+    }
+
+    public void testDfsTSQ() throws Exception {
+        createIdx();
+
+        TermStatQueryBuilder tsq = new TermStatQueryBuilder()
+                .expr("df")
+                .aggr("min")
+                .posAggr("min")
+                .terms(new String[]{"zzz"})
+                .fields(new String[]{"s"});
+
+        final SearchResponse r = client().prepareSearch("idx")
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setQuery(tsq)
+                .get();
+
+        assertSearchResponse(r);
+
+        SearchHits hits = r.getHits();
+        assertThat(hits.getAt(0).getScore(), equalTo(4.0f));
+    }
+
+    public void testNonDfsTSQ() throws Exception {
+        createIdx();
+
+        TermStatQueryBuilder tsq = new TermStatQueryBuilder()
+                .expr("df")
+                .aggr("min")
+                .posAggr("min")
+                .terms(new String[]{"zzz"})
+                .fields(new String[]{"s"});
+
+        final SearchResponse r = client().prepareSearch("idx")
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                .setQuery(tsq)
+                .get();
 
         assertSearchResponse(r);
 

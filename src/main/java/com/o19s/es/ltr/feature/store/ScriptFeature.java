@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
@@ -286,18 +287,31 @@ public class ScriptFeature implements Feature {
         private final ScriptScoreFunction function;
         private final TermStatSupplier termStatSupplier;
         private final Set<Term> terms;
+        private final HashMap<Term, TermStates> termContexts;
 
         LtrScriptWeight(Query query, ScriptScoreFunction function,
                         TermStatSupplier termStatSupplier,
                         Set<Term> terms,
                         IndexSearcher searcher,
-                        ScoreMode scoreMode) {
+                        ScoreMode scoreMode) throws IOException {
             super(query);
             this.function = function;
             this.termStatSupplier = termStatSupplier;
             this.terms = terms;
             this.searcher = searcher;
             this.scoreMode = scoreMode;
+            this.termContexts = new HashMap<>();
+
+            if (scoreMode.needsScores()) {
+                for (Term t : terms) {
+                    TermStates ctx = TermStates.build(searcher.getTopReaderContext(), t, true);
+                    if (ctx != null && ctx.docFreq() > 0) {
+                        searcher.collectionStatistics(t.field());
+                        searcher.termStatistics(t, ctx.docFreq(), ctx.totalTermFreq());
+                    }
+                    termContexts.put(t, ctx);
+                }
+            }
         }
 
         @Override
@@ -319,7 +333,7 @@ public class ScriptFeature implements Feature {
                 public float score() throws IOException {
                     // Do the terms magic if the user asked for it
                     if (terms.size() > 0) {
-                        termStatSupplier.bump(searcher, context, docID(), terms, scoreMode);
+                        termStatSupplier.bump(searcher, context, docID(), terms, scoreMode, termContexts);
                     }
 
                     return (float) leafScoreFunction.score(iterator.docID(), 0F);
