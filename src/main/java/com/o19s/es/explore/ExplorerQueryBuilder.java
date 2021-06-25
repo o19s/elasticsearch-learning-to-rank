@@ -38,6 +38,8 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     private static final ParseField QUERY_NAME = new ParseField("query");
     private static final ParseField TYPE_NAME = new ParseField("type");
+    private static final ParseField SHARD_NAME = new ParseField("shard");
+
     private static final ObjectParser<ExplorerQueryBuilder, Void> PARSER;
 
     static {
@@ -48,11 +50,13 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
                 QUERY_NAME
         );
         PARSER.declareString(ExplorerQueryBuilder::statsType, TYPE_NAME);
+        PARSER.declareBoolean(ExplorerQueryBuilder::shard, SHARD_NAME);
         declareStandardFields(PARSER);
     }
 
     private QueryBuilder query;
     private String type;
+    private boolean shard;
 
     public ExplorerQueryBuilder() {
     }
@@ -62,6 +66,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         super(in);
         query = in.readNamedWriteable(QueryBuilder.class);
         type = in.readString();
+        shard = in.readBoolean();
     }
 
     public static ExplorerQueryBuilder fromXContent(XContentParser parser) throws IOException {
@@ -79,6 +84,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         if (builder.statsType() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
         }
+
         return builder;
     }
 
@@ -86,6 +92,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     protected void doWriteTo(StreamOutput out) throws IOException {
         out.writeNamedWriteable(query);
         out.writeString(type);
+        out.writeBoolean(shard);
     }
 
     @Override
@@ -94,12 +101,13 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         printBoostAndQueryName(builder);
         builder.field(QUERY_NAME.getPreferredName(), query);
         builder.field(TYPE_NAME.getPreferredName(), type);
+        builder.field(SHARD_NAME.getPreferredName(), shard);
         builder.endObject();
     }
 
     @Override
     protected Query doToQuery(SearchExecutionContext context) throws IOException {
-        return new ExplorerQuery(query.toQuery(context), type);
+        return new ExplorerQuery(query.toQuery(context), type, shard);
     }
 
     @Override
@@ -107,6 +115,7 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         if (queryRewriteContext != null) {
 
             ExplorerQueryBuilder rewritten = new ExplorerQueryBuilder();
+            rewritten.shard = this.shard;
             rewritten.type = this.type;
             rewritten.query = Rewriteable.rewrite(query, queryRewriteContext);
             rewritten.boost(boost());
@@ -127,7 +136,8 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     @Override
     protected boolean doEquals(ExplorerQueryBuilder other) {
         return Objects.equals(query, other.query)
-                && Objects.equals(type, other.type);
+                && Objects.equals(type, other.type)
+                && Objects.equals(shard, other.shard);
     }
 
     @Override
@@ -150,6 +160,12 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     public ExplorerQueryBuilder statsType(String type) {
         this.type = type;
+        return this;
+    }
+
+    public boolean shard() { return shard; }
+    public ExplorerQueryBuilder shard(boolean shard) {
+        this.shard = shard;
         return this;
     }
 }
