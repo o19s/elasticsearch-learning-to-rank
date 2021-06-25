@@ -38,7 +38,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     private static final ParseField QUERY_NAME = new ParseField("query");
     private static final ParseField TYPE_NAME = new ParseField("type");
-
     private static final ObjectParser<ExplorerQueryBuilder, Void> PARSER;
 
     static {
@@ -80,7 +79,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
         if (builder.statsType() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + TYPE_NAME + "] is mandatory.");
         }
-
         return builder;
     }
 

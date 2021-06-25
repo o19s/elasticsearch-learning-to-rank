@@ -62,7 +62,6 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 break;
             }
 
-            // Shard level stats
             TermStates termStates = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
 
             assert termStates != null && termStates
@@ -75,7 +74,6 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 continue;
             }
 
-            // Attempt to get index wide stats
             TermStatistics indexStats = searcher.termStatistics(term, termStates.docFreq(), termStates.totalTermFreq());
 
             // Collection Statistics
