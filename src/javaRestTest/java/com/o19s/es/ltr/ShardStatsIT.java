@@ -40,35 +40,14 @@ public class ShardStatsIT extends ESIntegTestCase {
         client().admin().indices().prepareRefresh("idx").get();
     }
 
-    public void testShardedExplorer() throws Exception {
+    public void testDfsExplorer() throws Exception {
         createIdx();
 
         QueryBuilder q = new TermQueryBuilder("s", "zzz");
 
         ExplorerQueryBuilder eq = new ExplorerQueryBuilder()
                 .query(q)
-                .statsType("min_raw_df")
-                .shard(true);
-
-        final SearchResponse r = client().prepareSearch("idx")
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(eq).get();
-
-        assertSearchResponse(r);
-
-        SearchHits hits = r.getHits();
-        assertThat(hits.getAt(0).getScore(), equalTo(2.0f));
-    }
-
-    public void testNonShardedExplorer() throws Exception {
-        createIdx();
-
-        QueryBuilder q = new TermQueryBuilder("s", "zzz");
-
-        ExplorerQueryBuilder eq = new ExplorerQueryBuilder()
-                .query(q)
-                .statsType("min_raw_df")
-                .shard(false);
+                .statsType("min_raw_df");
 
         final SearchResponse r = client().prepareSearch("idx")
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -78,5 +57,24 @@ public class ShardStatsIT extends ESIntegTestCase {
 
         SearchHits hits = r.getHits();
         assertThat(hits.getAt(0).getScore(), equalTo(4.0f));
+    }
+
+    public void testNonDfsExplorer() throws Exception {
+        createIdx();
+
+        QueryBuilder q = new TermQueryBuilder("s", "zzz");
+
+        ExplorerQueryBuilder eq = new ExplorerQueryBuilder()
+                .query(q)
+                .statsType("min_raw_df");
+
+        final SearchResponse r = client().prepareSearch("idx")
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                .setQuery(eq).get();
+
+        assertSearchResponse(r);
+
+        SearchHits hits = r.getHits();
+        assertThat(hits.getAt(0).getScore(), equalTo(2.0f));
     }
 }

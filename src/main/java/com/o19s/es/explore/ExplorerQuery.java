@@ -43,16 +43,10 @@ import java.util.Set;
 public class ExplorerQuery extends Query {
     private final Query query;
     private final String type;
-    private final boolean shard;
 
     public ExplorerQuery(Query query, String type) {
-        this(query, type, false);
-    }
-
-    public ExplorerQuery(Query query, String type, Boolean shard) {
         this.query = query;
         this.type = type;
-        this.shard = shard;
     }
 
     private boolean isCollectionScoped() {
@@ -83,7 +77,7 @@ public class ExplorerQuery extends Query {
         Query rewritten = query.rewrite(reader);
 
         if (rewritten != query) {
-            return new ExplorerQuery(rewritten, type, shard);
+            return new ExplorerQuery(rewritten, type);
         }
 
         return this;
@@ -112,17 +106,10 @@ public class ExplorerQuery extends Query {
             for (Term term : terms) {
                 TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
                 if(ctx != null && ctx.docFreq() > 0){
-                    if (shard) {
-                        df_stats.add(ctx.docFreq());
-                        idf_stats.add(sim.idf(ctx.docFreq(), searcher.getIndexReader().getDocCount(term.field())));
-                        ttf_stats.add(ctx.totalTermFreq());
-                    } else {
-                        TermStatistics tStats = searcher.termStatistics(term, ctx.docFreq(), ctx.totalTermFreq());
-                        df_stats.add(tStats.docFreq());
-                        idf_stats.add(sim.idf(tStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
-                        ttf_stats.add(tStats.totalTermFreq());
-                    }
-                // Default to 0 if term is not in our dictionary
+                    TermStatistics tStats = searcher.termStatistics(term, ctx.docFreq(), ctx.totalTermFreq());
+                    df_stats.add(tStats.docFreq());
+                    idf_stats.add(sim.idf(tStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
+                    ttf_stats.add(tStats.totalTermFreq());
                 } else {
                     df_stats.add(0.0f);
                     idf_stats.add(0.0f);
