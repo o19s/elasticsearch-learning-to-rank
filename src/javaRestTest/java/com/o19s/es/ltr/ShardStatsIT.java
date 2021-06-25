@@ -1,4 +1,4 @@
-package com.o19s.es.termstat;
+package com.o19s.es.ltr;
 
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.equalTo;
 /*
     These tests mostly verify that shard vs collection stat counting is working as expected.
  */
-public class ShardTests extends ESIntegTestCase {
+public class ShardStatsIT extends ESIntegTestCase {
     @Override
     protected int numberOfShards() {
         return 2;
