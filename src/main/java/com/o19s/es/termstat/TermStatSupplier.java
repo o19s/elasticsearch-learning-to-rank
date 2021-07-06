@@ -13,6 +13,7 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -47,7 +49,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
 
     public void bump (IndexSearcher searcher, LeafReaderContext context,
                       int docID, Set<Term> terms,
-                      ScoreMode scoreMode) throws IOException {
+                      ScoreMode scoreMode, Map<Term, TermStates> termContexts) throws IOException {
         df_stats.getData().clear();
         idf_stats.getData().clear();
         tf_stats.getData().clear();
@@ -61,22 +63,24 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 break;
             }
 
-            TermStates termStates = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
+            TermStates termStates = termContexts.get(term);
 
             assert termStates != null && termStates
                     .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
 
             TermState state = termStates.get(context);
 
-            if (state == null) {
+            if (state == null || termStates.docFreq() == 0) {
                 insertZeroes(); // Zero out stats for terms we don't know about in the index
                 continue;
             }
 
+            TermStatistics indexStats = searcher.termStatistics(term, termStates.docFreq(), termStates.totalTermFreq());
+
             // Collection Statistics
-            df_stats.add(termStates.docFreq());
-            idf_stats.add(sim.idf(termStates.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
-            ttf_stats.add(termStates.totalTermFreq());
+            df_stats.add(indexStats.docFreq());
+            idf_stats.add(sim.idf(indexStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
+            ttf_stats.add(indexStats.totalTermFreq());
 
             // Doc specifics
             TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
