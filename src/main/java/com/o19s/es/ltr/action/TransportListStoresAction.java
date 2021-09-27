@@ -32,7 +32,7 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.STORE_VERSION_PROP;
 import static java.util.stream.Collectors.toMap;
 import static org.elasticsearch.action.ActionListener.wrap;
-import static org.elasticsearch.common.collect.Tuple.tuple;
+import static org.elasticsearch.core.Tuple.tuple;
 
 public class TransportListStoresAction extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
     private final Client client;

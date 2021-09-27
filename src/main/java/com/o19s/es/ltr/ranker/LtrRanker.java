@@ -16,7 +16,7 @@
 
 package com.o19s.es.ltr.ranker;
 
-import org.elasticsearch.common.Nullable;
+import org.elasticsearch.core.Nullable;
 
 /**
  * A ranker used by {@link com.o19s.es.ltr.query.RankerQuery}

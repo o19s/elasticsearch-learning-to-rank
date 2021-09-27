@@ -18,7 +18,7 @@ package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.common.Nullable;
+import org.elasticsearch.core.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
