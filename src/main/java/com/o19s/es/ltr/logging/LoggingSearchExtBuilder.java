@@ -77,7 +77,7 @@ public class LoggingSearchExtBuilder extends SearchExtBuilder {
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
+        builder.startObject(NAME);
         builder.field(LOG_SPECS.getPreferredName(), logSpecs);
         return builder.endObject();
     }
