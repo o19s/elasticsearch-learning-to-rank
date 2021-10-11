@@ -48,8 +48,8 @@ One could also imagine a query based on the user's location::
                     "geo_distance" : {
                         "distance" : "200km",
                         "pin.location" : {
-                            "lat" : {{users_lat}},
-                            "lon" : {{users_lon}}
+                            "lat" : "{{users_lat}}",
+                            "lon" : "{{users_lon}}"
                         }
                     }
                 }
