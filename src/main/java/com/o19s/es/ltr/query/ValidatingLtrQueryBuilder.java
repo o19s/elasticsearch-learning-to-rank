@@ -173,10 +173,10 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             FeatureSet set = ((StoredFeatureSet) element).optimize();
             LinearRanker ranker = new LinearRanker(new float[set.size()]);
             CompiledLtrModel model = new CompiledLtrModel("validation", set, ranker);
-            return RankerQuery.build(model, context, validation.getParams());
+            return RankerQuery.build(model, context, validation.getParams(), false);
         } else if (StoredLtrModel.TYPE.equals(element.type())) {
             CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);
-            return RankerQuery.build(model, context, validation.getParams());
+            return RankerQuery.build(model, context, validation.getParams(), false);
         } else {
             throw new QueryShardException(searchExecutionContext, "Unknown element type [" + element.type() + "]");
         }

@@ -44,6 +44,7 @@ import org.apache.lucene.search.Weight;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,11 +62,14 @@ public class RankerQuery extends Query {
     private final List<Query> queries;
     private final FeatureSet features;
     private final LtrRanker ranker;
+    private final Map<Integer, float[]> featureScoreCache;
 
-    private RankerQuery(List<Query> queries, FeatureSet features, LtrRanker ranker) {
+    private RankerQuery(List<Query> queries, FeatureSet features, LtrRanker ranker,
+                        Map<Integer, float[]> featureScoreCache) {
         this.queries = Objects.requireNonNull(queries);
         this.features = Objects.requireNonNull(features);
         this.ranker = Objects.requireNonNull(ranker);
+        this.featureScoreCache = featureScoreCache;
     }
 
     /**
@@ -77,7 +81,7 @@ public class RankerQuery extends Query {
      */
     public static RankerQuery build(PrebuiltLtrModel model) {
         return build(model.ranker(), model.featureSet(),
-                     new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap());
+                new LtrQueryContext(null, Collections.emptySet()), Collections.emptyMap(), false);
     }
 
     /**
@@ -88,26 +92,31 @@ public class RankerQuery extends Query {
      * @param params  the query params
      * @return the lucene query
      */
-    public static RankerQuery build(LtrModel model, LtrQueryContext context, Map<String, Object> params) {
-        return build(model.ranker(), model.featureSet(), context, params);
+    public static RankerQuery build(LtrModel model, LtrQueryContext context, Map<String, Object> params,
+                                    Boolean featureScoreCacheFlag) {
+        return build(model.ranker(), model.featureSet(), context, params, featureScoreCacheFlag);
     }
 
     private static RankerQuery build(LtrRanker ranker, FeatureSet features,
-                                     LtrQueryContext context, Map<String, Object> params) {
+                                     LtrQueryContext context, Map<String, Object> params, Boolean featureScoreCacheFlag) {
         List<Query> queries = features.toQueries(context, params);
-        return new RankerQuery(queries, features, ranker);
+        Map<Integer, float[]> featureScoreCache = null;
+        if (null != featureScoreCacheFlag && featureScoreCacheFlag) {
+            featureScoreCache = new HashMap<>();
+        }
+        return new RankerQuery(queries, features, ranker, featureScoreCache);
     }
 
     public static RankerQuery buildLogQuery(LogLtrRanker.LogConsumer consumer, FeatureSet features,
                                             LtrQueryContext context, Map<String, Object> params) {
         List<Query> queries = features.toQueries(context, params);
         return new RankerQuery(queries, features,
-                               new LogLtrRanker(consumer, features.size()));
+                new LogLtrRanker(consumer, features.size()), null);
     }
 
     public RankerQuery toLoggerQuery(LogLtrRanker.LogConsumer consumer) {
         NullRanker newRanker = new NullRanker(features.size());
-        return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer));
+        return new RankerQuery(queries, features, new LogLtrRanker(newRanker, consumer), featureScoreCache);
     }
 
     @Override
@@ -119,7 +128,7 @@ public class RankerQuery extends Query {
             rewritten |= rewrittenQuery != query;
             rewrittenQueries.add(rewrittenQuery);
         }
-        return rewritten ? new RankerQuery(rewrittenQueries, features, ranker) : this;
+        return rewritten ? new RankerQuery(rewrittenQueries, features, ranker, featureScoreCache) : this;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -141,6 +150,7 @@ public class RankerQuery extends Query {
     Stream<Query> stream() {
         return queries.stream();
     }
+
     @Override
     public int hashCode() {
         return 31 * classHash() + Objects.hash(features, queries, ranker);
@@ -177,7 +187,7 @@ public class RankerQuery extends Query {
                 @Override
                 public Scorer scorer(LeafReaderContext context) throws IOException {
                     return new ConstantScoreScorer(this, score(),
-                        scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
+                            scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
 
                 @Override
@@ -196,24 +206,27 @@ public class RankerQuery extends Query {
         LtrRewriteContext context = new LtrRewriteContext(ranker, vectorSupplier);
         for (Query q : queries) {
             if (q instanceof LtrRewritableQuery) {
-                q = ((LtrRewritableQuery)q).ltrRewrite(context);
+                q = ((LtrRewritableQuery) q).ltrRewrite(context);
             }
             weights.add(searcher.createWeight(q, ScoreMode.COMPLETE, boost));
         }
-        return new RankerWeight(this, weights, ltrRankerWrapper, features);
+        return new RankerWeight(this, weights, ltrRankerWrapper, features, featureScoreCache);
     }
 
     public static class RankerWeight extends Weight {
         private final List<Weight> weights;
         private final FVLtrRankerWrapper ranker;
         private final FeatureSet features;
+        private final Map<Integer, float[]> featureScoreCache;
 
-        RankerWeight(RankerQuery query, List<Weight> weights, FVLtrRankerWrapper ranker, FeatureSet features) {
+        RankerWeight(RankerQuery query, List<Weight> weights, FVLtrRankerWrapper ranker, FeatureSet features,
+                     Map<Integer, float[]> featureScoreCache) {
             super(query);
             assert weights instanceof RandomAccess;
             this.weights = weights;
             this.ranker = Objects.requireNonNull(ranker);
             this.features = Objects.requireNonNull(features);
+            this.featureScoreCache = featureScoreCache;
         }
 
         @Override
@@ -268,8 +281,8 @@ public class RankerQuery extends Query {
             }
 
             DisjunctionDISI rankerIterator = new DisjunctionDISI(
-                    DocIdSetIterator.all(context.reader().maxDoc()), disiPriorityQueue);
-            return new RankerScorer(scorers, rankerIterator, ranker);
+                    DocIdSetIterator.all(context.reader().maxDoc()), disiPriorityQueue, context.docBase, featureScoreCache);
+            return new RankerScorer(scorers, rankerIterator, ranker, context.docBase, featureScoreCache);
         }
 
         class RankerScorer extends Scorer {
@@ -281,12 +294,17 @@ public class RankerQuery extends Query {
             private final DisjunctionDISI iterator;
             private final FVLtrRankerWrapper ranker;
             private LtrRanker.FeatureVector fv;
+            private final int docBase;
+            private final Map<Integer, float[]> featureScoreCache;
 
-            RankerScorer(List<Scorer> scorers, DisjunctionDISI iterator, FVLtrRankerWrapper ranker) {
+            RankerScorer(List<Scorer> scorers, DisjunctionDISI iterator, FVLtrRankerWrapper ranker,
+                         int docBase, Map<Integer, float[]> featureScoreCache) {
                 super(RankerWeight.this);
                 this.scorers = scorers;
                 this.iterator = iterator;
                 this.ranker = ranker;
+                this.docBase = docBase;
+                this.featureScoreCache = featureScoreCache;
             }
 
             @Override
@@ -297,16 +315,43 @@ public class RankerQuery extends Query {
             @Override
             public float score() throws IOException {
                 fv = ranker.newFeatureVector(fv);
-                int ordinal = -1;
-                // a DisiPriorityQueue could help to avoid
-                // looping on all scorers
-                for (Scorer scorer : scorers) {
-                    ordinal++;
-                    // FIXME: Probably inefficient, again we loop over all scorers..
-                    if (scorer.docID() == docID()) {
-                        // XXX: bold assumption that all models are dense
-                        // do we need a some indirection to infer the featureId?
-                        fv.setFeatureScore(ordinal, scorer.score());
+                if (featureScoreCache == null) {  // Cache disabled
+                    int ordinal = -1;
+                    // a DisiPriorityQueue could help to avoid
+                    // looping on all scorers
+                    for (Scorer scorer : scorers) {
+                        ordinal++;
+                        // FIXME: Probably inefficient, again we loop over all scorers..
+                        if (scorer.docID() == docID()) {
+                            // XXX: bold assumption that all models are dense
+                            // do we need a some indirection to infer the featureId?
+                            fv.setFeatureScore(ordinal, scorer.score());
+                        }
+                    }
+                } else {
+                    int perShardDocId = docBase + docID();
+                    if (featureScoreCache.containsKey(perShardDocId)) {  // Cache hit
+                        float[] featureScores = featureScoreCache.get(perShardDocId);
+                        int ordinal = -1;
+                        for (float score : featureScores) {
+                            ordinal++;
+                            if (!Float.isNaN(score)) {
+                                fv.setFeatureScore(ordinal, score);
+                            }
+                        }
+                    } else {  // Cache miss
+                        int ordinal = -1;
+                        float[] featureScores = new float[scorers.size()];
+                        for (Scorer scorer : scorers) {
+                            ordinal++;
+                            float score = Float.NaN;
+                            if (scorer.docID() == docID()) {
+                                score = scorer.score();
+                                fv.setFeatureScore(ordinal, score);
+                            }
+                            featureScores[ordinal] = score;
+                        }
+                        featureScoreCache.put(perShardDocId, featureScores);
                     }
                 }
                 return ranker.score(fv);
@@ -343,10 +388,15 @@ public class RankerQuery extends Query {
     static class DisjunctionDISI extends DocIdSetIterator {
         private final DocIdSetIterator main;
         private final DisiPriorityQueue subIteratorsPriorityQueue;
+        private final int docBase;
+        private final Map<Integer, float[]> featureScoreCache;
 
-        DisjunctionDISI(DocIdSetIterator main, DisiPriorityQueue subIteratorsPriorityQueue) {
+        DisjunctionDISI(DocIdSetIterator main, DisiPriorityQueue subIteratorsPriorityQueue, int docBase,
+                        Map<Integer, float[]> featureScoreCache) {
             this.main = main;
             this.subIteratorsPriorityQueue = subIteratorsPriorityQueue;
+            this.docBase = docBase;
+            this.featureScoreCache = featureScoreCache;
         }
 
         @Override
@@ -364,6 +414,9 @@ public class RankerQuery extends Query {
         @Override
         public int advance(int target) throws IOException {
             int docId = main.advance(target);
+            if (featureScoreCache != null && featureScoreCache.containsKey(docBase + target)) {
+                return docId;  // Cache hit. No need to advance sub iterators
+            }
             advanceSubIterators(docId);
             return docId;
         }
