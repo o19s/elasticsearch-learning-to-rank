@@ -1,13 +1,3 @@
-import org.elasticsearch.gradle.testclusters.StandaloneRestIntegTestTask
-import org.gradle.api.tasks.Input;
-import org.gradle.process.CommandLineArgumentProvider;
-
-import java.nio.file.Files
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 buildscript {
   repositories {
     gradlePluginPortal()
@@ -17,8 +7,6 @@ buildscript {
     classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
   }
 }
-
-description = "The elasticsearch build tools"
 
 allprojects {
   group = 'com.o19s'
@@ -39,7 +27,7 @@ allprojects {
     implementation "org.ow2.asm:asm:${ow2Version}"
     implementation "org.ow2.asm:asm-commons:${ow2Version}"
     implementation "org.ow2.asm:asm-tree:${ow2Version}"
-    implementation "com.o19s:RankyMcRankFace:0.1.1"
+    implementation 'com.o19s:RankyMcRankFace:0.1.1'
     implementation "com.github.spullara.mustache.java:compiler:0.9.3"
   }
 }
@@ -48,11 +36,6 @@ apply plugin: 'checkstyle'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'elasticsearch.testclusters'
-
-// license of this project
-// licenseFile = rootProject.file('LICENSE.txt')
-// copyright notices
-// noticeFile = rootProject.file('NOTICE.txt')
 
 checkstyle {
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
@@ -81,12 +64,12 @@ repositories {
   }
 }
 
+
 sourceSets {
   javaRestTest {
     compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
     runtimeClasspath += output + compileClasspath
   }
-  yamlRestTest
 }
 
 java {
@@ -94,57 +77,45 @@ java {
   withSourcesJar()
 }
 
-testClusters {
-  javaRestTest
-  yamlRestTest
-}
-dependencies {
-  runtimeOnly "org.apache.logging.log4j:log4j-core:2.11.1"
-}
+
+// Set to false to not use elasticsearch checkstyle rules
+checkstyleMain.enabled = true
+checkstyleTest.enabled = true
+
+
+/* HOTFIXES FOR 7.14.0, cleanup when possible. */ 
 configurations {
-  yamlRestTestImplementation.extendsFrom testImplementation
-  yamlRestTestRuntimeOnly.extendsFrom testRuntimeOnly
+  javaRestTestImplementation.extendsFrom testImplementation
+  javaRestTestRuntimeOnly.extendsFrom testRuntimeOnly
   restTestSpecs
 }
 
-tasks.register('copyRestTestSpecs', Copy) {
-  from zipTree(configurations.restTestSpecs.singleFile)
-  into "$buildDir/restResources/restspec"
+dependencies {
+  javaRestTestImplementation "org.elasticsearch.test:framework:$elasticsearchVersion"
+  restTestSpecs "org.elasticsearch:rest-api-spec:$elasticsearchVersion"
+  runtimeOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
 }
 
-TaskProvider<Zip> bundle = project.getTasks().withType(Zip.class).named("bundlePlugin");
+testClusters {
+  javaRestTest
+}
 
-// Register rest resources with source set
-sourceSets.yamlRestTest.getOutput().dir("$buildDir/restResources/restspec");
+tasks.register('javaRestTest', StandaloneRestIntegTestTask) { testTask ->
+  def cluster = testClusters.javaRestTest
+  testTask.useCluster(testClusters.javaRestTest)
 
-tasks.register('yamlRestTest', StandaloneRestIntegTestTask) { testTask ->
-    testTask.dependsOn(bundle, 'copyRestTestSpecs')
+  testTask.mustRunAfter(project.getTasks().named("test"))
+  testTask.setTestClassesDirs(sourceSets.javaRestTest.getOutput().getClassesDirs())
+  testTask.setClasspath(sourceSets.javaRestTest.getRuntimeClasspath())
 
-    def cluster = testClusters.yamlRestTest
-    cluster.plugin(bundle.flatMap(AbstractArchiveTask::getArchiveFile))
-    testTask.useCluster(testClusters.yamlRestTest)
-
-    testTask.mustRunAfter(project.getTasks().named("test"))
-    testTask.setTestClassesDirs(sourceSets.yamlRestTest.getOutput().getClassesDirs())
-    testTask.setClasspath(sourceSets.yamlRestTest.getRuntimeClasspath())
-
-
-    SystemPropertyCommandLineArgumentProvider nonInputProperties = new SystemPropertyCommandLineArgumentProvider()
+  SystemPropertyCommandLineArgumentProvider nonInputProperties = new SystemPropertyCommandLineArgumentProvider()
     nonInputProperties.systemProperty("tests.rest.cluster", "${-> String.join(",", cluster.getAllHttpSocketURI())}")
     nonInputProperties.systemProperty("tests.cluster", "${-> String.join(",", cluster.getAllTransportPortURI())}")
     nonInputProperties.systemProperty("tests.clustername", "${-> cluster.getName()}")
     testTask.getJvmArgumentProviders().add(nonInputProperties)
     testTask.systemProperty("tests.rest.load_packaged", Boolean.FALSE.toString())
 }
-// this is a bit of a hack to make sure we run the test tests when releasing...
-check.dependsOn 'yamlRestTest'
 
-dependencies {
-  yamlRestTestImplementation "org.elasticsearch.test:framework:$elasticsearchVersion"
-  restTestSpecs "org.elasticsearch:rest-api-spec:$elasticsearchVersion"
-}
-
-// remove when 7.14.1 is released
 tasks.withType(Test).configureEach { testTask ->
   testTask.systemProperties 'gradle.dist.lib': "${gradle.gradleHomeDir}/lib",
         'gradle.worker.jar': "${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/workerMain/gradle-worker.jar",
@@ -152,7 +123,17 @@ tasks.withType(Test).configureEach { testTask ->
         'tests.task': testTask.path
 }
 
-// This will be available in 7.15 in build tools and not manually declared. 
+import org.elasticsearch.gradle.testclusters.StandaloneRestIntegTestTask
+import org.gradle.api.tasks.Input;
+import org.gradle.process.CommandLineArgumentProvider;
+
+import java.nio.file.Files
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+// This will be available in 7.15 in build tools and not manually declared.
 public class SystemPropertyCommandLineArgumentProvider implements CommandLineArgumentProvider {
     private final Map<String, Object> systemProperties = new LinkedHashMap<>();
 
@@ -183,17 +164,3 @@ public class SystemPropertyCommandLineArgumentProvider implements CommandLineArg
         return systemProperties.keySet();
     }
 }
-
-// this is a bit of a hack to make sure we run the test tests when releasing...
-check.dependsOn 'yamlRestTest'
-
-dependencies {
-  yamlRestTestImplementation "org.elasticsearch.test:framework:$elasticsearchVersion"
-  restTestSpecs "org.elasticsearch:rest-api-spec:$elasticsearchVersion"
-}
-
-// Set to false to not use elasticsearch checkstyle rules
-checkstyleMain.enabled = true
-checkstyleTest.enabled = true
-
-// validateElasticPom.enabled = false
