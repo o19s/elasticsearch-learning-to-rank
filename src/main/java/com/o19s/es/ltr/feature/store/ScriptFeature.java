@@ -214,7 +214,8 @@ public class ScriptFeature implements Feature {
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
         ScoreScript.Factory factoryFactory  = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
-        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory, 
+                context.getSearchExecutionContext().lookup(),
                 context.getSearchExecutionContext().index().getName(),
                 context.getSearchExecutionContext().getShardId()
                 );

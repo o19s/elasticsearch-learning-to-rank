@@ -29,16 +29,30 @@ allprojects {
     implementation "org.ow2.asm:asm-tree:${ow2Version}"
     implementation 'com.o19s:RankyMcRankFace:0.1.1'
     implementation "com.github.spullara.mustache.java:compiler:0.9.3"
+
+    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
   }
 }
 
 apply plugin: 'checkstyle'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
-apply plugin: 'elasticsearch.testclusters'
+apply plugin: 'elasticsearch.java-rest-test'
+apply plugin: 'elasticsearch.yaml-rest-test'
 
 checkstyle {
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
+
+sourceSets {
+  javaRestTest {
+    compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
+    runtimeClasspath += output + compileClasspath
+  }
+  yamlRestTest {
+    compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
+    runtimeClasspath += output + compileClasspath
+  }
 }
 
 esplugin {
@@ -64,103 +78,11 @@ repositories {
   }
 }
 
-
-sourceSets {
-  javaRestTest {
-    compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
-    runtimeClasspath += output + compileClasspath
-  }
-}
-
 java {
   withJavadocJar()
   withSourcesJar()
 }
 
-
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true
 checkstyleTest.enabled = true
-
-
-/* HOTFIXES FOR 7.14.0, cleanup when possible. */ 
-configurations {
-  javaRestTestImplementation.extendsFrom testImplementation
-  javaRestTestRuntimeOnly.extendsFrom testRuntimeOnly
-  restTestSpecs
-}
-
-dependencies {
-  javaRestTestImplementation "org.elasticsearch.test:framework:$elasticsearchVersion"
-  restTestSpecs "org.elasticsearch:rest-api-spec:$elasticsearchVersion"
-  runtimeOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
-}
-
-testClusters {
-  javaRestTest
-}
-
-tasks.register('javaRestTest', StandaloneRestIntegTestTask) { testTask ->
-  def cluster = testClusters.javaRestTest
-  testTask.useCluster(testClusters.javaRestTest)
-
-  testTask.mustRunAfter(project.getTasks().named("test"))
-  testTask.setTestClassesDirs(sourceSets.javaRestTest.getOutput().getClassesDirs())
-  testTask.setClasspath(sourceSets.javaRestTest.getRuntimeClasspath())
-
-  SystemPropertyCommandLineArgumentProvider nonInputProperties = new SystemPropertyCommandLineArgumentProvider()
-    nonInputProperties.systemProperty("tests.rest.cluster", "${-> String.join(",", cluster.getAllHttpSocketURI())}")
-    nonInputProperties.systemProperty("tests.cluster", "${-> String.join(",", cluster.getAllTransportPortURI())}")
-    nonInputProperties.systemProperty("tests.clustername", "${-> cluster.getName()}")
-    testTask.getJvmArgumentProviders().add(nonInputProperties)
-    testTask.systemProperty("tests.rest.load_packaged", Boolean.FALSE.toString())
-}
-
-tasks.withType(Test).configureEach { testTask ->
-  testTask.systemProperties 'gradle.dist.lib': "${gradle.gradleHomeDir}/lib",
-        'gradle.worker.jar': "${gradle.gradleUserHomeDir}/caches/${gradle.gradleVersion}/workerMain/gradle-worker.jar",
-        'tests.gradle': 'true',
-        'tests.task': testTask.path
-}
-
-import org.elasticsearch.gradle.testclusters.StandaloneRestIntegTestTask
-import org.gradle.api.tasks.Input;
-import org.gradle.process.CommandLineArgumentProvider;
-
-import java.nio.file.Files
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-// This will be available in 7.15 in build tools and not manually declared.
-public class SystemPropertyCommandLineArgumentProvider implements CommandLineArgumentProvider {
-    private final Map<String, Object> systemProperties = new LinkedHashMap<>();
-
-    public void systemProperty(String key, Supplier<String> value) {
-        systemProperties.put(key, value);
-    }
-
-    public void systemProperty(String key, Object value) {
-        systemProperties.put(key, value);
-    }
-
-    @Override
-    public Iterable<String> asArguments() {
-        return systemProperties.entrySet()
-            .stream()
-            .map(
-                entry -> "-D"
-                    + entry.getKey()
-                    + "="
-                    + (entry.getValue() instanceof Supplier ? ((Supplier) entry.getValue()).get() : entry.getValue())
-            )
-            .collect(Collectors.toList());
-    }
-
-    // Track system property keys as an input so our build cache key will change if we add properties but values are still ignored
-    @Input
-    public Iterable<String> getPropertyNames() {
-        return systemProperties.keySet();
-    }
-}

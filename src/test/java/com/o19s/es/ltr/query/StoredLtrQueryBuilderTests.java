@@ -57,7 +57,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -71,16 +70,9 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         return Arrays.asList(TestPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
-    /**
-     * Returns a set of object names that won't trigger any exception (uncluding their children) when testing that unknown
-     * objects cause parse exceptions through {@link #testUnknownObjectException()}. Default is an empty set. Can be overridden
-     * by subclasses that test queries which contain objects that get parsed on the data nodes (e.g. score functions) or objects
-     * that can contain arbitrary content (e.g. documents for percolate or more like this query, params for scripts). In such
-     * cases no exception would get thrown.
-     */
     @Override
-    protected Set<String> getObjectsHoldingArbitraryContent() {
-        return Collections.singletonMap(StoredLtrQueryBuilder.PARAMS.getPreferredName(), null).keySet();
+    protected Map<String, String> getObjectsHoldingArbitraryContent() {
+        return Collections.singletonMap(StoredLtrQueryBuilder.PARAMS.getPreferredName(), null);
     }
 
     @Before

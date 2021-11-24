@@ -24,7 +24,6 @@ import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
-import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -33,6 +32,7 @@ import org.elasticsearch.core.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.script.DocReader;
 import org.elasticsearch.script.ScoreScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
@@ -171,8 +171,8 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                     ScoreScript.Factory factory = (p, lookup) ->
                             new ScoreScript.LeafFactory() {
                                 @Override
-                                public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
-                                    return new ScoreScript(p, lookup, ctx) {
+                                public ScoreScript newInstance(DocReader reader) throws IOException {
+                                    return new ScoreScript(p, lookup, reader) {
                                         @Override
                                         public double execute(ExplanationHolder explainationHolder) {
                                             // For testing purposes just look for the "terms" key and see if stats were injected
@@ -267,8 +267,8 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     }
 
                                     @Override
-                                    public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
-                                        return new ScoreScript(p, lookup, ctx) {
+                                    public ScoreScript newInstance(DocReader reader) throws IOException {
+                                        return new ScoreScript(p, lookup, reader) {
                                             @Override
                                             public double execute(ExplanationHolder explainationHolder ) {
                                                 return extraMultiplier == 0.0d ?
@@ -299,8 +299,8 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     }
 
                                     @Override
-                                    public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
-                                        return new ScoreScript(p, lookup, ctx) {
+                                    public ScoreScript newInstance(DocReader reader) throws IOException {
+                                        return new ScoreScript(p, lookup, reader) {
 
                                             @Override
                                             public double execute(ExplanationHolder explanation) {

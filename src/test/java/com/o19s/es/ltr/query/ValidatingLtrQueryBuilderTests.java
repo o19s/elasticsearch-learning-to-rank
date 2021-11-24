@@ -39,9 +39,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -63,9 +61,11 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     }
 
     @Override
-    protected Set<String> getObjectsHoldingArbitraryContent() {
-        return new HashSet<>(asList(FeatureValidation.PARAMS.getPreferredName(),
-                StoredFeature.TEMPLATE.getPreferredName()));
+    protected Map<String, String> getObjectsHoldingArbitraryContent() {
+        Map<String, String> params = new HashMap<>();
+        params.put(FeatureValidation.PARAMS.getPreferredName(), null);
+        params.put(StoredFeature.TEMPLATE.getPreferredName(), null);
+        return params;
     }
 
     /**
