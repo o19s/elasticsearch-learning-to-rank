@@ -352,7 +352,7 @@ You have the following options for sending in parameters to scripts.  If you alw
                "source": "params.termStats['df'].size()",
                "params": {
                  "term_stat": {
-                    "analyzer": "!standard"
+                    "analyzer": "!standard",
                     "terms": ["rambo rocky"],
                     "fields": ["overview"]
                  }
@@ -379,7 +379,7 @@ To set parameter lookups simply pass the name of the parameter to pull the value
                "source": "params.termStats['df'].size()",
                "params": {
                  "term_stat": {
-                    "analyzer": "analyzerParam"
+                    "analyzer": "analyzerParam",
                     "terms": "termsParam",
                     "fields": "fieldsParam"
                  }
