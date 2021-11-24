@@ -93,6 +93,9 @@ configurations {
 dependencies {
   javaRestTestImplementation "org.elasticsearch.test:framework:$elasticsearchVersion"
   restTestSpecs "org.elasticsearch:rest-api-spec:$elasticsearchVersion"
+
+  runtimeOnly 'org.locationtech.spatial4j:spatial4j:0.7'
+  runtimeOnly 'org.locationtech.jts:jts-core:1.15.0'
   runtimeOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
 }
 
