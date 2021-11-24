@@ -69,9 +69,11 @@ public class LoggingSearchExtBuilderTests extends ESTestCase {
     public void testToXCtontent() throws IOException {
         LoggingSearchExtBuilder ext1 = buildTestExt();
         XContentBuilder builder = XContentFactory.jsonBuilder();
+        builder.startObject();
         ext1.toXContent(builder, ToXContent.EMPTY_PARAMS);
+        builder.endObject();
         builder.close();
-        assertEquals(getTestExtAsString(), Strings.toString(builder));
+        assertEquals("{\"ltr_log\":" + getTestExtAsString() + "}", Strings.toString(builder));
     }
 
     public void testSer() throws IOException {
