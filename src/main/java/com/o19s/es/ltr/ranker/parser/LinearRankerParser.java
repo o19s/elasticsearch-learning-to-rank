@@ -20,12 +20,12 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 
-import static org.elasticsearch.common.xcontent.NamedXContentRegistry.EMPTY;
+import static org.elasticsearch.xcontent.NamedXContentRegistry.EMPTY;
 
 public class LinearRankerParser implements LtrRankerParser {
     public static final String TYPE = "model/linear";

@@ -18,8 +18,8 @@ package com.o19s.es.ltr.feature.store;
 
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xcontent.ToXContent;
+import org.elasticsearch.xcontent.XContentParser;
 
 public interface StorableElement extends ToXContent, NamedWriteable {
     /**
