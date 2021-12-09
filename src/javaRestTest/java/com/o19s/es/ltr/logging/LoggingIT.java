@@ -353,6 +353,100 @@ public class LoggingIT extends BaseIntegrationTest {
         assertSearchHitsExtraLogging(docs, resp3);
     }
 
+    public void testLogWithFeatureScoreCache() throws Exception {
+        prepareModels();
+        Map<String, Doc> docs = buildIndex();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query", "found");
+        List<String> idsColl = new ArrayList<>(docs.keySet());
+        Collections.shuffle(idsColl, random());
+        String[] ids = idsColl.subList(0, TestUtil.nextInt(random(), 5, 15)).toArray(new String[0]);
+        StoredLtrQueryBuilder sbuilder = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test")
+                .boost(1)
+                .featureScoreCacheFlag(Boolean.TRUE);
+        /*
+            Note: Feature score caching with boosts other than 1 affects logged feature scores.
+            This behavior is a bug. See: https://github.com/o19s/elasticsearch-learning-to-rank/issues/368
+        */
+
+        StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
+                .featureSetName("my_set")
+                .params(params)
+                .queryName("test_rescore")
+                .boost(1)
+                .featureScoreCacheFlag(Boolean.TRUE);
+
+        QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+
+        SearchResponse resp = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHits(docs, resp);
+        sbuilder.featureSetName(null);
+        sbuilder.modelName("my_model");
+        sbuilder_rescore.featureSetName(null);
+        sbuilder_rescore.modelName("my_model");
+
+        query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()))
+                .filter(QueryBuilders.idsQuery("test").addIds(ids));
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+
+        SearchResponse resp2 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHits(docs, resp2);
+
+        query = QueryBuilders.boolQuery()
+                .must(new WrapperQueryBuilder(sbuilder.toString()))
+                .must(
+                        QueryBuilders.nestedQuery(
+                                "nesteddocs1",
+                                QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("nesteddocs1.field1", "nestedvalue")),
+                                ScoreMode.None
+                        ).innerHit(new InnerHitBuilder())
+                );
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addQueryLogging("first_log", "test", false)
+                                .addRescoreLogging("second_log", 0, true)));
+        SearchResponse resp3 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHits(docs, resp3);
+
+        query = QueryBuilders.boolQuery().filter(QueryBuilders.idsQuery("test").addIds(ids));
+        sourceBuilder = new SearchSourceBuilder().query(query)
+                .fetchSource(false)
+                .size(10)
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder.toString())))
+                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
+                .ext(Collections.singletonList(
+                        new LoggingSearchExtBuilder()
+                                .addRescoreLogging("first_log", 0, false)
+                                .addRescoreLogging("second_log", 1, true)));
+
+        SearchResponse resp4 = client().prepareSearch("test_index").setTypes("test").setSource(sourceBuilder).get();
+        assertSearchHits(docs, resp4);
+    }
+
     public void testScriptLogInternalParams() throws Exception {
         prepareInternalScriptFeatures();
         Map<String, Doc> docs = buildIndex();
