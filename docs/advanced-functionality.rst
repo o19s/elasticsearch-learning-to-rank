@@ -214,6 +214,56 @@ If (and only if) the extra logging Map is accessed, it will be returned as an ad
     }
 
 =============================
+Feature Score Caching
+=============================
+
+By default, this plugin calculates feature scores for model inference and for feature score logging separately.
+For example, if we write a query as below to rescore top-100 documents then return top-10 among them with feature scores, this plugin calculates the feature scores on the 100 documents for model inference then calculates again and logs 10 of them::
+
+    POST tmdb/_search
+    {
+        "size": 10,
+        "query": {
+            "match": {
+                "_all": "rambo"
+            }
+        },
+        "rescore": {
+            "window_size" : 100,
+            "query": {
+                "rescore_query": {
+                    "sltr": {
+                        "params": {
+                            "keywords": "rambo"
+                        },
+                        "model": "my_model"
+                    }
+                }
+            }
+        },
+        "ext": {
+            "ltr_log": {
+                "log_specs": {
+                    "name": "log_entry1",
+                    "rescore_index": 0
+                }
+            }
+        }
+    }
+
+In some environments, it may be faster to cache the feature scores for model inference and just reuse them for logging.
+This plugin supports this behavior.
+To enable the feature score caching, add :code:`cache: "true"` flag to the LTR query which is the target of feature score logging::
+
+                    "sltr": {
+                        "cache": true,
+                        "params": {
+                            "keywords": "rambo"
+                        },
+                        "model": "my_model"
+                    }
+
+=============================
 Stats
 =============================
 The stats API gives the overall plugin status and statistics::
