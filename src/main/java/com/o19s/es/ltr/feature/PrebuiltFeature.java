@@ -18,8 +18,10 @@ package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 import org.elasticsearch.core.Nullable;
@@ -84,4 +86,10 @@ public class PrebuiltFeature extends Query implements Feature {
     public Query rewrite(IndexReader reader) throws IOException {
         return query.rewrite(reader);
     }
+
+    // follow the "wrapper" pattern: just visit child query
+	@Override
+	public void visit(QueryVisitor visitor) {
+        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));		
+	}
 }

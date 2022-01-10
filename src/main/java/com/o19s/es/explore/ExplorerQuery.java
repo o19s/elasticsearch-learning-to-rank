@@ -16,29 +16,29 @@
 
 package com.o19s.es.explore;
 
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.TermStatistics;
-import org.apache.lucene.search.ConstantScoreWeight;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ConstantScoreScorer;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanClause;
-
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.similarities.ClassicSimilarity;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TermStatistics;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 public class ExplorerQuery extends Query {
     private final Query query;
@@ -60,7 +60,6 @@ public class ExplorerQuery extends Query {
 
     public String getType() { return this.type; }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
         return sameClassAs(other) &&
@@ -94,9 +93,10 @@ public class ExplorerQuery extends Query {
         if (!scoreMode.needsScores()) {
             return searcher.createWeight(query, scoreMode, boost);
         }
-        final Weight subWeight = searcher.createWeight(query, scoreMode, boost);
-        Set<Term> terms = new HashSet<>();
-        subWeight.extractTerms(terms);
+//        final Weight subWeight = searcher.createWeight(query, scoreMode, boost);
+        final Set<Term> terms = new HashSet<>();
+//        subWeight.extractTerms(terms);        
+        this.visit(QueryVisitor.termCollector(terms));        
         if (isCollectionScoped()) {
             ClassicSimilarity sim = new ClassicSimilarity();
             StatisticsHelper df_stats = new StatisticsHelper();
@@ -241,10 +241,10 @@ public class ExplorerQuery extends Query {
             this.type = type;
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//            weight.extractTerms(terms);
+//        }
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -279,4 +279,10 @@ public class ExplorerQuery extends Query {
     public String toString(String field) {
         return query.toString();
     }
+
+    // follow the "wrapper" pattern: just visit child query
+	@Override
+	public void visit(QueryVisitor visitor) {
+        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
+	}
 }

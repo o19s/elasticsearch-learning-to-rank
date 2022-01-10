@@ -3,7 +3,6 @@ package com.o19s.es.ltr.action;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.FailedNodeException;
-import org.elasticsearch.action.support.nodes.BaseNodeRequest;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesRequest;
 import org.elasticsearch.action.support.nodes.BaseNodesResponse;
@@ -39,11 +38,12 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
         }
     }
 
-    public static class LTRStatsNodeRequest extends BaseNodeRequest {
+    public static class LTRStatsNodeRequest extends BaseNodesRequest<LTRStatsNodeRequest> {
         private final LTRStatsNodesRequest nodesRequest;
 
         public LTRStatsNodeRequest(LTRStatsNodesRequest nodesRequest) {
-            this.nodesRequest = nodesRequest;
+        	super(nodesRequest.nodesIds());
+        	this.nodesRequest = nodesRequest;
         }
 
         public LTRStatsNodeRequest(StreamInput in) throws IOException {

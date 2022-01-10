@@ -23,7 +23,7 @@ public class ShardStatsIT extends ESIntegTestCase {
 
     protected void createIdx() {
         prepareCreate("idx")
-                .addMapping("type", "s", "type=text");
+                .setMapping("type=text");
 
         for (int i = 0; i < 4; i++) {
             indexDoc(i);
@@ -32,7 +32,7 @@ public class ShardStatsIT extends ESIntegTestCase {
     }
 
     protected void indexDoc(int id) {
-        client().prepareIndex("idx", "type", Integer.toString(id))
+        client().prepareIndex("idx")
                 .setRouting( ((id % 2) == 0 ) ? "a" : "b" )
                 .setSource("s", "zzz").get();
     }

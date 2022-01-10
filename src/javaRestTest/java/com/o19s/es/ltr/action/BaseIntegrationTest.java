@@ -125,7 +125,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
         builder.request().setValidation(validation);
         FeatureStoreResponse response = builder.execute().get();
         assertEquals(1, response.getResponse().getVersion());
-        assertEquals(IndexFeatureStore.ES_TYPE, response.getResponse().getType());
+//        assertEquals(IndexFeatureStore.ES_TYPE, response.getResponse().getType());
         assertEquals(DocWriteResponse.Result.CREATED, response.getResponse().getResult());
         assertEquals(element.id(), response.getResponse().getId());
         assertEquals(store, response.getResponse().getIndex());

@@ -29,6 +29,7 @@ import com.o19s.es.ltr.utils.Suppliers.MutableSupplier;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DisiPriorityQueue;
@@ -37,9 +38,11 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.BooleanClause.Occur;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -234,12 +237,12 @@ public class RankerQuery extends Query {
             return false;
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            for (Weight w : weights) {
-                w.extractTerms(terms);
-            }
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//            for (Weight w : weights) {
+//                w.extractTerms(terms);
+//            }
+//        }
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -478,4 +481,12 @@ public class RankerQuery extends Query {
             return Objects.hash(wrapped, vectorSupplier);
         }
     }
+
+	@Override
+	public void visit(QueryVisitor visitor) {
+	    QueryVisitor v = visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this);
+	    for (Query q : queries) {
+	      q.visit(v);
+	    }
+	}
 }

@@ -16,13 +16,11 @@
 
 package com.o19s.es.ltr.action;
 
-import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodeResponse;
-import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesRequest;
-import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesResponse;
-import com.o19s.es.ltr.feature.store.index.Caches;
+import java.io.IOException;
+import java.util.List;
+
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.nodes.BaseNodeRequest;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -30,15 +28,20 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.transport.TransportService;
 
-import java.io.IOException;
-import java.util.List;
+import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodeResponse;
+import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesRequest;
+import com.o19s.es.ltr.action.CachesStatsAction.CachesStatsNodesResponse;
+import com.o19s.es.ltr.feature.store.index.Caches;
+
 
 public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsNodesRequest, CachesStatsNodesResponse,
-        TransportCacheStatsAction.CachesStatsNodeRequest, CachesStatsNodeResponse> {
-    private final Caches caches;
+		TransportCacheStatsAction.CachesStatsNodeRequest, CachesStatsNodeResponse> {
+	private final Caches caches;
 
     @Inject
     public TransportCacheStatsAction(Settings settings, ThreadPool threadPool,
@@ -68,11 +71,11 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
     }
 
     @Override
-    protected CachesStatsNodeResponse nodeOperation(CachesStatsNodeRequest request) {
+    protected CachesStatsNodeResponse nodeOperation(CachesStatsNodeRequest request, Task task) {
         return new CachesStatsNodeResponse(clusterService.localNode()).initFromCaches(caches);
     }
-
-    public static class CachesStatsNodeRequest extends BaseNodeRequest {
+        
+    public static class CachesStatsNodeRequest extends TransportRequest {
         public CachesStatsNodeRequest() {}
 
         public CachesStatsNodeRequest(StreamInput in) throws IOException {

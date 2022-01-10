@@ -10,9 +10,11 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.BooleanClause.Occur;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,7 +43,6 @@ public class TermStatQuery extends Query {
     public AggrType getPosAggr() { return this.posAggr; }
     public Set<Term> getTerms() { return this.terms; }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
         return sameClassAs(other) &&
@@ -116,10 +117,10 @@ public class TermStatQuery extends Query {
             }
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            terms.addAll(terms);
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//            terms.addAll(terms);
+//        }
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -142,4 +143,14 @@ public class TermStatQuery extends Query {
             return true;
         }
     }
+
+	@Override
+	public void visit(QueryVisitor visitor) {
+	    Term[] acceptedTerms =
+	            terms.stream().filter(t -> visitor.acceptField(t.field())).toArray(Term[]::new);
+        if (acceptedTerms.length > 0) {
+          QueryVisitor v = visitor.getSubVisitor(Occur.SHOULD, this);
+          v.consumeTerms(this, acceptedTerms);
+        }
+	}
 }

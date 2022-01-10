@@ -1,18 +1,17 @@
 package com.o19s.es.ltr.rest;
 
-import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.RestStatusToXContentListener;
-
-import java.util.List;
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+
+import java.util.List;
+
+import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.action.RestStatusToXContentListener;
 
 public class RestSearchStoreElements extends FeatureStoreBaseRestHandler {
     private final String type;
@@ -48,7 +47,6 @@ public class RestSearchStoreElements extends FeatureStoreBaseRestHandler {
             qb.must(matchQuery("name.prefix", prefix));
         }
         return (channel) -> client.prepareSearch(indexName)
-                .setTypes(IndexFeatureStore.ES_TYPE)
                 .setQuery(qb)
                 .setSize(size)
                 .setFrom(from)

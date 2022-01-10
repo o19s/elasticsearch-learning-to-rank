@@ -90,8 +90,8 @@ public class XGBoostJsonParser implements LtrRankerParser {
             } else if (startToken == XContentParser.Token.START_ARRAY) {
                 definition = new XGBoostDefinition();
                 definition.splitParserStates = new ArrayList<>();
-                while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
-                    definition.splitParserStates.add(SplitParserState.parse(parser, set));
+                while (parser.nextToken() != XContentParser.Token.END_ARRAY) { 
+					definition.splitParserStates.add(SplitParserState.parse(parser, set));
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_ARRAY] or [START_OBJECT] but got ["
@@ -160,7 +160,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
             PARSER.declareFloat(SplitParserState::setLeaf, new ParseField("leaf"));
             PARSER.declareObjectArray(SplitParserState::setChildren, SplitParserState::parse,
                     new ParseField("children"));
-            PARSER.declareFloat(SplitParserState::setThreshold, new ParseField("split_condition"));
+//            PARSER.declareFloat(SplitParserState::setThreshold, new ParseField("split_condition"));
         }
 
         private Integer nodeId;

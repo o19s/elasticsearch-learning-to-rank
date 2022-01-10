@@ -38,6 +38,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -67,7 +68,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     }
 
     @Override
-    protected void masterOperation(ListStoresActionRequest request, ClusterState state,
+    protected void masterOperation(Task task, ListStoresActionRequest request, ClusterState state,
                                    ActionListener<ListStoresActionResponse> listener) throws Exception {
         String[] names = indexNameExpressionResolver.concreteIndexNames(state,
                 new ClusterStateRequest().indices(IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
@@ -121,17 +122,17 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
         return new ListStoresActionResponse(infos);
     }
 
-    private Tuple<String, Integer> toVersion(String s) {
-        if (!IndexFeatureStore.isIndexStore(s)) {
-            return null;
-        }
-        IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
-
-        if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
-            return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));
-        }
-        return null;
-    }
+//    private Tuple<String, Integer> toVersion(String s) {
+//        if (!IndexFeatureStore.isIndexStore(s)) {
+//            return null;
+//        }
+//        IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
+//
+//        if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
+//            return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));
+//        }
+//        return null;
+//    }
 
     @Override
     protected ClusterBlockException checkBlock(ListStoresActionRequest request, ClusterState state) {

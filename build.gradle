@@ -1,6 +1,10 @@
 buildscript {
   repositories {
     gradlePluginPortal()
+	maven {
+	    name "lucene-snapshots"
+	    url 'https://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/cc2a31f2be8'
+	}        
   }
 
   dependencies {
@@ -19,6 +23,10 @@ allprojects {
     jcenter()
     mavenLocal()
     gradlePluginPortal()
+	maven {
+	    name "lucene-snapshots"
+	    url 'https://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/cc2a31f2be8'
+	}        
   }
 
   dependencies {

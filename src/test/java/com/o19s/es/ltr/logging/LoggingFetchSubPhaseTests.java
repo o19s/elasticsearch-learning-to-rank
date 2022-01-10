@@ -16,13 +16,17 @@
 
 package com.o19s.es.ltr.logging;
 
-import com.o19s.es.ltr.feature.PrebuiltFeature;
-import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
-import com.o19s.es.ltr.feature.PrebuiltLtrModel;
-import com.o19s.es.ltr.logging.LoggingFetchSubPhase.LoggingFetchSubPhaseProcessor;
-import com.o19s.es.ltr.query.RankerQuery;
-import com.o19s.es.ltr.ranker.LtrRanker;
-import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
+import static org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction.Modifier.LN2P;
+import static org.elasticsearch.index.fielddata.IndexNumericFieldData.NumericType.FLOAT;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -44,11 +48,10 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
-import org.elasticsearch.core.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
-import org.elasticsearch.common.text.Text;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.index.fielddata.plain.SortedNumericIndexFieldData;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
@@ -56,16 +59,13 @@ import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction.Modifier.LN2P;
-import static org.elasticsearch.index.fielddata.IndexNumericFieldData.NumericType.FLOAT;
+import com.o19s.es.ltr.feature.PrebuiltFeature;
+import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
+import com.o19s.es.ltr.feature.PrebuiltLtrModel;
+import com.o19s.es.ltr.logging.LoggingFetchSubPhase.LoggingFetchSubPhaseProcessor;
+import com.o19s.es.ltr.query.RankerQuery;
+import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 
 public class LoggingFetchSubPhaseTests extends LuceneTestCase {
     public static final float FACTOR = 1.2F;
@@ -181,7 +181,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                     SearchHit hit = new SearchHit(
                         doc,
                         id,
-                        new Text("text"),
+//                        new Text("text"),
                         random().nextBoolean() ? new HashMap<>() : null,
                         null
                     );

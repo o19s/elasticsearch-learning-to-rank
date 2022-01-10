@@ -9,6 +9,7 @@ import com.o19s.es.ltr.stats.LTRStats;
 import com.o19s.es.ltr.stats.StatName;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.transport.TransportService;
 import org.junit.Before;
@@ -62,7 +63,7 @@ public class TransportLTRStatsActionTests extends ESIntegTestCase {
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(nodeIds);
         ltrStatsRequest.setStatsToBeRetrieved(ltrStats.getStats().keySet());
 
-        LTRStatsNodeResponse response = action.nodeOperation(new LTRStatsNodeRequest(ltrStatsRequest));
+        LTRStatsNodeResponse response = action.nodeOperation(new LTRStatsNodeRequest(ltrStatsRequest), (Task) null);
 
         Map<String, Object> stats = response.getStatsMap();
 

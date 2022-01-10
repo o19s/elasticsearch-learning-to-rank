@@ -34,6 +34,7 @@ import static org.elasticsearch.ExceptionsHelper.unwrap;
 import static org.hamcrest.CoreMatchers.containsString;
 
 public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
+/*
     public void testAddToSetWithQuery() throws Exception {
         int nFeature = random().nextInt(99) + 1;
         List<StoredFeature> features = new ArrayList<>(nFeature);
@@ -114,7 +115,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertNotNull(iae);
         assertThat(iae.getMessage(), containsString("returned no features"));
     }
-
+*/
     public void testFailuresOnDuplicates() throws Exception {
         addElement(randomFeature("duplicated"));
 
@@ -138,7 +139,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertNotNull(iae);
         assertThat(iae.getMessage(), containsString("defined twice in this set"));
     }
-
+/*
     public void testMergeWithQuery() throws Exception {
         addElement(randomFeature("duplicated"));
         addElement(randomFeature("new_feature"));
@@ -203,5 +204,5 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertEquals(features.size()+1, set.size());
         assertTrue(set.hasFeature("another_feature"));
         assertEquals(0, set.featureOrdinal("feature0"));
-    }
+    } */
 }

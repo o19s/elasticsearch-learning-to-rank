@@ -16,7 +16,11 @@
 
 package com.o19s.es.explore;
 
-import com.o19s.es.ltr.utils.CheckedBiFunction;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Objects;
+
 import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
@@ -29,15 +33,12 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import com.o19s.es.ltr.utils.CheckedBiFunction;
 
 public class PostingsExplorerQuery extends Query {
     private final Term term;
@@ -62,7 +63,6 @@ public class PostingsExplorerQuery extends Query {
         return buffer.toString();
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         return this.sameClassAs(obj)
@@ -117,10 +117,10 @@ public class PostingsExplorerQuery extends Query {
             this.type = type;
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            terms.add(term);
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//            terms.add(term);
+//        }
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
@@ -245,4 +245,12 @@ public class PostingsExplorerQuery extends Query {
             return Float.POSITIVE_INFINITY;
         }
     }
+
+	@Override
+	public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(this.term.field()) == false) {
+            return;
+        }
+		visitor.consumeTerms(this, term);		
+	}
 }

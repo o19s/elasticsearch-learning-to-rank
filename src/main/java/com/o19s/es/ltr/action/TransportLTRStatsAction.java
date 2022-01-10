@@ -12,6 +12,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -64,7 +65,7 @@ public class TransportLTRStatsAction extends
     }
 
     @Override
-    protected LTRStatsNodeResponse nodeOperation(LTRStatsNodeRequest request) {
+    protected LTRStatsNodeResponse nodeOperation(LTRStatsNodeRequest request, Task task) {
         LTRStatsNodesRequest nodesRequest = request.getLTRStatsNodesRequest();
         Set<String> statsToBeRetrieved = nodesRequest.getStatsToBeRetrieved();
 

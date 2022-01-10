@@ -30,6 +30,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.TransportGetAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchTask;
 import org.elasticsearch.action.search.TransportSearchAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
@@ -43,12 +44,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.tasks.Task;
+import org.elasticsearch.tasks.TaskId;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -144,12 +147,11 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                 featuresRef.set(features);
             }
             GetRequest getRequest = new GetRequest(store)
-                    .type(IndexFeatureStore.ES_TYPE)
+//                    .type(IndexFeatureStore.ES_TYPE)
                     .id(StorableElement.generateId(StoredFeatureSet.TYPE, featureSetName))
                     .routing(routing);
-
             getRequest.setParentTask(clusterService.localNode().getId(), task.getId());
-            getAction.execute(getRequest, wrap(this::onGetResponse, this::onGetFailure));
+            getAction.execute(task, getRequest, wrap(this::onGetResponse, this::onGetFailure));
         }
 
         private void fetchFeaturesFromStore() {
@@ -170,11 +172,13 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             BoolQueryBuilder bq = QueryBuilders.boolQuery();
             bq.must(nameQuery);
             bq.must(QueryBuilders.matchQuery("type", StoredFeature.TYPE));
-            srequest.types(IndexFeatureStore.ES_TYPE);
+//            srequest.types(IndexFeatureStore.ES_TYPE);
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
-            searchAction.execute(srequest, wrap(this::onSearchResponse, this::onSearchFailure));
+            
+            SearchTask st = srequest.createTask(task.getId(), task.getType(), task.getAction(), task.getParentTaskId(), Map.of());
+            searchAction.execute(st, srequest, wrap(this::onSearchResponse, this::onSearchFailure));
         }
 
         private void onGetFailure(Exception e) {
@@ -279,23 +283,23 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             frequest.setRouting(routing);
             frequest.setParentTask(clusterService.localNode().getId(), task.getId());
             frequest.setValidation(validation);
-            featureStoreAction.execute(frequest, wrap(
+            featureStoreAction.execute(task, frequest, wrap(
                     (r) -> listener.onResponse(new AddFeaturesToSetResponse(r.getResponse())),
                     listener::onFailure));
         }
     }
 
-    private static class AsyncFetchSet implements ActionListener<GetResponse> {
-        private ActionListener<AddFeaturesToSetResponse> listener;
-
-        @Override
-        public void onResponse(GetResponse getFields) {
-
-        }
-
-        @Override
-        public void onFailure(Exception e) {
-            listener.onFailure(e);
-        }
-    }
+//    private static class AsyncFetchSet implements ActionListener<GetResponse> {
+//        private ActionListener<AddFeaturesToSetResponse> listener;
+//
+//        @Override
+//        public void onResponse(GetResponse getFields) {
+//
+//        }
+//
+//        @Override
+//        public void onFailure(Exception e) {
+//            listener.onFailure(e);
+//        }
+//    }
 }

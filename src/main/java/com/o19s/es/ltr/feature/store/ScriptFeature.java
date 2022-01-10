@@ -1,36 +1,5 @@
 package com.o19s.es.ltr.feature.store;
 
-import com.o19s.es.ltr.LtrQueryContext;
-import com.o19s.es.ltr.feature.Feature;
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.query.LtrRewritableQuery;
-import com.o19s.es.ltr.query.LtrRewriteContext;
-import com.o19s.es.ltr.ranker.LogLtrRanker;
-import com.o19s.es.termstat.TermStatSupplier;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
-import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
-import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
-import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.xcontent.XContentType;
-import org.elasticsearch.index.mapper.MappedFieldType;
-import org.elasticsearch.script.ScoreScript;
-import org.elasticsearch.script.Script;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +10,40 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
+import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
+import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
+import org.elasticsearch.index.mapper.MappedFieldType;
+import org.elasticsearch.script.ScoreScript;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.xcontent.NamedXContentRegistry;
+import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentType;
+
+import com.o19s.es.ltr.LtrQueryContext;
+import com.o19s.es.ltr.feature.Feature;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.query.LtrRewritableQuery;
+import com.o19s.es.ltr.query.LtrRewriteContext;
+import com.o19s.es.ltr.ranker.LogLtrRanker;
+import com.o19s.es.termstat.TermStatSupplier;
 
 public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
@@ -241,7 +244,6 @@ public class ScriptFeature implements Feature {
             this.terms = terms;
         }
 
-        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -280,6 +282,17 @@ public class ScriptFeature implements Feature {
             }
             return this;
         }
+
+		@Override
+		public void visit(QueryVisitor visitor) {
+	        Set<String> fields = terms.stream().map(Term::field).collect(Collectors.toUnmodifiableSet());
+	        for (String field : fields) {
+	            if (visitor.acceptField(field) == false) {
+	                return;
+	            }
+	        }
+	        visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this).consumeTerms(this, terms.toArray(new Term[0]));
+		}
     }
 
     static class LtrScriptWeight extends Weight {
@@ -358,9 +371,9 @@ public class ScriptFeature implements Feature {
             };
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//        }
 
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {

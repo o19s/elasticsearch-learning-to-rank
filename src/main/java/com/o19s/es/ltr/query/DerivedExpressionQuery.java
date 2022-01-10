@@ -16,12 +16,15 @@
 
 package com.o19s.es.ltr.query;
 
-import com.o19s.es.ltr.feature.FeatureSet;
-import com.o19s.es.ltr.ranker.LtrRanker;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
+
 import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -30,15 +33,13 @@ import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Supplier;
+import com.o19s.es.ltr.feature.FeatureSet;
+import com.o19s.es.ltr.ranker.LtrRanker;
 
 public class DerivedExpressionQuery extends Query implements LtrRewritableQuery {
     private final FeatureSet features;
@@ -130,6 +131,11 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
             // Should not be called as it is likely an indication that it'll be cached but should not...
             return Objects.hash(classHash(), query, fvSupplier);
         }
+
+		@Override
+		public void visit(QueryVisitor visitor) {
+	        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));			
+		}
     }
 
     static class FVWeight extends Weight {
@@ -146,10 +152,10 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
             vectorSupplier = query.fvSupplier;
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            // No-op
-        }
+//        @Override
+//        public void extractTerms(Set<Term> terms) {
+//            // No-op
+//        }
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
@@ -298,4 +304,9 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
             return false;
         }
     }
+
+	@Override
+	public void visit(QueryVisitor visitor) {
+		// it's not possible to invoke features.toQueries, so I do not know "how" this query can perform a visit		
+	}
 }
