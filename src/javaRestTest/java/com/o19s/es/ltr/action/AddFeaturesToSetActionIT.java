@@ -34,7 +34,7 @@ import static org.elasticsearch.ExceptionsHelper.unwrap;
 import static org.hamcrest.CoreMatchers.containsString;
 
 public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
-/*
+
     public void testAddToSetWithQuery() throws Exception {
         int nFeature = random().nextInt(99) + 1;
         List<StoredFeature> features = new ArrayList<>(nFeature);
@@ -115,7 +115,7 @@ public class AddFeaturesToSetActionIT extends BaseIntegrationTest {
         assertNotNull(iae);
         assertThat(iae.getMessage(), containsString("returned no features"));
     }
-*/
+
     public void testFailuresOnDuplicates() throws Exception {
         addElement(randomFeature("duplicated"));
 
