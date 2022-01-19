@@ -6,12 +6,12 @@ buildscript {
   }
 
   dependencies {
-    classpath "org.elasticsearch.gradle:build-tools:6.8.6"
+    classpath "org.elasticsearch.gradle:build-tools:6.8.23"
   }
 }
 
 group = 'com.o19s'
-version = '1.1.1-es6.8.6'
+version = '1.1.1-es6.8.23'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -46,15 +46,15 @@ repositories {
 }
 
 dependencies {
-  compile "org.apache.lucene:lucene-expressions:7.7.0"
+  compile "org.apache.lucene:lucene-expressions:7.7.3"
   compile 'org.antlr:antlr4-runtime:4.5.1-1'
   compile 'org.ow2.asm:asm:5.0.4'
   compile 'org.ow2.asm:asm-commons:5.0.4'
   compile 'org.ow2.asm:asm-tree:5.0.4'
-  compile 'org.elasticsearch:elasticsearch:6.8.6'
+  compile 'org.elasticsearch:elasticsearch:6.8.23'
   compile 'com.o19s:RankyMcRankFace:0.1.1'
   compile "com.github.spullara.mustache.java:compiler:0.9.3"
-  testCompile 'org.elasticsearch.test:framework:6.8.6'
+  testCompile 'org.elasticsearch.test:framework:6.8.23'
 }
 
 dependencyLicenses {
