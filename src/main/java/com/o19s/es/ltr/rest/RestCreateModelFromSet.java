@@ -55,6 +55,9 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+        if (!request.hasContentOrSourceParam()) {
+            throw new IllegalArgumentException("Missing content or source param.");
+        }
         String store = indexName(request);
         Long expectedVersion = null;
         if (request.hasParam("version")) {
