@@ -234,7 +234,7 @@ The associated features are *copied into* the model. This is for your safety: mo
 
     DELETE _ltr/_featureset/more_movie_features
 
-We can still access and search with "my_linear_model". The following still accesses the model and it's associtred features::
+We can still access and search with "my_linear_model". The following still accesses the model and it's associated features::
 
     GET _ltr/_model/my_linear_model
 
