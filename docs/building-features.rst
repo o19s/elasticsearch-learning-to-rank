@@ -132,7 +132,7 @@ You can create a feature set simply by using a POST. To create it, you give a fe
                     "params": [
                         "some_multiplier"
                     ],
-                    "template_language": "derived_expressions",
+                    "template_language": "derived_expression",
                     "template": "title_query * some_multiplier"
                 },
                 {
