@@ -3,7 +3,7 @@ package com.o19s.es.ltr.rest;
 import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BytesRestResponse;
@@ -85,19 +85,19 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
     }
 
     RestChannelConsumer getStore(NodeClient client, String indexName) {
-        return (channel) -> client.admin().indices().prepareExists(indexName)
-                .execute(new RestBuilderListener<IndicesExistsResponse>(channel) {
+        return (channel) -> client.admin().indices().prepareGetIndex().setIndices(indexName)
+                .execute(new RestBuilderListener<GetIndexResponse>(channel) {
                     @Override
                     public RestResponse buildResponse(
-                            IndicesExistsResponse indicesExistsResponse,
+                            GetIndexResponse indexResponse,
                             XContentBuilder builder
                     ) throws Exception {
                         builder.startObject()
-                                .field("exists", indicesExistsResponse.isExists())
+                                .field("exists", indexResponse.indices().length > 1)
                                 .endObject()
                                 .close();
                         return new BytesRestResponse(
-                                indicesExistsResponse.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND,
+                                indexResponse.indices().length > 1 ? RestStatus.OK : RestStatus.NOT_FOUND,
                                 builder
                         );
                     }

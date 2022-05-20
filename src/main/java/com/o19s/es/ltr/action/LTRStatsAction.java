@@ -3,7 +3,6 @@ package com.o19s.es.ltr.action;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.FailedNodeException;
-import org.elasticsearch.action.support.nodes.BaseNodeRequest;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesRequest;
 import org.elasticsearch.action.support.nodes.BaseNodesResponse;
@@ -12,6 +11,7 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.ToXContentFragment;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -39,7 +39,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
         }
     }
 
-    public static class LTRStatsNodeRequest extends BaseNodeRequest {
+    public static class LTRStatsNodeRequest extends TransportRequest {
         private final LTRStatsNodesRequest nodesRequest;
 
         public LTRStatsNodeRequest(LTRStatsNodesRequest nodesRequest) {

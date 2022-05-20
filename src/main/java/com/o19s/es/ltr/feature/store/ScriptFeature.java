@@ -13,14 +13,16 @@ import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.MatchAllDocsQuery;
+
 import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
 import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
@@ -280,6 +282,10 @@ public class ScriptFeature implements Feature {
             }
             return this;
         }
+
+        public void visit(QueryVisitor visitor) {
+            visitor.visitLeaf(this);
+        }
     }
 
     static class LtrScriptWeight extends Weight {
@@ -358,7 +364,6 @@ public class ScriptFeature implements Feature {
             };
         }
 
-        @Override
         public void extractTerms(Set<Term> terms) {
         }
 

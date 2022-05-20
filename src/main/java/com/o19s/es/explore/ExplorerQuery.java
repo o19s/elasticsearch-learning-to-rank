@@ -21,6 +21,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
@@ -96,7 +97,8 @@ public class ExplorerQuery extends Query {
         }
         final Weight subWeight = searcher.createWeight(query, scoreMode, boost);
         Set<Term> terms = new HashSet<>();
-        subWeight.extractTerms(terms);
+//        subWeight.extractTerms(terms);
+        QueryVisitor.termCollector(terms);
         if (isCollectionScoped()) {
             ClassicSimilarity sim = new ClassicSimilarity();
             StatisticsHelper df_stats = new StatisticsHelper();
@@ -241,9 +243,8 @@ public class ExplorerQuery extends Query {
             this.type = type;
         }
 
-        @Override
         public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
+            QueryVisitor.termCollector(terms);
         }
 
         @Override
@@ -278,5 +279,9 @@ public class ExplorerQuery extends Query {
 
     public String toString(String field) {
         return query.toString();
+    }
+
+    public void visit(QueryVisitor visitor) {
+        visitor.visitLeaf(this);
     }
 }

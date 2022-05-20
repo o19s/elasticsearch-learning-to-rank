@@ -25,13 +25,14 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermState;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.DocIdSetIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -117,7 +118,6 @@ public class PostingsExplorerQuery extends Query {
             this.type = type;
         }
 
-        @Override
         public void extractTerms(Set<Term> terms) {
             terms.add(term);
         }
@@ -244,5 +244,9 @@ public class PostingsExplorerQuery extends Query {
         public float getMaxScore(int upTo) throws IOException {
             return Float.POSITIVE_INFINITY;
         }
+    }
+
+    public void visit(QueryVisitor visitor) {
+        visitor.visitLeaf(this);
     }
 }

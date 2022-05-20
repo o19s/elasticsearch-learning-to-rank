@@ -48,7 +48,6 @@ import org.elasticsearch.core.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
-import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.fielddata.plain.SortedNumericIndexFieldData;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
@@ -181,7 +180,6 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                     SearchHit hit = new SearchHit(
                         doc,
                         id,
-                        new Text("text"),
                         random().nextBoolean() ? new HashMap<>() : null,
                         null
                     );
