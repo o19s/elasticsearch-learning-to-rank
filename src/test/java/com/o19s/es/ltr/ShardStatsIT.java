@@ -6,8 +6,12 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESIntegTestCase;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchResponse;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,6 +20,11 @@ import static org.hamcrest.Matchers.equalTo;
     These tests mostly verify that shard vs collection stat counting is working as expected.
  */
 public class ShardStatsIT extends ESIntegTestCase {
+    @Override
+    protected Collection<Class<? extends Plugin>> nodePlugins() {
+        return Arrays.asList(LtrQueryParserPlugin.class);
+    }
+
     @Override
     protected int numberOfShards() {
         return 2;

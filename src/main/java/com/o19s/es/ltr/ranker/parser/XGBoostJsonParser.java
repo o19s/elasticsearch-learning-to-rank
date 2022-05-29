@@ -160,7 +160,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
             PARSER.declareFloat(SplitParserState::setLeaf, new ParseField("leaf"));
             PARSER.declareObjectArray(SplitParserState::setChildren, SplitParserState::parse,
                     new ParseField("children"));
-            PARSER.declareFloat(SplitParserState::setThreshold, new ParseField("split_condition"));
         }
 
         private Integer nodeId;
