@@ -13,6 +13,7 @@ import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.Weight;
@@ -243,7 +244,6 @@ public class ScriptFeature implements Feature {
             this.terms = terms;
         }
 
-        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -283,9 +283,16 @@ public class ScriptFeature implements Feature {
             return this;
         }
 
-        public void visit(QueryVisitor visitor) {
-            visitor.visitLeaf(this);
-        }
+       @Override
+       public void visit(QueryVisitor visitor) {
+            Set<String> fields = terms.stream().map(Term::field).collect(Collectors.toUnmodifiableSet());
+            for (String field : fields) {
+                if (visitor.acceptField(field) == false) {
+                    return;
+                }
+            }
+            visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this).consumeTerms(this, terms.toArray(new Term[0]));
+       }
     }
 
     static class LtrScriptWeight extends Weight {

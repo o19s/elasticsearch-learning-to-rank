@@ -18,6 +18,7 @@ package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.Weight;
@@ -86,7 +87,8 @@ public class PrebuiltFeature extends Query implements Feature {
         return query.rewrite(reader);
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
     }
 }

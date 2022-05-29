@@ -30,6 +30,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.TransportGetAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchTask;
 import org.elasticsearch.action.search.TransportSearchAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
@@ -49,6 +50,7 @@ import org.elasticsearch.transport.TransportService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -149,6 +151,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                     .routing(routing);
 
             getRequest.setParentTask(clusterService.localNode().getId(), task.getId());
+
             getAction.execute(task, getRequest, wrap(this::onGetResponse, this::onGetFailure));
         }
 
@@ -174,7 +177,9 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
-            searchAction.execute(task, srequest, wrap(this::onSearchResponse, this::onSearchFailure));
+
+            SearchTask st = srequest.createTask(task.getId(), task.getType(), task.getAction(), task.getParentTaskId(), Map.of());
+            searchAction.execute(st, srequest, wrap(this::onSearchResponse, this::onSearchFailure));
         }
 
         private void onGetFailure(Exception e) {

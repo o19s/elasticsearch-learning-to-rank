@@ -104,7 +104,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
     private IndexRequest buildIndexRequest(Task parentTask, FeatureStoreRequest request) throws IOException {
         StorableElement elt = request.getStorableElement();
 
-        IndexRequest indexRequest = client.prepareIndex(elt.id())
+        IndexRequest indexRequest = client.prepareIndex(request.getStore())
                 .setCreate(request.getAction() == FeatureStoreRequest.Action.CREATE)
                 .setRouting(request.getRouting())
                 .setSource(IndexFeatureStore.toSource(elt))

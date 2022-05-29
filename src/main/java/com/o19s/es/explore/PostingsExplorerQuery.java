@@ -63,7 +63,6 @@ public class PostingsExplorerQuery extends Query {
         return buffer.toString();
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
         return this.sameClassAs(obj)
@@ -246,7 +245,10 @@ public class PostingsExplorerQuery extends Query {
         }
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        if (visitor.acceptField(this.term.field()) != false) {
+            visitor.consumeTerms(this, term);
+        }
     }
 }

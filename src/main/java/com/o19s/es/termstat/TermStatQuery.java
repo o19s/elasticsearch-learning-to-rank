@@ -7,6 +7,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
@@ -143,7 +144,15 @@ public class TermStatQuery extends Query {
         }
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        Term[] acceptedTerms = terms.stream().filter(
+                t -> visitor.acceptField(t.field())
+        ).toArray(Term[]::new);
+
+        if (acceptedTerms.length > 0) {
+            QueryVisitor v = visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this);
+            v.consumeTerms(this, acceptedTerms);
+        }
     }
 }

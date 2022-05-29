@@ -270,7 +270,7 @@ public class IndexFeatureStore implements FeatureStore {
 
     public static CreateIndexRequest buildIndexRequest(String indexName) {
         return new CreateIndexRequest(indexName)
-                .mapping(MAPPING_FILE)
+                .mapping(readResourceFile(indexName, MAPPING_FILE))
                 .settings(storeIndexSettings(indexName));
     }
 

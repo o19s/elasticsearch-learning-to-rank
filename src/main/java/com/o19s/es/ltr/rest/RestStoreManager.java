@@ -93,11 +93,11 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
                             XContentBuilder builder
                     ) throws Exception {
                         builder.startObject()
-                                .field("exists", indexResponse.indices().length > 1)
+                                .field("exists", indexResponse.indices().length > 0)
                                 .endObject()
                                 .close();
                         return new BytesRestResponse(
-                                indexResponse.indices().length > 1 ? RestStatus.OK : RestStatus.NOT_FOUND,
+                                indexResponse.indices().length > 0 ? RestStatus.OK : RestStatus.NOT_FOUND,
                                 builder
                         );
                     }

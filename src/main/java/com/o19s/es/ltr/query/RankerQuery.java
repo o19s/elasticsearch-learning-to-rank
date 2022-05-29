@@ -29,6 +29,7 @@ import com.o19s.es.ltr.utils.Suppliers.MutableSupplier;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
@@ -480,7 +481,12 @@ public class RankerQuery extends Query {
         }
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        QueryVisitor v = visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this);
+        for (Query q : queries) {
+            q.visit(v);
+        }
     }
+
 }

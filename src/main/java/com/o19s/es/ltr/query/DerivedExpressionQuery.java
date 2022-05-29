@@ -22,6 +22,7 @@ import org.apache.lucene.expressions.Bindings;
 import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.Weight;
@@ -136,8 +137,9 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
             return Objects.hash(classHash(), query, fvSupplier);
         }
 
+        @Override
         public void visit(QueryVisitor visitor) {
-            visitor.visitLeaf(this);
+            this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
         }
     }
 
@@ -307,7 +309,8 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         }
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        // No-op
     }
 }

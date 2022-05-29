@@ -23,7 +23,7 @@ public class ShardStatsIT extends ESIntegTestCase {
 
     protected void createIdx() {
         prepareCreate("idx")
-                .setMapping( "s");
+                .setMapping( "type=text");
 
         for (int i = 0; i < 4; i++) {
             indexDoc(i);

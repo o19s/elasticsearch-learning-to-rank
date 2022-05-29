@@ -61,7 +61,6 @@ public class ExplorerQuery extends Query {
 
     public String getType() { return this.type; }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
         return sameClassAs(other) &&
@@ -95,10 +94,8 @@ public class ExplorerQuery extends Query {
         if (!scoreMode.needsScores()) {
             return searcher.createWeight(query, scoreMode, boost);
         }
-        final Weight subWeight = searcher.createWeight(query, scoreMode, boost);
-        Set<Term> terms = new HashSet<>();
-//        subWeight.extractTerms(terms);
-        QueryVisitor.termCollector(terms);
+        final Set<Term> terms = new HashSet<>();
+        this.visit(QueryVisitor.termCollector(terms));
         if (isCollectionScoped()) {
             ClassicSimilarity sim = new ClassicSimilarity();
             StatisticsHelper df_stats = new StatisticsHelper();
@@ -281,7 +278,8 @@ public class ExplorerQuery extends Query {
         return query.toString();
     }
 
+    @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
     }
 }
