@@ -105,6 +105,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         StorableElement elt = request.getStorableElement();
 
         IndexRequest indexRequest = client.prepareIndex(request.getStore())
+                .setId(elt.id())
                 .setCreate(request.getAction() == FeatureStoreRequest.Action.CREATE)
                 .setRouting(request.getRouting())
                 .setSource(IndexFeatureStore.toSource(elt))

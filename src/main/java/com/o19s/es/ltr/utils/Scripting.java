@@ -46,24 +46,8 @@ public class Scripting {
             @Override
             public Expression run() {
                 try {
-                    // snapshot our context here, we check on behalf of the expression
-                    AccessControlContext engineContext = AccessController.getContext();
-                    ClassLoader loader = getClass().getClassLoader();
-                    if (sm != null) {
-                        loader = new ClassLoader(loader) {
-                            @Override
-                            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                                try {
-                                    engineContext.checkPermission(new ClassPermission(name));
-                                } catch (SecurityException e) {
-                                    throw new ClassNotFoundException(name, e);
-                                }
-                                return super.loadClass(name, resolve);
-                            }
-                        };
-                    }
                     // NOTE: validation is delayed to allow runtime vars, and we don't have access to per index stuff here
-                    return JavascriptCompiler.compile(scriptSource, functions, loader);
+                    return JavascriptCompiler.compile(scriptSource, functions, getClass().getClassLoader());
                 } catch (ParseException e) {
                     throw convertToScriptException("compile error", scriptSource, scriptSource, e);
                 }
