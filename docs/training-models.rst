@@ -14,7 +14,7 @@ We provide two demos for training a model. A fully-fledged `Ranklib Demo <http:/
     3	qid:1	1:10.7808075	2:6.8449354 # 1369	rambo
     3	qid:1	1:10.7808075	2:0.0 # 1368	rambo
 
-Here for query id 1 (Rambo) we've logged features 1 (a title TF\*IDF score) and feature 2 (a description TF\*IDF score) for a set of documents. In `train.py <http://github.com/o19s/elasticsearch-learning-to-rank/demo/train.py>`_ you'll see how we call Ranklib to train one of it's supporerd models on this line::
+Here for query id 1 (Rambo) we've logged features 1 (a title TF\*IDF score) and feature 2 (a description TF\*IDF score) for a set of documents. In `train.py <http://github.com/o19s/elasticsearch-learning-to-rank/demo/train.py>`_ you'll see how we call Ranklib to train one of it's supported models on this line::
 
     cmd = "java -jar RankLib-2.8.jar -ranker %s -train%rs -save %s -frate 1.0" % (whichModel, judgmentsWithFeaturesFile, modelOutput)
 
