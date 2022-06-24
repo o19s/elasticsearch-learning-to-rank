@@ -108,7 +108,7 @@ Many learning to rank models are familiar with a file format introduced by SVM R
     3   qid:1   1:53.1  2:40.1  3:50,...
     ...
 
-In actual systems, you might log these values after the fact, gathering them to annotate a judgment list with feature values. In others the judgment list might come from user analytics, so it may be logged as the user interacts with the search application. More on this when we cover in :doc:`logging-features`.
+In actual systems, you might log these values after the fact, gathering them to annotate a judgment list with feature values. In others the judgment list might come from user analytics, so it may be logged as the user interacts with the search application. More on this when we cover it in :doc:`logging-features`.
 
 ===============================
 Training a ranking function
