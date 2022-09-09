@@ -17,6 +17,7 @@ package com.o19s.es.explore;
 
 import org.apache.lucene.search.Query;
 import org.elasticsearch.xcontent.ParseField;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -151,5 +152,11 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     public ExplorerQueryBuilder statsType(String type) {
         this.type = type;
         return this;
+    }
+
+
+    @Override
+    public Version getMinimalSupportedVersion() {
+        return Version.V_8_5_0;
     }
 }

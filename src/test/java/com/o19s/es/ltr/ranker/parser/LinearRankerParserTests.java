@@ -22,7 +22,7 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.xcontent.XContentBuilder;

@@ -26,9 +26,8 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 
 import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
 import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.XContentType;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.script.ScoreScript;
@@ -80,8 +79,10 @@ public class ScriptFeature implements Feature {
 
     public static ScriptFeature compile(StoredFeature feature) {
         try {
-            XContentParser xContentParser = XContentType.JSON.xContent().createParser(NamedXContentRegistry.EMPTY,
-                    LoggingDeprecationHandler.INSTANCE, feature.template());
+            XContentParser xContentParser = XContentType.JSON.xContent().createParser(
+                XContentParserConfiguration.EMPTY,
+                feature.template()
+            );
 
             return new ScriptFeature(feature.name(), Script.parse(xContentParser, "native"), feature.queryParams());
         } catch (IOException e) {
@@ -178,7 +179,7 @@ public class ScriptFeature implements Feature {
             for(String field : fields) {
                 if (analyzerName == null) {
                     final MappedFieldType fieldType = context.getSearchExecutionContext().getFieldType(field);
-                    analyzer = fieldType.getTextSearchInfo().getSearchAnalyzer();
+                    analyzer = fieldType.getTextSearchInfo().searchAnalyzer();
                 } else {
                     analyzer = context.getSearchExecutionContext().getIndexAnalyzers().get(analyzerName);
                 }
@@ -217,7 +218,7 @@ public class ScriptFeature implements Feature {
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
         ScoreScript.Factory factoryFactory  = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
-        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory, 
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
                 context.getSearchExecutionContext().lookup(),
                 context.getSearchExecutionContext().index().getName(),
                 context.getSearchExecutionContext().getShardId()

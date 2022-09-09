@@ -9,8 +9,8 @@ import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.client.internal.node.NodeClient;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
@@ -140,7 +140,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
                 throw new IllegalArgumentException("Element of type [" + elt.type() + "] are not updatable, " +
                         "please create a new one instead.");
             } catch (IllegalArgumentException iae) {
-                return (channel) -> channel.sendResponse(new BytesRestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
+                return (channel) -> channel.sendResponse(new RestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
             }
         }
         FeatureStoreAction.FeatureStoreRequestBuilder builder = new FeatureStoreAction.FeatureStoreRequestBuilder(

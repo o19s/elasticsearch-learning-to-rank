@@ -15,7 +15,7 @@
  */
 package com.o19s.es.explore;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 
 public class StatisticsHelperTests extends LuceneTestCase {
     private final float[] dataset = new float[] {

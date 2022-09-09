@@ -42,10 +42,10 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.RandomIndexWriter;
+import org.apache.lucene.tests.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.misc.SweetSpotSimilarity;
-import org.apache.lucene.queries.BlendedTermQuery;
+import org.apache.lucene.search.BlendedTermQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -76,7 +76,7 @@ import org.apache.lucene.search.similarities.NormalizationH3;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.lucene.search.function.WeightFactorFunction;
 import org.junit.After;
@@ -416,7 +416,12 @@ public class LtrQueryTests extends LuceneTestCase {
 
         Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
 
-        Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
+        BlendedTermQuery.Builder bldr = new BlendedTermQuery.Builder()
+            .setRewriteMethod(BlendedTermQuery.DISJUNCTION_MAX_REWRITE);
+        for (Term t : termsToBlend) {
+            bldr.add(t);
+        }
+        Query blended = bldr.build();
         List<Query> features = Arrays.asList(new TermQuery(new Term("field",  userQuery.split(" ")[0])), blended);
 
         checkModelWithFeatures(toPrebuildFeatureWithNoName(features), null, null);
@@ -433,7 +438,12 @@ public class LtrQueryTests extends LuceneTestCase {
 
         Term[] termsToBlend = new Term[]{new Term("field",  userQuery.split(" ")[0])};
 
-        Query blended = BlendedTermQuery.dismaxBlendedQuery(termsToBlend, 1f);
+        BlendedTermQuery.Builder bldr = new BlendedTermQuery.Builder()
+            .setRewriteMethod(BlendedTermQuery.DISJUNCTION_MAX_REWRITE);
+        for (Term t : termsToBlend) {
+            bldr.add(t);
+        }
+        Query blended = bldr.build();
         List<PrebuiltFeature> features = Arrays.asList(
                 new PrebuiltFeature(null, new TermQuery(new Term("field",  "missingterm"))),
                 new PrebuiltFeature(null, blended));

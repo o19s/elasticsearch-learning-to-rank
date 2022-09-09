@@ -16,10 +16,9 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentFactory;
@@ -31,7 +30,7 @@ import org.hamcrest.CoreMatchers;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.elasticsearch.xcontent.NamedXContentRegistry.EMPTY;
+import static org.elasticsearch.xcontent.XContentParserConfiguration.EMPTY;
 import static org.elasticsearch.xcontent.json.JsonXContent.jsonXContent;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -251,7 +250,7 @@ public class StoredFeatureParserTests extends LuceneTestCase {
 
     static StoredFeature parse(String featureString, String defaultName) throws IOException {
         return StoredFeature.parse(jsonXContent.createParser(EMPTY,
-                LoggingDeprecationHandler.INSTANCE, featureString), defaultName);
+                featureString), defaultName);
     }
 
     private String writeAsNonFormattedString(AbstractQueryBuilder<?> builder) {

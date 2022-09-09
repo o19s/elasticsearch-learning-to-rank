@@ -25,6 +25,7 @@ import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.xcontent.ParseField;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -201,5 +202,10 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     public final LtrQueryBuilder features(List<QueryBuilder> features) {
         _features = features;
         return this;
+    }
+
+    @Override
+    public Version getMinimalSupportedVersion() {
+        return Version.CURRENT;
     }
 }

@@ -16,7 +16,7 @@
 
 package com.o19s.es.ltr.feature.store;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 
 import java.io.IOException;
 import java.util.List;

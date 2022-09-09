@@ -18,7 +18,7 @@ package com.o19s.es.ltr.utils;
 
 import com.o19s.es.ltr.feature.store.FeatureStore;
 import java.util.function.Supplier;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.internal.Client;
 
 @FunctionalInterface
 public interface FeatureStoreLoader {

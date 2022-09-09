@@ -10,6 +10,7 @@ import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.xcontent.ParseField;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -171,7 +172,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     private Analyzer getAnalyzerForField(SearchExecutionContext context, String fieldName) {
         MappedFieldType fieldType = context.getFieldType(fieldName);
-        return fieldType.getTextSearchInfo().getSearchAnalyzer();
+        return fieldType.getTextSearchInfo().searchAnalyzer();
     }
 
     private Analyzer getAnalyzerByName(SearchExecutionContext context, String analyzerName) {
@@ -246,5 +247,10 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     public TermStatQueryBuilder terms(List<String> terms) {
         this.terms = terms.toArray(new String[]{});
         return this;
+    }
+
+    @Override
+    public Version getMinimalSupportedVersion() {
+        return Version.CURRENT;
     }
 }

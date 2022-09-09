@@ -16,7 +16,7 @@
 
 package com.o19s.es.template.mustache;
 
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import org.elasticsearch.xcontent.json.JsonStringEncoder;
 import com.github.mustachejava.Code;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.DefaultMustacheVisitor;

@@ -42,8 +42,8 @@ import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.LuceneTestCase;
-import org.apache.lucene.util.TestUtil;
+import org.apache.lucene.tests.util.LuceneTestCase;
+import org.apache.lucene.tests.util.TestUtil;
 import org.elasticsearch.core.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
@@ -214,7 +214,10 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
 
     public Query buildFunctionScore() {
         FieldValueFactorFunction fieldValueFactorFunction = new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
-                new SortedNumericIndexFieldData("score", FLOAT));
+                new SortedNumericIndexFieldData(
+                    "score",
+                     FLOAT,
+                     (dv, n) -> { throw new UnsupportedOperationException(); }));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }

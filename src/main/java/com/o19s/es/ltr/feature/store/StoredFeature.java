@@ -30,12 +30,11 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.ObjectParser;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentFactory;
 import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.ScriptQueryBuilder;
@@ -134,8 +133,10 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         } else {
             builder.field(TEMPLATE.getPreferredName());
             // it's ok to use NamedXContentRegistry.EMPTY because we don't really parse we copy the structure...
-            XContentParser parser = XContentFactory.xContent(template).createParser(NamedXContentRegistry.EMPTY,
-                    LoggingDeprecationHandler.INSTANCE, template);
+            XContentParser parser = XContentFactory.xContent(template).createParser(
+                XContentParserConfiguration.EMPTY,
+                template
+            );
             builder.copyCurrentStructure(parser);
         }
         builder.endObject();
@@ -218,16 +219,16 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
         }
     }
 
-    private XContentParser createParser(Object source, NamedXContentRegistry registry) throws IOException {
+    private XContentParser createParser(Object source, XContentParserConfiguration config) throws IOException {
         if (source instanceof String) {
-            return XContentFactory.xContent((String) source).createParser(registry, LoggingDeprecationHandler.INSTANCE, (String) source);
+            return XContentFactory.xContent((String) source).createParser(config, (String) source);
         } else if (source instanceof BytesReference) {
             BytesRef ref = ((BytesReference) source).toBytesRef();
             return XContentFactory.xContent(ref.bytes, ref.offset, ref.length)
-                    .createParser(registry, LoggingDeprecationHandler.INSTANCE,
+                    .createParser(config,
                             ref.bytes, ref.offset, ref.length);
         } else if (source instanceof byte[]) {
-            return XContentFactory.xContent((byte[]) source).createParser(registry, LoggingDeprecationHandler.INSTANCE, (byte[]) source);
+            return XContentFactory.xContent((byte[]) source).createParser(config, (byte[]) source);
         } else {
             throw new IllegalArgumentException("Template engine returned an unsupported object type [" +
                     source.getClass().getCanonicalName() + "]");

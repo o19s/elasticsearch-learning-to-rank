@@ -30,8 +30,8 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.internal.Client;
+import org.elasticsearch.client.internal.Requests;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.MetadataCreateIndexService;
 import org.elasticsearch.core.CheckedFunction;
@@ -40,14 +40,13 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.apache.logging.log4j.LogManager;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.ObjectParser;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentFactory;
 import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.XContentType;
-import org.elasticsearch.core.internal.io.Streams;
+import org.elasticsearch.common.io.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -228,7 +227,7 @@ public class IndexFeatureStore implements FeatureStore {
     public static <E extends StorableElement> E parse(Class<E> eltClass, String type, byte[] bytes,
                                                       int offset, int length) throws IOException {
         try (XContentParser parser = XContentFactory.xContent(bytes)
-                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE, bytes)) {
+                .createParser(XContentParserConfiguration.EMPTY, bytes)) {
             return parse(eltClass, type, parser);
         }
     }
@@ -236,7 +235,7 @@ public class IndexFeatureStore implements FeatureStore {
     public static <E extends StorableElement> E parse(Class<E> eltClass, String type, BytesReference bytesReference) throws IOException {
         BytesRef ref = bytesReference.toBytesRef();
         try (XContentParser parser = XContentFactory.xContent(ref.bytes, ref.offset, ref.length)
-                .createParser(NamedXContentRegistry.EMPTY, LoggingDeprecationHandler.INSTANCE,
+                .createParser(XContentParserConfiguration.EMPTY,
                         ref.bytes, ref.offset, ref.length)
         ) {
             return parse(eltClass, type, parser);
@@ -277,7 +276,7 @@ public class IndexFeatureStore implements FeatureStore {
     private static String readResourceFile(String indexName, String resource) {
         try (InputStream is = IndexFeatureStore.class.getResourceAsStream(resource)) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Streams.copy(is, out);
+            Streams.copy(is.readAllBytes(), out);
             return out.toString(StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             LOGGER.error(

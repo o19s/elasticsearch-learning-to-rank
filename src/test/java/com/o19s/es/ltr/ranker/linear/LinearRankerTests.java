@@ -21,12 +21,12 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTreeTests;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.util.LuceneTestCase;
-import org.apache.lucene.util.TestUtil;
+import org.apache.lucene.tests.util.LuceneTestCase;
+import org.apache.lucene.tests.util.TestUtil;
 
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-import static org.apache.lucene.util.TestUtil.nextInt;
+import static org.apache.lucene.tests.util.TestUtil.nextInt;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.AllOf.allOf;

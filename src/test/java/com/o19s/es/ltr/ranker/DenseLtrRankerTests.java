@@ -16,7 +16,7 @@
 
 package com.o19s.es.ltr.ranker;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 
 public class DenseLtrRankerTests extends LuceneTestCase {
     public void newFeatureVector() throws Exception {
