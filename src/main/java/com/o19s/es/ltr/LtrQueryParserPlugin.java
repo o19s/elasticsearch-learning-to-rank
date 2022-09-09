@@ -260,6 +260,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
+       
         return asList(caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
     }
 

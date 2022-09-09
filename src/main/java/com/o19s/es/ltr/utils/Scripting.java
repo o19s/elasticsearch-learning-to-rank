@@ -15,56 +15,29 @@
  */
 package com.o19s.es.ltr.utils;
 
-import org.apache.lucene.expressions.Expression;
-import org.apache.lucene.expressions.js.JavascriptCompiler;
-import org.elasticsearch.SpecialPermission;
-import org.elasticsearch.script.ScriptException;
+import org.elasticsearch.script.RawScript;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptType;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.Collections;
 
 public class Scripting {
+    private static ScriptService scriptService = null;
+
     private Scripting() {}
 
-    public static Object compile(String scriptSource) {
-        return compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS);
+    public static void initScriptService(ScriptService scriptService) {
+        Scripting.scriptService = scriptService;
     }
 
-    public static Object compile(String scriptSource, Map<String,java.lang.reflect.Method> functions) {
-        // classloader created here
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SpecialPermission());
+    public static Object compile(String scriptSource) throws IOException {
+        if (Scripting.scriptService == null) {
+            throw new IOException("Script service not initialized.");
         }
-        return AccessController.doPrivileged(new PrivilegedAction<Expression>() {
-            @Override
-            public Expression run() {
-                try {
-                    // NOTE: validation is delayed to allow runtime vars, and we don't have access to per index stuff here
-                    return JavascriptCompiler.compile(scriptSource, functions, getClass().getClassLoader());
-                } catch (ParseException e) {
-                    throw convertToScriptException("compile error", scriptSource, scriptSource, e);
-                }
-            }
-        });
-    }
 
-    private static ScriptException convertToScriptException(String message, String source, String portion, Throwable cause) {
-        List<String> stack = new ArrayList<>();
-        stack.add(portion);
-        StringBuilder pointer = new StringBuilder();
-        if (cause instanceof ParseException) {
-            int offset = ((ParseException) cause).getErrorOffset();
-            for (int i = 0; i < offset; i++) {
-                pointer.append(' ');
-            }
-        }
-        pointer.append("^---- HERE");
-        stack.add(pointer.toString());
-        throw new ScriptException(message, cause, stack, source, "STATIC_COMPILER");
+        Script script = new Script(ScriptType.INLINE, "expression", scriptSource, Collections.EMPTY_MAP);
+        return scriptService.compile(script, RawScript.CONTEXT).newInstance();
     }
 }

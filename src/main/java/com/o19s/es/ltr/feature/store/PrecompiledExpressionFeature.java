@@ -26,6 +26,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -58,8 +59,12 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
 
     public static PrecompiledExpressionFeature compile(StoredFeature feature) {
         assert TEMPLATE_LANGUAGE.equals(feature.templateLanguage());
-        Expression expr = (Expression) Scripting.compile(feature.template());
-        return new PrecompiledExpressionFeature(feature.name(), expr, feature.queryParams());
+        try {
+            Expression expr = (Expression) Scripting.compile(feature.template());
+            return new PrecompiledExpressionFeature(feature.name(), expr, feature.queryParams());
+        } catch (IOException ex) {
+            return null; // TODO: Cleaner exception handling
+        }
     }
 
     @Override
