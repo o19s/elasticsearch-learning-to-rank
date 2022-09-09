@@ -38,6 +38,6 @@ public class Scripting {
         }
 
         Script script = new Script(ScriptType.INLINE, "expression", scriptSource, Collections.EMPTY_MAP);
-        return scriptService.compile(script, RawScript.CONTEXT).newInstance();
+        return scriptService.compile(script, RawScript.CONTEXT).newInstance().execute();
     }
 }
