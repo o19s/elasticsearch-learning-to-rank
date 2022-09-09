@@ -63,6 +63,7 @@ import com.o19s.es.ltr.stats.suppliers.CacheStatsOnNodeSupplier;
 import com.o19s.es.ltr.stats.suppliers.PluginHealthStatusSupplier;
 import com.o19s.es.ltr.stats.suppliers.StoreStatsSupplier;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import com.o19s.es.ltr.utils.Scripting;
 import com.o19s.es.ltr.utils.Suppliers;
 import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
@@ -260,7 +261,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
-       
+
+        Scripting.initScriptService(scriptService);
+
         return asList(caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
     }
 
