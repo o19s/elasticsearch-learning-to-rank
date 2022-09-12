@@ -14,6 +14,7 @@ import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.elasticsearch.script.RawDoubleValuesScript;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,7 +23,7 @@ import java.util.Set;
 
 public class TermStatScorer extends Scorer {
     private final DocIdSetIterator iter;
-    private final Expression compiledExpression;
+    private final RawDoubleValuesScript compiledExpression;
 
     private AggrType aggr;
     private AggrType posAggr;
@@ -36,7 +37,7 @@ public class TermStatScorer extends Scorer {
     public TermStatScorer(TermStatQuery.TermStatWeight weight,
                           IndexSearcher searcher,
                           LeafReaderContext context,
-                          Expression compiledExpression,
+                          RawDoubleValuesScript compiledExpression,
                           Set<Term> terms,
                           ScoreMode scoreMode,
                           AggrType aggr,
@@ -98,7 +99,7 @@ public class TermStatScorer extends Scorer {
             termStatDict.put("unique", (float) terms.size());
 
             // Run the expression and store the result in computed
-            DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource(bindings);
+            DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource((name)-> DoubleValuesSource.constant(termStatDict.get(name)));
             DoubleValues values = dvSrc.getValues(context, null);
 
             values.advanceExact(docID());

@@ -136,7 +136,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     @Override
     protected Query doToQuery(SearchExecutionContext context) throws IOException {
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        var compiledExpression = Scripting.compile(expr);
         AggrType aggrType = AggrType.valueOf(aggr.toUpperCase(Locale.getDefault()));
         AggrType posAggrType = AggrType.valueOf(pos_aggr.toUpperCase(Locale.getDefault()));
 

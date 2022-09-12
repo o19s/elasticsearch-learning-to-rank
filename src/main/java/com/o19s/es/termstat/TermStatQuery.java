@@ -15,6 +15,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
+import org.elasticsearch.script.RawDoubleValuesScript;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,12 +24,12 @@ import java.util.Objects;
 import java.util.Set;
 
 public class TermStatQuery extends Query {
-    private Expression expr;
+    private RawDoubleValuesScript expr;
     private StatisticsHelper.AggrType aggr;
     private StatisticsHelper.AggrType posAggr;
     private Set<Term> terms;
 
-    public TermStatQuery(Expression expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
+    public TermStatQuery(RawDoubleValuesScript expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
         this.expr = expr;
         this.aggr = aggr;
         this.posAggr = posAggr;
@@ -36,7 +37,7 @@ public class TermStatQuery extends Query {
     }
 
 
-    public Expression getExpr() {
+    public RawDoubleValuesScript getExpr() {
         return this.expr;
     }
     public AggrType getAggr() { return this.aggr; }
@@ -51,7 +52,7 @@ public class TermStatQuery extends Query {
     }
 
     private boolean equalsTo(TermStatQuery other) {
-        return Objects.equals(expr.sourceText, other.expr.sourceText)
+        return Objects.equals(expr.sourceText(), other.expr.sourceText())
                 && Objects.equals(aggr, other.aggr)
                 && Objects.equals(posAggr, other.posAggr)
                 && Objects.equals(terms, other.terms);
@@ -63,7 +64,7 @@ public class TermStatQuery extends Query {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(expr.sourceText, aggr, posAggr, terms); }
+    public int hashCode() { return Objects.hash(expr.sourceText(), aggr, posAggr, terms); }
 
     @Override
     public String toString(String field) {
@@ -79,7 +80,7 @@ public class TermStatQuery extends Query {
     }
 
     static class TermStatWeight extends Weight {
-        private final Expression expression;
+        private final RawDoubleValuesScript expression;
         private final IndexSearcher searcher;
         private final ScoreMode scoreMode;
 
@@ -128,7 +129,7 @@ public class TermStatQuery extends Query {
             int newDoc = scorer.iterator().advance(doc);
             if (newDoc == doc) {
                 return Explanation
-                        .match(scorer.score(), "weight(" + this.expression.sourceText + " in doc " + newDoc + ")");
+                        .match(scorer.score(), "weight(" + this.expression.sourceText() + " in doc " + newDoc + ")");
             }
             return Explanation.noMatch("no matching term");
         }
