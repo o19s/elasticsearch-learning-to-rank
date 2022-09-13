@@ -14,7 +14,7 @@ import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.elasticsearch.script.RawDoubleValuesScript;
+import org.elasticsearch.script.DoubleValuesScript;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 public class TermStatScorer extends Scorer {
     private final DocIdSetIterator iter;
-    private final RawDoubleValuesScript compiledExpression;
+    private final DoubleValuesScript compiledExpression;
 
     private AggrType aggr;
     private AggrType posAggr;
@@ -37,7 +37,7 @@ public class TermStatScorer extends Scorer {
     public TermStatScorer(TermStatQuery.TermStatWeight weight,
                           IndexSearcher searcher,
                           LeafReaderContext context,
-                          RawDoubleValuesScript compiledExpression,
+                          DoubleValuesScript compiledExpression,
                           Set<Term> terms,
                           ScoreMode scoreMode,
                           AggrType aggr,

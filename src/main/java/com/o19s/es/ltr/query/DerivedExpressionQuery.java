@@ -33,7 +33,7 @@ import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.DoubleValues;
-import org.elasticsearch.script.RawDoubleValuesScript;
+import org.elasticsearch.script.DoubleValuesScript;
 
 
 import java.io.IOException;
@@ -44,10 +44,10 @@ import java.util.function.Supplier;
 
 public class DerivedExpressionQuery extends Query implements LtrRewritableQuery {
     private final FeatureSet features;
-    private final RawDoubleValuesScript expression;
+    private final DoubleValuesScript expression;
     private final Map<String, Double> queryParamValues;
 
-    public DerivedExpressionQuery(FeatureSet features, RawDoubleValuesScript expr, Map<String, Double> queryParamValues) {
+    public DerivedExpressionQuery(FeatureSet features, DoubleValuesScript expr, Map<String, Double> queryParamValues) {
         this.features = features;
         this.expression = expr;
         this.queryParamValues = queryParamValues;
@@ -141,7 +141,7 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
     static class FVWeight extends Weight {
         private final FeatureSet features;
-        private final RawDoubleValuesScript expression;
+        private final DoubleValuesScript expression;
         private final Supplier<LtrRanker.FeatureVector> vectorSupplier;
         private final Map<String, Double> queryParamValues;
 

@@ -15,7 +15,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
-import org.elasticsearch.script.RawDoubleValuesScript;
+import org.elasticsearch.script.DoubleValuesScript;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -24,12 +24,12 @@ import java.util.Objects;
 import java.util.Set;
 
 public class TermStatQuery extends Query {
-    private RawDoubleValuesScript expr;
+    private DoubleValuesScript expr;
     private StatisticsHelper.AggrType aggr;
     private StatisticsHelper.AggrType posAggr;
     private Set<Term> terms;
 
-    public TermStatQuery(RawDoubleValuesScript expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
+    public TermStatQuery(DoubleValuesScript expr, AggrType aggr, AggrType posAggr, Set<Term> terms) {
         this.expr = expr;
         this.aggr = aggr;
         this.posAggr = posAggr;
@@ -37,7 +37,7 @@ public class TermStatQuery extends Query {
     }
 
 
-    public RawDoubleValuesScript getExpr() {
+    public DoubleValuesScript getExpr() {
         return this.expr;
     }
     public AggrType getAggr() { return this.aggr; }
@@ -80,7 +80,7 @@ public class TermStatQuery extends Query {
     }
 
     static class TermStatWeight extends Weight {
-        private final RawDoubleValuesScript expression;
+        private final DoubleValuesScript expression;
         private final IndexSearcher searcher;
         private final ScoreMode scoreMode;
 

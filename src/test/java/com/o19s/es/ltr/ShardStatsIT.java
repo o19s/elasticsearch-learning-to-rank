@@ -1,5 +1,6 @@
 package com.o19s.es.ltr;
 
+import com.o19s.es.TestExpressionsPlugin;
 import com.o19s.es.explore.ExplorerQueryBuilder;
 import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -22,7 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class ShardStatsIT extends ESIntegTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class);
+        return Arrays.asList(LtrQueryParserPlugin.class, TestExpressionsPlugin.class);
     }
 
     @Override

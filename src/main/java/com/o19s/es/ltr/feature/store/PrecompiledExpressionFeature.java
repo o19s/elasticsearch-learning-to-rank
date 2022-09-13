@@ -25,7 +25,7 @@ import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.elasticsearch.script.RawDoubleValuesScript;
+import org.elasticsearch.script.DoubleValuesScript;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -47,11 +47,11 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(PrecompiledExpressionFeature.class);
 
     private final String name;
-    private final RawDoubleValuesScript expression;
+    private final DoubleValuesScript expression;
     private final Set<String> expressionVariables;
     private final Collection<String> queryParams;
 
-    private PrecompiledExpressionFeature(String name, RawDoubleValuesScript expression, Collection<String> queryParams) {
+    private PrecompiledExpressionFeature(String name, DoubleValuesScript expression, Collection<String> queryParams) {
         this.name = name;
         this.expression = expression;
         this.queryParams = queryParams;
@@ -61,7 +61,7 @@ public class PrecompiledExpressionFeature implements Feature, Accountable {
     public static PrecompiledExpressionFeature compile(StoredFeature feature) {
         assert TEMPLATE_LANGUAGE.equals(feature.templateLanguage());
         try {
-            RawDoubleValuesScript expr = Scripting.compile(feature.template());
+            DoubleValuesScript expr = Scripting.compile(feature.template());
             return new PrecompiledExpressionFeature(feature.name(), expr, feature.queryParams());
         } catch (IOException ex) {
             return null; // TODO: Cleaner exception handling

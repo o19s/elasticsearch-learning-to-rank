@@ -15,7 +15,7 @@
  */
 package com.o19s.es.ltr.utils;
 
-import org.elasticsearch.script.RawDoubleValuesScript;
+import org.elasticsearch.script.DoubleValuesScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptType;
@@ -32,12 +32,12 @@ public class Scripting {
         Scripting.scriptService = scriptService;
     }
 
-    public static RawDoubleValuesScript compile(String scriptSource) throws IOException {
+    public static DoubleValuesScript compile(String scriptSource) throws IOException {
         if (Scripting.scriptService == null) {
             throw new IOException("Script service not initialized.");
         }
 
         Script script = new Script(ScriptType.INLINE, "expression", scriptSource, Collections.EMPTY_MAP);
-        return scriptService.compile(script, RawDoubleValuesScript.CONTEXT).newInstance();
+        return scriptService.compile(script, DoubleValuesScript.CONTEXT).newInstance();
     }
 }
