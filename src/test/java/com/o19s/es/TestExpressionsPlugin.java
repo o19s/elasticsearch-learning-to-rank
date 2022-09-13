@@ -55,7 +55,9 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
             try {
                 var expr = JavascriptCompiler.compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS, getClass().getClassLoader());
                 if (contexts.containsKey(context) == false) {
-                    throw new IllegalArgumentException("expression engine does not know how to handle script context [" + context.name + "]");
+                    throw new IllegalArgumentException(
+                        "expression engine does not know how to handle script context [" + context.name + "]"
+                    );
                 }
                 return context.factoryClazz.cast(contexts.get(context).apply(expr));
             } catch (ParseException e) {

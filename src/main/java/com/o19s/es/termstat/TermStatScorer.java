@@ -3,7 +3,6 @@ package com.o19s.es.termstat;
 import com.o19s.es.explore.StatisticsHelper;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 import org.apache.lucene.expressions.Bindings;
-import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 
@@ -99,7 +98,9 @@ public class TermStatScorer extends Scorer {
             termStatDict.put("unique", (float) terms.size());
 
             // Run the expression and store the result in computed
-            DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource((name)-> DoubleValuesSource.constant(termStatDict.get(name)));
+            DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource(
+                (name)-> DoubleValuesSource.constant(termStatDict.get(name))
+            );
             DoubleValues values = dvSrc.getValues(context, null);
 
             values.advanceExact(docID());
