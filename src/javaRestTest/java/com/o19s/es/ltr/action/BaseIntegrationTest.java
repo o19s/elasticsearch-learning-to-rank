@@ -60,7 +60,12 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class, InjectionScriptPlugin.class, TestExpressionsPlugin.class);
+        return Arrays.asList(
+            LtrQueryParserPlugin.class,
+            NativeScriptPlugin.class,
+            InjectionScriptPlugin.class,
+            TestExpressionsPlugin.class
+        );
     }
 
     public void createStore(String name) throws Exception {

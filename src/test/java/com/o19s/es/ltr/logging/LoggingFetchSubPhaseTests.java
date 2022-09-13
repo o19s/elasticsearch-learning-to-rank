@@ -48,7 +48,7 @@ import org.elasticsearch.core.Tuple;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
-import org.elasticsearch.index.fielddata.plain.SortedNumericIndexFieldData;
+import org.elasticsearch.index.fielddata.plain.SortedDoublesIndexFieldData;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
@@ -214,7 +214,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
 
     public Query buildFunctionScore() {
         FieldValueFactorFunction fieldValueFactorFunction = new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
-                new SortedNumericIndexFieldData(
+                new SortedDoublesIndexFieldData(
                     "score",
                      FLOAT,
                      (dv, n) -> { throw new UnsupportedOperationException(); }));
