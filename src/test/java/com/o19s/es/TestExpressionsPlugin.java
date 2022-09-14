@@ -27,9 +27,9 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
     }
 
     public static class ExpressionScriptEngine implements ScriptEngine {
-        private static Map<ScriptContext<?>, Function<Expression, Object>> contexts = Map.of(
+        private final static Map<ScriptContext<?>, Function<Expression, Object>> contexts = Map.of(
             DoubleValuesScript.CONTEXT,
-            (Expression expr) -> new ExpressionDoubleValuesScript(expr) {
+            (Expression expr) -> new MockExpressionDoubleValuesScript(expr) {
                 @Override
                 public boolean isResultDeterministic() {
                     return true;
@@ -44,11 +44,9 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
         @Override
         public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context, Map<String, String> params) {
-            T result = PrivilegedOperations.supplierWithCreateClassLoader(
+            return PrivilegedOperations.supplierWithCreateClassLoader(
                     () -> compileInternal(scriptSource, context)
             );
-
-            return result;
         }
 
         public <T> T compileInternal(String scriptSource, ScriptContext<T> context) {
@@ -56,7 +54,7 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
                 var expr = JavascriptCompiler.compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS, getClass().getClassLoader());
                 if (contexts.containsKey(context) == false) {
                     throw new IllegalArgumentException(
-                        "expression engine does not know how to handle script context [" + context.name + "]"
+                        "mock expression engine does not know how to handle script context [" + context.name + "]"
                     );
                 }
                 return context.factoryClazz.cast(contexts.get(context).apply(expr));
@@ -71,11 +69,11 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
         }
     }
 
-    public static class ExpressionDoubleValuesScript implements DoubleValuesScript.Factory {
-        private final Expression exprScript;
+    public static class MockExpressionDoubleValuesScript implements DoubleValuesScript.Factory {
+        private final Expression expression;
 
-        ExpressionDoubleValuesScript(Expression e) {
-            this.exprScript = e;
+        MockExpressionDoubleValuesScript(Expression e) {
+            this.expression = e;
         }
 
         @Override
@@ -83,17 +81,17 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
             return new DoubleValuesScript() {
                 @Override
                 public double execute() {
-                    return exprScript.evaluate(new DoubleValues[0]);
+                    return expression.evaluate(new DoubleValues[0]);
                 }
 
                 @Override
                 public double evaluate(DoubleValues[] functionValues) {
-                    return exprScript.evaluate(functionValues);
+                    return expression.evaluate(functionValues);
                 }
 
                 @Override
                 public DoubleValuesSource getDoubleValuesSource(Function<String, DoubleValuesSource> sourceProvider) {
-                    return exprScript.getDoubleValuesSource(new Bindings() {
+                    return expression.getDoubleValuesSource(new Bindings() {
                         @Override
                         public DoubleValuesSource getDoubleValuesSource(String name) {
                             return sourceProvider.apply(name);
@@ -103,7 +101,7 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
                 @Override
                 public SortField getSortField(Function<String, DoubleValuesSource> sourceProvider, boolean reverse) {
-                    return exprScript.getSortField(new Bindings() {
+                    return expression.getSortField(new Bindings() {
                         @Override
                         public DoubleValuesSource getDoubleValuesSource(String name) {
                             return sourceProvider.apply(name);
@@ -113,7 +111,7 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
                 @Override
                 public Rescorer getRescorer(Function<String, DoubleValuesSource> sourceProvider) {
-                    return exprScript.getRescorer(new Bindings() {
+                    return expression.getRescorer(new Bindings() {
                         @Override
                         public DoubleValuesSource getDoubleValuesSource(String name) {
                             return sourceProvider.apply(name);
@@ -123,12 +121,12 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
                 @Override
                 public String sourceText() {
-                    return exprScript.sourceText;
+                    return expression.sourceText;
                 }
 
                 @Override
                 public String[] variables() {
-                    return exprScript.variables;
+                    return expression.variables;
                 }
             };
         }
