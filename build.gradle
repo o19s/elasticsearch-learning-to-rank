@@ -1,15 +1,10 @@
 buildscript {
   repositories {
     gradlePluginPortal()
-    mavenLocal()
-    maven {
-      url = "https://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/923a9f800ae"
-    }
   }
 
   dependencies {
-    classpath "org.elasticsearch:elasticsearch:8.5.0-SNAPSHOT"
-    classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}-SNAPSHOT"
+    classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
   }
 }
 
@@ -23,9 +18,6 @@ allprojects {
     mavenCentral()
     jcenter()
     mavenLocal()
-    maven {
-      url = "https://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/923a9f800ae"
-    }
     gradlePluginPortal()
   }
 
@@ -40,7 +32,6 @@ allprojects {
 
     runtimeOnly 'org.locationtech.spatial4j:spatial4j:0.7'
     runtimeOnly 'org.locationtech.jts:jts-core:1.15.0'
-    //runtimeOnly 'org.apache.logging.log4j:log4j-core:2.17.1'
   }
 }
 

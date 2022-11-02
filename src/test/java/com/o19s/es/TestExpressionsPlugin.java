@@ -27,7 +27,7 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
     }
 
     public static class ExpressionScriptEngine implements ScriptEngine {
-        private final static Map<ScriptContext<?>, Function<Expression, Object>> contexts = Map.of(
+        private static final Map<ScriptContext<?>, Function<Expression, Object>> contexts = Map.of(
             DoubleValuesScript.CONTEXT,
             (Expression expr) -> new MockExpressionDoubleValuesScript(expr) {
                 @Override
