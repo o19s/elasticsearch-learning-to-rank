@@ -16,6 +16,7 @@
 
 package com.o19s.es.ltr.action;
 
+import com.o19s.es.TestExpressionsPlugin;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreRequestBuilder;
 import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
@@ -59,7 +60,12 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(LtrQueryParserPlugin.class, NativeScriptPlugin.class, InjectionScriptPlugin.class);
+        return Arrays.asList(
+            LtrQueryParserPlugin.class,
+            NativeScriptPlugin.class,
+            InjectionScriptPlugin.class,
+            TestExpressionsPlugin.class
+        );
     }
 
     public void createStore(String name) throws Exception {

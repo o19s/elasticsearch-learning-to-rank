@@ -6,7 +6,6 @@ import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
-import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.xcontent.ParseField;
@@ -136,7 +135,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     @Override
     protected Query doToQuery(SearchExecutionContext context) throws IOException {
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
+        var compiledExpression = Scripting.compile(expr);
         AggrType aggrType = AggrType.valueOf(aggr.toUpperCase(Locale.getDefault()));
         AggrType posAggrType = AggrType.valueOf(pos_aggr.toUpperCase(Locale.getDefault()));
 

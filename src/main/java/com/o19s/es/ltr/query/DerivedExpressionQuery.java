@@ -18,8 +18,6 @@ package com.o19s.es.ltr.query;
 
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.LtrRanker;
-import org.apache.lucene.expressions.Bindings;
-import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -35,9 +33,7 @@ import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.DoubleValues;
-import org.apache.lucene.search.ConstantScoreWeight;
-import org.apache.lucene.search.ConstantScoreWeight;
-import org.apache.lucene.search.ConstantScoreWeight;
+import org.elasticsearch.script.DoubleValuesScript;
 
 
 import java.io.IOException;
@@ -48,10 +44,10 @@ import java.util.function.Supplier;
 
 public class DerivedExpressionQuery extends Query implements LtrRewritableQuery {
     private final FeatureSet features;
-    private final Expression expression;
+    private final DoubleValuesScript expression;
     private final Map<String, Double> queryParamValues;
 
-    public DerivedExpressionQuery(FeatureSet features, Expression expr, Map<String, Double> queryParamValues) {
+    public DerivedExpressionQuery(FeatureSet features, DoubleValuesScript expr, Map<String, Double> queryParamValues) {
         this.features = features;
         this.expression = expr;
         this.queryParamValues = queryParamValues;
@@ -83,7 +79,7 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
     @Override
     public String toString(String field) {
-        return (field != null ? field : "") + ":fv_query(" + expression.sourceText + ")";
+        return (field != null ? field : "") + ":fv_query(" + expression.sourceText() + ")";
     }
 
     static final class FVDerivedExpressionQuery extends Query {
@@ -145,7 +141,7 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
     static class FVWeight extends Weight {
         private final FeatureSet features;
-        private final Expression expression;
+        private final DoubleValuesScript expression;
         private final Supplier<LtrRanker.FeatureVector> vectorSupplier;
         private final Map<String, Double> queryParamValues;
 
@@ -163,19 +159,14 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
-            Bindings bindings = new Bindings(){
-                @Override
-                public DoubleValuesSource getDoubleValuesSource(String name) {
-                    Double queryParamValue  = queryParamValues.get(name);
-                    if (queryParamValue != null) {
-                        return DoubleValuesSource.constant(queryParamValue);
-                    }
-                    return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
-                }
-            };
-
             DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
-            DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
+            DoubleValuesSource src = expression.getDoubleValuesSource((name) -> {
+                Double queryParamValue  = queryParamValues.get(name);
+                if (queryParamValue != null) {
+                    return DoubleValuesSource.constant(queryParamValue);
+                }
+                return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
+            });
             DoubleValues values = src.getValues(context, null);
 
             return new DValScorer(this, iterator, values);
@@ -183,17 +174,12 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
 
         @Override
         public Explanation explain(LeafReaderContext context, int doc) throws IOException {
-            Bindings bindings = new Bindings(){
-                @Override
-                public DoubleValuesSource getDoubleValuesSource(String name) {
-                    return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
-                }
-            };
-
-            DoubleValuesSource src = expression.getDoubleValuesSource(bindings);
+            DoubleValuesSource src = expression.getDoubleValuesSource((name) -> {
+                return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
+            });
             DoubleValues values = src.getValues(context, null);
             values.advanceExact(doc);
-            return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText);
+            return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText());
         }
 
         @Override

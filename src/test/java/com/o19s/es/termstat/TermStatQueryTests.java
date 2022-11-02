@@ -6,7 +6,6 @@ import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
-import org.apache.lucene.expressions.Expression;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -78,8 +77,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         Set<Term> terms = new HashSet<>();
         terms.add(new Term("text", "cow"));
 
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -94,8 +92,7 @@ public class TermStatQueryTests extends LuceneTestCase {
 
         Set<Term> terms = new HashSet<>();
 
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -111,8 +108,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         Set<Term> terms = new HashSet<>();
         terms.add(new Term("text", "cow"));
 
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -130,8 +126,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         terms.add(new Term("text", "cow"));
         terms.add(new Term("text", "horse"));
 
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -149,8 +144,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         terms.add(new Term("text", "cow"));
         terms.add(new Term("text", "horse"));
 
-        Expression compiledExpression = (Expression) Scripting.compile(expr);
-        TermStatQuery tsq = new TermStatQuery(compiledExpression, aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
