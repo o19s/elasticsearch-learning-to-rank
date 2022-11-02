@@ -66,7 +66,7 @@ public class FeatureValidation implements Writeable, ToXContentObject {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(index);
-        out.writeMap(params);
+        out.writeGenericMap(params);
     }
 
     public String getIndex() {

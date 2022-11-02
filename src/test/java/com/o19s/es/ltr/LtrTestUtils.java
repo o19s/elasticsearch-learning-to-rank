@@ -36,7 +36,7 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
-import org.apache.lucene.util.TestUtil;
+import org.apache.lucene.tests.util.TestUtil;
 import org.elasticsearch.core.CheckedFunction;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import static org.apache.lucene.util.LuceneTestCase.random;
+import static org.apache.lucene.tests.util.LuceneTestCase.random;
 
 public class LtrTestUtils {
 

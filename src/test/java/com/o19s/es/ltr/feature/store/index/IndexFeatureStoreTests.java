@@ -23,9 +23,9 @@ import com.o19s.es.ltr.feature.store.StoredFeatureNormalizers;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.LuceneTestCase;
-import org.apache.lucene.util.TestUtil;
-import org.elasticsearch.client.Requests;
+import org.apache.lucene.tests.util.LuceneTestCase;
+import org.apache.lucene.tests.util.TestUtil;
+import org.elasticsearch.client.internal.Requests;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.xcontent.NamedXContentRegistry;
@@ -41,8 +41,8 @@ import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.STORE_PREFIX
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.indexName;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.isIndexStore;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.storeName;
-import static org.apache.lucene.util.TestUtil.randomRealisticUnicodeString;
-import static org.apache.lucene.util.TestUtil.randomSimpleString;
+import static org.apache.lucene.tests.util.TestUtil.randomRealisticUnicodeString;
+import static org.apache.lucene.tests.util.TestUtil.randomSimpleString;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 public class IndexFeatureStoreTests extends LuceneTestCase {

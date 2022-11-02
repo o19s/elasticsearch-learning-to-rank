@@ -38,7 +38,7 @@ import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.tasks.Task;
@@ -104,7 +104,8 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
     private IndexRequest buildIndexRequest(Task parentTask, FeatureStoreRequest request) throws IOException {
         StorableElement elt = request.getStorableElement();
 
-        IndexRequest indexRequest = client.prepareIndex(request.getStore(), IndexFeatureStore.ES_TYPE, elt.id())
+        IndexRequest indexRequest = client.prepareIndex(request.getStore())
+                .setId(elt.id())
                 .setCreate(request.getAction() == FeatureStoreRequest.Action.CREATE)
                 .setRouting(request.getRouting())
                 .setSource(IndexFeatureStore.toSource(elt))
@@ -182,7 +183,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                     (r) -> {
                         // Run and forget, log only if something bad happens
                         // but don't wait for the action to be done nor set the parent task.
-                        clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(req, wrap(
+                        clearCachesNodesRequest.ifPresent((req) -> clearCachesAction.execute(task, req, wrap(
                                 (r2) -> {
                                 },
                                 (e) -> logger.error("Failed to clear cache", e))));

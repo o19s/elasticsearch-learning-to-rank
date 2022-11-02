@@ -22,13 +22,13 @@ import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.xcontent.ObjectParser;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
-import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
@@ -94,7 +94,7 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
                     }
 
                     try {
-                        channel.sendResponse(new BytesRestResponse(channel, status, exc));
+                        channel.sendResponse(new RestResponse(channel, status, exc));
                     } catch (Exception inner) {
                         inner.addSuppressed(e);
                         logger.error("failed to send failure response", inner);

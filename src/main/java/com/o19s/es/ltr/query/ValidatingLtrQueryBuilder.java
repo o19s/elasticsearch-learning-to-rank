@@ -31,6 +31,7 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.xcontent.ParseField;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -204,5 +205,10 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
 
     public FeatureValidation getValidation() {
         return validation;
+    }
+
+    @Override
+    public Version getMinimalSupportedVersion() {
+        return Version.V_7_0_0;
     }
 }

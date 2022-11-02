@@ -23,11 +23,10 @@ import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizers;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.ObjectParser;
 import org.elasticsearch.xcontent.XContentParseException;
 import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.json.JsonXContent;
 
 import java.io.IOException;
@@ -45,8 +44,8 @@ public class XGBoostJsonParser implements LtrRankerParser {
     @Override
     public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
         XGBoostDefinition modelDefinition;
-        try (XContentParser parser = JsonXContent.jsonXContent.createParser(NamedXContentRegistry.EMPTY,
-                LoggingDeprecationHandler.INSTANCE, model)
+        try (XContentParser parser = JsonXContent.jsonXContent.createParser(XContentParserConfiguration.EMPTY,
+                model)
         ) {
             modelDefinition = XGBoostDefinition.parse(parser, set);
         } catch (IOException e) {
@@ -160,7 +159,6 @@ public class XGBoostJsonParser implements LtrRankerParser {
             PARSER.declareFloat(SplitParserState::setLeaf, new ParseField("leaf"));
             PARSER.declareObjectArray(SplitParserState::setChildren, SplitParserState::parse,
                     new ParseField("children"));
-            PARSER.declareFloat(SplitParserState::setThreshold, new ParseField("split_condition"));
         }
 
         private Integer nodeId;

@@ -13,19 +13,21 @@ import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.MatchAllDocsQuery;
+
 import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
 import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction;
-import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.XContentType;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.script.ScoreScript;
@@ -77,8 +79,10 @@ public class ScriptFeature implements Feature {
 
     public static ScriptFeature compile(StoredFeature feature) {
         try {
-            XContentParser xContentParser = XContentType.JSON.xContent().createParser(NamedXContentRegistry.EMPTY,
-                    LoggingDeprecationHandler.INSTANCE, feature.template());
+            XContentParser xContentParser = XContentType.JSON.xContent().createParser(
+                XContentParserConfiguration.EMPTY,
+                feature.template()
+            );
 
             return new ScriptFeature(feature.name(), Script.parse(xContentParser, "native"), feature.queryParams());
         } catch (IOException e) {
@@ -175,7 +179,7 @@ public class ScriptFeature implements Feature {
             for(String field : fields) {
                 if (analyzerName == null) {
                     final MappedFieldType fieldType = context.getSearchExecutionContext().getFieldType(field);
-                    analyzer = fieldType.getTextSearchInfo().getSearchAnalyzer();
+                    analyzer = fieldType.getTextSearchInfo().searchAnalyzer();
                 } else {
                     analyzer = context.getSearchExecutionContext().getIndexAnalyzers().get(analyzerName);
                 }
@@ -214,7 +218,7 @@ public class ScriptFeature implements Feature {
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
         ScoreScript.Factory factoryFactory  = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
-        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory, 
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
                 context.getSearchExecutionContext().lookup(),
                 context.getSearchExecutionContext().index().getName(),
                 context.getSearchExecutionContext().getShardId()
@@ -241,7 +245,6 @@ public class ScriptFeature implements Feature {
             this.terms = terms;
         }
 
-        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -280,6 +283,17 @@ public class ScriptFeature implements Feature {
             }
             return this;
         }
+
+       @Override
+       public void visit(QueryVisitor visitor) {
+            Set<String> fields = terms.stream().map(Term::field).collect(Collectors.toUnmodifiableSet());
+            for (String field : fields) {
+                if (visitor.acceptField(field) == false) {
+                    return;
+                }
+            }
+            visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this).consumeTerms(this, terms.toArray(new Term[0]));
+       }
     }
 
     static class LtrScriptWeight extends Weight {
@@ -358,7 +372,6 @@ public class ScriptFeature implements Feature {
             };
         }
 
-        @Override
         public void extractTerms(Set<Term> terms) {
         }
 

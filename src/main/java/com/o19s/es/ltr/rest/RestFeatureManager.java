@@ -9,8 +9,8 @@ import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.client.internal.node.NodeClient;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
-import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
 import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
@@ -74,7 +73,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         String routing = request.param("routing");
         return (channel) ->  {
             RestStatusToXContentListener<DeleteResponse> restR = new RestStatusToXContentListener<>(channel, (r) -> r.getLocation(routing));
-            client.prepareDelete(indexName, ES_TYPE, id)
+            client.prepareDelete(indexName, id)
                     .setRouting(routing)
                     .execute(ActionListener.wrap((deleteResponse) -> {
                                 // wrap the response so we can send another request to clear the cache
@@ -108,7 +107,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         String name = request.param("name");
         String routing = request.param("routing");
         String id = generateId(type, name);
-        return (channel) -> client.prepareGet(indexName, ES_TYPE, id)
+        return (channel) -> client.prepareGet(indexName, id)
                 .setRouting(routing)
                 .execute(new RestToXContentListener<GetResponse>(channel) {
                     @Override
@@ -141,7 +140,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
                 throw new IllegalArgumentException("Element of type [" + elt.type() + "] are not updatable, " +
                         "please create a new one instead.");
             } catch (IllegalArgumentException iae) {
-                return (channel) -> channel.sendResponse(new BytesRestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
+                return (channel) -> channel.sendResponse(new RestResponse(channel, RestStatus.METHOD_NOT_ALLOWED, iae));
             }
         }
         FeatureStoreAction.FeatureStoreRequestBuilder builder = new FeatureStoreAction.FeatureStoreRequestBuilder(

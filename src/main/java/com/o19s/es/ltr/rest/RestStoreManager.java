@@ -3,10 +3,10 @@ package com.o19s.es.ltr.rest;
 import com.o19s.es.ltr.action.ListStoresAction;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
@@ -85,19 +85,19 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
     }
 
     RestChannelConsumer getStore(NodeClient client, String indexName) {
-        return (channel) -> client.admin().indices().prepareExists(indexName)
-                .execute(new RestBuilderListener<IndicesExistsResponse>(channel) {
+        return (channel) -> client.admin().indices().prepareGetIndex().setIndices(indexName)
+                .execute(new RestBuilderListener<GetIndexResponse>(channel) {
                     @Override
                     public RestResponse buildResponse(
-                            IndicesExistsResponse indicesExistsResponse,
+                            GetIndexResponse indexResponse,
                             XContentBuilder builder
                     ) throws Exception {
                         builder.startObject()
-                                .field("exists", indicesExistsResponse.isExists())
+                                .field("exists", indexResponse.indices().length > 0)
                                 .endObject()
                                 .close();
-                        return new BytesRestResponse(
-                                indicesExistsResponse.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND,
+                        return new RestResponse(
+                                indexResponse.indices().length > 0 ? RestStatus.OK : RestStatus.NOT_FOUND,
                                 builder
                         );
                     }

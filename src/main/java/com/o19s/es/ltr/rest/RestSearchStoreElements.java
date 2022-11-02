@@ -1,7 +1,6 @@
 package com.o19s.es.ltr.rest;
 
-import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
@@ -48,7 +47,7 @@ public class RestSearchStoreElements extends FeatureStoreBaseRestHandler {
             qb.must(matchQuery("name.prefix", prefix));
         }
         return (channel) -> client.prepareSearch(indexName)
-                .setTypes(IndexFeatureStore.ES_TYPE)
+//                .setTypes(IndexFeatureStore.ES_TYPE)
                 .setQuery(qb)
                 .setSize(size)
                 .setFrom(from)

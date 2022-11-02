@@ -63,6 +63,7 @@ import com.o19s.es.ltr.stats.suppliers.CacheStatsOnNodeSupplier;
 import com.o19s.es.ltr.stats.suppliers.PluginHealthStatusSupplier;
 import com.o19s.es.ltr.stats.suppliers.StoreStatsSupplier;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import com.o19s.es.ltr.utils.Scripting;
 import com.o19s.es.ltr.utils.Suppliers;
 import com.o19s.es.termstat.TermStatQueryBuilder;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
@@ -70,9 +71,10 @@ import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.core.CheckedFunction;
 import org.elasticsearch.xcontent.ParseField;
@@ -103,6 +105,7 @@ import org.elasticsearch.script.ScriptEngine;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.tracing.Tracer;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
 import java.io.IOException;
@@ -248,7 +251,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                                                NodeEnvironment nodeEnvironment,
                                                NamedWriteableRegistry namedWriteableRegistry,
                                                IndexNameExpressionResolver indexNameExpressionResolver,
-                                               Supplier<RepositoriesService> repositoriesServiceSupplier) {
+                                               Supplier<RepositoriesService> repositoriesServiceSupplier,
+                                               Tracer tracer,
+                                               AllocationDeciders AllocationDeciders) {
         clusterService.addListener(event -> {
             for (Index i : event.indicesDeleted()) {
                 if (IndexFeatureStore.isIndexStore(i.getName())) {
@@ -256,6 +261,9 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
                 }
             }
         });
+
+        Scripting.initScriptService(scriptService);
+
         return asList(caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
     }
 

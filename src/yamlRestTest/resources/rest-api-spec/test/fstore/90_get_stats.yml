@@ -7,14 +7,12 @@ setup:
   - do:
       index:
         index:  test
-        type:   test
         id:     1
         body:   { "field1": "v1", "field2": "v2", "field3": "some text", "user_rating": 5.2  }
 
   - do:
       index:
         index:  test
-        type:   test
         id:     2
         body:   { "field1": "v1 aoeu", "field2": " ua u v2", "field3": "foo bar text", "user_rating": 0.0  }
 

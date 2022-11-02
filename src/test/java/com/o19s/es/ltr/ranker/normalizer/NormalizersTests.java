@@ -1,6 +1,6 @@
 package com.o19s.es.ltr.ranker.normalizer;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 import org.hamcrest.CoreMatchers;
 
 public class NormalizersTests extends LuceneTestCase {

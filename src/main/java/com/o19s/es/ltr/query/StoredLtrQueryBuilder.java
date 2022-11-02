@@ -90,7 +90,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         featureScoreCacheFlag = input.readOptionalBoolean();
         featureSetName = input.readOptionalString();
         params = input.readMap();
-        if (input.getVersion().onOrAfter(Version.V_6_2_4)) {
+        if (input.getVersion().onOrAfter(Version.V_7_0_0)) {
             String[] activeFeat = input.readOptionalStringArray();
             activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);
         }
@@ -120,8 +120,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalString(modelName);
         out.writeOptionalBoolean(featureScoreCacheFlag);
         out.writeOptionalString(featureSetName);
-        out.writeMap(params);
-        if (out.getVersion().onOrAfter(Version.V_6_2_4)) {
+        out.writeGenericMap(params);
+        if (out.getVersion().onOrAfter(Version.V_7_0_0)) {
             out.writeOptionalStringArray(activeFeatures != null ? activeFeatures.toArray(new String[0]) : null);
         }
         out.writeOptionalString(storeName);
@@ -250,6 +250,12 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     public StoredLtrQueryBuilder activeFeatures(List<String> activeFeatures) {
         this.activeFeatures = Objects.requireNonNull(activeFeatures);
         return this;
+    }
+
+
+    @Override
+    public Version getMinimalSupportedVersion() {
+        return Version.V_7_0_0;
     }
 
 }

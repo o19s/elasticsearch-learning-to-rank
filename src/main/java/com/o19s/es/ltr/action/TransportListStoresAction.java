@@ -26,13 +26,14 @@ import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeReadAction;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.core.Tuple;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -67,7 +68,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     }
 
     @Override
-    protected void masterOperation(ListStoresActionRequest request, ClusterState state,
+    protected void masterOperation(Task task, ListStoresActionRequest request, ClusterState state,
                                    ActionListener<ListStoresActionResponse> listener) throws Exception {
         String[] names = indexNameExpressionResolver.concreteIndexNames(state,
                 new ClusterStateRequest().indices(IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));

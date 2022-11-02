@@ -62,7 +62,7 @@ public class TransportLTRStatsActionTests extends ESIntegTestCase {
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(nodeIds);
         ltrStatsRequest.setStatsToBeRetrieved(ltrStats.getStats().keySet());
 
-        LTRStatsNodeResponse response = action.nodeOperation(new LTRStatsNodeRequest(ltrStatsRequest));
+        LTRStatsNodeResponse response = action.nodeOperation(new LTRStatsNodeRequest(ltrStatsRequest), null);
 
         Map<String, Object> stats = response.getStatsMap();
 

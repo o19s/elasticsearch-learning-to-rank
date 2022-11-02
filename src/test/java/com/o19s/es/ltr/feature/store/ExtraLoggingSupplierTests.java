@@ -1,7 +1,7 @@
 package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.ranker.LogLtrRanker;
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 
 import java.util.HashMap;
 import java.util.Map;
