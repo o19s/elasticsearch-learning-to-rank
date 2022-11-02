@@ -250,6 +250,6 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     @Override
     public Version getMinimalSupportedVersion() {
-        return Version.CURRENT;
+        return Version.V_7_0_0;
     }
 }

@@ -255,8 +255,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
 
     @Override
     public Version getMinimalSupportedVersion() {
-        // TODO Auto-generated method stub
-        return null;
+        return Version.V_7_0_0;
     }
 
 }

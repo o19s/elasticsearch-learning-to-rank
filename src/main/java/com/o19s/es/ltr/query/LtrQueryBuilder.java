@@ -206,6 +206,6 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
 
     @Override
     public Version getMinimalSupportedVersion() {
-        return Version.CURRENT;
+        return Version.V_7_0_0;
     }
 }

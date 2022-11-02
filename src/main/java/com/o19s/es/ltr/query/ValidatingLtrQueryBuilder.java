@@ -209,6 +209,6 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
 
     @Override
     public Version getMinimalSupportedVersion() {
-        return Version.CURRENT;
+        return Version.V_7_0_0;
     }
 }

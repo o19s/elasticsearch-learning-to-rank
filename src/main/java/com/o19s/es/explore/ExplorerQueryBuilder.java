@@ -157,6 +157,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     @Override
     public Version getMinimalSupportedVersion() {
-        return Version.V_8_5_0;
+        return Version.V_7_0_0;
     }
 }
