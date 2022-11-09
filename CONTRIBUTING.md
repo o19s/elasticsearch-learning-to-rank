@@ -130,6 +130,11 @@ Docs changes at master will be automatically built and deployed to readthedocs.
 
 Most people come to this plugin, unfamiliar with the basic Learning to Rank workflow. We want this documentation to read as a walkthrough of the Learning to Rank workflow, without getting into the 'advanced' stuff yet. So save the caveats and wherefores to the later section (ie "Advanced Functionality") and keep the 80% 'what you need to know' to the chapters working to tell a story on how to do Learning to Rank.
 
+## Release Workflows
+To create a release for ESLTR you must create a tag with the format of `v0.0.0-es0.0.0`, for example: `v1.5.8-es8.5.0`.  When a tag matching this format is submitted a workflow will be triggered to create a Github release.
+
+To publish releashes on Maven Central you must follow the instructions [here](https://central.sonatype.org/publish/publish-guide/).  Once you have a user registered, you can Close/Release repositories generated from the Github workflows.
+
 # Other questions? Get in touch!
 
 Please open an issue to ask any questions about contributing not covered by this document. If there's a "bug" in this document, please feel free to file PR, typos are the wosrt.
