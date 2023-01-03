@@ -68,7 +68,17 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         vector.setFeatureScore(2, 3);
 
         float expected = 1.2F*3.4F + 3.2F*2.8F;
-        float actual = ranker.score(vector);
+        assertEquals(expected, ranker.score(vector), Math.ulp(expected));
+    }
+
+    public void testScoreMissing() throws IOException {
+        NaiveAdditiveDecisionTree ranker = parseTreeModel("simple_tree.txt", Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME));
+        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+        vector.setFeatureScore(0, Float.NaN);
+        vector.setFeatureScore(1, Float.NaN);
+        vector.setFeatureScore(2, Float.NaN);
+
+        float expected = 17.0F*3.4F + 23.0F*2.8F;
         assertEquals(expected, ranker.score(vector), Math.ulp(expected));
     }
 
@@ -210,6 +220,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             } else if(line.contains("- split")) {
                 String[] values = line.split(":");
                 String featName = values[1];
+                float threshold = Float.parseFloat(values[2]);
                 int leftNodeId = Integer.parseInt(values[3]);
                 int rightNodeId = Integer.parseInt(values[4]);
                 int missingNodeId = Integer.parseInt(values[5]);
@@ -217,7 +228,6 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 if (ord < 0 || ord > set.size()) {
                     throw new IllegalArgumentException("Unknown feature " + featName);
                 }
-                float threshold = extractLastFloat(line);
                 NaiveAdditiveDecisionTree.Node right = parseTree();
                 NaiveAdditiveDecisionTree.Node left = parseTree();
 
