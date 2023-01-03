@@ -247,7 +247,7 @@ public class XGBoostJsonParser implements LtrRankerParser {
         Node toNode(FeatureSet set) {
             if (isSplit()) {
                 return new NaiveAdditiveDecisionTree.Split(children.get(0).toNode(set), children.get(1).toNode(set),
-                        set.featureOrdinal(split), threshold);
+                        set.featureOrdinal(split), threshold, leftNodeId, rightNodeId, missingNodeId);
             } else {
                 return new NaiveAdditiveDecisionTree.Leaf(leaf);
             }
