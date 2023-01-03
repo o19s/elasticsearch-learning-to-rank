@@ -118,19 +118,20 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 counts.nodes.get(), counts.splits.get(), counts.leaves.get());
     }
 
-//    public void testRamSize() {
-//        SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
-//        NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
-//                100, 1000,
-//                5, 50, counts);
-//        long actualSize = ranker.ramBytesUsed();
-//        long expectedApprox = counts.splits.get() * (NUM_BYTES_OBJECT_HEADER + Float.BYTES + NUM_BYTES_OBJECT_REF * 2);
-//        expectedApprox += counts.leaves.get() * (NUM_BYTES_ARRAY_HEADER + NUM_BYTES_OBJECT_HEADER + Float.BYTES);
-//        expectedApprox += ranker.size() * Float.BYTES + NUM_BYTES_ARRAY_HEADER;
-//        assertThat(actualSize, allOf(
-//                greaterThan((long) (expectedApprox*0.66F)),
-//                lessThan((long) (expectedApprox*1.33F))));
-//    }
+    public void testRamSize() {
+        SimpleCountRandomTreeGeneratorStatsCollector counts = new SimpleCountRandomTreeGeneratorStatsCollector();
+        NaiveAdditiveDecisionTree ranker = generateRandomDecTree(100, 1000,
+                100, 1000,
+                5, 50, counts);
+        long actualSize = ranker.ramBytesUsed();
+        long expectedApprox = counts.splits.get() * (NUM_BYTES_OBJECT_HEADER + Float.BYTES + NUM_BYTES_OBJECT_REF * 2 + Integer.BYTES * 3);
+        int num_splits = counts.splits.get();
+        expectedApprox += counts.leaves.get() * (NUM_BYTES_ARRAY_HEADER + NUM_BYTES_OBJECT_HEADER + Float.BYTES);
+        expectedApprox += ranker.size() * Float.BYTES + NUM_BYTES_ARRAY_HEADER;
+        assertThat(actualSize, allOf(
+                greaterThan((long) (expectedApprox*0.66F)),
+                lessThan((long) (expectedApprox*1.33F))));
+    }
 
     public static NaiveAdditiveDecisionTree generateRandomDecTree(int minFeatures, int maxFeatures, int minTrees,
                                                                   int maxTrees, int minDepth, int maxDepth,
