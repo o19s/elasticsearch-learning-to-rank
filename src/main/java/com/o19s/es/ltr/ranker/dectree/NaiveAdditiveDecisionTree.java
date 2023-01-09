@@ -129,7 +129,8 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
                 }
                 else if (s.threshold > scores[s.feature]) {
                     n = s.left;
-                } else {
+                }
+                else {
                     n = s.right;
                 }
             }

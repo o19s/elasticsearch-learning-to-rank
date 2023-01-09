@@ -125,7 +125,6 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 5, 50, counts);
         long actualSize = ranker.ramBytesUsed();
         long expectedApprox = counts.splits.get() * (NUM_BYTES_OBJECT_HEADER + Float.BYTES + NUM_BYTES_OBJECT_REF * 2 + Integer.BYTES * 3);
-        int num_splits = counts.splits.get();
         expectedApprox += counts.leaves.get() * (NUM_BYTES_ARRAY_HEADER + NUM_BYTES_OBJECT_HEADER + Float.BYTES);
         expectedApprox += ranker.size() * Float.BYTES + NUM_BYTES_ARRAY_HEADER;
         assertThat(actualSize, allOf(
