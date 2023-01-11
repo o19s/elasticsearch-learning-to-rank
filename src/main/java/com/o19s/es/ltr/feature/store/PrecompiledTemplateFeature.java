@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
 import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
-import static org.elasticsearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
+import static org.elasticsearch.index.query.AbstractQueryBuilder.parseTopLevelQuery;
 
 public class PrecompiledTemplateFeature implements Feature, Accountable {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredFeature.class);
@@ -93,7 +93,7 @@ public class PrecompiledTemplateFeature implements Feature, Accountable {
         try {
             XContentParser parser = XContentFactory.xContent(query)
                     .createParser(context.getSearchExecutionContext().getParserConfig(), query);
-            QueryBuilder queryBuilder = parseInnerQueryBuilder(parser);
+            QueryBuilder queryBuilder = parseTopLevelQuery(parser);
             // XXX: QueryShardContext extends QueryRewriteContext (for now)
             return Rewriteable.rewrite(queryBuilder, context.getSearchExecutionContext()).toQuery(context.getSearchExecutionContext());
         } catch (IOException | ParsingException | IllegalArgumentException e) {
