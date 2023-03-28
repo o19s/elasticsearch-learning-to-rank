@@ -159,13 +159,13 @@ Or a simple linear model::
             "name": "my_linear_model",
             "model": {
                 "type": "model/linear",
-                "definition": "
+                "definition": """
                                 {
-                                    \"title_query\" : 0.3,
-                                    \"body_query\" : 0.5,
-                                    \"recency\" : 0.1
+                                    "title_query" : 0.3,
+                                    "body_query" : 0.5,
+                                    "recency" : 0.1
                                 }
-                            "
+                            """
             }
         }
     }
@@ -182,24 +182,24 @@ With standard feature normalization, values corresponding to the mean will have 
     POST _ltr/_featureset/more_movie_features/_createmodel
     {
         "model": {
-            "feature_normalizers": {
-               "release_year": {
-                  "standard": {
-                    "mean": 1970,
-                    "standard_deviation": 30
-                  }
-               }
-            },
             "name": "my_linear_model",
             "model": {
                 "type": "model/linear",
-                "definition": "
+                "feature_normalizers": {
+                               "release_year": {
+                                  "standard": {
+                                    "mean": 1970,
+                                    "standard_deviation": 30
+                                  }
+                               }
+                            },
+                "definition": """
                                 {
-                                    \"release_year\" : 0.3,
-                                    \"body_query\" : 0.5,
-                                    \"recency\" : 0.1
+                                    "release_year" : 0.3,
+                                    "body_query" : 0.5,
+                                    "recency" : 0.1
                                 }
-                            "
+                            """
             }
         }
     }
