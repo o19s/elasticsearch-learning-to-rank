@@ -208,7 +208,7 @@ Also supported is min-max normalization. Where values at the specified minimum r
 
     "feature_normalizers": {
         "vote_average": {
-            "standard": {
+            "min_max": {
                 "minimum": 0,
                 "maximum": 10
             }
