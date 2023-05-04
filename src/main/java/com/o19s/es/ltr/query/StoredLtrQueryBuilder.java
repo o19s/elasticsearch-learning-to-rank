@@ -23,7 +23,7 @@ import com.o19s.es.ltr.feature.store.FeatureStore;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
-import org.elasticsearch.Version;
+import org.elasticsearch.TransportVersion;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.NamedWriteable;
@@ -90,7 +90,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         featureScoreCacheFlag = input.readOptionalBoolean();
         featureSetName = input.readOptionalString();
         params = input.readMap();
-        if (input.getVersion().onOrAfter(Version.V_7_0_0)) {
+        if (input.getTransportVersion().onOrAfter(TransportVersion.V_7_0_0)) {
             String[] activeFeat = input.readOptionalStringArray();
             activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);
         }
@@ -121,7 +121,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalBoolean(featureScoreCacheFlag);
         out.writeOptionalString(featureSetName);
         out.writeGenericMap(params);
-        if (out.getVersion().onOrAfter(Version.V_7_0_0)) {
+        if (out.getTransportVersion().onOrAfter(TransportVersion.V_7_0_0)) {
             out.writeOptionalStringArray(activeFeatures != null ? activeFeatures.toArray(new String[0]) : null);
         }
         out.writeOptionalString(storeName);
@@ -254,8 +254,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
 
 
     @Override
-    public Version getMinimalSupportedVersion() {
-        return Version.V_7_0_0;
+    public TransportVersion getMinimalSupportedVersion() {
+        return TransportVersion.V_7_0_0;
     }
 
 }
