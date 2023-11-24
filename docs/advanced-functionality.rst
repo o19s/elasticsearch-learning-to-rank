@@ -145,7 +145,7 @@ And of course you can delete a featureset::
 
     DELETE _ltr/wikipedia/_featureset/attempt_1
 
-You can use featuresets of specific feature stores by using the :code:`store` parameter in the :code:`sltr` part of your query when logging features:
+You can use featuresets of specific feature stores by using the :code:`store` parameter in the :code:`sltr` part of your query when logging features::
 
     "sltr": {
         "_name": "logged_featureset",
@@ -157,6 +157,7 @@ You can use featuresets of specific feature stores by using the :code:`store` pa
     }
 
 In case no :code:`store` is specified the default store will be used for looking up the featureset.
+
 =============================
 Model Caching
 =============================
