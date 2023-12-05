@@ -14,7 +14,6 @@ allprojects {
   version = "${ltrVersion}-es${elasticsearchVersion}"
 
   apply plugin: 'java'
-  apply plugin: 'com.diffplug.spotless'
 
   repositories {
     mavenCentral()
@@ -42,6 +41,7 @@ apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'elasticsearch.java-rest-test'
 apply plugin: 'elasticsearch.yaml-rest-test'
+apply plugin: 'com.diffplug.spotless'
 
 checkstyle {
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
