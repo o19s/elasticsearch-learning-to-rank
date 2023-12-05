@@ -18,76 +18,73 @@ package com.o19s.es.ltr.feature.store;
 
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * in memory test store
- */
+/** in memory test store */
 public class MemStore implements FeatureStore {
-    private final Map<String, StoredFeature> features = new HashMap<>();
-    private final Map<String, StoredFeatureSet> sets = new HashMap<>();
-    private final Map<String, CompiledLtrModel> models = new HashMap<>();
+  private final Map<String, StoredFeature> features = new HashMap<>();
+  private final Map<String, StoredFeatureSet> sets = new HashMap<>();
+  private final Map<String, CompiledLtrModel> models = new HashMap<>();
 
-    private final String storeName;
+  private final String storeName;
 
-    public MemStore(String storeName) {
-        this.storeName = storeName;
+  public MemStore(String storeName) {
+    this.storeName = storeName;
+  }
+
+  public MemStore() {
+    this("memstore");
+  }
+
+  @Override
+  public String getStoreName() {
+    return storeName;
+  }
+
+  @Override
+  public Feature load(String id) throws IOException {
+    StoredFeature feature = features.get(id);
+    if (feature == null) {
+      throw new IllegalArgumentException("Feature [" + id + "] not found");
     }
+    return feature.optimize();
+  }
 
-    public MemStore() {
-        this("memstore");
+  @Override
+  public FeatureSet loadSet(String id) throws IOException {
+    StoredFeatureSet set = sets.get(id);
+    if (set == null) {
+      throw new IllegalArgumentException("Feature [" + id + "] not found");
     }
+    return set.optimize();
+  }
 
-    @Override
-    public String getStoreName() {
-        return storeName;
+  @Override
+  public CompiledLtrModel loadModel(String id) throws IOException {
+    CompiledLtrModel model = models.get(id);
+    if (model == null) {
+      throw new IllegalArgumentException("Feature [" + id + "] not found");
     }
+    return model;
+  }
 
-    @Override
-    public Feature load(String id) throws IOException {
-        StoredFeature feature = features.get(id);
-        if (feature == null) {
-            throw new IllegalArgumentException("Feature [" + id + "] not found");
-        }
-        return feature.optimize();
-    }
+  public void add(StoredFeature feature) {
+    features.put(feature.name(), feature);
+  }
 
-    @Override
-    public FeatureSet loadSet(String id) throws IOException {
-        StoredFeatureSet set = sets.get(id);
-        if (set == null) {
-            throw new IllegalArgumentException("Feature [" + id + "] not found");
-        }
-        return set.optimize();
-    }
+  public void add(StoredFeatureSet set) {
+    sets.put(set.name(), set);
+  }
 
-    @Override
-    public CompiledLtrModel loadModel(String id) throws IOException {
-        CompiledLtrModel model = models.get(id);
-        if (model == null) {
-            throw new IllegalArgumentException("Feature [" + id + "] not found");
-        }
-        return model;
-    }
+  public void add(CompiledLtrModel model) {
+    models.put(model.name(), model);
+  }
 
-    public void add(StoredFeature feature) {
-        features.put(feature.name(), feature);
-    }
-
-    public void add(StoredFeatureSet set) {
-        sets.put(set.name(), set);
-    }
-
-    public void add(CompiledLtrModel model) {
-        models.put(model.name(), model);
-    }
-
-    public void clear() {
-        features.clear();
-        sets.clear();
-        models.clear();
-    }
+  public void clear() {
+    features.clear();
+    sets.clear();
+    models.clear();
+  }
 }

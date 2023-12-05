@@ -1,10 +1,9 @@
 package com.o19s.es.ltr;
 
-import org.apache.lucene.tests.util.LuceneTestCase;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import org.apache.lucene.tests.util.LuceneTestCase;
 
 /*
  * Copyright [2017] Wikimedia Foundation
@@ -24,36 +23,34 @@ import java.util.HashSet;
 
 public class LtrQueryContextTests extends LuceneTestCase {
 
-    public void testIsFeatureActiveForNull() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, null);
-        assertTrue(ltrContext.isFeatureActive("feature"));
-    }
+  public void testIsFeatureActiveForNull() {
+    LtrQueryContext ltrContext = new LtrQueryContext(null, null);
+    assertTrue(ltrContext.isFeatureActive("feature"));
+  }
 
-    public void testIsFeatureActiveForEmptySet() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.emptySet());
-        assertTrue(ltrContext.isFeatureActive("feature"));
-    }
+  public void testIsFeatureActiveForEmptySet() {
+    LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.emptySet());
+    assertTrue(ltrContext.isFeatureActive("feature"));
+  }
 
-    public void testIsFeatureActiveTrue() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature"));
-        assertTrue(ltrContext.isFeatureActive("feature"));
-    }
+  public void testIsFeatureActiveTrue() {
+    LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature"));
+    assertTrue(ltrContext.isFeatureActive("feature"));
+  }
 
-    public void testIsFeatureActiveFalse() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature1"));
-        assertFalse(ltrContext.isFeatureActive("feature2"));
-    }
+  public void testIsFeatureActiveFalse() {
+    LtrQueryContext ltrContext = new LtrQueryContext(null, Collections.singleton("feature1"));
+    assertFalse(ltrContext.isFeatureActive("feature2"));
+  }
 
-    public void testGetActiveFeaturesForNull() {
-        LtrQueryContext ltrContext = new LtrQueryContext(null, null);
-        assertEquals(Collections.emptySet(), ltrContext.getActiveFeatures());
-    }
+  public void testGetActiveFeaturesForNull() {
+    LtrQueryContext ltrContext = new LtrQueryContext(null, null);
+    assertEquals(Collections.emptySet(), ltrContext.getActiveFeatures());
+  }
 
-    public void testGetActiveFeatures() {
-        HashSet<String> features = new HashSet<>(Arrays.asList("feature1", "feature2"));
-        LtrQueryContext ltrContext = new LtrQueryContext(null, features);
-        assertEquals(features, ltrContext.getActiveFeatures());
-    }
-
+  public void testGetActiveFeatures() {
+    HashSet<String> features = new HashSet<>(Arrays.asList("feature1", "feature2"));
+    LtrQueryContext ltrContext = new LtrQueryContext(null, features);
+    assertEquals(features, ltrContext.getActiveFeatures());
+  }
 }
-

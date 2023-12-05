@@ -21,42 +21,40 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * LtrModel parser registry
- */
+/** LtrModel parser registry */
 public class LtrRankerParserFactory {
-    private final Map<String, Supplier<LtrRankerParser>> parsers;
+  private final Map<String, Supplier<LtrRankerParser>> parsers;
 
-    private LtrRankerParserFactory(Map<String, Supplier<LtrRankerParser>> parsers) {
-        this.parsers = parsers;
+  private LtrRankerParserFactory(Map<String, Supplier<LtrRankerParser>> parsers) {
+    this.parsers = parsers;
+  }
+
+  /**
+   * @param type type or content-type like string defining the model format
+   * @return a model parser
+   * @throws IllegalArgumentException if the type is not supported
+   */
+  public LtrRankerParser getParser(String type) {
+    Supplier<LtrRankerParser> supplier = parsers.get(type);
+    if (supplier == null) {
+      throw new IllegalArgumentException("Unsupported LtrRanker format/type [" + type + "]");
+    }
+    return supplier.get();
+  }
+
+  public static class Builder {
+    private final Map<String, Supplier<LtrRankerParser>> registry = new HashMap<>();
+
+    public Builder register(String type, Supplier<LtrRankerParser> parser) {
+      if (registry.put(type, parser) != null) {
+        throw new RuntimeException(
+            "Cannot register LtrRankerParser: [" + type + "] already registered.");
+      }
+      return this;
     }
 
-    /**
-     *
-     * @param type type or content-type like string defining the model format
-     * @return a model parser
-     * @throws IllegalArgumentException if the type is not supported
-     */
-    public LtrRankerParser getParser(String type) {
-        Supplier<LtrRankerParser> supplier = parsers.get(type);
-        if (supplier == null) {
-            throw new IllegalArgumentException("Unsupported LtrRanker format/type [" + type + "]");
-        }
-        return supplier.get();
+    public LtrRankerParserFactory build() {
+      return new LtrRankerParserFactory(Collections.unmodifiableMap(registry));
     }
-
-    public static class Builder {
-        private final Map<String, Supplier<LtrRankerParser>> registry = new HashMap<>();
-
-        public Builder register(String type, Supplier<LtrRankerParser> parser) {
-            if (registry.put(type, parser) != null) {
-                throw new RuntimeException("Cannot register LtrRankerParser: [" + type + "] already registered.");
-            }
-            return this;
-        }
-
-        public LtrRankerParserFactory build() {
-            return new LtrRankerParserFactory(Collections.unmodifiableMap(registry));
-        }
-    }
+  }
 }

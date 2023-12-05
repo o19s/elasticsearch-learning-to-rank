@@ -17,35 +17,32 @@
 package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
-
 import java.util.Objects;
 
-/**
- * Prebuilt model
- */
+/** Prebuilt model */
 public class PrebuiltLtrModel implements LtrModel {
-    private final String name;
-    private final LtrRanker ranker;
-    private final PrebuiltFeatureSet featureSet;
+  private final String name;
+  private final LtrRanker ranker;
+  private final PrebuiltFeatureSet featureSet;
 
-    public PrebuiltLtrModel(String name, LtrRanker ranker, PrebuiltFeatureSet featureSet) {
-        this.name = Objects.requireNonNull(name);
-        this.ranker = Objects.requireNonNull(ranker);
-        this.featureSet = Objects.requireNonNull(featureSet);
-    }
+  public PrebuiltLtrModel(String name, LtrRanker ranker, PrebuiltFeatureSet featureSet) {
+    this.name = Objects.requireNonNull(name);
+    this.ranker = Objects.requireNonNull(ranker);
+    this.featureSet = Objects.requireNonNull(featureSet);
+  }
 
-    @Override
-    public String name() {
-        return name;
-    }
+  @Override
+  public String name() {
+    return name;
+  }
 
-    @Override
-    public LtrRanker ranker() {
-        return ranker;
-    }
+  @Override
+  public LtrRanker ranker() {
+    return ranker;
+  }
 
-    @Override
-    public FeatureSet featureSet() {
-        return featureSet;
-    }
+  @Override
+  public FeatureSet featureSet() {
+    return featureSet;
+  }
 }

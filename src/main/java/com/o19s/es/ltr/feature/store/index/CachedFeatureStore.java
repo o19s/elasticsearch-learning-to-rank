@@ -20,75 +20,72 @@ import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
 import com.o19s.es.ltr.feature.store.FeatureStore;
+import java.io.IOException;
 import org.elasticsearch.common.cache.Cache;
 
-import java.io.IOException;
-
-/**
- * Cache layer on top of an {@link IndexFeatureStore}
- */
+/** Cache layer on top of an {@link IndexFeatureStore} */
 public class CachedFeatureStore implements FeatureStore {
-    private final FeatureStore inner;
-    private final Caches caches;
+  private final FeatureStore inner;
+  private final Caches caches;
 
-    public CachedFeatureStore(FeatureStore inner, Caches caches) {
-        this.inner = inner;
-        this.caches = caches;
-    }
+  public CachedFeatureStore(FeatureStore inner, Caches caches) {
+    this.inner = inner;
+    this.caches = caches;
+  }
 
-    @Override
-    public String getStoreName() {
-        return inner.getStoreName();
-    }
+  @Override
+  public String getStoreName() {
+    return inner.getStoreName();
+  }
 
-    @Override
-    public Feature load(String id) throws IOException {
-        return caches.loadFeature(key(id), inner::load);
-    }
+  @Override
+  public Feature load(String id) throws IOException {
+    return caches.loadFeature(key(id), inner::load);
+  }
 
-    @Override
-    public FeatureSet loadSet(String id) throws IOException {
-        return caches.loadFeatureSet(key(id), inner::loadSet);
-    }
+  @Override
+  public FeatureSet loadSet(String id) throws IOException {
+    return caches.loadFeatureSet(key(id), inner::loadSet);
+  }
 
-    @Override
-    public CompiledLtrModel loadModel(String id) throws IOException {
-        return caches.loadModel(key(id), inner::loadModel);
-    }
+  @Override
+  public CompiledLtrModel loadModel(String id) throws IOException {
+    return caches.loadModel(key(id), inner::loadModel);
+  }
 
-    Feature getCachedFeature(String id) {
-        return innerGet(id, caches.featureCache());
-    }
+  Feature getCachedFeature(String id) {
+    return innerGet(id, caches.featureCache());
+  }
 
-    FeatureSet getCachedFeatureSet(String id) {
-        return innerGet(id, caches.featureSetCache());
-    }
+  FeatureSet getCachedFeatureSet(String id) {
+    return innerGet(id, caches.featureSetCache());
+  }
 
-    CompiledLtrModel getCachedModel(String id) {
-        return innerGet(id, caches.modelCache());
-    }
+  CompiledLtrModel getCachedModel(String id) {
+    return innerGet(id, caches.modelCache());
+  }
 
-    public long totalWeight() {
-        return featuresWeight() + featureSetWeight() + modelWeight();
-    }
+  public long totalWeight() {
+    return featuresWeight() + featureSetWeight() + modelWeight();
+  }
 
-    public long featuresWeight() {
-        return caches.featureCache().weight();
-    }
+  public long featuresWeight() {
+    return caches.featureCache().weight();
+  }
 
-    public long featureSetWeight() {
-        return caches.featureSetCache().weight();
-    }
+  public long featureSetWeight() {
+    return caches.featureSetCache().weight();
+  }
 
-    public long modelWeight() {
-        return caches.modelCache().weight();
-    }
+  public long modelWeight() {
+    return caches.modelCache().weight();
+  }
 
-    private <T> T innerGet(String id, Cache<Caches.CacheKey, T> cache) {
-        return cache.get(key(id));
-    }
+  private <T> T innerGet(String id, Cache<Caches.CacheKey, T> cache) {
+    return cache.get(key(id));
+  }
 
-    private Caches.CacheKey key(String id) {
-        return new Caches.CacheKey(inner.getStoreName(), id);
-    }
+  private Caches.CacheKey key(String id) {
+    return new Caches.CacheKey(inner.getStoreName(), id);
+  }
 }

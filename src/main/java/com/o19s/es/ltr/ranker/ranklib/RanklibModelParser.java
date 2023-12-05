@@ -23,24 +23,24 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 
 /**
- * Load a ranklib model from a script file, mostly a wrapper around the
- * existing script that complies with the {@link LtrRankerParser} interface
+ * Load a ranklib model from a script file, mostly a wrapper around the existing script that
+ * complies with the {@link LtrRankerParser} interface
  */
 public class RanklibModelParser implements LtrRankerParser {
-    public static final String TYPE = "model/ranklib";
-    private final RankerFactory factory;
+  public static final String TYPE = "model/ranklib";
+  private final RankerFactory factory;
 
-    public RanklibModelParser(RankerFactory factory) {
-        this.factory = factory;
-    }
+  public RanklibModelParser(RankerFactory factory) {
+    this.factory = factory;
+  }
 
-    @Override
-    public LtrRanker parse(FeatureSet set, String model) {
-        Ranker ranklibRanker = factory.loadRankerFromString(model);
-        int numFeatures = ranklibRanker.getFeatures().length;
-        if (set != null) {
-            numFeatures = set.size();
-        }
-        return new RanklibRanker(ranklibRanker, numFeatures);
+  @Override
+  public LtrRanker parse(FeatureSet set, String model) {
+    Ranker ranklibRanker = factory.loadRankerFromString(model);
+    int numFeatures = ranklibRanker.getFeatures().length;
+    if (set != null) {
+      numFeatures = set.size();
     }
+    return new RanklibRanker(ranklibRanker, numFeatures);
+  }
 }

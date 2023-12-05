@@ -21,34 +21,33 @@ import org.apache.lucene.tests.util.LuceneTestCase;
 import org.apache.lucene.tests.util.TestUtil;
 
 public class LogLtrRankerTests extends LuceneTestCase {
-    public void testNewFeatureVector() throws Exception {
-        int modelSize = TestUtil.nextInt(random(), 1, 20);
+  public void testNewFeatureVector() throws Exception {
+    int modelSize = TestUtil.nextInt(random(), 1, 20);
 
-        final float[] expectedScores = new float[modelSize];
-        LinearRankerTests.fillRandomWeights(expectedScores);
+    final float[] expectedScores = new float[modelSize];
+    LinearRankerTests.fillRandomWeights(expectedScores);
 
-        final float[] actualScores = new float[modelSize];
-        LogLtrRanker ranker = new LogLtrRanker(new NullRanker(modelSize), (i, s) -> actualScores[i] = s);
-        LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
-        for (int i = 0; i < expectedScores.length; i++) {
-            vector.setFeatureScore(i, expectedScores[i]);
-        }
-        assertArrayEquals(expectedScores, actualScores, 0F);
+    final float[] actualScores = new float[modelSize];
+    LogLtrRanker ranker =
+        new LogLtrRanker(new NullRanker(modelSize), (i, s) -> actualScores[i] = s);
+    LtrRanker.FeatureVector vector = ranker.newFeatureVector(null);
+    for (int i = 0; i < expectedScores.length; i++) {
+      vector.setFeatureScore(i, expectedScores[i]);
     }
+    assertArrayEquals(expectedScores, actualScores, 0F);
+  }
 
-    public void score() throws Exception {
-        int modelSize = TestUtil.nextInt(random(), 1, 20);
-        LtrRanker ranker = new NullRanker(modelSize);
-        LogLtrRanker logRanker = new LogLtrRanker(new NullRanker(modelSize), (i, s) -> {});
-        int nPass = TestUtil.nextInt(random(), 100, 200);
-        float[] scores = new float[modelSize];
+  public void score() throws Exception {
+    int modelSize = TestUtil.nextInt(random(), 1, 20);
+    LtrRanker ranker = new NullRanker(modelSize);
+    LogLtrRanker logRanker = new LogLtrRanker(new NullRanker(modelSize), (i, s) -> {});
+    int nPass = TestUtil.nextInt(random(), 100, 200);
+    float[] scores = new float[modelSize];
 
-        while (nPass-- > 0) {
-            LinearRankerTests.fillRandomWeights(scores);
-            LtrRanker.FeatureVector vect1 = ranker.newFeatureVector(null);
-            LtrRanker.FeatureVector vect2 = logRanker.newFeatureVector(null);
-        }
-
+    while (nPass-- > 0) {
+      LinearRankerTests.fillRandomWeights(scores);
+      LtrRanker.FeatureVector vect1 = ranker.newFeatureVector(null);
+      LtrRanker.FeatureVector vect2 = logRanker.newFeatureVector(null);
     }
-
+  }
 }

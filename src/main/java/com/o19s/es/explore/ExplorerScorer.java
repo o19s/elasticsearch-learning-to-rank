@@ -15,89 +15,86 @@
  */
 package com.o19s.es.explore;
 
+import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-
 public class ExplorerScorer extends Scorer {
-    private final Scorer subScorer;
-    private final String type;
+  private final Scorer subScorer;
+  private final String type;
 
-    protected ExplorerScorer(Weight weight, String type, Scorer subScorer) {
-        super(weight);
-        this.type = type;
-        this.subScorer = subScorer;
-    }
+  protected ExplorerScorer(Weight weight, String type, Scorer subScorer) {
+    super(weight);
+    this.type = type;
+    this.subScorer = subScorer;
+  }
 
-    @Override
-    public float score() throws IOException {
-        StatisticsHelper tf_stats = new StatisticsHelper();
+  @Override
+  public float score() throws IOException {
+    StatisticsHelper tf_stats = new StatisticsHelper();
 
-        // Grab freq from subscorer, or the children if available
-        if(subScorer.getChildren().size() > 0) {
-            for(ChildScorable child : subScorer.getChildren()) {
-                assert child.child instanceof PostingsExplorerQuery.PostingsExplorerScorer;
-                if(child.child.docID() == docID()) {
-                    ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).setType(type);
-                    tf_stats.add(child.child.score());
-                }
-            }
-        } else {
-            assert subScorer instanceof PostingsExplorerQuery.PostingsExplorerScorer;
-            assert subScorer.docID() == docID();
-            ((PostingsExplorerQuery.PostingsExplorerScorer) subScorer).setType(type);
-            tf_stats.add(subScorer.score());
+    // Grab freq from subscorer, or the children if available
+    if (subScorer.getChildren().size() > 0) {
+      for (ChildScorable child : subScorer.getChildren()) {
+        assert child.child instanceof PostingsExplorerQuery.PostingsExplorerScorer;
+        if (child.child.docID() == docID()) {
+          ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).setType(type);
+          tf_stats.add(child.child.score());
         }
-
-        float retval;
-        switch(type) {
-            case("sum_raw_tf"):
-                retval = tf_stats.getSum();
-                break;
-            case("mean_raw_tf"):
-                retval = tf_stats.getMean();
-                break;
-            case("max_raw_tf"):
-            case("max_raw_tp"):
-                retval = tf_stats.getMax();
-                break;
-            case("min_raw_tf"):
-            case("min_raw_tp"):
-                retval = tf_stats.getMin();
-                break;
-            case("stddev_raw_tf"):
-                retval = tf_stats.getStdDev();
-                break;
-            case("avg_raw_tp"):
-                retval = tf_stats.getMean();
-                break;
-            default:
-                throw new RuntimeException("Invalid stat type specified.");
-        }
-
-        return retval;
+      }
+    } else {
+      assert subScorer instanceof PostingsExplorerQuery.PostingsExplorerScorer;
+      assert subScorer.docID() == docID();
+      ((PostingsExplorerQuery.PostingsExplorerScorer) subScorer).setType(type);
+      tf_stats.add(subScorer.score());
     }
 
-    @Override
-    public int docID() {
-        return subScorer.docID();
+    float retval;
+    switch (type) {
+      case ("sum_raw_tf"):
+        retval = tf_stats.getSum();
+        break;
+      case ("mean_raw_tf"):
+        retval = tf_stats.getMean();
+        break;
+      case ("max_raw_tf"):
+      case ("max_raw_tp"):
+        retval = tf_stats.getMax();
+        break;
+      case ("min_raw_tf"):
+      case ("min_raw_tp"):
+        retval = tf_stats.getMin();
+        break;
+      case ("stddev_raw_tf"):
+        retval = tf_stats.getStdDev();
+        break;
+      case ("avg_raw_tp"):
+        retval = tf_stats.getMean();
+        break;
+      default:
+        throw new RuntimeException("Invalid stat type specified.");
     }
 
+    return retval;
+  }
 
-    @Override
-    public DocIdSetIterator iterator() {
-        return subScorer.iterator();
-    }
+  @Override
+  public int docID() {
+    return subScorer.docID();
+  }
 
-    /**
-     * Return the maximum score that documents between the last {@code target}
-     * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
-     * included and {@code upTo} included.
-     */
-    @Override
-    public float getMaxScore(int upTo) throws IOException {
-        return Float.POSITIVE_INFINITY;
-    }
+  @Override
+  public DocIdSetIterator iterator() {
+    return subScorer.iterator();
+  }
+
+  /**
+   * Return the maximum score that documents between the last {@code target} that this iterator was
+   * {@link #advanceShallow(int) shallow-advanced} to included and {@code upTo} included.
+   */
+  @Override
+  public float getMaxScore(int upTo) throws IOException {
+    return Float.POSITIVE_INFINITY;
+  }
 }

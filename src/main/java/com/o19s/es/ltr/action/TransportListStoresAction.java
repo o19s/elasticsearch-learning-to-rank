@@ -16,9 +16,21 @@
 
 package com.o19s.es.ltr.action;
 
+import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.STORE_VERSION_PROP;
+import static java.util.stream.Collectors.toMap;
+import static org.elasticsearch.action.ActionListener.wrap;
+import static org.elasticsearch.core.Tuple.tuple;
+
 import com.o19s.es.ltr.action.ListStoresAction.ListStoresActionRequest;
 import com.o19s.es.ltr.action.ListStoresAction.ListStoresActionResponse;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
@@ -32,110 +44,121 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.core.Tuple;
-import org.elasticsearch.tasks.Task;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
+import org.elasticsearch.core.Tuple;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
+public class TransportListStoresAction
+    extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
 
-import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.STORE_VERSION_PROP;
-import static java.util.stream.Collectors.toMap;
-import static org.elasticsearch.action.ActionListener.wrap;
-import static org.elasticsearch.core.Tuple.tuple;
+  private final Client client;
 
-public class TransportListStoresAction extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
-    private final Client client;
+  @Inject
+  public TransportListStoresAction(
+      TransportService transportService,
+      ClusterService clusterService,
+      ThreadPool threadPool,
+      ActionFilters actionFilters,
+      IndexNameExpressionResolver indexNameExpressionResolver,
+      Client client) {
+    super(
+        ListStoresAction.NAME,
+        transportService,
+        clusterService,
+        threadPool,
+        actionFilters,
+        ListStoresActionRequest::new,
+        indexNameExpressionResolver,
+        ListStoresActionResponse::new,
+        EsExecutors.DIRECT_EXECUTOR_SERVICE);
+    this.client = client;
+  }
 
-    @Inject
-    public TransportListStoresAction(TransportService transportService,
-                                     ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
-        super(ListStoresAction.NAME, transportService, clusterService, threadPool,
-            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new, ThreadPool.Names.SAME);
-        this.client = client;
+  @Override
+  protected void masterOperation(
+      Task task,
+      ListStoresActionRequest request,
+      ClusterState state,
+      ActionListener<ListStoresActionResponse> listener)
+      throws Exception {
+    String[] names =
+        indexNameExpressionResolver.concreteIndexNames(
+            state,
+            new ClusterStateRequest()
+                .indices(IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
+    final MultiSearchRequestBuilder req = client.prepareMultiSearch();
+    final List<Tuple<String, Integer>> versions = new ArrayList<>();
+    Stream.of(names)
+        .filter(IndexFeatureStore::isIndexStore)
+        .map((s) -> clusterService.state().metadata().getIndices().get(s))
+        .filter(Objects::nonNull)
+        .filter((im) -> STORE_VERSION_PROP.exists(im.getSettings()))
+        .forEach(
+            (m) -> {
+              req.add(countSearchRequest(m));
+              versions.add(tuple(m.getIndex().getName(), STORE_VERSION_PROP.get(m.getSettings())));
+            });
+    if (versions.isEmpty()) {
+      listener.onResponse(new ListStoresActionResponse(Collections.emptyList()));
+    } else {
+      req.execute(wrap((r) -> listener.onResponse(toResponse(r, versions)), listener::onFailure));
     }
+  }
 
-    @Override
-    protected void masterOperation(Task task, ListStoresActionRequest request, ClusterState state,
-                                   ActionListener<ListStoresActionResponse> listener) throws Exception {
-        String[] names = indexNameExpressionResolver.concreteIndexNames(state,
-                new ClusterStateRequest().indices(IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
-        final MultiSearchRequestBuilder req = client.prepareMultiSearch();
-        final List<Tuple<String, Integer>> versions = new ArrayList<>();
-        Stream.of(names)
-                .filter(IndexFeatureStore::isIndexStore)
-                .map((s) -> clusterService.state().metadata().getIndices().get(s))
-                .filter(Objects::nonNull)
-                .filter((im) -> STORE_VERSION_PROP.exists(im.getSettings()))
-                .forEach((m) -> {
-                    req.add(countSearchRequest(m));
-                    versions.add(tuple(m.getIndex().getName(),STORE_VERSION_PROP.get(m.getSettings())));
-                });
-        if (versions.isEmpty()) {
-            listener.onResponse(new ListStoresActionResponse(Collections.emptyList()));
-        } else {
-            req.execute(wrap((r) -> listener.onResponse(toResponse(r, versions)), listener::onFailure));
-        }
+  private SearchRequestBuilder countSearchRequest(IndexMetadata meta) {
+    return client
+        .prepareSearch(meta.getIndex().getName())
+        .setQuery(QueryBuilders.matchAllQuery())
+        .setSize(0)
+        .addAggregation(AggregationBuilders.terms("type").field("type").size(100));
+  }
+
+  private ListStoresActionResponse toResponse(
+      MultiSearchResponse response, List<Tuple<String, Integer>> versions) {
+    assert versions.size() == response.getResponses().length;
+    Iterator<Tuple<String, Integer>> vs = versions.iterator();
+    Iterator<MultiSearchResponse.Item> rs = response.iterator();
+    List<ListStoresAction.IndexStoreInfo> infos = new ArrayList<>(versions.size());
+    while (vs.hasNext() && rs.hasNext()) {
+      MultiSearchResponse.Item it = rs.next();
+      Tuple<String, Integer> idxAndVersion = vs.next();
+      Map<String, Integer> counts = Collections.emptyMap();
+      if (!it.isFailure()) {
+        Terms aggs = it.getResponse().getAggregations().get("type");
+        counts =
+            aggs.getBuckets().stream()
+                .collect(
+                    toMap(
+                        MultiBucketsAggregation.Bucket::getKeyAsString,
+                        (b) -> (int) b.getDocCount()));
+      }
+      infos.add(
+          new ListStoresAction.IndexStoreInfo(idxAndVersion.v1(), idxAndVersion.v2(), counts));
     }
+    return new ListStoresActionResponse(infos);
+  }
 
-
-    private SearchRequestBuilder countSearchRequest(IndexMetadata meta) {
-        return client.prepareSearch(meta.getIndex().getName())
-                .setQuery(QueryBuilders.matchAllQuery())
-                .setSize(0)
-                .addAggregation(AggregationBuilders.terms("type").field("type").size(100));
+  private Tuple<String, Integer> toVersion(String s) {
+    if (!IndexFeatureStore.isIndexStore(s)) {
+      return null;
     }
+    IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
 
-    private ListStoresActionResponse toResponse(MultiSearchResponse response, List<Tuple<String, Integer>> versions) {
-        assert versions.size() == response.getResponses().length;
-        Iterator<Tuple<String, Integer>> vs = versions.iterator();
-        Iterator<MultiSearchResponse.Item> rs = response.iterator();
-        List<ListStoresAction.IndexStoreInfo> infos = new ArrayList<>(versions.size());
-        while (vs.hasNext() && rs.hasNext()) {
-            MultiSearchResponse.Item it = rs.next();
-            Tuple<String, Integer> idxAndVersion = vs.next();
-            Map<String, Integer> counts = Collections.emptyMap();
-            if (!it.isFailure()) {
-                Terms aggs = it.getResponse()
-                        .getAggregations()
-                        .get("type");
-                counts = aggs
-                        .getBuckets()
-                        .stream()
-                        .collect(toMap(MultiBucketsAggregation.Bucket::getKeyAsString,
-                                (b) -> (int) b.getDocCount()));
-            }
-            infos.add(new ListStoresAction.IndexStoreInfo(idxAndVersion.v1(), idxAndVersion.v2(), counts));
-        }
-        return new ListStoresActionResponse(infos);
+    if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
+      return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));
     }
+    return null;
+  }
 
-    private Tuple<String, Integer> toVersion(String s) {
-        if (!IndexFeatureStore.isIndexStore(s)) {
-            return null;
-        }
-        IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
-
-        if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
-            return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));
-        }
-        return null;
-    }
-
-    @Override
-    protected ClusterBlockException checkBlock(ListStoresActionRequest request, ClusterState state) {
-        return null;
-    }
+  @Override
+  protected ClusterBlockException checkBlock(ListStoresActionRequest request, ClusterState state) {
+    return null;
+  }
 }

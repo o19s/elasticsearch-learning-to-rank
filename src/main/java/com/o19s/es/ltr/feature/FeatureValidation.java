@@ -16,86 +16,90 @@
 
 package com.o19s.es.ltr.feature;
 
-import org.elasticsearch.xcontent.ParseField;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.xcontent.ConstructingObjectParser;
 import org.elasticsearch.xcontent.ObjectParser;
+import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.xcontent.XContentParser;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
-
 /**
- * Simple object to store the parameters needed to validate stored elements:
- * - The list of template params to replace
- * - The index to run the query
+ * Simple object to store the parameters needed to validate stored elements: - The list of template
+ * params to replace - The index to run the query
  */
 public class FeatureValidation implements Writeable, ToXContentObject {
-    @SuppressWarnings("unchecked")
-    public static final ConstructingObjectParser<FeatureValidation, Void> PARSER = new ConstructingObjectParser<>("feature_validation",
-            (Object[] args) -> new FeatureValidation((String) args[0], (Map<String, Object>) args[1]));
+  @SuppressWarnings("unchecked")
+  public static final ConstructingObjectParser<FeatureValidation, Void> PARSER =
+      new ConstructingObjectParser<>(
+          "feature_validation",
+          (Object[] args) ->
+              new FeatureValidation((String) args[0], (Map<String, Object>) args[1]));
 
-    public static final ParseField INDEX = new ParseField("index");
+  public static final ParseField INDEX = new ParseField("index");
 
-    public static final ParseField PARAMS = new ParseField("params");
+  public static final ParseField PARAMS = new ParseField("params");
 
-    static {
-        PARSER.declareString(ConstructingObjectParser.constructorArg(), INDEX);
-        PARSER.declareField(ConstructingObjectParser.constructorArg(), XContentParser::map,
-                PARAMS, ObjectParser.ValueType.OBJECT);
-    }
+  static {
+    PARSER.declareString(ConstructingObjectParser.constructorArg(), INDEX);
+    PARSER.declareField(
+        ConstructingObjectParser.constructorArg(),
+        XContentParser::map,
+        PARAMS,
+        ObjectParser.ValueType.OBJECT);
+  }
 
-    private final String index;
-    private final Map<String, Object> params;
+  private final String index;
+  private final Map<String, Object> params;
 
-    public FeatureValidation(String index, Map<String, Object> params) {
-        this.index = Objects.requireNonNull(index);
-        this.params = Objects.requireNonNull(params);
-    }
+  public FeatureValidation(String index, Map<String, Object> params) {
+    this.index = Objects.requireNonNull(index);
+    this.params = Objects.requireNonNull(params);
+  }
 
-    public FeatureValidation(StreamInput input) throws IOException {
-        this.index = input.readString();
-        this.params = input.readMap();
-    }
+  public FeatureValidation(StreamInput input) throws IOException {
+    this.index = input.readString();
+    this.params = input.readMap();
+  }
 
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        out.writeString(index);
-        out.writeGenericMap(params);
-    }
+  @Override
+  public void writeTo(StreamOutput out) throws IOException {
+    out.writeString(index);
+    out.writeGenericMap(params);
+  }
 
-    public String getIndex() {
-        return index;
-    }
+  public String getIndex() {
+    return index;
+  }
 
-    public Map<String, Object> getParams() {
-        return params;
-    }
+  public Map<String, Object> getParams() {
+    return params;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FeatureValidation that = (FeatureValidation) o;
-        return Objects.equals(index, that.index) &&
-                Objects.equals(params, that.params);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FeatureValidation that = (FeatureValidation) o;
+    return Objects.equals(index, that.index) && Objects.equals(params, that.params);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(index, params);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, params);
+  }
 
-    @Override
-    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        return builder.startObject()
-                .field(INDEX.getPreferredName(), index)
-                .field(PARAMS.getPreferredName(), this.params)
-                .endObject();
-    }
+  @Override
+  public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+    return builder
+        .startObject()
+        .field(INDEX.getPreferredName(), index)
+        .field(PARAMS.getPreferredName(), this.params)
+        .endObject();
+  }
 }

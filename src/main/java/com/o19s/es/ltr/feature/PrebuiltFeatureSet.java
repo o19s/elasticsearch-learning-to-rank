@@ -17,73 +17,70 @@
 package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
-import org.apache.lucene.search.Query;
-import org.elasticsearch.core.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+import org.apache.lucene.search.Query;
+import org.elasticsearch.core.Nullable;
 
 public class PrebuiltFeatureSet implements FeatureSet {
-    private final List<Query> features;
-    private final String name;
+  private final List<Query> features;
+  private final String name;
 
-    public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
-        this.name = name;
-        this.features = new ArrayList<>(Objects.requireNonNull(features));
-    }
+  public PrebuiltFeatureSet(@Nullable String name, List<PrebuiltFeature> features) {
+    this.name = name;
+    this.features = new ArrayList<>(Objects.requireNonNull(features));
+  }
 
-    @Override
-    public String name() {
-        return name;
-    }
+  @Override
+  public String name() {
+    return name;
+  }
 
-    /**
-     * Parse and build lucene queries
-     */
-    @Override
-    public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
-        return features;
-    }
+  /** Parse and build lucene queries */
+  @Override
+  public List<Query> toQueries(LtrQueryContext context, Map<String, Object> params) {
+    return features;
+  }
 
-    @Override
-    public int featureOrdinal(String featureName) {
-        int ord = findFeatureIndexByName(featureName);
-        if (ord < 0) {
-            throw new IllegalArgumentException("Unknown feature [" + featureName + "]");
-        }
-        return ord;
+  @Override
+  public int featureOrdinal(String featureName) {
+    int ord = findFeatureIndexByName(featureName);
+    if (ord < 0) {
+      throw new IllegalArgumentException("Unknown feature [" + featureName + "]");
     }
+    return ord;
+  }
 
-    @Override
-    public Feature feature(int ord) {
-        return (PrebuiltFeature) features.get(ord);
-    }
+  @Override
+  public Feature feature(int ord) {
+    return (PrebuiltFeature) features.get(ord);
+  }
 
-    @Override
-    public PrebuiltFeature feature(String name) {
-        return (PrebuiltFeature) features.get(featureOrdinal(name));
-    }
+  @Override
+  public PrebuiltFeature feature(String name) {
+    return (PrebuiltFeature) features.get(featureOrdinal(name));
+  }
 
-    @Override
-    public boolean hasFeature(String name) {
-        return findFeatureIndexByName(name) >= 0;
-    }
+  @Override
+  public boolean hasFeature(String name) {
+    return findFeatureIndexByName(name) >= 0;
+  }
 
-    @Override
-    public int size() {
-        return features.size();
-    }
+  @Override
+  public int size() {
+    return features.size();
+  }
 
-    private int findFeatureIndexByName(String featureName) {
-        // slow, not meant for runtime usage, mostly needed for tests
-        // would make sense to implement a Map to do this once
-        // feature names are mandatory and unique.
-        return IntStream.range(0, features.size())
-                .filter(i -> Objects.equals(((PrebuiltFeature)features.get(i)).name(), featureName))
-                .findFirst()
-                .orElse(-1);
-    }
+  private int findFeatureIndexByName(String featureName) {
+    // slow, not meant for runtime usage, mostly needed for tests
+    // would make sense to implement a Map to do this once
+    // feature names are mandatory and unique.
+    return IntStream.range(0, features.size())
+        .filter(i -> Objects.equals(((PrebuiltFeature) features.get(i)).name(), featureName))
+        .findFirst()
+        .orElse(-1);
+  }
 }

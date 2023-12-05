@@ -17,78 +17,75 @@
 package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.ScoreMode;
-import org.elasticsearch.core.Nullable;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Weight;
+import org.elasticsearch.core.Nullable;
 
-/**
- * A prebuilt featured query, needed by query builders
- * that provides the query itself.
- */
+/** A prebuilt featured query, needed by query builders that provides the query itself. */
 public class PrebuiltFeature extends Query implements Feature {
-    private final String name;
-    private final Query query;
+  private final String name;
+  private final Query query;
 
-    public PrebuiltFeature(@Nullable String name, Query query) {
-        this.name = name;
-        this.query = Objects.requireNonNull(query);
-    }
+  public PrebuiltFeature(@Nullable String name, Query query) {
+    this.name = name;
+    this.query = Objects.requireNonNull(query);
+  }
 
-    @Override @Nullable
-    public String name() {
-        return name;
-    }
+  @Override
+  @Nullable
+  public String name() {
+    return name;
+  }
 
-    @Override
-    public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
-        return query;
-    }
+  @Override
+  public Query doToQuery(LtrQueryContext context, FeatureSet set, Map<String, Object> params) {
+    return query;
+  }
 
-    public Query getPrebuiltQuery() {
-        return query;
-    }
+  public Query getPrebuiltQuery() {
+    return query;
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, query);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, query);
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof PrebuiltFeature)) {
-            return false;
-        }
-        PrebuiltFeature other = (PrebuiltFeature) o;
-        return Objects.equals(name, other.name)
-                && Objects.equals(query, other.query);
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PrebuiltFeature)) {
+      return false;
     }
+    PrebuiltFeature other = (PrebuiltFeature) o;
+    return Objects.equals(name, other.name) && Objects.equals(query, other.query);
+  }
 
-    @Override
-    public String toString(String field) {
-        return query.toString(field);
-    }
+  @Override
+  public String toString(String field) {
+    return query.toString(field);
+  }
 
-    @Override
-    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-        return query.createWeight(searcher, scoreMode, boost);
-    }
+  @Override
+  public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
+      throws IOException {
+    return query.createWeight(searcher, scoreMode, boost);
+  }
 
-    @Override
-    public Query rewrite(IndexReader reader) throws IOException {
-        return query.rewrite(reader);
-    }
+  @Override
+  public Query rewrite(IndexReader reader) throws IOException {
+    return query.rewrite(reader);
+  }
 
-    @Override
-    public void visit(QueryVisitor visitor) {
-        this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
-    }
+  @Override
+  public void visit(QueryVisitor visitor) {
+    this.query.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
+  }
 }

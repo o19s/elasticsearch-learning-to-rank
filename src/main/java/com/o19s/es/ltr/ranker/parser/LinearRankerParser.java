@@ -16,46 +16,48 @@
 
 package com.o19s.es.ltr.ranker.parser;
 
+import static org.elasticsearch.xcontent.XContentParserConfiguration.EMPTY;
+
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.linear.LinearRanker;
+import java.io.IOException;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.xcontent.json.JsonXContent;
 
-import java.io.IOException;
-
-import static org.elasticsearch.xcontent.XContentParserConfiguration.EMPTY;
-
 public class LinearRankerParser implements LtrRankerParser {
-    public static final String TYPE = "model/linear";
+  public static final String TYPE = "model/linear";
 
-    @Override
-    public LinearRanker parse(FeatureSet set, String model) {
-        try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY,
-                model)
-        ) {
-            return parse(parser, set);
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
+  @Override
+  public LinearRanker parse(FeatureSet set, String model) {
+    try (XContentParser parser = JsonXContent.jsonXContent.createParser(EMPTY, model)) {
+      return parse(parser, set);
+    } catch (IOException e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
     }
+  }
 
-    private LinearRanker parse(XContentParser parser, FeatureSet set) throws IOException {
-        float[] weights = new float[set.size()];
-        if (parser.nextToken() != XContentParser.Token.START_OBJECT) {
-            throw new ParsingException(parser.getTokenLocation(), "Expected start object but found [" + parser.currentToken() +"]");
-        }
-        while (parser.nextToken() == XContentParser.Token.FIELD_NAME) {
-            String fname = parser.currentName();
-            if (!set.hasFeature(fname)) {
-                throw new ParsingException(parser.getTokenLocation(), "Feature [" + fname + "] is unknown.");
-            }
-            if (parser.nextToken() != XContentParser.Token.VALUE_NUMBER) {
-                throw new ParsingException(parser.getTokenLocation(), "Expected a float but found [" + parser.currentToken() +"]");
-            }
-            weights[set.featureOrdinal(fname)] = parser.floatValue();
-        }
-        assert parser.currentToken() == XContentParser.Token.END_OBJECT;
-        return new LinearRanker(weights);
+  private LinearRanker parse(XContentParser parser, FeatureSet set) throws IOException {
+    float[] weights = new float[set.size()];
+    if (parser.nextToken() != XContentParser.Token.START_OBJECT) {
+      throw new ParsingException(
+          parser.getTokenLocation(),
+          "Expected start object but found [" + parser.currentToken() + "]");
     }
+    while (parser.nextToken() == XContentParser.Token.FIELD_NAME) {
+      String fname = parser.currentName();
+      if (!set.hasFeature(fname)) {
+        throw new ParsingException(
+            parser.getTokenLocation(), "Feature [" + fname + "] is unknown.");
+      }
+      if (parser.nextToken() != XContentParser.Token.VALUE_NUMBER) {
+        throw new ParsingException(
+            parser.getTokenLocation(),
+            "Expected a float but found [" + parser.currentToken() + "]");
+      }
+      weights[set.featureOrdinal(fname)] = parser.floatValue();
+    }
+    assert parser.currentToken() == XContentParser.Token.END_OBJECT;
+    return new LinearRanker(weights);
+  }
 }

@@ -16,6 +16,9 @@
 
 package com.o19s.es.ltr.query;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.store.CompiledLtrModel;
@@ -29,6 +32,15 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
@@ -40,8 +52,8 @@ import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.Rewriteable;
+import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
@@ -49,203 +61,219 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.junit.Before;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQueryBuilder> {
-    private static final MemStore store = new MemStore();
+  private static final MemStore store = new MemStore();
 
-    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
-    protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(TestPlugin.class, TestGeoShapeFieldMapperPlugin.class);
-    }
+  // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
+  protected Collection<Class<? extends Plugin>> getPlugins() {
+    return Arrays.asList(TestPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+  }
 
-    @Override
-    protected Map<String, String> getObjectsHoldingArbitraryContent() {
-        return Collections.singletonMap(StoredLtrQueryBuilder.PARAMS.getPreferredName(), null);
-    }
+  @Override
+  protected Map<String, String> getObjectsHoldingArbitraryContent() {
+    return Collections.singletonMap(StoredLtrQueryBuilder.PARAMS.getPreferredName(), null);
+  }
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        store.clear();
-        StoredFeature feature1 = new StoredFeature("match1", Collections.singletonList("query_string"),
-                "mustache",
-                new MatchQueryBuilder("field1", "{{query_string}}").toString());
-        StoredFeature feature2 = new StoredFeature("match2", Collections.singletonList("query_string"),
-                "mustache",
-                new MatchQueryBuilder("field2", "{{query_string}}").toString());
-        StoredFeature feature3 = new StoredFeature("score3", Collections.emptyList(),
-                "mustache",
-                new FunctionScoreQueryBuilder(new FieldValueFactorFunctionBuilder("scorefield2")
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    store.clear();
+    StoredFeature feature1 =
+        new StoredFeature(
+            "match1",
+            Collections.singletonList("query_string"),
+            "mustache",
+            new MatchQueryBuilder("field1", "{{query_string}}").toString());
+    StoredFeature feature2 =
+        new StoredFeature(
+            "match2",
+            Collections.singletonList("query_string"),
+            "mustache",
+            new MatchQueryBuilder("field2", "{{query_string}}").toString());
+    StoredFeature feature3 =
+        new StoredFeature(
+            "score3",
+            Collections.emptyList(),
+            "mustache",
+            new FunctionScoreQueryBuilder(
+                    new FieldValueFactorFunctionBuilder("scorefield2")
                         .factor(1.2F)
                         .modifier(FieldValueFactorFunction.Modifier.LN2P)
-                        .missing(0F)).toString());
-        StoredFeatureSet set = new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
-        store.add(set);
-        LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
+                        .missing(0F))
+                .toString());
+    StoredFeatureSet set =
+        new StoredFeatureSet("set1", Arrays.asList(feature1, feature2, feature3));
+    store.add(set);
+    LtrRanker ranker = new LinearRanker(new float[] {0.1F, 0.2F, 0.3F});
 
-        Map<Integer, Normalizer> ftrNorms = new HashMap<>();
-        ftrNorms.put(2, new StandardFeatureNormalizer(1.0f,0.5f));
-        ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
+    Map<Integer, Normalizer> ftrNorms = new HashMap<>();
+    ftrNorms.put(2, new StandardFeatureNormalizer(1.0f, 0.5f));
+    ranker = new FeatureNormalizingRanker(ranker, ftrNorms);
 
-        CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
-        store.add(model);
+    CompiledLtrModel model = new CompiledLtrModel("model1", set, ranker);
+    store.add(model);
+  }
+
+  /** Create the query that is being tested */
+  @Override
+  protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
+    StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(store));
+    if (random().nextBoolean()) { // executing a model
+      builder.modelName("model1");
+    } else { // logging
+      builder.featureSetName("set1");
+    }
+    Map<String, Object> params = new HashMap<>();
+    params.put("query_string", "a wonderful query");
+    builder.params(params);
+    return builder;
+  }
+
+  public void testMissingParams() {
+    StoredLtrQueryBuilder builder =
+        new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+    builder.modelName("model1");
+
+    assertThat(
+        expectThrows(
+                IllegalArgumentException.class,
+                () -> builder.toQuery(createSearchExecutionContext()))
+            .getMessage(),
+        equalTo("Missing required param(s): [query_string]"));
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("query_string2", "a wonderful query");
+    builder.params(params);
+    assertThat(
+        expectThrows(
+                IllegalArgumentException.class,
+                () -> builder.toQuery(createSearchExecutionContext()))
+            .getMessage(),
+        equalTo("Missing required param(s): [query_string]"));
+  }
+
+  public void testInvalidActiveFeatures() {
+    StoredLtrQueryBuilder builder =
+        new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+    builder.modelName("model1");
+    builder.activeFeatures(Collections.singletonList("non_existent_feature"));
+    assertThat(
+        expectThrows(
+                IllegalArgumentException.class,
+                () -> builder.toQuery(createSearchExecutionContext()))
+            .getMessage(),
+        equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
+  }
+
+  public void testSerDe() throws IOException {
+    StoredLtrQueryBuilder builder =
+        new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+    builder.activeFeatures(Collections.singletonList("match1"));
+    BytesStreamOutput out = new BytesStreamOutput();
+    builder.writeTo(out);
+    out.close();
+
+    BytesRef ref = out.bytes().toBytesRef();
+    StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
+    StoredLtrQueryBuilder builderFromInputStream =
+        new StoredLtrQueryBuilder(
+            LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store), input);
+    List<String> expected = Collections.singletonList("match1");
+    assertEquals(expected, builderFromInputStream.activeFeatures());
+  }
+
+  public void testDoToQueryWhenFeatureEnabled() throws IOException {
+    assertQueryClass(FunctionScoreQuery.class, false);
+  }
+
+  public void testDoToQueryWhenFeatureDisabled() throws IOException {
+    assertQueryClass(MatchNoDocsQuery.class, true);
+  }
+
+  private void assertQueryClass(Class<?> clazz, boolean setActiveFeature) throws IOException {
+    StoredLtrQueryBuilder builder =
+        new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+    builder.modelName("model1");
+    Map<String, Object> params = new HashMap<>();
+    params.put("query_string", "a wonderful query");
+    builder.params(params);
+    if (setActiveFeature) {
+      builder.activeFeatures(Arrays.asList("match1", "match2"));
     }
 
-    /**
-     * Create the query that is being tested
-     */
-    @Override
-    protected StoredLtrQueryBuilder doCreateTestQueryBuilder() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(store));
-        if (random().nextBoolean()) { // executing a model
-            builder.modelName("model1");
-        } else { // logging
-            builder.featureSetName("set1");
-        }
-        Map<String, Object> params = new HashMap<>();
-        params.put("query_string", "a wonderful query");
-        builder.params(params);
-        return builder;
+    RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext());
+    List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
+    assertEquals(clazz, queries.get(2).getClass());
+  }
+
+  @Override
+  protected void doAssertLuceneQuery(
+      StoredLtrQueryBuilder queryBuilder, Query query, SearchExecutionContext context)
+      throws IOException {
+    assertThat(query, instanceOf(RankerQuery.class));
+    RankerQuery rquery = (RankerQuery) query;
+    Iterator<Query> ite = rquery.stream().iterator();
+
+    // Confirm each feature normalizer when evaluating a model
+    LtrRanker ranker = rquery.ranker();
+    if (queryBuilder.featureSetName() != null && queryBuilder.featureSetName().equals("set1")) {
+      assertThat(ranker, instanceOf(LinearRanker.class));
+    } else {
+      assertEquals(queryBuilder.modelName(), "model1");
+      assertThat(ranker, instanceOf(FeatureNormalizingRanker.class));
     }
 
-    public void testMissingParams() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
-        builder.modelName("model1");
+    // Check each feature query
+    assertTrue(ite.hasNext());
+    Query featureQuery = ite.next();
+    QueryBuilder builder =
+        new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
+    SearchExecutionContext qcontext = createSearchExecutionContext();
 
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
-                equalTo("Missing required param(s): [query_string]"));
+    Query expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
+    assertEquals(expected, featureQuery);
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("query_string2", "a wonderful query");
-        builder.params(params);
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
-                equalTo("Missing required param(s): [query_string]"));
+    assertTrue(ite.hasNext());
+    featureQuery = ite.next();
+    builder = new MatchQueryBuilder("field2", queryBuilder.params().get("query_string"));
+    qcontext = createSearchExecutionContext();
+    expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
+    assertEquals(expected, featureQuery);
+    assertTrue(ite.hasNext());
 
-    }
-
-    public void testInvalidActiveFeatures() {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
-        builder.modelName("model1");
-        builder.activeFeatures(Collections.singletonList("non_existent_feature"));
-        assertThat(expectThrows(IllegalArgumentException.class, () -> builder.toQuery(createSearchExecutionContext())).getMessage(),
-                equalTo("Feature: [non_existent_feature] provided in active_features does not exist"));
-    }
-
-    public void testSerDe() throws IOException {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
-        builder.activeFeatures(Collections.singletonList("match1"));
-        BytesStreamOutput out = new BytesStreamOutput();
-        builder.writeTo(out);
-        out.close();
-
-        BytesRef ref = out.bytes().toBytesRef();
-        StreamInput input = ByteBufferStreamInput.wrap(ref.bytes, ref.offset, ref.length);
-        StoredLtrQueryBuilder builderFromInputStream = new StoredLtrQueryBuilder(
-                LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store), input);
-        List<String> expected = Collections.singletonList("match1");
-        assertEquals(expected, builderFromInputStream.activeFeatures());
-    }
-
-    public void testDoToQueryWhenFeatureEnabled() throws IOException {
-        assertQueryClass(FunctionScoreQuery.class, false);
-    }
-
-    public void testDoToQueryWhenFeatureDisabled() throws IOException {
-        assertQueryClass(MatchNoDocsQuery.class, true);
-    }
-
-    private void assertQueryClass(Class<?> clazz, boolean setActiveFeature) throws IOException {
-        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
-        builder.modelName("model1");
-        Map<String, Object> params = new HashMap<>();
-        params.put("query_string", "a wonderful query");
-        builder.params(params);
-        if (setActiveFeature) {
-            builder.activeFeatures(Arrays.asList("match1", "match2"));
-        }
-
-        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext());
-        List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
-        assertEquals(clazz, queries.get(2).getClass());
-    }
-
-    @Override
-    protected void doAssertLuceneQuery(StoredLtrQueryBuilder queryBuilder,
-                                       Query query, SearchExecutionContext context) throws IOException {
-        assertThat(query, instanceOf(RankerQuery.class));
-        RankerQuery rquery = (RankerQuery) query;
-        Iterator<Query> ite = rquery.stream().iterator();
-
-        // Confirm each feature normalizer when evaluating a model
-        LtrRanker ranker = rquery.ranker();
-        if (queryBuilder.featureSetName() != null && queryBuilder.featureSetName().equals("set1")) {
-            assertThat(ranker, instanceOf(LinearRanker.class));
-        } else {
-            assertEquals(queryBuilder.modelName(), "model1");
-            assertThat(ranker, instanceOf(FeatureNormalizingRanker.class));
-        }
-
-        // Check each feature query
-        assertTrue(ite.hasNext());
-        Query featureQuery = ite.next();
-        QueryBuilder builder = new MatchQueryBuilder("field1", queryBuilder.params().get("query_string"));
-        SearchExecutionContext qcontext = createSearchExecutionContext();
-
-        Query expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
-        assertEquals(expected, featureQuery);
-
-        assertTrue(ite.hasNext());
-        featureQuery = ite.next();
-        builder = new MatchQueryBuilder("field2", queryBuilder.params().get("query_string"));
-        qcontext = createSearchExecutionContext();
-        expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
-        assertEquals(expected, featureQuery);
-        assertTrue(ite.hasNext());
-
-        featureQuery = ite.next();
-        builder = new FunctionScoreQueryBuilder(new FieldValueFactorFunctionBuilder("scorefield2")
+    featureQuery = ite.next();
+    builder =
+        new FunctionScoreQueryBuilder(
+            new FieldValueFactorFunctionBuilder("scorefield2")
                 .factor(1.2F)
                 .modifier(FieldValueFactorFunction.Modifier.LN2P)
                 .missing(0F));
-        qcontext = createSearchExecutionContext();
-        expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
-        assertEquals(expected, featureQuery);
+    qcontext = createSearchExecutionContext();
+    expected = Rewriteable.rewrite(builder, qcontext).toQuery(qcontext);
+    assertEquals(expected, featureQuery);
 
-        assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
+    assertThat(rquery.ranker().newFeatureVector(null), instanceOf(DenseFeatureVector.class));
+  }
+
+  @Override
+  public void testCacheability() throws IOException {
+    StoredLtrQueryBuilder queryBuilder = createTestQueryBuilder();
+    SearchExecutionContext context = createSearchExecutionContext();
+    assert context.isCacheable();
+    QueryBuilder rewritten = rewriteQuery(queryBuilder, new SearchExecutionContext(context));
+    assertNotNull(rewritten.toQuery(context));
+    assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
+  }
+
+  // Hack to inject our MemStore
+  public static class TestPlugin extends LtrQueryParserPlugin {
+    public TestPlugin(Settings settings) {
+      super(settings);
     }
 
     @Override
-    public void testCacheability() throws IOException {
-        StoredLtrQueryBuilder queryBuilder = createTestQueryBuilder();
-        SearchExecutionContext context = createSearchExecutionContext();
-        assert context.isCacheable();
-        QueryBuilder rewritten = rewriteQuery(queryBuilder, new SearchExecutionContext(context));
-        assertNotNull(rewritten.toQuery(context));
-        assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
+    protected FeatureStoreLoader getFeatureStoreLoader() {
+      return LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store);
     }
-
-    // Hack to inject our MemStore
-    public static class TestPlugin extends LtrQueryParserPlugin {
-        public TestPlugin(Settings settings) {
-            super(settings);
-        }
-
-        @Override
-        protected FeatureStoreLoader getFeatureStoreLoader() {
-            return LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store);
-        }
-    }
-
+  }
 }

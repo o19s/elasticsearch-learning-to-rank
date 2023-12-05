@@ -17,31 +17,31 @@
 package com.o19s.es.ltr.ranker;
 
 /**
- * A dense ranker base class to work with {@link DenseFeatureVector}
- * where missing feature scores are set to 0.
+ * A dense ranker base class to work with {@link DenseFeatureVector} where missing feature scores
+ * are set to 0.
  */
 public abstract class DenseLtrRanker implements LtrRanker {
-    @Override
-    public DenseFeatureVector newFeatureVector(FeatureVector reuse) {
-        if (reuse != null) {
-            assert reuse instanceof DenseFeatureVector;
-            DenseFeatureVector vector = (DenseFeatureVector) reuse;
-            vector.reset();
-            return vector;
-        }
-        return new DenseFeatureVector(size());
+  @Override
+  public DenseFeatureVector newFeatureVector(FeatureVector reuse) {
+    if (reuse != null) {
+      assert reuse instanceof DenseFeatureVector;
+      DenseFeatureVector vector = (DenseFeatureVector) reuse;
+      vector.reset();
+      return vector;
     }
+    return new DenseFeatureVector(size());
+  }
 
-    @Override
-    public float score(FeatureVector vector) {
-        assert vector instanceof DenseFeatureVector;
-        return this.score((DenseFeatureVector) vector);
-    }
+  @Override
+  public float score(FeatureVector vector) {
+    assert vector instanceof DenseFeatureVector;
+    return this.score((DenseFeatureVector) vector);
+  }
 
-    protected abstract float score(DenseFeatureVector vector);
+  protected abstract float score(DenseFeatureVector vector);
 
-    /**
-     * @return the number of features supported by this ranker
-     */
-    protected abstract int size();
+  /**
+   * @return the number of features supported by this ranker
+   */
+  protected abstract int size();
 }

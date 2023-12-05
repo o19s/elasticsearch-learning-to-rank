@@ -18,22 +18,20 @@ package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
 
-/**
- * Represents a self contained LTR model
- */
+/** Represents a self contained LTR model */
 public interface LtrModel {
-    /**
-     * @return the name of the model
-     */
-    String name();
+  /**
+   * @return the name of the model
+   */
+  String name();
 
-    /**
-     * @return the {@link LtrRanker} implementation used by this model
-     */
-    LtrRanker ranker();
+  /**
+   * @return the {@link LtrRanker} implementation used by this model
+   */
+  LtrRanker ranker();
 
-    /**
-     * @return the set of features used by this model
-     */
-    FeatureSet featureSet();
+  /**
+   * @return the set of features used by this model
+   */
+  FeatureSet featureSet();
 }

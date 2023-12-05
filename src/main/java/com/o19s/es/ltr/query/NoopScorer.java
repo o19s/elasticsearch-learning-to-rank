@@ -15,56 +15,52 @@
  */
 package com.o19s.es.ltr.query;
 
+import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-
-/**
- * Created by doug on 2/3/17.
- */
+/** Created by doug on 2/3/17. */
 public class NoopScorer extends Scorer {
-    private final DocIdSetIterator _noopIter;
-    /**
-     * Constructs a Scorer
-     *
-     * @param weight The scorers weight
-     * @param maxDocs maximum number of documents to score
-     */
-    public NoopScorer(Weight weight, int maxDocs) {
-        super(weight);
-        _noopIter = DocIdSetIterator.all(maxDocs);
+  private final DocIdSetIterator _noopIter;
 
-    }
+  /**
+   * Constructs a Scorer
+   *
+   * @param weight The scorers weight
+   * @param maxDocs maximum number of documents to score
+   */
+  public NoopScorer(Weight weight, int maxDocs) {
+    super(weight);
+    _noopIter = DocIdSetIterator.all(maxDocs);
+  }
 
-    public NoopScorer(Weight weight, DocIdSetIterator iterator) {
-        super(weight);
-        _noopIter = iterator;
-    }
+  public NoopScorer(Weight weight, DocIdSetIterator iterator) {
+    super(weight);
+    _noopIter = iterator;
+  }
 
-    @Override
-    public int docID() {
-        return _noopIter.docID();
-    }
+  @Override
+  public int docID() {
+    return _noopIter.docID();
+  }
 
-    @Override
-    public float score() throws IOException {
-        return 0;
-    }
+  @Override
+  public float score() throws IOException {
+    return 0;
+  }
 
-    @Override
-    public DocIdSetIterator iterator() {
-        return _noopIter;
-    }
+  @Override
+  public DocIdSetIterator iterator() {
+    return _noopIter;
+  }
 
-    /**
-     * Return the maximum score that documents between the last {@code target}
-     * that this iterator was {@link #advanceShallow(int) shallow-advanced} to
-     * included and {@code upTo} included.
-     */
-    @Override
-    public float getMaxScore(int upTo) throws IOException {
-        return Float.POSITIVE_INFINITY;
-    }
+  /**
+   * Return the maximum score that documents between the last {@code target} that this iterator was
+   * {@link #advanceShallow(int) shallow-advanced} to included and {@code upTo} included.
+   */
+  @Override
+  public float getMaxScore(int upTo) throws IOException {
+    return Float.POSITIVE_INFINITY;
+  }
 }

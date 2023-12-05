@@ -15,7 +15,12 @@
  */
 package com.o19s.es.explore;
 
+import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
+
 import com.o19s.es.ltr.LtrQueryParserPlugin;
+import java.io.IOException;
+import java.util.Collection;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
@@ -26,85 +31,80 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 
-import java.io.IOException;
-import java.util.Collection;
-
-import static java.util.Arrays.asList;
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQueryBuilder> {
-    // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
-    protected Collection<Class<? extends Plugin>> getPlugins() {
-        return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
-    }
+  // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
+  protected Collection<Class<? extends Plugin>> getPlugins() {
+    return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+  }
 
-    @Override
-    protected ExplorerQueryBuilder doCreateTestQueryBuilder() {
-        ExplorerQueryBuilder builder = new ExplorerQueryBuilder();
-        builder.query(new TermQueryBuilder("foo", "bar"));
-        builder.statsType("sum_raw_ttf");
-        return builder;
-    }
+  @Override
+  protected ExplorerQueryBuilder doCreateTestQueryBuilder() {
+    ExplorerQueryBuilder builder = new ExplorerQueryBuilder();
+    builder.query(new TermQueryBuilder("foo", "bar"));
+    builder.statsType("sum_raw_ttf");
+    return builder;
+  }
 
-    public void testParse() throws Exception {
-        String query = " {" +
-                        "  \"match_explorer\": {" +
-                        "    \"query\": {" +
-                        "      \"match\": {" +
-                        "        \"title\": \"test\"" +
-                        "      }" +
-                        "    }," +
-                        "   \"type\": \"stddev_raw_tf\"" +
-                        "  }" +
-                        "}";
+  public void testParse() throws Exception {
+    String query =
+        " {"
+            + "  \"match_explorer\": {"
+            + "    \"query\": {"
+            + "      \"match\": {"
+            + "        \"title\": \"test\""
+            + "      }"
+            + "    },"
+            + "   \"type\": \"stddev_raw_tf\""
+            + "  }"
+            + "}";
 
-        ExplorerQueryBuilder builder = (ExplorerQueryBuilder)parseQuery(query);
+    ExplorerQueryBuilder builder = (ExplorerQueryBuilder) parseQuery(query);
 
-        assertNotNull(builder.query());
-        assertEquals(builder.statsType(), "stddev_raw_tf");
-    }
+    assertNotNull(builder.query());
+    assertEquals(builder.statsType(), "stddev_raw_tf");
+  }
 
-    @Override
-    public void testMustRewrite() throws IOException {
-        SearchExecutionContext context = createSearchExecutionContext();
-        context.setAllowUnmappedFields(true);
-        ExplorerQueryBuilder queryBuilder = createTestQueryBuilder();
-        queryBuilder.boost(AbstractQueryBuilder.DEFAULT_BOOST);
-        QueryBuilder rewritten = queryBuilder.rewrite(context);
+  @Override
+  public void testMustRewrite() throws IOException {
+    SearchExecutionContext context = createSearchExecutionContext();
+    context.setAllowUnmappedFields(true);
+    ExplorerQueryBuilder queryBuilder = createTestQueryBuilder();
+    queryBuilder.boost(AbstractQueryBuilder.DEFAULT_BOOST);
+    QueryBuilder rewritten = queryBuilder.rewrite(context);
 
-        // though the query may be rewritten, we assert that we
-        // always rewrite to an ExplorerQueryBuilder (same goes for ExplorerQuery...)
-        assertThat(rewritten, instanceOf(ExplorerQueryBuilder.class));
-        Query q = rewritten.toQuery(context);
-        assertThat(q, instanceOf(ExplorerQuery.class));
-    }
+    // though the query may be rewritten, we assert that we
+    // always rewrite to an ExplorerQueryBuilder (same goes for ExplorerQuery...)
+    assertThat(rewritten, instanceOf(ExplorerQueryBuilder.class));
+    Query q = rewritten.toQuery(context);
+    assertThat(q, instanceOf(ExplorerQuery.class));
+  }
 
-    public void testMissingQuery() throws Exception {
-        String query =  " {" +
-                        "  \"match_explorer\": {" +
-                        "   \"type\": \"stddev_raw_tf\"" +
-                        "  }" +
-                        "}";
+  public void testMissingQuery() throws Exception {
+    String query =
+        " {" + "  \"match_explorer\": {" + "   \"type\": \"stddev_raw_tf\"" + "  }" + "}";
 
-        expectThrows(ParsingException.class, () -> parseQuery(query));
-    }
+    expectThrows(ParsingException.class, () -> parseQuery(query));
+  }
 
-    public void testMissingType() throws Exception {
-        String query =  " {" +
-                        "  \"match_explorer\": {" +
-                        "    \"query\": {" +
-                        "      \"match\": {" +
-                        "        \"title\": \"test\"" +
-                        "      }" +
-                        "    }" +
-                        "  }" +
-                        "}";
+  public void testMissingType() throws Exception {
+    String query =
+        " {"
+            + "  \"match_explorer\": {"
+            + "    \"query\": {"
+            + "      \"match\": {"
+            + "        \"title\": \"test\""
+            + "      }"
+            + "    }"
+            + "  }"
+            + "}";
 
-        expectThrows(ParsingException.class, () -> parseQuery(query));
-    }
+    expectThrows(ParsingException.class, () -> parseQuery(query));
+  }
 
-    @Override
-    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, SearchExecutionContext context) throws IOException {
-        assertThat(query, instanceOf(ExplorerQuery.class));
-    }
+  @Override
+  protected void doAssertLuceneQuery(
+      ExplorerQueryBuilder queryBuilder, Query query, SearchExecutionContext context)
+      throws IOException {
+    assertThat(query, instanceOf(ExplorerQuery.class));
+  }
 }

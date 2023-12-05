@@ -19,59 +19,54 @@ package com.o19s.es.ltr.ranker;
 import org.elasticsearch.core.Nullable;
 
 /**
- * A ranker used by {@link com.o19s.es.ltr.query.RankerQuery}
- * to compute a score based on a set of feature scores.
+ * A ranker used by {@link com.o19s.es.ltr.query.RankerQuery} to compute a score based on a set of
+ * feature scores.
  */
 public interface LtrRanker {
 
+  /**
+   * LtrRanker name
+   *
+   * @return the ranker name
+   */
+  String name();
+
+  /**
+   * Data point implementation used by this ranker A data point is used to store feature scores. A
+   * single instance will be created for every Scorer. The implementation does not have to be
+   * thread-safe and meant to be reused. The ranker must always provide a new instance of the data
+   * point when this method is called with null.
+   *
+   * @param reuse allows Ranker to reuse a feature vector instance
+   * @return the new feature vector to be used by this ranker
+   */
+  FeatureVector newFeatureVector(@Nullable FeatureVector reuse);
+
+  /**
+   * Score the data point. At this point all feature scores are set. features that did not match are
+   * set with a score to 0
+   *
+   * @param point the feature vector point to compute the score for
+   * @return the score computed for the given point
+   */
+  float score(FeatureVector point);
+
+  /** A FeatureVector used to store individual feature scores */
+  interface FeatureVector {
     /**
-     * LtrRanker name
+     * Set the score for the given featureId
      *
-     * @return the ranker name
+     * @param featureId the feature-id to set the score for
+     * @param score the feature's score
      */
-    String name();
+    void setFeatureScore(int featureId, float score);
 
     /**
-     * Data point implementation used by this ranker
-     * A data point is used to store feature scores.
-     * A single instance will be created for every Scorer.
-     * The implementation does not have to be thread-safe and meant to be reused.
-     * The ranker must always provide a new instance of the data point when this method is called with null.
+     * Retrieve the score for the given feature-id
      *
-     * @param reuse allows Ranker to reuse a feature vector instance
-     * @return the new feature vector to be used by this ranker
+     * @param featureId the feature-id to retrieve the score for
+     * @return the score computed for the given feature
      */
-    FeatureVector newFeatureVector(@Nullable FeatureVector reuse);
-
-    /**
-     * Score the data point.
-     * At this point all feature scores are set.
-     * features that did not match are set with a score to 0
-     *
-     * @param point the feature vector point to compute the score for
-     * @return the score computed for the given point
-     */
-    float score(FeatureVector point);
-
-    /**
-     * A FeatureVector used to store individual feature scores
-     */
-    interface FeatureVector {
-        /**
-         * Set the score for the given featureId
-         *
-         * @param featureId the feature-id to set the score for
-         * @param score the feature's score
-         */
-        void setFeatureScore(int featureId, float score);
-
-        /**
-         * Retrieve the score for the given feature-id
-         *
-         * @param featureId the feature-id to retrieve the score for
-         * @return the score computed for the given feature
-         */
-        float getFeatureScore(int featureId);
-
-    }
+    float getFeatureScore(int featureId);
+  }
 }
