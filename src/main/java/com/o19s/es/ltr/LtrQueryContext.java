@@ -16,36 +16,37 @@
 
 package com.o19s.es.ltr;
 
-import org.elasticsearch.index.query.SearchExecutionContext;
-
 import java.util.Collections;
 import java.util.Set;
+import org.elasticsearch.index.query.SearchExecutionContext;
 
-/**
- * LTR queryShardContext used to track information needed for building lucene queries
- */
+/** LTR queryShardContext used to track information needed for building lucene queries */
 public class LtrQueryContext {
-    private final SearchExecutionContext queryShardContext;
-    private final Set<String> activeFeatures;
+  private final SearchExecutionContext queryShardContext;
+  private final Set<String> activeFeatures;
 
-    public LtrQueryContext(SearchExecutionContext context) {
-        this(context, Collections.emptySet());
-    }
+  public LtrQueryContext(SearchExecutionContext context) {
+    this(context, Collections.emptySet());
+  }
 
-    public LtrQueryContext(SearchExecutionContext context, Set<String> activeFeatures) {
-        this.queryShardContext = context;
-        this.activeFeatures = activeFeatures;
-    }
+  public LtrQueryContext(SearchExecutionContext context, Set<String> activeFeatures) {
+    this.queryShardContext = context;
+    this.activeFeatures = activeFeatures;
+  }
 
-    public SearchExecutionContext getSearchExecutionContext() {
-        return queryShardContext;
-    }
+  public SearchExecutionContext getSearchExecutionContext() {
+    return queryShardContext;
+  }
 
-    public boolean isFeatureActive(String featureName) {
-        return activeFeatures == null || activeFeatures.isEmpty() || activeFeatures.contains(featureName);
-    }
+  public boolean isFeatureActive(String featureName) {
+    return activeFeatures == null
+        || activeFeatures.isEmpty()
+        || activeFeatures.contains(featureName);
+  }
 
-    public Set<String> getActiveFeatures() {
-        return activeFeatures==null? Collections.emptySet(): Collections.unmodifiableSet(activeFeatures);
-    }
+  public Set<String> getActiveFeatures() {
+    return activeFeatures == null
+        ? Collections.emptySet()
+        : Collections.unmodifiableSet(activeFeatures);
+  }
 }

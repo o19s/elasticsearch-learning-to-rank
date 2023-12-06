@@ -19,56 +19,57 @@ package com.o19s.es.ltr.ranker.ranklib;
 import ciir.umass.edu.learning.DataPoint;
 import ciir.umass.edu.utilities.RankLibError;
 import com.o19s.es.ltr.ranker.LtrRanker;
-
 import java.util.Arrays;
 
-/**
- * Implements FeatureVector but without needing to pass in a stirng
- * to be parsed
- */
+/** Implements FeatureVector but without needing to pass in a stirng to be parsed */
 public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.FeatureVector {
-    private static final int RANKLIB_FEATURE_INDEX_OFFSET = 1;
-    public DenseProgramaticDataPoint(int numFeatures) {
-        this.fVals = new float[numFeatures+RANKLIB_FEATURE_INDEX_OFFSET]; // add 1 because RankLib features 1 based
-    }
+  private static final int RANKLIB_FEATURE_INDEX_OFFSET = 1;
 
-    public float getFeatureValue(int fid) {
-        if(fid > 0 && fid < this.fVals.length) {
-            return isUnknown(this.fVals[fid])?0.0F:this.fVals[fid];
-        } else {
-            throw RankLibError.create("Error in DenseDataPoint::getFeatureValue(): requesting unspecified feature, fid=" + fid);
-        }
-    }
+  public DenseProgramaticDataPoint(int numFeatures) {
+    this.fVals =
+        new float
+            [numFeatures + RANKLIB_FEATURE_INDEX_OFFSET]; // add 1 because RankLib features 1 based
+  }
 
-    public void setFeatureValue(int fid, float fval) {
-        if(fid > 0 && fid < this.fVals.length) {
-            this.fVals[fid] = fval;
-        } else {
-            throw RankLibError.create("Error in DenseDataPoint::setFeatureValue(): feature (id=" + fid + ") not found.");
-        }
+  public float getFeatureValue(int fid) {
+    if (fid > 0 && fid < this.fVals.length) {
+      return isUnknown(this.fVals[fid]) ? 0.0F : this.fVals[fid];
+    } else {
+      throw RankLibError.create(
+          "Error in DenseDataPoint::getFeatureValue(): requesting unspecified feature, fid=" + fid);
     }
+  }
 
-    public void setFeatureVector(float[] dfVals) {
-        this.fVals = dfVals;
+  public void setFeatureValue(int fid, float fval) {
+    if (fid > 0 && fid < this.fVals.length) {
+      this.fVals[fid] = fval;
+    } else {
+      throw RankLibError.create(
+          "Error in DenseDataPoint::setFeatureValue(): feature (id=" + fid + ") not found.");
     }
+  }
 
-    public float[] getFeatureVector() {
-        return this.fVals;
-    }
+  public void setFeatureVector(float[] dfVals) {
+    this.fVals = dfVals;
+  }
 
-    @Override
-    public void setFeatureScore(int featureIdx, float score) {
-        // add 1 because RankLib features 1 based
-        this.setFeatureValue(featureIdx+1, score);
-    }
+  public float[] getFeatureVector() {
+    return this.fVals;
+  }
 
-    @Override
-    public float getFeatureScore(int featureIdx) {
-        // add 1 because RankLib features 1 based
-        return this.getFeatureValue(featureIdx+1);
-    }
+  @Override
+  public void setFeatureScore(int featureIdx, float score) {
+    // add 1 because RankLib features 1 based
+    this.setFeatureValue(featureIdx + 1, score);
+  }
 
-    public void reset() {
-        Arrays.fill(fVals, 0F);
-    }
+  @Override
+  public float getFeatureScore(int featureIdx) {
+    // add 1 because RankLib features 1 based
+    return this.getFeatureValue(featureIdx + 1);
+  }
+
+  public void reset() {
+    Arrays.fill(fVals, 0F);
+  }
 }

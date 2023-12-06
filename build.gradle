@@ -5,6 +5,7 @@ buildscript {
 
   dependencies {
     classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
+    classpath("com.diffplug.spotless:spotless-plugin-gradle:${spotlessVersion}")
   }
 }
 
@@ -40,6 +41,7 @@ apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 apply plugin: 'elasticsearch.java-rest-test'
 apply plugin: 'elasticsearch.yaml-rest-test'
+apply plugin: 'com.diffplug.spotless'
 
 checkstyle {
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
@@ -73,7 +75,7 @@ repositories {
   mavenLocal()
   jcenter {
     url "https://jcenter.bintray.com/"
-    metadataSources{
+    metadataSources {
       artifact()
     }
   }
@@ -82,6 +84,19 @@ repositories {
 java {
   withJavadocJar()
   withSourcesJar()
+}
+
+spotless {
+  java {
+    removeUnusedImports()
+    googleJavaFormat('1.18.1')
+    target 'src/**/*.java'
+  }
+  groovyGradle {
+    target '*.gradle'
+    greclipse()
+    indentWithSpaces(2)
+  }
 }
 
 // Set to false to not use elasticsearch checkstyle rules

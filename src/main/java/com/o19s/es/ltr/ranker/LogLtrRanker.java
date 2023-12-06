@@ -19,77 +19,81 @@ package com.o19s.es.ltr.ranker;
 import java.util.Map;
 
 public class LogLtrRanker implements LtrRanker {
+  private final LogConsumer logger;
+  private final NullRanker ranker;
+
+  public LogLtrRanker(NullRanker ranker, LogConsumer consumer) {
+    this.ranker = ranker;
+    assert (this.ranker.getClass() == NullRanker.class);
+    this.logger = consumer;
+  }
+
+  public LogLtrRanker(LogConsumer consumer, int modelSize) {
+    this.ranker = new NullRanker(modelSize);
+    this.logger = consumer;
+  }
+
+  @Override
+  public String name() {
+    return "log(" + ranker.name() + ")";
+  }
+
+  @Override
+  public FeatureVector newFeatureVector(FeatureVector reuse) {
+    final VectorWrapper wrapper;
+    if (reuse == null) {
+      wrapper = new VectorWrapper(logger);
+    } else {
+      assert reuse instanceof VectorWrapper;
+      wrapper = (VectorWrapper) reuse;
+    }
+    wrapper.reset(ranker);
+    return wrapper;
+  }
+
+  @Override
+  public float score(FeatureVector point) {
+    assert point instanceof VectorWrapper;
+    return ranker.score(((VectorWrapper) point).inner);
+  }
+
+  private static class VectorWrapper implements FeatureVector {
+    private FeatureVector inner;
     private final LogConsumer logger;
-    private final NullRanker ranker;
 
-    public LogLtrRanker(NullRanker ranker, LogConsumer consumer) {
-        this.ranker = ranker;
-        assert(this.ranker.getClass() == NullRanker.class);
-        this.logger = consumer;
-    }
-
-    public LogLtrRanker(LogConsumer consumer, int modelSize) {
-        this.ranker = new NullRanker(modelSize);
-        this.logger = consumer;
+    VectorWrapper(LogConsumer consumer) {
+      this.logger = consumer;
     }
 
     @Override
-    public String name() {
-        return "log(" + ranker.name() + ")";
+    public void setFeatureScore(int featureId, float score) {
+      inner.setFeatureScore(featureId, score);
+      logger.accept(featureId, score);
     }
 
     @Override
-    public FeatureVector newFeatureVector(FeatureVector reuse) {
-        final VectorWrapper wrapper;
-        if (reuse == null) {
-            wrapper = new VectorWrapper(logger);
-        } else {
-            assert reuse instanceof VectorWrapper;
-            wrapper = (VectorWrapper) reuse;
-        }
-        wrapper.reset(ranker);
-        return wrapper;
+    public float getFeatureScore(int featureId) {
+      return inner.getFeatureScore(featureId);
     }
 
-    @Override
-    public float score(FeatureVector point) {
-        assert point instanceof VectorWrapper;
-        return ranker.score(((VectorWrapper) point).inner);
+    void reset(LtrRanker ranker) {
+      this.inner = ranker.newFeatureVector(inner);
+      logger.reset();
+    }
+  }
+
+  public LogConsumer getLogConsumer() {
+    return logger;
+  }
+
+  @FunctionalInterface
+  public interface LogConsumer {
+    void accept(int featureOrdinal, float score);
+
+    default Map<String, Object> getExtraLoggingMap() {
+      return null;
     }
 
-    private static class VectorWrapper implements FeatureVector {
-        private FeatureVector inner;
-        private final LogConsumer logger;
-
-        VectorWrapper(LogConsumer consumer) {
-            this.logger = consumer;
-        }
-
-        @Override
-        public void setFeatureScore(int featureId, float score) {
-            inner.setFeatureScore(featureId, score);
-            logger.accept(featureId, score);
-        }
-
-        @Override
-        public float getFeatureScore(int featureId) {
-            return inner.getFeatureScore(featureId);
-        }
-
-        void reset(LtrRanker ranker) {
-            this.inner = ranker.newFeatureVector(inner);
-            logger.reset();
-        }
-    }
-
-    public LogConsumer getLogConsumer() {
-        return logger;
-    }
-
-    @FunctionalInterface
-    public interface LogConsumer {
-        void accept(int featureOrdinal, float score);
-        default Map<String,Object> getExtraLoggingMap() {return null;}
-        default void reset() {}
-    }
+    default void reset() {}
+  }
 }

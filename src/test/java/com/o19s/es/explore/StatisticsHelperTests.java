@@ -18,33 +18,31 @@ package com.o19s.es.explore;
 import org.apache.lucene.tests.util.LuceneTestCase;
 
 public class StatisticsHelperTests extends LuceneTestCase {
-    private final float[] dataset = new float[] {
-      0.0f, -5.0f, 10.0f, 5.0f
-    };
+  private final float[] dataset = new float[] {0.0f, -5.0f, 10.0f, 5.0f};
 
-    public void testStats() throws Exception {
-        StatisticsHelper stats = new StatisticsHelper();
+  public void testStats() throws Exception {
+    StatisticsHelper stats = new StatisticsHelper();
 
-        for(float f : dataset) {
-            stats.add(f);
-        }
-
-        assertEquals(10.0f, stats.getMax(), 0.0f);
-        assertEquals(-5.0f, stats.getMin(), 0.0f);
-        assertEquals(2.5f, stats.getMean(), 0.0f);
-        assertEquals(5.59f, stats.getStdDev(), 0.009f);
-        assertEquals(31.25f, stats.getVariance(), 0.009f);
+    for (float f : dataset) {
+      stats.add(f);
     }
 
-    public void testSingleElement() throws Exception {
-        StatisticsHelper stats = new StatisticsHelper();
+    assertEquals(10.0f, stats.getMax(), 0.0f);
+    assertEquals(-5.0f, stats.getMin(), 0.0f);
+    assertEquals(2.5f, stats.getMean(), 0.0f);
+    assertEquals(5.59f, stats.getStdDev(), 0.009f);
+    assertEquals(31.25f, stats.getVariance(), 0.009f);
+  }
 
-        stats.add(42.0f);
+  public void testSingleElement() throws Exception {
+    StatisticsHelper stats = new StatisticsHelper();
 
-        assertEquals(42.0f, stats.getMax(), 0.0f);
-        assertEquals(42.0f, stats.getMin(), 0.0f);
-        assertEquals(42.0f, stats.getMean(), 0.0f);
-        assertEquals(0.0f, stats.getStdDev(), 0.0f);
-        assertEquals(0.0f, stats.getVariance(), 0.0f);
-    }
+    stats.add(42.0f);
+
+    assertEquals(42.0f, stats.getMax(), 0.0f);
+    assertEquals(42.0f, stats.getMin(), 0.0f);
+    assertEquals(42.0f, stats.getMean(), 0.0f);
+    assertEquals(0.0f, stats.getStdDev(), 0.0f);
+    assertEquals(0.0f, stats.getVariance(), 0.0f);
+  }
 }

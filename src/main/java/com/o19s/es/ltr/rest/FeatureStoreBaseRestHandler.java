@@ -24,13 +24,13 @@ import org.elasticsearch.rest.RestRequest;
 
 public abstract class FeatureStoreBaseRestHandler extends BaseRestHandler {
 
-    protected String indexName(RestRequest request) {
-        if (request.hasParam("store")) {
-            return IndexFeatureStore.STORE_PREFIX + request.param("store");
-        } else {
-            return IndexFeatureStore.DEFAULT_STORE;
-        }
+  protected String indexName(RestRequest request) {
+    if (request.hasParam("store")) {
+      return IndexFeatureStore.STORE_PREFIX + request.param("store");
+    } else {
+      return IndexFeatureStore.DEFAULT_STORE;
     }
+  }
 
-    protected Logger logger = LogManager.getLogger(getClass());
+  protected Logger logger = LogManager.getLogger(getClass());
 }

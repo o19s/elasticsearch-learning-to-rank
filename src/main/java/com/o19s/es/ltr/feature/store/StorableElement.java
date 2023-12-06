@@ -22,55 +22,58 @@ import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.XContentParser;
 
 public interface StorableElement extends ToXContent, NamedWriteable {
-    /**
-     * @return the element name
-     */
-    String name();
+  /**
+   * @return the element name
+   */
+  String name();
 
-    /**
-     * @return the element type
-     */
-    String type();
+  /**
+   * @return the element type
+   */
+  String type();
 
-    /**
-     * @return if the current element can be updated
-     */
-    default boolean updatable() {
-        return true;
+  /**
+   * @return if the current element can be updated
+   */
+  default boolean updatable() {
+    return true;
+  }
+
+  default String id() {
+    return generateId(type(), name());
+  }
+
+  static String generateId(String type, String name) {
+    return type + "-" + name;
+  }
+
+  @Override
+  default String getWriteableName() {
+    return type();
+  }
+
+  abstract class StorableElementParserState {
+    private String name;
+
+    public void setName(String name) {
+      this.name = name;
     }
 
-    default String id() {
-        return generateId(type(), name());
+    public String getName() {
+      return this.name;
     }
 
-    static String generateId(String type, String name) {
-        return type + "-" + name;
+    void resolveName(XContentParser parser, String name) {
+      if (this.name == null && name != null) {
+        this.name = name;
+      } else if (this.name == null /* && name == null */) {
+        throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
+      } else if (
+      /* this.name != null && */ name != null && !this.name.equals(name)) {
+        throw new ParsingException(
+            parser.getTokenLocation(),
+            "Invalid [name], expected [" + name + "] but got [" + this.name + "]");
+      }
     }
-
-    @Override
-    default String getWriteableName() {
-        return type();
-    }
-
-    abstract class StorableElementParserState {
-        private String name;
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        void resolveName(XContentParser parser, String name) {
-            if (this.name == null && name != null) {
-                this.name = name;
-            } else if ( this.name == null /* && name == null */) {
-                throw new ParsingException(parser.getTokenLocation(), "Field [name] is mandatory");
-            } else if ( /* this.name != null && */ name != null && !this.name.equals(name)) {
-                throw new ParsingException(parser.getTokenLocation(), "Invalid [name], expected ["+name+"] but got [" + this.name+"]");
-            }
-        }
-    }
+  }
 }

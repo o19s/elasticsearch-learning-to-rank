@@ -18,5 +18,5 @@ package com.o19s.es.ltr.utils;
 
 @FunctionalInterface
 public interface CheckedBiFunction<T, U, R, E extends Exception> {
-    R apply(T var1, U var2) throws E;
+  R apply(T var1, U var2) throws E;
 }

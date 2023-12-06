@@ -22,5 +22,5 @@ import org.elasticsearch.client.internal.Client;
 
 @FunctionalInterface
 public interface FeatureStoreLoader {
-    FeatureStore load(String storeName, Supplier<Client> clientSupplier);
+  FeatureStore load(String storeName, Supplier<Client> clientSupplier);
 }

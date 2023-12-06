@@ -19,47 +19,47 @@ package com.o19s.es.ltr.ranker;
 import org.apache.lucene.tests.util.LuceneTestCase;
 
 public class DenseLtrRankerTests extends LuceneTestCase {
-    public void newFeatureVector() throws Exception {
-        int modelSize = random().nextInt(10);
-        DummyDenseRanker ranker = new DummyDenseRanker(modelSize);
-        DenseFeatureVector vector = ranker.newFeatureVector(null);
-        assertNotNull(vector);
-        for(int i = 0; i < modelSize; i++) {
-            assertEquals(0, vector.getFeatureScore(0), Math.ulp(0));
-        }
-        float[] points = vector.scores;
-        assertEquals(points.length, 2);
+  public void newFeatureVector() throws Exception {
+    int modelSize = random().nextInt(10);
+    DummyDenseRanker ranker = new DummyDenseRanker(modelSize);
+    DenseFeatureVector vector = ranker.newFeatureVector(null);
+    assertNotNull(vector);
+    for (int i = 0; i < modelSize; i++) {
+      assertEquals(0, vector.getFeatureScore(0), Math.ulp(0));
+    }
+    float[] points = vector.scores;
+    assertEquals(points.length, 2);
 
-        for(int i = 0; i < modelSize; i++) {
-            vector.setFeatureScore(0, random().nextFloat());
-        }
-        LtrRanker.FeatureVector vector2 = ranker.newFeatureVector(vector);
-        assertSame(vector, vector2);
-        for(int i = 0; i < modelSize; i++) {
-            assertEquals(0, vector.getFeatureScore(0), Math.ulp(0));
-        }
+    for (int i = 0; i < modelSize; i++) {
+      vector.setFeatureScore(0, random().nextFloat());
+    }
+    LtrRanker.FeatureVector vector2 = ranker.newFeatureVector(vector);
+    assertSame(vector, vector2);
+    for (int i = 0; i < modelSize; i++) {
+      assertEquals(0, vector.getFeatureScore(0), Math.ulp(0));
+    }
+  }
+
+  private static class DummyDenseRanker extends DenseLtrRanker {
+    private final int modelSize;
+
+    private DummyDenseRanker(int modelSize) {
+      this.modelSize = modelSize;
     }
 
-    private static class DummyDenseRanker extends DenseLtrRanker {
-        private final int modelSize;
-
-        private DummyDenseRanker(int modelSize) {
-            this.modelSize = modelSize;
-        }
-
-        @Override
-        protected float score(DenseFeatureVector vector) {
-            return 0;
-        }
-
-        @Override
-        protected int size() {
-            return modelSize;
-        }
-
-        @Override
-        public String name() {
-            return "dummy";
-        }
+    @Override
+    protected float score(DenseFeatureVector vector) {
+      return 0;
     }
+
+    @Override
+    protected int size() {
+      return modelSize;
+    }
+
+    @Override
+    public String name() {
+      return "dummy";
+    }
+  }
 }

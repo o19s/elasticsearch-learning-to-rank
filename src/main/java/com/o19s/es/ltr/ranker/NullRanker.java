@@ -17,29 +17,29 @@
 package com.o19s.es.ltr.ranker;
 
 public class NullRanker extends DenseLtrRanker {
-    private final int modelSize;
+  private final int modelSize;
 
-    public NullRanker(int modelSize) {
-        this.modelSize = modelSize;
-    }
+  public NullRanker(int modelSize) {
+    this.modelSize = modelSize;
+  }
 
-    @Override
-    public String name() {
-        return "null_ranker";
-    }
+  @Override
+  public String name() {
+    return "null_ranker";
+  }
 
-    @Override
-    public float score(FeatureVector point) {
-        return 0F;
-    }
+  @Override
+  public float score(FeatureVector point) {
+    return 0F;
+  }
 
-    @Override
-    protected float score(DenseFeatureVector vector) {
-        return 0F;
-    }
+  @Override
+  protected float score(DenseFeatureVector vector) {
+    return 0F;
+  }
 
-    @Override
-    protected int size() {
-        return modelSize;
-    }
+  @Override
+  protected int size() {
+    return modelSize;
+  }
 }

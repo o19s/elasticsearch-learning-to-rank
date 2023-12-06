@@ -16,28 +16,26 @@
 
 package com.o19s.es.ltr.ranker.parser;
 
-import org.apache.lucene.tests.util.LuceneTestCase;
-
 import static org.hamcrest.CoreMatchers.containsString;
 
+import org.apache.lucene.tests.util.LuceneTestCase;
+
 public class LtrRankerParserFactoryTests extends LuceneTestCase {
-    public void testGetParser() {
-        LtrRankerParser parser = (set, model) -> null;
-        LtrRankerParserFactory factory = new LtrRankerParserFactory.Builder()
-                .register("model/test", () -> parser)
-                .build();
-        assertSame(parser, factory.getParser("model/test"));
-        assertThat(expectThrows(IllegalArgumentException.class,
-                () -> factory.getParser("model/foobar")).getMessage(),
-                containsString("Unsupported LtrRanker format/type [model/foobar]"));
-    }
+  public void testGetParser() {
+    LtrRankerParser parser = (set, model) -> null;
+    LtrRankerParserFactory factory =
+        new LtrRankerParserFactory.Builder().register("model/test", () -> parser).build();
+    assertSame(parser, factory.getParser("model/test"));
+    assertThat(
+        expectThrows(IllegalArgumentException.class, () -> factory.getParser("model/foobar"))
+            .getMessage(),
+        containsString("Unsupported LtrRanker format/type [model/foobar]"));
+  }
 
-    public void testDeclareMultiple() {
-        LtrRankerParser parser = (set, model) -> null;
-        LtrRankerParserFactory.Builder builder = new LtrRankerParserFactory.Builder()
-                .register("model/test", () -> parser);
-        expectThrows(RuntimeException.class,
-                () -> builder.register("model/test", () -> parser));
-    }
-
+  public void testDeclareMultiple() {
+    LtrRankerParser parser = (set, model) -> null;
+    LtrRankerParserFactory.Builder builder =
+        new LtrRankerParserFactory.Builder().register("model/test", () -> parser);
+    expectThrows(RuntimeException.class, () -> builder.register("model/test", () -> parser));
+  }
 }

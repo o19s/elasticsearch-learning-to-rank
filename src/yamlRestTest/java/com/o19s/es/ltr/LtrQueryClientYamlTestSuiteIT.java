@@ -20,17 +20,15 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
-/**
- * Created by doug on 12/30/16.
- */
+/** Created by doug on 12/30/16. */
 public class LtrQueryClientYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
-    public LtrQueryClientYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
-        super(testCandidate);
-    }
+  public LtrQueryClientYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
+    super(testCandidate);
+  }
 
-    @ParametersFactory
-    public static Iterable<Object[]> parameters() throws Exception {
-        return ESClientYamlSuiteTestCase.createParameters();
-    }
+  @ParametersFactory
+  public static Iterable<Object[]> parameters() throws Exception {
+    return ESClientYamlSuiteTestCase.createParameters();
+  }
 }

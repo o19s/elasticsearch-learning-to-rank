@@ -16,28 +16,29 @@
 
 package com.o19s.es.ltr.rest;
 
-import org.apache.lucene.tests.util.LuceneTestCase;
-import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.xcontent.XContentParserConfiguration;
+import static com.o19s.es.ltr.feature.store.StoredFeatureParserTests.generateTestFeature;
+import static org.elasticsearch.xcontent.json.JsonXContent.jsonXContent;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static com.o19s.es.ltr.feature.store.StoredFeatureParserTests.generateTestFeature;
-import static org.elasticsearch.xcontent.json.JsonXContent.jsonXContent;
+import org.apache.lucene.tests.util.LuceneTestCase;
+import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
 
 public class FeaturesParserTests extends LuceneTestCase {
-    public void testParseArray() throws IOException {
-        RestAddFeatureToSet.FeaturesParserState fparser = new RestAddFeatureToSet.FeaturesParserState();
-        int nFeat = random().nextInt(18)+1;
-        String featuresArray = IntStream.range(0, nFeat)
-                .mapToObj((i) -> generateTestFeature("feat" + i))
-                .collect(Collectors.joining(","));
-        XContentParser parser = jsonXContent.createParser(XContentParserConfiguration.EMPTY,
-                "{\"features\":[" + featuresArray + "]}");
-        fparser.parse(parser);
-        assertEquals(nFeat, fparser.getFeatures().size());
-        assertEquals("feat0", fparser.getFeatures().get(0).name());
-    }
+  public void testParseArray() throws IOException {
+    RestAddFeatureToSet.FeaturesParserState fparser = new RestAddFeatureToSet.FeaturesParserState();
+    int nFeat = random().nextInt(18) + 1;
+    String featuresArray =
+        IntStream.range(0, nFeat)
+            .mapToObj((i) -> generateTestFeature("feat" + i))
+            .collect(Collectors.joining(","));
+    XContentParser parser =
+        jsonXContent.createParser(
+            XContentParserConfiguration.EMPTY, "{\"features\":[" + featuresArray + "]}");
+    fparser.parse(parser);
+    assertEquals(nFeat, fparser.getFeatures().size());
+    assertEquals("feat0", fparser.getFeatures().get(0).name());
+  }
 }

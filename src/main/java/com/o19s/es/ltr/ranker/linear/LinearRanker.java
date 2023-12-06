@@ -18,63 +18,57 @@ package com.o19s.es.ltr.ranker.linear;
 
 import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.DenseLtrRanker;
+import java.util.Arrays;
+import java.util.Objects;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
-import java.util.Arrays;
-import java.util.Objects;
-
-/**
- * Simple linear ranker that applies a dot product based
- * on the provided weights array.
- */
+/** Simple linear ranker that applies a dot product based on the provided weights array. */
 public class LinearRanker extends DenseLtrRanker implements Accountable {
-    private final float[] weights;
+  private final float[] weights;
 
-    public LinearRanker(float[] weights) {
-        this.weights = Objects.requireNonNull(weights);
+  public LinearRanker(float[] weights) {
+    this.weights = Objects.requireNonNull(weights);
+  }
+
+  @Override
+  public String name() {
+    return "linear";
+  }
+
+  @Override
+  protected float score(DenseFeatureVector point) {
+    float[] scores = point.scores;
+    float score = 0;
+    for (int i = 0; i < weights.length; i++) {
+      score += weights[i] * scores[i];
     }
+    return score;
+  }
 
-    @Override
-    public String name() {
-        return "linear";
-    }
+  @Override
+  protected int size() {
+    return weights.length;
+  }
 
-    @Override
-    protected float score(DenseFeatureVector point) {
-        float[] scores = point.scores;
-        float score = 0;
-        for (int i = 0; i < weights.length; i++) {
-            score += weights[i]*scores[i];
-        }
-        return score;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    @Override
-    protected int size() {
-        return weights.length;
-    }
+    LinearRanker ranker = (LinearRanker) o;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    return Arrays.equals(weights, ranker.weights);
+  }
 
-        LinearRanker ranker = (LinearRanker) o;
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(weights);
+  }
 
-        return Arrays.equals(weights, ranker.weights);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(weights);
-    }
-
-    /**
-     * Return the memory usage of this object in bytes. Negative values are illegal.
-     */
-    @Override
-    public long ramBytesUsed() {
-        return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + RamUsageEstimator.sizeOf(weights);
-    }
+  /** Return the memory usage of this object in bytes. Negative values are illegal. */
+  @Override
+  public long ramBytesUsed() {
+    return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + RamUsageEstimator.sizeOf(weights);
+  }
 }

@@ -16,60 +16,58 @@
 
 package com.o19s.es.ltr.feature.store;
 
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
+import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
+
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.LtrModel;
 import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
 
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
-import static org.apache.lucene.util.RamUsageEstimator.NUM_BYTES_OBJECT_HEADER;
-
 public class CompiledLtrModel implements LtrModel, Accountable {
-    private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(StoredLtrModel.class);
+  private static final long BASE_RAM_USED =
+      RamUsageEstimator.shallowSizeOfInstance(StoredLtrModel.class);
 
-    private final String name;
-    private final FeatureSet set;
-    private final LtrRanker ranker;
+  private final String name;
+  private final FeatureSet set;
+  private final LtrRanker ranker;
 
-    public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
-        this.name = name;
-        this.set = set.optimize();
-        this.ranker = ranker;
-    }
+  public CompiledLtrModel(String name, FeatureSet set, LtrRanker ranker) {
+    this.name = name;
+    this.set = set.optimize();
+    this.ranker = ranker;
+  }
 
-    /**
-     * Name of the model
-     */
-    @Override
-    public String name() {
-        return name;
-    }
+  /** Name of the model */
+  @Override
+  public String name() {
+    return name;
+  }
 
-    /**
-     * Return the {@link LtrRanker} implementation used by this model
-     */
-    @Override
-    public LtrRanker ranker() {
-        return ranker;
-    }
+  /** Return the {@link LtrRanker} implementation used by this model */
+  @Override
+  public LtrRanker ranker() {
+    return ranker;
+  }
 
-    /**
-     * The set of features used by this model
-     */
-    @Override
-    public FeatureSet featureSet() {
-        return set;
-    }
+  /** The set of features used by this model */
+  @Override
+  public FeatureSet featureSet() {
+    return set;
+  }
 
-    /**
-     * Return the memory usage of this object in bytes. Negative values are illegal.
-     */
-    @Override
-    public long ramBytesUsed() {
-        return BASE_RAM_USED + name.length() * Character.BYTES + NUM_BYTES_ARRAY_HEADER
-                + (set instanceof Accountable ? ((Accountable)set).ramBytesUsed() : set.size() * NUM_BYTES_OBJECT_HEADER)
-                + (ranker instanceof Accountable ?
-                ((Accountable)ranker).ramBytesUsed() : set.size() * NUM_BYTES_OBJECT_HEADER);
-    }
+  /** Return the memory usage of this object in bytes. Negative values are illegal. */
+  @Override
+  public long ramBytesUsed() {
+    return BASE_RAM_USED
+        + name.length() * Character.BYTES
+        + NUM_BYTES_ARRAY_HEADER
+        + (set instanceof Accountable
+            ? ((Accountable) set).ramBytesUsed()
+            : set.size() * NUM_BYTES_OBJECT_HEADER)
+        + (ranker instanceof Accountable
+            ? ((Accountable) ranker).ramBytesUsed()
+            : set.size() * NUM_BYTES_OBJECT_HEADER);
+  }
 }
