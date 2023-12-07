@@ -16,6 +16,7 @@
 package com.o19s.es.explore;
 
 import org.apache.lucene.search.Query;
+import org.elasticsearch.TransportVersions;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -157,6 +158,6 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
 
     @Override
     public TransportVersion getMinimalSupportedVersion() {
-        return TransportVersion.V_7_0_0;
+        return TransportVersions.V_7_0_0;
     }
 }

@@ -30,6 +30,7 @@ import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.TransportVersions;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -209,6 +210,6 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
 
     @Override
     public TransportVersion getMinimalSupportedVersion() {
-        return TransportVersion.V_7_0_0;
+        return TransportVersions.V_7_0_0;
     }
 }
