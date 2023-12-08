@@ -57,7 +57,7 @@ Currently supported parameters:
 
 **objective** - Defines the model learning objective as specified in the `XGBoost documentation <https://xgboost.readthedocs.io/en/latest/parameter.html#learning-task-parameters>`_. This parameter can transform the final model prediction. Using logistic objectives applies a sigmoid normalization.
 
-Currently supported values: 'binary:logistic', 'binary:logitraw', 'rank:pairwise', 'reg:linear', 'reg:logistic'
+Currently supported values: 'binary:logistic', 'binary:logitraw', 'rank:ndcg', 'rank:map', 'rank:pairwise', 'reg:linear', 'reg:logistic'
 
 ===================
 Simple linear models
