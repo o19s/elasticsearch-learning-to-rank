@@ -222,7 +222,6 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 String featName = values[1];
                 float threshold = Float.parseFloat(values[2]);
                 int leftNodeId = Integer.parseInt(values[3]);
-                int rightNodeId = Integer.parseInt(values[4]);
                 int missingNodeId = Integer.parseInt(values[5]);
                 int ord = set.featureOrdinal(featName);
                 if (ord < 0 || ord > set.size()) {
@@ -232,7 +231,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 NaiveAdditiveDecisionTree.Node left = parseTree();
 
                 return new NaiveAdditiveDecisionTree.Split(left, right,
-                        ord, threshold, leftNodeId, rightNodeId, missingNodeId);
+                        ord, threshold, leftNodeId, missingNodeId);
             } else {
                 throw new IllegalArgumentException("Invalid tree");
             }
@@ -297,7 +296,7 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
             int feature = featureGen.get();
             float thresh = thresholdGenerator.apply(feature);
             statsCollector.newSplit(depth, feature, thresh);
-            return new NaiveAdditiveDecisionTree.Split(newNode(depth), newNode(depth), feature, thresh, 1, 2, 1);
+            return new NaiveAdditiveDecisionTree.Split(newNode(depth), newNode(depth), feature, thresh, 1, 1);
         }
 
         private NaiveAdditiveDecisionTree.Node newLeaf(int depth) {
