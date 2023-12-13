@@ -118,6 +118,8 @@ public class XGBoostJsonParser implements LtrRankerParser {
         void setNormalizer(String objectiveName) {
             switch (objectiveName) {
                 case "binary:logitraw":
+                case "rank:ndcg":
+                case "rank:map":
                 case "rank:pairwise":
                 case "reg:linear":
                     normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
