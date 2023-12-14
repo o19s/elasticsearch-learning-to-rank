@@ -17,7 +17,7 @@
 package com.o19s.es.ltr.utils;
 
 import com.o19s.es.ltr.ranker.LtrRanker;
-import org.elasticsearch.Assertions;
+import org.elasticsearch.core.Assertions;
 import org.elasticsearch.common.CheckedSupplier;
 
 import java.util.Objects;

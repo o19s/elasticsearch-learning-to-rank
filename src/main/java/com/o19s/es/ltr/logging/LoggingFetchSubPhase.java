@@ -35,6 +35,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchContext;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
+import org.elasticsearch.search.fetch.StoredFieldsSpec;
 import org.elasticsearch.search.rescore.QueryRescorer;
 import org.elasticsearch.search.rescore.RescoreContext;
 
@@ -107,9 +108,9 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                     "at index [" + logSpec.getRescoreIndex() + "]");
         }
         QueryRescorer.QueryRescoreContext qrescore = (QueryRescorer.QueryRescoreContext) context;
-        return toLogger(logSpec, inspectQuery(qrescore.query())
+        return toLogger(logSpec, inspectQuery(qrescore.parsedQuery().query())
                 .orElseThrow(() -> new IllegalArgumentException("Expected a [sltr] query but found a " +
-                        "[" + qrescore.query().getClass().getSimpleName() + "] " +
+                        "[" + qrescore.parsedQuery().query().getClass().getSimpleName() + "] " +
                         "at index [" + logSpec.getRescoreIndex() + "]")));
     }
 
@@ -159,6 +160,11 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                 // Scoring will trigger log collection
                 scorer.score();
             }
+        }
+
+        @Override
+        public StoredFieldsSpec storedFieldsSpec() {
+          return StoredFieldsSpec.NO_REQUIREMENTS;
         }
     }
 

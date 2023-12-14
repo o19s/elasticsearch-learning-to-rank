@@ -61,7 +61,7 @@ public class Caches {
 
     static {
         LTR_CACHE_MEM_SETTING = Setting.memorySizeSetting("ltr.caches.max_mem",
-                (s) -> new ByteSizeValue(Math.min(RamUsageEstimator.ONE_MB*10,
+                (s) -> ByteSizeValue.ofBytes(Math.min(RamUsageEstimator.ONE_MB*10,
                         JvmInfo.jvmInfo().getMem().getHeapMax().getBytes()/10)).toString(),
                 Setting.Property.NodeScope);
     }
