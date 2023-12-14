@@ -1,21 +1,22 @@
 # first line after split is right
+# on a split line, the last 3 integers correspond to leftNodeId, rightNodeId, missingNodeId
 # data point: feature1:1, feature2:2, feature3:3
 - tree:3.4
-  - split:feature1:2.3
+  - split:feature1:2.3:1:2:1
     - output:3.2
 # right wins
-    - split:feature2:2.2
-      - split:feature3:3.2
+    - split:feature2:2.2:3:4:4
+      - split:feature3:3.2:5:6:5
         - output:11
         - output:17
 # left wins => output 1.2*3.4
       - output:1.2
 - tree:2.8
-  - split:feature1:0.1
+  - split:feature1:0.1:1:2:1
 # right wins
-    - split:feature2:1.8
+    - split:feature2:1.8:3:4:4
 # right wins
-      - split:feature3:3.2
+      - split:feature3:3.2:5:6:6
         - output:10
 # left wins => output 3.2*2.8
         - output:3.2
