@@ -22,7 +22,6 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-import org.elasticsearch.TransportVersion;
 import org.elasticsearch.TransportVersions;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.common.ParsingException;

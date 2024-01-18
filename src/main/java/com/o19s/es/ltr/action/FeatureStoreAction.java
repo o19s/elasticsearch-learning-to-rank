@@ -26,9 +26,9 @@ import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -141,10 +141,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
             this.routing = routing;
         }
 
-        public Long getUpdatedVersion() {
-            return updatedVersion;
-        }
-
         public FeatureValidation getValidation() {
             return validation;
         }
@@ -188,6 +184,13 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             response.writeTo(out);
+        }
+
+        /**
+         * Returns the REST status to make sure it is returned correctly
+         */
+        public RestStatus status() {
+            return response.status();
         }
 
         @Override

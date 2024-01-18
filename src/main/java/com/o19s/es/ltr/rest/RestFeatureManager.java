@@ -10,8 +10,8 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
@@ -71,7 +71,8 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         String id = generateId(type, name);
         String routing = request.param("routing");
         return (channel) ->  {
-            RestToXContentListener<DeleteResponse> restR = new RestToXContentListener<>(channel);
+            //RestToXContentListener<DeleteResponse> restR = new RestToXContentListener<>(channel, (r) -> r.getLocation(routing));
+            RestToXContentListener<DeleteResponse> restR = (new RestToXContentListener<>(channel, (r) -> r.status()));
             client.prepareDelete(indexName, id)
                     .setRouting(routing)
                     .execute(ActionListener.wrap((deleteResponse) -> {
@@ -108,7 +109,11 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         String id = generateId(type, name);
         return (channel) -> client.prepareGet(indexName, id)
                 .setRouting(routing)
-                .execute(new RestToXContentListener<GetResponse>(channel));
+                .execute(new RestToXContentListener<GetResponse>(channel) {
+                    protected RestStatus getStatus(final GetResponse response) {
+                        return response.isExists() ? OK : NOT_FOUND;
+                    }
+                });
     }
 
     RestChannelConsumer addOrUpdate(NodeClient client, String type, String indexName, RestRequest request) throws IOException {
@@ -148,6 +153,6 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         builder.request().setRouting(routing);
         builder.request().setStore(indexName);
         builder.request().setValidation(parserState.getValidation());
-        return (channel) -> builder.execute(new RestToXContentListener<>(channel));
+        return (channel) -> builder.execute(new RestToXContentListener<>(channel, (r) -> r.getResponse().status(), (r) -> r.getResponse().getLocation(routing)));
     }
 }

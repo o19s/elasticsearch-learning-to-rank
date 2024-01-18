@@ -25,9 +25,9 @@ import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.List;
@@ -188,6 +188,13 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return response.toXContent(builder, params);
+        }
+
+        /**
+         * Returns the REST status to make sure it is returned correctly
+         */
+        public RestStatus status() {
+            return response.status();
         }
 
         public DocWriteResponse getResponse() {
