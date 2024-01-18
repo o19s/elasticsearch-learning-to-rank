@@ -27,7 +27,7 @@ import com.o19s.es.ltr.ranker.parser.LinearRankerParserTests;
 import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.tests.util.TestUtil;
 import org.elasticsearch.ExceptionsHelper;
-import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
@@ -715,7 +715,7 @@ public class LoggingIT extends BaseIntegrationTest {
     }
 
     public void indexDoc(Doc d) {
-        IndexResponse resp = client().prepareIndex("test_index")
+        DocWriteResponse resp = client().prepareIndex("test_index")
                 .setSource("field1", d.field1, "field2", d.field2, "scorefield1", d.scorefield1, "nesteddocs1", d.getNesteddocs1())
                 .get();
         d.id = resp.getId();

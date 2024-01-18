@@ -19,16 +19,12 @@ package com.o19s.es.ltr.action;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetResponse;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.ActionRequestBuilder;
-import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.ActionType;
+import org.elasticsearch.action.*;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.StatusToXContentObject;
+import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 
@@ -169,9 +165,9 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
         }
     }
 
-    public static class CreateModelFromSetResponse extends ActionResponse implements StatusToXContentObject {
+    public static class CreateModelFromSetResponse extends ActionResponse implements ToXContentObject {
         private static final int VERSION = 1;
-        private IndexResponse response;
+        private DocWriteResponse response;
 
         public CreateModelFromSetResponse(StreamInput in) throws IOException {
             super(in);
@@ -180,7 +176,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
             response = new IndexResponse(in);
         }
 
-        public CreateModelFromSetResponse(IndexResponse response) {
+        public CreateModelFromSetResponse(DocWriteResponse response) {
             this.response = response;
         }
 
@@ -190,7 +186,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
             response.writeTo(out);
         }
 
-        public IndexResponse getResponse() {
+        public DocWriteResponse getResponse() {
             return response;
         }
 
@@ -199,9 +195,5 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
             return response.toXContent(builder, params);
         }
 
-        @Override
-        public RestStatus status() {
-            return response.status();
-        }
     }
 }

@@ -20,17 +20,13 @@ import com.o19s.es.ltr.action.FeatureStoreAction.FeatureStoreResponse;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.ActionRequestBuilder;
-import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.action.ActionType;
+import org.elasticsearch.action.*;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
-import org.elasticsearch.common.xcontent.StatusToXContentObject;
+import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 
@@ -173,33 +169,25 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
         }
     }
 
-    public static class FeatureStoreResponse extends ActionResponse implements StatusToXContentObject {
-        private IndexResponse response;
+    public static class FeatureStoreResponse extends ActionResponse implements ToXContentObject {
+        private DocWriteResponse response;
 
         public FeatureStoreResponse(StreamInput in) throws IOException {
             super(in);
             response = new IndexResponse(in);
         }
 
-        public FeatureStoreResponse(IndexResponse response) {
+        public FeatureStoreResponse(DocWriteResponse response) {
             this.response = response;
         }
 
-        public IndexResponse getResponse() {
+        public DocWriteResponse getResponse() {
             return response;
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             response.writeTo(out);
-        }
-
-        /**
-         * Returns the REST status to make sure it is returned correctly
-         */
-        @Override
-        public RestStatus status() {
-            return response.status();
         }
 
         @Override
