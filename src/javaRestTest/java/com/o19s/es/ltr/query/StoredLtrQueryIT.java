@@ -74,10 +74,10 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
             "\"nodeid\": 0," +
             "\"split\":\"text_feature1\"," +
             "\"depth\":0," +
-            "\"split_condition\":0.0," +
+            "\"split_condition\":100.0," +
             "\"yes\":1," +
-            "\"no\": 2," +
-            "\"missing\":1," +
+            "\"no\":2," +
+            "\"missing\":2," +
             "\"children\": [" +
             "   {\"nodeid\": 1, \"depth\": 1, \"leaf\": 0.5}," +
             "   {\"nodeid\": 2, \"depth\": 1, \"leaf\": 0.2}" +
@@ -130,11 +130,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         assertTrue(logs.containsKey("log"));
         List<Map<String, Object>> log = logs.get("log");
 
-        // verify that text_feature1 has a missing value, and that the score results from the model taking the
+        // verify that text_feature1 has a missing value, and that the reported score results from the model taking the
         // corresponding branch
         assertEquals("text_feature1", log.get(0).get("name"));
         assertEquals(null, log.get(0).get("value"));
-        assertEquals(0.5F, resp.getHits().getAt(0).getScore(), Math.ulp(0.5F));
+        assertEquals(0.2F, resp.getHits().getAt(0).getScore(), Math.ulp(0.2F));
     }
 
     public void testScriptFeatureUseCase() throws Exception {
