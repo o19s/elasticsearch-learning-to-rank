@@ -20,7 +20,7 @@ import com.o19s.es.ltr.LtrTestUtils;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.store.StoredFeatureSet;
-import com.o19s.es.ltr.ranker.DenseFeatureVector;
+import com.o19s.es.ltr.ranker.SparseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker.FeatureVector;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
@@ -268,7 +268,7 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
 
         StoredFeatureSet set = new StoredFeatureSet("set", features);
         NaiveAdditiveDecisionTree tree = parser.parse(set, model);
-        DenseFeatureVector v = tree.newFeatureVector(null);
+        SparseFeatureVector v = tree.newFeatureVector(null);
         assertEquals(v.scores.length, features.size());
 
         for (int i = random().nextInt(5000) + 1000; i > 0; i--) {

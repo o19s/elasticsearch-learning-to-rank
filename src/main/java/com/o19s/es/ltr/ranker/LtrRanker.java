@@ -46,7 +46,7 @@ public interface LtrRanker {
     /**
      * Score the data point.
      * At this point all feature scores are set.
-     * features that did not match are set with a score to 0
+     * features that did not match are set with a default score
      *
      * @param point the feature vector point to compute the score for
      * @return the score computed for the given point

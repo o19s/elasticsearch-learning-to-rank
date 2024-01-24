@@ -16,9 +16,28 @@
 
 package com.o19s.es.ltr.ranker;
 
-public class DenseFeatureVector extends ArrayFeatureVector {
+import java.util.Arrays;
 
-    public DenseFeatureVector(int size) {
-        super(size, 0F);
+public class ArrayFeatureVector implements LtrRanker.FeatureVector {
+    public final float[] scores;
+    public final float defaultScore;
+
+    public ArrayFeatureVector(int size, float value) {
+        scores = new float[size];
+        defaultScore = value;
+    }
+
+    @Override
+    public void setFeatureScore(int featureIdx, float score) {
+        scores[featureIdx] = score;
+    }
+
+    @Override
+    public float getFeatureScore(int featureIdx) {
+        return scores[featureIdx];
+    }
+
+    public void reset() {
+        Arrays.fill(scores, defaultScore);
     }
 }

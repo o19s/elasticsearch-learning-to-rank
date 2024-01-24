@@ -16,9 +16,10 @@
 
 package com.o19s.es.ltr.ranker;
 
-public class DenseFeatureVector extends ArrayFeatureVector {
+public class SparseFeatureVector extends ArrayFeatureVector {
 
-    public DenseFeatureVector(int size) {
-        super(size, 0F);
+    public SparseFeatureVector(int size) {
+        super(size, Float.NaN);
+        reset();
     }
 }
