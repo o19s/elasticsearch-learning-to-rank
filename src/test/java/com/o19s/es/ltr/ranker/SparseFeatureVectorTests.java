@@ -19,7 +19,7 @@ package com.o19s.es.ltr.ranker;
 import org.apache.lucene.tests.util.LuceneTestCase;
 
 public class SparseFeatureVectorTests extends LuceneTestCase {
-    public void testConstructor() throws Exception {
+    public void testConstructor() {
         int size = 10;
         SparseFeatureVector featureVector = new SparseFeatureVector(size);
         for (float score : featureVector.scores) {
@@ -27,7 +27,7 @@ public class SparseFeatureVectorTests extends LuceneTestCase {
         }
     }
 
-    public void testSetGetReset() throws Exception {
+    public void testSetGetReset() {
         int size = 10;
         SparseFeatureVector featureVector = new SparseFeatureVector(size);
         featureVector.setFeatureScore(5, 3.15F);
@@ -40,6 +40,10 @@ public class SparseFeatureVectorTests extends LuceneTestCase {
         for (int featureId = 0; featureId < size; featureId++) {
             assertTrue(Float.isNaN(featureVector.getFeatureScore(featureId)));
         }
+    }
+
+    public void testGetDefaultValue() {
+        assertTrue(Float.isNaN(new SparseFeatureVector(10).getDefaultScore()));
     }
 
 }
