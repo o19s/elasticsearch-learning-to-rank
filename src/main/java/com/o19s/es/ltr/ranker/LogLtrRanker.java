@@ -80,6 +80,10 @@ public class LogLtrRanker implements LtrRanker {
             this.inner = ranker.newFeatureVector(inner);
             logger.reset();
         }
+
+        public float getDefaultScore() {
+            return inner.getDefaultScore();
+        }
     }
 
     public LogConsumer getLogConsumer() {

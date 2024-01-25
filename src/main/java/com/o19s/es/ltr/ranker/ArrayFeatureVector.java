@@ -40,4 +40,9 @@ public class ArrayFeatureVector implements LtrRanker.FeatureVector {
     public void reset() {
         Arrays.fill(scores, defaultScore);
     }
+
+    @Override
+    public float getDefaultScore() {
+        return defaultScore;
+    }
 }

@@ -259,7 +259,7 @@ public class RankerQuery extends Query {
                 }
                 featureString += ":";
                 if (!explain.isMatch()) {
-                    subs.add(Explanation.noMatch(featureString + " [no match, default value used]"));
+                    subs.add(Explanation.noMatch(featureString + String.format(" [no match, default value of %.2f used]", d.getDefaultScore())));
                 } else {
                     subs.add(Explanation.match(explain.getValue(), featureString, explain));
                     d.setFeatureScore(ordinal, explain.getValue().floatValue());

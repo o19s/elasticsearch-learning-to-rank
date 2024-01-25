@@ -23,7 +23,7 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import java.util.Arrays;
 
 /**
- * Implements FeatureVector but without needing to pass in a stirng
+ * Implements FeatureVector but without needing to pass in a string
  * to be parsed
  */
 public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.FeatureVector {
@@ -70,5 +70,9 @@ public class DenseProgramaticDataPoint extends DataPoint implements LtrRanker.Fe
 
     public void reset() {
         Arrays.fill(fVals, 0F);
+    }
+
+    public float getDefaultScore() {
+        return 0.0F;
     }
 }

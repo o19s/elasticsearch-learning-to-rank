@@ -51,6 +51,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.containsString;
+
 /**
  * Created by doug on 12/29/16.
  */
@@ -105,36 +107,33 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 .modelName("my_model")
                 .params(params)
                 .queryName("test")
-                .boost(0);
-
-        StoredLtrQueryBuilder sbuilder_rescore = new StoredLtrQueryBuilder(LtrTestUtils.nullLoader())
-                .featureSetName("my_set")
-                .modelName("my_model")
-                .params(params)
-                .queryName("test_rescore")
                 .boost(1);
 
         QueryBuilder query = QueryBuilders.boolQuery().must(new WrapperQueryBuilder(sbuilder.toString()));
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query)
-                .fetchSource(false)
+                .explain(true)
+                .fetchSource(true)
                 .size(10)
-                .addRescorer(new QueryRescorerBuilder(new WrapperQueryBuilder(sbuilder_rescore.toString())))
                 .ext(Collections.singletonList(
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("log", "test", false)));
 
         SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        SearchHit hit = resp.getHits().getHits()[0];
+        SearchHit hit = resp.getHits().getAt(0);
         assertTrue(hit.getFields().containsKey("_ltrlog"));
         Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
         assertTrue(logs.containsKey("log"));
         List<Map<String, Object>> log = logs.get("log");
 
         // verify that text_feature1 has a missing value, and that the reported score results from the model taking the
-        // corresponding branch
+        // corresponding branch, along with the explanation
+        String explanation = hit.getExplanation().getDetails()[0].getDescription();
+        assertThat(explanation, containsString("default value of NaN used"));
+
         assertEquals("text_feature1", log.get(0).get("name"));
         assertEquals(null, log.get(0).get("value"));
-        assertEquals(0.2F, resp.getHits().getAt(0).getScore(), Math.ulp(0.2F));
+
+        assertEquals(0.2F, hit.getScore(), Math.ulp(0.2F));
     }
 
     public void testScriptFeatureUseCase() throws Exception {
@@ -374,6 +373,4 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                 .setSource("field1", "hello world", "field2", "bonjour world")
                 .get();
     }
-
-
 }
