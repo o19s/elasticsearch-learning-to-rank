@@ -111,7 +111,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
                 arve = addValidationError("modelName must be set", arve);
             }
             if (definition == null) {
-                arve = addValidationError("defition must be set", arve);
+                arve = addValidationError("definition must be set", arve);
             }
             return arve;
         }
