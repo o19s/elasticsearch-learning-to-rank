@@ -19,7 +19,12 @@ package com.o19s.es.ltr.action;
 import com.o19s.es.ltr.action.CreateModelFromSetAction.CreateModelFromSetResponse;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
-import org.elasticsearch.action.*;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.ActionType;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -42,7 +47,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
 
 
     public static class CreateModelFromSetRequestBuilder extends ActionRequestBuilder<CreateModelFromSetRequest,
-        CreateModelFromSetResponse> {
+            CreateModelFromSetResponse> {
 
         public CreateModelFromSetRequestBuilder(ElasticsearchClient client) {
             super(client, INSTANCE, new CreateModelFromSetRequest());

@@ -109,11 +109,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         String id = generateId(type, name);
         return (channel) -> client.prepareGet(indexName, id)
                 .setRouting(routing)
-                .execute(new RestToXContentListener<GetResponse>(channel) {
-                    protected RestStatus getStatus(final GetResponse response) {
-                        return response.isExists() ? OK : NOT_FOUND;
-                    }
-                });
+                .execute(new RestToXContentListener<GetResponse>(channel, r -> r.isExists() ? OK : NOT_FOUND));
     }
 
     RestChannelConsumer addOrUpdate(NodeClient client, String type, String indexName, RestRequest request) throws IOException {
@@ -153,6 +149,7 @@ public class RestFeatureManager extends FeatureStoreBaseRestHandler {
         builder.request().setRouting(routing);
         builder.request().setStore(indexName);
         builder.request().setValidation(parserState.getValidation());
-        return (channel) -> builder.execute(new RestToXContentListener<>(channel, (r) -> r.getResponse().status(), (r) -> r.getResponse().getLocation(routing)));
+        return (channel) -> builder.execute(new RestToXContentListener<>(channel, (r) -> r.getResponse().status(),
+                (r) -> r.getResponse().getLocation(routing)));
     }
 }
