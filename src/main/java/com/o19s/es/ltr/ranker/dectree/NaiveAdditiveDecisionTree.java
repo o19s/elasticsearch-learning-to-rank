@@ -16,8 +16,8 @@
 
 package com.o19s.es.ltr.ranker.dectree;
 
-import com.o19s.es.ltr.ranker.DenseFeatureVector;
-import com.o19s.es.ltr.ranker.DenseLtrRanker;
+import com.o19s.es.ltr.ranker.SparseFeatureVector;
+import com.o19s.es.ltr.ranker.SparseLtrRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
@@ -28,7 +28,7 @@ import java.util.Objects;
  * Naive implementation of additive decision tree.
  * May be slow when the number of trees and tree complexity if high comparatively to the number of features.
  */
-public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Accountable {
+public class NaiveAdditiveDecisionTree extends SparseLtrRanker implements Accountable {
     private static final long BASE_RAM_USED = RamUsageEstimator.shallowSizeOfInstance(Split.class);
 
     private final Node[] trees;
@@ -60,7 +60,7 @@ public class NaiveAdditiveDecisionTree extends DenseLtrRanker implements Account
     }
 
     @Override
-    protected float score(DenseFeatureVector vector) {
+    protected float score(SparseFeatureVector vector) {
         float sum = 0;
         float[] scores = vector.scores;
         for (int i = 0; i < trees.length; i++) {

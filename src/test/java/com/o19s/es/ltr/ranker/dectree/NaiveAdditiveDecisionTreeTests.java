@@ -19,8 +19,8 @@ package com.o19s.es.ltr.ranker.dectree;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.feature.PrebuiltFeature;
 import com.o19s.es.ltr.feature.PrebuiltFeatureSet;
-import com.o19s.es.ltr.ranker.DenseFeatureVector;
 import com.o19s.es.ltr.ranker.LtrRanker;
+import com.o19s.es.ltr.ranker.SparseFeatureVector;
 import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizers;
@@ -100,15 +100,15 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
                 100, 1000,
                 5, 50, counts);
 
-        DenseFeatureVector vector = ranker.newFeatureVector(null);
+        SparseFeatureVector vector = ranker.newFeatureVector(null);
         int nPass = TestUtil.nextInt(random(), 10, 8916);
-        LinearRankerTests.fillRandomWeights(vector.scores);
+        fillRandomWeights(vector.scores);
         ranker.score(vector); // warmup
 
         long time = -System.currentTimeMillis();
         for (int i = 0; i < nPass; i++) {
             vector = ranker.newFeatureVector(vector);
-            LinearRankerTests.fillRandomWeights(vector.scores);
+            fillRandomWeights(vector.scores);
             ranker.score(vector);
         }
         time += System.currentTimeMillis();
@@ -338,6 +338,12 @@ public class NaiveAdditiveDecisionTreeTests extends LuceneTestCase {
         @Override
         public void newTree() {
             trees.incrementAndGet();
+        }
+    }
+    public static void fillRandomWeights(float[] weights) {
+        for (int i = 0; i < weights.length; i++) {
+            if (random().nextBoolean())
+                weights[i] = (float) nextInt(random(),1, 100000) / (float) nextInt(random(), 1, 100000);
         }
     }
 }

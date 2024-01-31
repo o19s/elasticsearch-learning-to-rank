@@ -81,14 +81,14 @@ public class NodeSettingsIT extends BaseIntegrationTest {
 
     public static class DummyModel extends CompiledLtrModel {
         public DummyModel(String name, long size) throws IOException {
-            super(name, LtrTestUtils.randomFeatureSet(1), new DummryRanker(size));
+            super(name, LtrTestUtils.randomFeatureSet(1), new DummyRanker(size));
         }
     }
 
-    public static class DummryRanker implements LtrRanker, Accountable {
+    public static class DummyRanker implements LtrRanker, Accountable {
         private final long ramUsed;
 
-        public DummryRanker(long ramUsed) {
+        public DummyRanker(long ramUsed) {
             this.ramUsed = ramUsed;
         }
 
