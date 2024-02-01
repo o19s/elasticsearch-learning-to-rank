@@ -99,7 +99,7 @@ public class StoredFeature implements Feature, Accountable, StorableElement {
 
     public StoredFeature(StreamInput input) throws IOException {
         name = input.readString();
-        queryParams = input.readList(StreamInput::readString);
+        queryParams = input.readCollectionAsList(StreamInput::readString);
         templateLanguage = input.readString();
         template = input.readString();
         templateAsString = input.readBoolean();

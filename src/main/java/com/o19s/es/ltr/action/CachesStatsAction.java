@@ -78,12 +78,12 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
 
         @Override
         protected List<CachesStatsNodeResponse> readNodesFrom(StreamInput in) throws IOException {
-            return in.readList(CachesStatsNodeResponse::new);
+            return in.readCollectionAsList(CachesStatsNodeResponse::new);
         }
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<CachesStatsNodeResponse> nodes) throws IOException {
-            out.writeList(nodes);
+            out.writeCollection(nodes);
         }
 
         @Override

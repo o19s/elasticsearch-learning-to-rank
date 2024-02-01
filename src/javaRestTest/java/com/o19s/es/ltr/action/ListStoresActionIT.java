@@ -32,6 +32,10 @@ import java.util.Map;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.indexName;
 
 public class ListStoresActionIT extends BaseIntegrationTest {
+    /*
+    Create two stores (test2, test2) in addition to the default store.
+    List the stores.
+     */
     public void testListStore() throws Exception {
         createStore(indexName("test2"));
         createStore(indexName("test3"));
@@ -42,6 +46,46 @@ public class ListStoresActionIT extends BaseIntegrationTest {
                     new IndexStoreInfo(store, IndexFeatureStore.VERSION, addElements(store)));
         }
         ListStoresActionResponse resp = new ListStoresAction.ListStoresActionBuilder(client()).execute().get();
+        assertEquals(infos.size(), resp.getStores().size());
+        assertEquals(infos.keySet(), resp.getStores().keySet());
+        for (String k : infos.keySet()) {
+            IndexStoreInfo expected = infos.get(k);
+            IndexStoreInfo actual = resp.getStores().get(k);
+            assertEquals(expected.getIndexName(), actual.getIndexName());
+            assertEquals(expected.getStoreName(), actual.getStoreName());
+            assertEquals(expected.getVersion(), actual.getVersion());
+            assertEquals(expected.getCounts(), actual.getCounts());
+        }
+    }
+
+    /*
+    Create two stores (test2, test2) in addition to the default store.
+    List the stores.
+    Delete a store ("test2") and make sure the store is not listed any more.
+     */
+    public void testListRemovedStore() throws Exception {
+        createStore(indexName("test2"));
+        createStore(indexName("test3"));
+        Map<String, IndexStoreInfo> infos = new HashMap<>();
+        String[] stores = new String[]{IndexFeatureStore.DEFAULT_STORE, indexName("test2"), indexName("test3")};
+        for (String store : stores) {
+            infos.put(IndexFeatureStore.storeName(store),
+                    new IndexStoreInfo(store, IndexFeatureStore.VERSION, addElements(store)));
+        }
+        ListStoresActionResponse resp = new ListStoresAction.ListStoresActionBuilder(client()).execute().get();
+        assertEquals(infos.size(), resp.getStores().size());
+        assertEquals(infos.keySet(), resp.getStores().keySet());
+        for (String k : infos.keySet()) {
+            IndexStoreInfo expected = infos.get(k);
+            IndexStoreInfo actual = resp.getStores().get(k);
+            assertEquals(expected.getIndexName(), actual.getIndexName());
+            assertEquals(expected.getStoreName(), actual.getStoreName());
+            assertEquals(expected.getVersion(), actual.getVersion());
+            assertEquals(expected.getCounts(), actual.getCounts());
+        }
+        deleteStore(indexName("test2"));
+        infos.remove("test2");
+        resp = new ListStoresAction.ListStoresActionBuilder(client()).execute().get();
         assertEquals(infos.size(), resp.getStores().size());
         assertEquals(infos.keySet(), resp.getStores().keySet());
         for (String k : infos.keySet()) {

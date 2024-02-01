@@ -31,7 +31,7 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.rest.action.RestToXContentListener;
 
 import java.io.IOException;
 import java.util.List;
@@ -78,8 +78,7 @@ public class RestCreateModelFromSet extends FeatureStoreBaseRestHandler {
         builder.request().setValidation(state.validation);
         builder.routing(routing);
         return (channel) -> builder.execute(ActionListener.wrap(
-                response -> new RestStatusToXContentListener<CreateModelFromSetAction.CreateModelFromSetResponse>(channel,
-                        (r) -> r.getResponse().getLocation(routing)).onResponse(response),
+                response -> new RestToXContentListener<CreateModelFromSetAction.CreateModelFromSetResponse>(channel).onResponse(response),
                 (e) -> {
                     final Exception exc;
                     final RestStatus status;

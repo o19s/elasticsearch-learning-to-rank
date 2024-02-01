@@ -103,7 +103,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
 
         public LTRStatsNodesRequest(StreamInput in) throws IOException {
             super(in);
-            statsToBeRetrieved = in.readSet(StreamInput::readString);
+            statsToBeRetrieved = in.readCollectionAsSet(StreamInput::readString);
         }
 
         public LTRStatsNodesRequest(String[] nodeIds) {
@@ -147,12 +147,12 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
 
         @Override
         protected List<LTRStatsNodeResponse> readNodesFrom(StreamInput in) throws IOException {
-            return in.readList(LTRStatsNodeResponse::new);
+            return in.readCollectionAsList(LTRStatsNodeResponse::new);
         }
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<LTRStatsNodeResponse> nodeResponses) throws IOException {
-            out.writeList(nodeResponses);
+            out.writeCollection(nodeResponses);
         }
 
         @Override
