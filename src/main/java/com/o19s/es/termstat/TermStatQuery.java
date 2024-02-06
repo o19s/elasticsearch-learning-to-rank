@@ -116,7 +116,7 @@ public class TermStatQuery extends Query {
       // This is needed for proper DFS_QUERY_THEN_FETCH support
       if (scoreMode.needsScores()) {
         for (Term t : terms) {
-          TermStates ctx = TermStates.build(searcher.getTopReaderContext(), t, true);
+          TermStates ctx = TermStates.build(searcher, t, true);
 
           if (ctx != null && ctx.docFreq() > 0) {
             searcher.collectionStatistics(t.field());

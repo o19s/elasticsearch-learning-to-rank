@@ -43,6 +43,7 @@ import org.elasticsearch.xcontent.XContentParserConfiguration;
 import org.elasticsearch.xcontent.XContentType;
 
 public class ScriptFeature implements Feature {
+
   public static final String TEMPLATE_LANGUAGE = "script_feature";
   public static final String FEATURE_VECTOR = "feature_vector";
   public static final String TERM_STAT = "termStats";
@@ -232,6 +233,7 @@ public class ScriptFeature implements Feature {
   }
 
   static class LtrScript extends Query implements LtrRewritableQuery {
+
     private final ScriptScoreFunction function;
     private final FeatureSupplier supplier;
     private final ExtraLoggingSupplier extraLoggingSupplier;
@@ -253,7 +255,9 @@ public class ScriptFeature implements Feature {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
+      if (this == o) {
+        return true;
+      }
       LtrScript ol = (LtrScript) o;
       return sameClassAs(o) && Objects.equals(function, ol.function);
     }
@@ -305,6 +309,7 @@ public class ScriptFeature implements Feature {
   }
 
   static class LtrScriptWeight extends Weight {
+
     private final IndexSearcher searcher;
     private final ScoreMode scoreMode;
     private final ScriptScoreFunction function;
@@ -330,7 +335,7 @@ public class ScriptFeature implements Feature {
 
       if (scoreMode.needsScores()) {
         for (Term t : terms) {
-          TermStates ctx = TermStates.build(searcher.getTopReaderContext(), t, true);
+          TermStates ctx = TermStates.build(searcher, t, true);
           if (ctx != null && ctx.docFreq() > 0) {
             searcher.collectionStatistics(t.field());
             searcher.termStatistics(t, ctx.docFreq(), ctx.totalTermFreq());

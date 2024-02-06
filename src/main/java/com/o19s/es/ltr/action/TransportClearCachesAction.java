@@ -57,11 +57,9 @@ public class TransportClearCachesAction
       Caches caches) {
     super(
         ClearCachesAction.NAME,
-        threadPool,
         clusterService,
         transportService,
         actionFilters,
-        ClearCachesNodesRequest::new,
         ClearCachesNodeRequest::new,
         threadPool.executor(ThreadPool.Names.MANAGEMENT));
     this.caches = caches;

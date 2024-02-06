@@ -190,7 +190,7 @@ public class IndexFeatureStore implements FeatureStore {
       throws IOException {
     GetResponse response = internalGet(generateId(type, name)).get();
     if (response.isExists()) {
-      return parse(eltClass, type, response.getSourceAsBytes());
+      return parse(eltClass, type, response.getSourceAsBytesRef());
     } else {
       return null;
     }

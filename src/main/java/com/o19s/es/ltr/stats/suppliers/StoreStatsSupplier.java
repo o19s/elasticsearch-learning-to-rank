@@ -109,6 +109,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
               .forEach(bucket -> updateCount(bucket, storeStat));
         }
       }
+      msr.decRef();
       return stats;
     } catch (InterruptedException | ExecutionException e) {
       LOG.error("Error retrieving store stats", e);

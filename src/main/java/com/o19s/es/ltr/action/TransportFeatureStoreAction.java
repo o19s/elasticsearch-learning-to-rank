@@ -36,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilters;
@@ -180,7 +179,7 @@ public class TransportFeatureStoreAction
       Runnable onSuccess) {
     ValidatingLtrQueryBuilder ltrBuilder =
         new ValidatingLtrQueryBuilder(element, validation, factory);
-    SearchRequestBuilder builder = new SearchRequestBuilder(client, SearchAction.INSTANCE);
+    SearchRequestBuilder builder = new SearchRequestBuilder(client);
     builder.setIndices(validation.getIndex());
     builder.setQuery(ltrBuilder);
     builder.setFrom(0);

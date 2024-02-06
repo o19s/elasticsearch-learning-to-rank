@@ -36,11 +36,9 @@ public class TransportLTRStatsAction
       LTRStats ltrStats) {
     super(
         LTRStatsAction.NAME,
-        threadPool,
         clusterService,
         transportService,
         actionFilters,
-        LTRStatsNodesRequest::new,
         LTRStatsNodeRequest::new,
         threadPool.executor(ThreadPool.Names.MANAGEMENT));
     this.ltrStats = ltrStats;

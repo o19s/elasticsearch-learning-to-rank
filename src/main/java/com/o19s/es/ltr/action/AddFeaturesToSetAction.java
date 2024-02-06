@@ -39,6 +39,7 @@ import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
 
 public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse> {
+
   public static final AddFeaturesToSetAction INSTANCE = new AddFeaturesToSetAction();
   public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
@@ -53,12 +54,14 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
 
   public static class AddFeaturesToSetRequestBuilder
       extends ActionRequestBuilder<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
+
     public AddFeaturesToSetRequestBuilder(ElasticsearchClient client) {
       super(client, INSTANCE, new AddFeaturesToSetRequest());
     }
   }
 
   public static class AddFeaturesToSetRequest extends ActionRequest {
+
     private String store;
     private String featureNameQuery;
     private List<StoredFeature> features;
@@ -171,6 +174,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
   }
 
   public static class AddFeaturesToSetResponse extends ActionResponse implements ToXContentObject {
+
     private DocWriteResponse response;
 
     public AddFeaturesToSetResponse(StreamInput in) throws IOException {
