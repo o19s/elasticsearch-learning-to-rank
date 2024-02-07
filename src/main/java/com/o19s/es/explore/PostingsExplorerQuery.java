@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.ReaderUtil;
@@ -77,10 +76,9 @@ public class PostingsExplorerQuery extends Query {
   @Override
   public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
       throws IOException {
-    IndexReaderContext context = searcher.getTopReaderContext();
     assert scoreMode.needsScores() : "Should not be used in filtering mode";
     return new PostingsExplorerWeight(
-        this, this.term, TermStates.build(context, this.term, scoreMode.needsScores()), this.type);
+        this, this.term, TermStates.build(searcher, this.term, scoreMode.needsScores()), this.type);
   }
 
   /** Will eventually allow implementing more explorer techniques (e.g. some stats on positions) */

@@ -23,12 +23,14 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class LTRStatsActionIT extends BaseIntegrationTest {
+
   private static final String DEFAULT_STORE_NAME = IndexFeatureStore.storeName(DEFAULT_STORE);
 
   @SuppressWarnings("unchecked")
   public void testStatsNoStore() throws Exception {
     deleteDefaultStore();
     LTRStatsNodesResponse response = executeRequest();
+
     assertFalse(response.hasFailures());
 
     Map<String, Object> clusterStats = response.getClusterStats();

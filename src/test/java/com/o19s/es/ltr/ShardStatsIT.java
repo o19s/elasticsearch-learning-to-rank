@@ -1,6 +1,6 @@
 package com.o19s.es.ltr;
 
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchResponse;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.o19s.es.TestExpressionsPlugin;
@@ -65,7 +65,7 @@ public class ShardStatsIT extends ESIntegTestCase {
             .setQuery(eq)
             .get();
 
-    assertSearchResponse(r);
+    assertNoFailures(r);
 
     SearchHits hits = r.getHits();
     assertThat(hits.getAt(0).getScore(), equalTo(4.0f));
@@ -81,7 +81,7 @@ public class ShardStatsIT extends ESIntegTestCase {
     final SearchResponse r =
         client().prepareSearch("idx").setSearchType(SearchType.QUERY_THEN_FETCH).setQuery(eq).get();
 
-    assertSearchResponse(r);
+    assertNoFailures(r);
 
     SearchHits hits = r.getHits();
     assertThat(hits.getAt(0).getScore(), equalTo(2.0f));
@@ -105,7 +105,7 @@ public class ShardStatsIT extends ESIntegTestCase {
             .setQuery(tsq)
             .get();
 
-    assertSearchResponse(r);
+    assertNoFailures(r);
 
     SearchHits hits = r.getHits();
     assertThat(hits.getAt(0).getScore(), equalTo(4.0f));
@@ -129,7 +129,7 @@ public class ShardStatsIT extends ESIntegTestCase {
             .setQuery(tsq)
             .get();
 
-    assertSearchResponse(r);
+    assertNoFailures(r);
 
     SearchHits hits = r.getHits();
     assertThat(hits.getAt(0).getScore(), equalTo(2.0f));

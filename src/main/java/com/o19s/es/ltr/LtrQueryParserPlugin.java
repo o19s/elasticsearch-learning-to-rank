@@ -88,9 +88,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
@@ -98,27 +96,19 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.core.CheckedFunction;
-import org.elasticsearch.env.Environment;
-import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.analysis.PreConfiguredTokenFilter;
 import org.elasticsearch.index.analysis.PreConfiguredTokenizer;
-import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.repositories.RepositoriesService;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.telemetry.TelemetryProvider;
-import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.xcontent.XContentParser;
@@ -269,34 +259,23 @@ public class LtrQueryParserPlugin extends Plugin
   }
 
   @Override
-  public Collection<Object> createComponents(
-      Client client,
-      ClusterService clusterService,
-      ThreadPool threadPool,
-      ResourceWatcherService resourceWatcherService,
-      ScriptService scriptService,
-      NamedXContentRegistry xContentRegistry,
-      Environment environment,
-      NodeEnvironment nodeEnvironment,
-      NamedWriteableRegistry namedWriteableRegistry,
-      IndexNameExpressionResolver indexNameExpressionResolver,
-      Supplier<RepositoriesService> repositoriesServiceSupplier,
-      TelemetryProvider telemetryProvider,
-      AllocationService allocationService,
-      IndicesService indicesService) {
-    clusterService.addListener(
-        event -> {
-          for (Index i : event.indicesDeleted()) {
-            if (IndexFeatureStore.isIndexStore(i.getName())) {
-              caches.evict(i.getName());
-            }
-          }
-        });
+  public Collection<?> createComponents(PluginServices ps) {
+    ps.clusterService()
+        .addListener(
+            event -> {
+              for (Index i : event.indicesDeleted()) {
+                if (IndexFeatureStore.isIndexStore(i.getName())) {
+                  caches.evict(i.getName());
+                }
+              }
+            });
 
-    Scripting.initScriptService(scriptService);
+    Scripting.initScriptService(ps.scriptService());
 
     return asList(
-        caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
+        caches,
+        parserFactory,
+        getStats(ps.client(), ps.clusterService(), ps.indexNameExpressionResolver()));
   }
 
   private LTRStats getStats(

@@ -56,11 +56,9 @@ public class TransportCacheStatsAction
       Caches caches) {
     super(
         CachesStatsAction.NAME,
-        threadPool,
         clusterService,
         transportService,
         actionFilters,
-        CachesStatsNodesRequest::new,
         CachesStatsNodeRequest::new,
         threadPool.executor(ThreadPool.Names.MANAGEMENT));
     this.caches = caches;

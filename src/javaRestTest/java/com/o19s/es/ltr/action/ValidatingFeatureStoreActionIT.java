@@ -33,6 +33,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.hamcrest.CoreMatchers;
 
 public class ValidatingFeatureStoreActionIT extends BaseIntegrationTest {
+
   public void testValidateFeature() throws ExecutionException, InterruptedException {
     prepareTestIndex();
     String brokenQuery = "{\"query\": {\"match\":{\"test\": \"{{query_string}}\"}}}";
