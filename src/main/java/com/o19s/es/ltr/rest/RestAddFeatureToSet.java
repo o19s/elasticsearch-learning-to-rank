@@ -24,7 +24,7 @@ import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.xcontent.ObjectParser;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.rest.action.RestToXContentListener;
 
 import java.io.IOException;
 import java.util.List;
@@ -86,7 +86,7 @@ public class RestAddFeatureToSet extends FeatureStoreBaseRestHandler {
         builder.request().setFeatures(features);
         builder.request().setMerge(merge);
         builder.request().setValidation(validation);
-        return (channel) -> builder.execute(new RestStatusToXContentListener<>(channel, (r) -> r.getResponse().getLocation(routing)));
+        return (channel) -> builder.execute(new RestToXContentListener<>(channel));
     }
 
     static class FeaturesParserState {

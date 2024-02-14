@@ -49,12 +49,12 @@ public class LoggingSearchExtBuilder extends SearchExtBuilder {
     public LoggingSearchExtBuilder() {}
 
     public LoggingSearchExtBuilder(StreamInput input) throws IOException {
-        logSpecs = input.readList(LogSpec::new);
+        logSpecs = input.readCollectionAsList(LogSpec::new);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeList(logSpecs);
+        out.writeCollection(logSpecs);
     }
 
     @Override

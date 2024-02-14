@@ -153,12 +153,12 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
         @Override
         protected List<ClearCachesNodeResponse> readNodesFrom(StreamInput in) throws IOException {
-            return in.readList(ClearCachesNodeResponse::new);
+            return in.readCollectionAsList(ClearCachesNodeResponse::new);
         }
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<ClearCachesNodeResponse> nodes) throws IOException {
-            out.writeList(nodes);
+            out.writeCollection(nodes);
         }
     }
 

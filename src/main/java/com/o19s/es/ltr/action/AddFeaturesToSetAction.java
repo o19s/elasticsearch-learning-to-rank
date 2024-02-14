@@ -20,18 +20,19 @@ import com.o19s.es.ltr.action.AddFeaturesToSetAction.AddFeaturesToSetResponse;
 import com.o19s.es.ltr.feature.store.StoredFeature;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ActionType;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
-import org.elasticsearch.common.xcontent.StatusToXContentObject;
-import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.xcontent.ToXContentObject;
+import org.elasticsearch.xcontent.XContentBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -73,7 +74,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
         public  AddFeaturesToSetRequest(StreamInput in) throws IOException {
             super(in);
             store = in.readString();
-            features = in.readList(StoredFeature::new);
+            features = in.readCollectionAsList(StoredFeature::new);
             if (in.readBoolean()) {
                 featureNameQuery = in.readOptionalString();
             }
@@ -107,7 +108,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
             out.writeString(store);
             out.writeOptionalString(featureNameQuery);
             if (features != null) {
-                out.writeList(features);
+                out.writeCollection(features);
             }
             out.writeBoolean(merge);
             out.writeString(featureSet);
@@ -172,15 +173,15 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
         }
     }
 
-    public static class AddFeaturesToSetResponse extends ActionResponse implements StatusToXContentObject {
-        private IndexResponse response;
+    public static class AddFeaturesToSetResponse extends ActionResponse implements ToXContentObject {
+        private DocWriteResponse response;
 
         public AddFeaturesToSetResponse(StreamInput in) throws IOException {
             super(in);
             response = new IndexResponse(in);
         }
 
-        public AddFeaturesToSetResponse(IndexResponse response) {
+        public AddFeaturesToSetResponse(DocWriteResponse response) {
             this.response = response;
         }
 
@@ -189,20 +190,19 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
             response.writeTo(out);
         }
 
-        /**
-         * Returns the REST status to make sure it is returned correctly
-         */
-        @Override
-        public RestStatus status() {
-            return response.status();
-        }
-
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return response.toXContent(builder, params);
         }
 
-        public IndexResponse getResponse() {
+        /**
+         * Returns the REST status to make sure it is returned correctly
+         */
+        public RestStatus status() {
+            return response.status();
+        }
+
+        public DocWriteResponse getResponse() {
             return response;
         }
     }

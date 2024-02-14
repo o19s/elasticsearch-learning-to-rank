@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.TransportVersions;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -250,6 +251,6 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
 
     @Override
     public TransportVersion getMinimalSupportedVersion() {
-        return TransportVersion.V_7_0_0;
+        return TransportVersions.V_7_0_0;
     }
 }

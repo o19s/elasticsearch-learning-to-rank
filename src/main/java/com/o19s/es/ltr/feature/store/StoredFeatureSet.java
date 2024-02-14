@@ -123,13 +123,13 @@ public class StoredFeatureSet implements FeatureSet, Accountable, StorableElemen
     }
 
     public StoredFeatureSet(StreamInput input) throws IOException {
-        this(input.readString(), input.readList(StoredFeature::new));
+        this(input.readString(), input.readCollectionAsList(StoredFeature::new));
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(name);
-        out.writeList(features);
+        out.writeCollection(features);
     }
 
     @Override
