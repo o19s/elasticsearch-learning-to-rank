@@ -30,9 +30,9 @@ import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.SpecialPermission;
 
 public class MustacheUtils {
+
   public static final String TEMPLATE_LANGUAGE = "mustache";
   private static final Logger logger = LogManager.getLogger(MustacheUtils.class);
-  private static final SpecialPermission SPECIAL_PERMS = new SpecialPermission();
 
   /** We store templates internally always as json */
   private static final CustomMustacheFactory FACTORY = new CustomMustacheFactory();
@@ -46,14 +46,11 @@ public class MustacheUtils {
     }
   }
 
+  @SuppressWarnings("removal")
   public static String execute(Mustache template, Map<String, Object> params) {
     final StringWriter writer = new StringWriter();
     try {
-      // crazy reflection here
-      SecurityManager sm = System.getSecurityManager();
-      if (sm != null) {
-        sm.checkPermission(SPECIAL_PERMS);
-      }
+      SpecialPermission.check();
       AccessController.doPrivileged(
           (PrivilegedAction<Void>)
               () -> {
