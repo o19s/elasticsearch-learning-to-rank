@@ -30,9 +30,8 @@ import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.index.IndexAction;
+import org.elasticsearch.action.index.TransportIndexAction;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilters;
@@ -41,6 +40,7 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.transport.TransportService;
 
@@ -62,7 +62,8 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                                        ClusterService clusterService, Client client,
                                        LtrRankerParserFactory factory,
                                        TransportClearCachesAction clearCachesAction) {
-        super(FeatureStoreAction.NAME, false, transportService, actionFilters, FeatureStoreRequest::new);
+        super(FeatureStoreAction.NAME, false, transportService, actionFilters,
+            FeatureStoreRequest::new, EsExecutors.DIRECT_EXECUTOR_SERVICE);
         this.factory = factory;
         this.clusterService = clusterService;
         this.clearCachesAction = clearCachesAction;
@@ -152,7 +153,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
                           Runnable onSuccess) {
         ValidatingLtrQueryBuilder ltrBuilder = new ValidatingLtrQueryBuilder(element,
                 validation, factory);
-        SearchRequestBuilder builder = new SearchRequestBuilder(client, SearchAction.INSTANCE);
+        SearchRequestBuilder builder = new SearchRequestBuilder(client);
         builder.setIndices(validation.getIndex());
         builder.setQuery(ltrBuilder);
         builder.setFrom(0);
@@ -179,7 +180,7 @@ public class TransportFeatureStoreAction extends HandledTransportAction<FeatureS
         try {
             Optional<ClearCachesNodesRequest> clearCachesNodesRequest = buildClearCache(request);
             IndexRequest indexRequest = buildIndexRequest(task, request);
-            client.execute(IndexAction.INSTANCE, indexRequest, wrap(
+            client.execute(TransportIndexAction.TYPE, indexRequest, wrap(
                     (r) -> {
                         // Run and forget, log only if something bad happens
                         // but don't wait for the action to be done nor set the parent task.

@@ -319,7 +319,7 @@ public class ScriptFeature implements Feature {
 
             if (scoreMode.needsScores()) {
                 for (Term t : terms) {
-                    TermStates ctx = TermStates.build(searcher.getTopReaderContext(), t, true);
+                    TermStates ctx = TermStates.build(searcher, t, true);
                     if (ctx != null && ctx.docFreq() > 0) {
                         searcher.collectionStatistics(t.field());
                         searcher.termStatistics(t, ctx.docFreq(), ctx.totalTermFreq());

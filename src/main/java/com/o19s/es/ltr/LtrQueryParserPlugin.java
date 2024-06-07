@@ -74,11 +74,9 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.internal.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.core.CheckedFunction;
-import org.elasticsearch.indices.IndicesService;
-import org.elasticsearch.telemetry.TelemetryProvider;
+import org.elasticsearch.features.NodeFeature;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
@@ -89,8 +87,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.env.Environment;
-import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.analysis.PreConfiguredTokenFilter;
 import org.elasticsearch.index.analysis.PreConfiguredTokenizer;
@@ -99,15 +95,11 @@ import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.repositories.RepositoriesService;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.fetch.FetchSubPhase;
-import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.watcher.ResourceWatcherService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -117,6 +109,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
@@ -171,10 +164,15 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     @Override
-    public List<RestHandler> getRestHandlers(Settings settings, RestController restController,
-                                             ClusterSettings clusterSettings, IndexScopedSettings indexScopedSettings,
-                                             SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
-                                             Supplier<DiscoveryNodes> nodesInCluster) {
+    public List<RestHandler> getRestHandlers(Settings settings,
+                                             NamedWriteableRegistry namedWriteableRegistry,
+                                             RestController restController,
+                                             ClusterSettings clusterSettings,
+                                             IndexScopedSettings indexScopedSettings,
+                                             SettingsFilter settingsFilter,
+                                             IndexNameExpressionResolver indexNameExpressionResolver,
+                                             Supplier<DiscoveryNodes> nodesInCluster,
+                                             Predicate<NodeFeature> clusterSupportsFeature) {
         List<RestHandler> list = new ArrayList<>();
 
         for (String type : ValidatingLtrQueryBuilder.SUPPORTED_TYPES) {
@@ -242,21 +240,8 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     @Override
-    public Collection<Object> createComponents(Client client,
-                                               ClusterService clusterService,
-                                               ThreadPool threadPool,
-                                               ResourceWatcherService resourceWatcherService,
-                                               ScriptService scriptService,
-                                               NamedXContentRegistry xContentRegistry,
-                                               Environment environment,
-                                               NodeEnvironment nodeEnvironment,
-                                               NamedWriteableRegistry namedWriteableRegistry,
-                                               IndexNameExpressionResolver indexNameExpressionResolver,
-                                               Supplier<RepositoriesService> repositoriesServiceSupplier,
-                                               TelemetryProvider telemetryProvider,
-                                               AllocationService allocationService,
-                                               IndicesService indicesService) {
-        clusterService.addListener(event -> {
+    public Collection<Object> createComponents(PluginServices services) {
+        services.clusterService().addListener(event -> {
             for (Index i : event.indicesDeleted()) {
                 if (IndexFeatureStore.isIndexStore(i.getName())) {
                     caches.evict(i.getName());
@@ -264,9 +249,10 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
             }
         });
 
-        Scripting.initScriptService(scriptService);
+        Scripting.initScriptService(services.scriptService());
 
-        return asList(caches, parserFactory, getStats(client, clusterService, indexNameExpressionResolver));
+        return asList(caches, parserFactory,
+            getStats(services.client(), services.clusterService(), services.indexNameExpressionResolver()));
     }
 
     private LTRStats getStats(Client client, ClusterService clusterService, IndexNameExpressionResolver indexNameExpressionResolver) {

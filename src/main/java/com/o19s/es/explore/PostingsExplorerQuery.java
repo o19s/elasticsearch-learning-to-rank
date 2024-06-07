@@ -17,7 +17,6 @@
 package com.o19s.es.explore;
 
 import com.o19s.es.ltr.utils.CheckedBiFunction;
-import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.ReaderUtil;
@@ -78,9 +77,8 @@ public class PostingsExplorerQuery extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
             throws IOException {
-        IndexReaderContext context = searcher.getTopReaderContext();
         assert scoreMode.needsScores() : "Should not be used in filtering mode";
-        return new PostingsExplorerWeight(this, this.term, TermStates.build(context, this.term,
+        return new PostingsExplorerWeight(this, this.term, TermStates.build(searcher, this.term,
                 scoreMode.needsScores()),
                 this.type);
     }

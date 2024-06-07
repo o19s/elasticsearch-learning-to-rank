@@ -27,7 +27,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
     public static final LTRStatsAction INSTANCE = new LTRStatsAction();
 
     public LTRStatsAction() {
-        super(NAME, LTRStatsNodesResponse::new);
+        super(NAME);
     }
 
     public static class LTRStatsRequestBuilder
@@ -132,7 +132,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
 
         public LTRStatsNodesResponse(StreamInput in) throws IOException {
             super(in);
-            clusterStats = in.readMap();
+            clusterStats = in.readGenericMap();
         }
 
         public LTRStatsNodesResponse(ClusterName clusterName, List<LTRStatsNodeResponse> nodeResponses,

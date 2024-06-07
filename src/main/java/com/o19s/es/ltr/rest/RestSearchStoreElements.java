@@ -3,7 +3,7 @@ package com.o19s.es.ltr.rest;
 import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.RestChunkedToXContentListener;
+import org.elasticsearch.rest.action.RestRefCountedChunkedToXContentListener;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class RestSearchStoreElements extends FeatureStoreBaseRestHandler {
                 .setQuery(qb)
                 .setSize(size)
                 .setFrom(from)
-                .execute(new RestChunkedToXContentListener<>(channel));
+                .execute(new RestRefCountedChunkedToXContentListener<>(channel));
     }
 
 }

@@ -42,7 +42,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
     public static final CreateModelFromSetAction INSTANCE = new CreateModelFromSetAction();
 
     protected CreateModelFromSetAction() {
-        super(NAME, CreateModelFromSetResponse::new);
+        super(NAME);
     }
 
 

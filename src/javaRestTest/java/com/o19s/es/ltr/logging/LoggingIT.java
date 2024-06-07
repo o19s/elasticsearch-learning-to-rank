@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertResponse;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -213,9 +214,7 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
-
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
         sbuilder.featureSetName(null);
         sbuilder.modelName("my_model");
         sbuilder.boost(random().nextInt(3));
@@ -234,8 +233,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
 
-        SearchResponse resp2 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp2);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
 
         query = QueryBuilders.boolQuery()
                 .must(new WrapperQueryBuilder(sbuilder.toString()))
@@ -254,8 +252,7 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
-        SearchResponse resp3 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp3);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
 
         query = QueryBuilders.boolQuery().filter(QueryBuilders.idsQuery().addIds(ids));
         sourceBuilder = new SearchSourceBuilder().query(query)
@@ -268,8 +265,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addRescoreLogging("first_log", 0, false)
                                 .addRescoreLogging("second_log", 1, true)));
 
-        SearchResponse resp4 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp4);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
     }
 
     public void testLogExtraLogging() throws Exception {
@@ -304,8 +300,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
 
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHitsExtraLogging(docs, resp);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHitsExtraLogging(docs, resp));
         sbuilder.featureSetName(null);
         sbuilder.modelName("my_model");
         sbuilder.boost(random().nextInt(3));
@@ -324,8 +319,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
 
-        SearchResponse resp2 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHitsExtraLogging(docs, resp2);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHitsExtraLogging(docs, resp));
 
         query = QueryBuilders.boolQuery()
                 .must(new WrapperQueryBuilder(sbuilder.toString()))
@@ -344,8 +338,7 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
-        SearchResponse resp3 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHitsExtraLogging(docs, resp3);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHitsExtraLogging(docs, resp));
     }
 
     public void testLogWithFeatureScoreCache() throws Exception {
@@ -386,8 +379,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
 
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
         sbuilder.featureSetName(null);
         sbuilder.modelName("my_model");
         sbuilder_rescore.featureSetName(null);
@@ -404,8 +396,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
 
-        SearchResponse resp2 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp2);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
 
         query = QueryBuilders.boolQuery()
                 .must(new WrapperQueryBuilder(sbuilder.toString()))
@@ -424,8 +415,7 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)
                                 .addRescoreLogging("second_log", 0, true)));
-        SearchResponse resp3 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp3);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
 
         query = QueryBuilders.boolQuery().filter(QueryBuilders.idsQuery().addIds(ids));
         sourceBuilder = new SearchSourceBuilder().query(query)
@@ -438,8 +428,7 @@ public class LoggingIT extends BaseIntegrationTest {
                                 .addRescoreLogging("first_log", 0, false)
                                 .addRescoreLogging("second_log", 1, true)));
 
-        SearchResponse resp4 = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        assertSearchHits(docs, resp4);
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
     }
 
     public void testScriptLogInternalParams() throws Exception {
@@ -467,17 +456,17 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)));
 
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
+        assertResponse( client().prepareSearch("test_index").setSource(sourceBuilder), resp -> {
+            SearchHits hits = resp.getHits();
+            SearchHit testHit = hits.getAt(0);
+            Map<String, List<Map<String, Object>>> logs = testHit.getFields().get("_ltrlog").getValue();
 
-        SearchHits hits = resp.getHits();
-        SearchHit testHit = hits.getAt(0);
-        Map<String, List<Map<String, Object>>> logs = testHit.getFields().get("_ltrlog").getValue();
+            assertTrue(logs.containsKey("first_log"));
+            List<Map<String, Object>> log = logs.get("first_log");
 
-        assertTrue(logs.containsKey("first_log"));
-        List<Map<String, Object>> log = logs.get("first_log");
-
-        assertEquals(log.get(0).get("name"), "test_inject");
-        assertTrue((Float)log.get(0).get("value") > 0.0F);
+            assertEquals(log.get(0).get("name"), "test_inject");
+            assertTrue((Float)log.get(0).get("value") > 0.0F);
+        });
     }
 
     public void testScriptLogExternalParams() throws Exception {
@@ -513,17 +502,17 @@ public class LoggingIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("first_log", "test", false)));
 
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
+        assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> {
+            SearchHits hits = resp.getHits();
+            SearchHit testHit = hits.getAt(0);
+            Map<String, List<Map<String, Object>>> logs = testHit.getFields().get("_ltrlog").getValue();
 
-        SearchHits hits = resp.getHits();
-        SearchHit testHit = hits.getAt(0);
-        Map<String, List<Map<String, Object>>> logs = testHit.getFields().get("_ltrlog").getValue();
+            assertTrue(logs.containsKey("first_log"));
+            List<Map<String, Object>> log = logs.get("first_log");
 
-        assertTrue(logs.containsKey("first_log"));
-        List<Map<String, Object>> log = logs.get("first_log");
-
-        assertEquals(log.get(0).get("name"), "test_inject");
-        assertTrue((Float)log.get(0).get("value") > 0.0F);
+            assertEquals(log.get(0).get("name"), "test_inject");
+            assertTrue((Float)log.get(0).get("value") > 0.0F);
+        });
     }
 
     public void testScriptLogInvalidExternalParams() throws Exception {

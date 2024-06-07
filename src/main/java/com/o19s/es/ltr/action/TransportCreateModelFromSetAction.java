@@ -33,6 +33,7 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -50,7 +51,8 @@ public class TransportCreateModelFromSetAction extends HandledTransportAction<Cr
                                                 IndexNameExpressionResolver indexNameExpressionResolver,
                                                 ClusterService clusterService, TransportGetAction getAction,
                                                 TransportFeatureStoreAction featureStoreAction) {
-        super(CreateModelFromSetAction.NAME, transportService, actionFilters, CreateModelFromSetRequest::new);
+        super(CreateModelFromSetAction.NAME, transportService, actionFilters,
+            CreateModelFromSetRequest::new, EsExecutors.DIRECT_EXECUTOR_SERVICE);
         this.clusterService = clusterService;
         this.getAction = getAction;
         this.featureStoreAction = featureStoreAction;

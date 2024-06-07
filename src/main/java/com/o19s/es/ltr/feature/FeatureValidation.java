@@ -60,7 +60,7 @@ public class FeatureValidation implements Writeable, ToXContentObject {
 
     public FeatureValidation(StreamInput input) throws IOException {
         this.index = input.readString();
-        this.params = input.readMap();
+        this.params = input.readGenericMap();
     }
 
     @Override

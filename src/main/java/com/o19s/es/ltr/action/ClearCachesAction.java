@@ -33,7 +33,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import org.elasticsearch.common.io.stream.Writeable.Reader;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -42,12 +41,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
     private ClearCachesAction() {
-        super(NAME, ClearCachesNodesResponse::new);
-    }
-
-    @Override
-    public Reader<ClearCachesNodesResponse> getResponseReader() {
-        return ClearCachesNodesResponse::new;
+        super(NAME);
     }
 
     public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse> {

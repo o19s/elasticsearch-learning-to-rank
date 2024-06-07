@@ -29,7 +29,6 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -44,12 +43,7 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
     public static final String NAME = "cluster:admin/ltr/store/add-features-to-set";
 
     protected AddFeaturesToSetAction() {
-        super(NAME, AddFeaturesToSetResponse::new);
-    }
-
-    @Override
-    public Reader<AddFeaturesToSetResponse> getResponseReader() {
-        return AddFeaturesToSetResponse::new;
+        super(NAME);
     }
 
     public static class AddFeaturesToSetRequestBuilder extends ActionRequestBuilder<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
