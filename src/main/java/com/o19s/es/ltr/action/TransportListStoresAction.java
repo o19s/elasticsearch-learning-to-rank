@@ -32,6 +32,7 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.core.Tuple;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.common.inject.Inject;
@@ -64,7 +65,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
                                      IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
             actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new,
-                threadPool.executor(ThreadPool.Names.SAME));
+                EsExecutors.DIRECT_EXECUTOR_SERVICE);
         this.client = client;
     }
 

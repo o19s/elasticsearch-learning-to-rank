@@ -221,7 +221,8 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                     "score",
                      FLOAT,
                      CoreValuesSourceType.NUMERIC,
-                     (dv, n) -> { throw new UnsupportedOperationException(); }));
+                     (dv, n) -> { throw new UnsupportedOperationException(); },
+                     false));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }

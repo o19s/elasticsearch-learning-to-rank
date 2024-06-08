@@ -26,7 +26,7 @@ import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
+import org.elasticsearch.action.admin.indices.create.TransportCreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.core.Nullable;
@@ -70,7 +70,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
     public void createStore(String name) throws Exception {
         assert IndexFeatureStore.isIndexStore(name);
-        CreateIndexResponse resp = client().execute(CreateIndexAction.INSTANCE, IndexFeatureStore.buildIndexRequest(name)).get();
+        CreateIndexResponse resp = client().execute(TransportCreateIndexAction.TYPE, IndexFeatureStore.buildIndexRequest(name)).get();
         assertTrue(resp.isAcknowledged());
     }
 
