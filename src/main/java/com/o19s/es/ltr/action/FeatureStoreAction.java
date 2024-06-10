@@ -30,7 +30,6 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -45,12 +44,7 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
     public static final FeatureStoreAction INSTANCE = new FeatureStoreAction();
 
     protected FeatureStoreAction() {
-        super(NAME, FeatureStoreResponse::new);
-    }
-
-    @Override
-    public Reader<FeatureStoreResponse> getResponseReader() {
-        return FeatureStoreResponse::new;
+        super(NAME);
     }
 
     public static class FeatureStoreRequestBuilder

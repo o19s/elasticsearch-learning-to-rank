@@ -27,7 +27,6 @@ import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -43,12 +42,7 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
     private ListStoresAction() {
-        super(NAME, ListStoresActionResponse::new);
-    }
-
-    @Override
-    public Reader<ListStoresActionResponse> getResponseReader() {
-        return ListStoresActionResponse::new;
+        super(NAME);
     }
 
     public static class ListStoresActionRequest extends MasterNodeReadRequest<ListStoresActionRequest> {

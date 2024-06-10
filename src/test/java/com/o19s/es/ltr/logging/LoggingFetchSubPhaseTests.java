@@ -121,7 +121,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         LoggingFetchSubPhaseProcessor processor = new LoggingFetchSubPhaseProcessor(() -> new Tuple<>(weight, loggers));
 
         SearchHit[] hits = preprocessRandomHits(processor);
-        for (SearchHit hit : hits) {
+        for (SearchHit hit : hits) try {
             assertTrue(docs.containsKey(hit.getId()));
             Document d = docs.get(hit.getId());
             assertTrue(hit.getFields().containsKey("_ltrlog"));
@@ -149,6 +149,8 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
             expectedScore = Math.log1p(expectedScore+1);
             assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
             assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
+        } finally {
+            hit.decRef();
         }
     }
 
@@ -219,7 +221,8 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                     "score",
                      FLOAT,
                      CoreValuesSourceType.NUMERIC,
-                     (dv, n) -> { throw new UnsupportedOperationException(); }));
+                     (dv, n) -> { throw new UnsupportedOperationException(); },
+                     false));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }

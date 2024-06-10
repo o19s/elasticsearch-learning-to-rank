@@ -31,7 +31,6 @@ import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.logging.LoggingSearchExtBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -51,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertResponse;
 import static org.hamcrest.CoreMatchers.containsString;
 
 /**
@@ -118,22 +118,23 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         new LoggingSearchExtBuilder()
                                 .addQueryLogging("log", "test", false)));
 
-        SearchResponse resp = client().prepareSearch("test_index").setSource(sourceBuilder).get();
-        SearchHit hit = resp.getHits().getAt(0);
-        assertTrue(hit.getFields().containsKey("_ltrlog"));
-        Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
-        assertTrue(logs.containsKey("log"));
-        List<Map<String, Object>> log = logs.get("log");
+        assertResponse( client().prepareSearch("test_index").setSource(sourceBuilder), resp -> {
+            SearchHit hit = resp.getHits().getAt(0);
+            assertTrue(hit.getFields().containsKey("_ltrlog"));
+            Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
+            assertTrue(logs.containsKey("log"));
+            List<Map<String, Object>> log = logs.get("log");
 
-        // verify that text_feature1 has a missing value, and that the reported score results from the model taking the
-        // corresponding branch, along with the explanation
-        String explanation = hit.getExplanation().getDetails()[0].getDescription();
-        assertThat(explanation, containsString("default value of NaN used"));
+            // verify that text_feature1 has a missing value, and that the reported score results from the model taking the
+            // corresponding branch, along with the explanation
+            String explanation = hit.getExplanation().getDetails()[0].getDescription();
+            assertThat(explanation, containsString("default value of NaN used"));
 
-        assertEquals("text_feature1", log.get(0).get("name"));
-        assertEquals(null, log.get(0).get("value"));
+            assertEquals("text_feature1", log.get(0).get("name"));
+            assertEquals(null, log.get(0).get("value"));
 
-        assertEquals(0.2F, hit.getScore(), Math.ulp(0.2F));
+            assertEquals(0.2F, hit.getScore(), Math.ulp(0.2F));
+        });
     }
 
     public void testScriptFeatureUseCase() throws Exception {
@@ -168,10 +169,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        SearchResponse sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(29.0f));
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(30.0f));
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(29.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(30.0f));
+        });
     }
 
     public void testFullUsecase() throws Exception {
@@ -217,9 +219,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
         buildIndex();
         Map<String, Object> params = new HashMap<>();
 
-        boolean negativeScore = false;
-        params.put("query", negativeScore ? "bonjour" : "hello");
-        params.put("multiplier", negativeScore ? Integer.parseInt("-1") : 1.0);
+        final boolean negativeScore1 = false;
+        params.put("query", negativeScore1 ? "bonjour" : "hello");
+        params.put("multiplier", negativeScore1 ? Integer.parseInt("-1") : 1.0);
         params.put("dependent_feature", new HashMap<>());
         SearchRequestBuilder sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
@@ -229,18 +231,18 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        SearchResponse sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            if (negativeScore1) {
+                assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
+            } else {
+                assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
+            }
+        });
 
-        if (negativeScore) {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
-        } else {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
-        }
-
-        negativeScore = true;
-        params.put("query", negativeScore ? "bonjour" : "hello");
-        params.put("multiplier", negativeScore ? -1 : 1.0);
+        final boolean negativeScore2 = true;
+        params.put("query", negativeScore2 ? "bonjour" : "hello");
+        params.put("multiplier", negativeScore2 ? -1 : 1.0);
         params.put("dependent_feature", new HashMap<>());
         sb = client().prepareSearch("test_index")
                 .setQuery(QueryBuilders.matchQuery("field1", "world"))
@@ -250,14 +252,16 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
 
-        if (negativeScore) {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
-        } else {
-            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
-        }
+            if (negativeScore2) {
+                assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(-10.0f));
+            } else {
+                assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThanOrEqualTo(10.0f));
+            }
+        });
+
 
         // Test profiling
         sb = client().prepareSearch("test_index")
@@ -269,8 +273,7 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        sr = sb.get();
-        assertThat(sr.getProfileResults().isEmpty(), Matchers.equalTo(false));
+        assertResponse(sb, sr -> assertThat(sr.getProfileResults().isEmpty(), Matchers.equalTo(false)));
         //we use only feature4 score and ignore other scores
         params.put("query", "hello");
         sb = client().prepareSearch("test_index")
@@ -281,10 +284,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
 
-        sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.0f));
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(1.0f));
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThanOrEqualTo(1.0f));
+        });
 
         //we use feature 5 with query time positive int multiplier passed to feature5
         params.put("query", "hello");
@@ -296,10 +300,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
-        sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(28.0f));
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(30.0f));
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(28.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(30.0f));
+        });
 
         //we use feature 5 with query time negative double multiplier passed to feature5
         params.put("query", "hello");
@@ -311,10 +316,11 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
-        sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-28.0f));
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(-30.0f));
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.lessThan(-28.0f));
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(-30.0f));
+        });
 
         //we use feature1 and feature6(ScriptFeature)
         params.put("query", "hello");
@@ -326,9 +332,10 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                         .setScoreMode(QueryRescoreMode.Total)
                         .setQueryWeight(0)
                         .setRescoreQueryWeight(1));
-        sr = sb.get();
-        assertEquals(1, sr.getHits().getTotalHits().value);
-        assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.2876f + 2.876f));
+        assertResponse(sb, sr -> {
+            assertEquals(1, sr.getHits().getTotalHits().value);
+            assertThat(sr.getHits().getAt(0).getScore(), Matchers.greaterThan(0.2876f + 2.876f));
+        });
 
         StoredLtrModel model = getElement(StoredLtrModel.class, StoredLtrModel.TYPE, "my_model");
         CachesStatsNodesResponse stats = client().execute(CachesStatsAction.INSTANCE,

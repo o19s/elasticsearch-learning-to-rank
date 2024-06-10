@@ -43,7 +43,7 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
     protected CachesStatsAction() {
-        super(NAME, CachesStatsNodesResponse::new);
+        super(NAME);
     }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {

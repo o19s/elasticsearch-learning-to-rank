@@ -33,8 +33,8 @@ public class TransportLTRStatsAction extends
                                    TransportService transportService,
                                    ActionFilters actionFilters,
                                    LTRStats ltrStats) {
-        super(LTRStatsAction.NAME, threadPool, clusterService, transportService,
-                actionFilters, LTRStatsNodesRequest::new, LTRStatsNodeRequest::new,
+        super(LTRStatsAction.NAME, clusterService, transportService,
+                actionFilters, LTRStatsNodeRequest::new,
                 threadPool.executor(ThreadPool.Names.MANAGEMENT));
         this.ltrStats = ltrStats;
     }

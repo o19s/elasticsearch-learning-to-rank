@@ -90,7 +90,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         modelName = input.readOptionalString();
         featureScoreCacheFlag = input.readOptionalBoolean();
         featureSetName = input.readOptionalString();
-        params = input.readMap();
+        params = input.readGenericMap();
         if (input.getTransportVersion().onOrAfter(TransportVersions.V_7_0_0)) {
             String[] activeFeat = input.readOptionalStringArray();
             activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);

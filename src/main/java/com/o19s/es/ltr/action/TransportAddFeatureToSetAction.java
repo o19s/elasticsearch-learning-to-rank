@@ -68,7 +68,8 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                                              IndexNameExpressionResolver indexNameExpressionResolver,
                                              ClusterService clusterService, TransportSearchAction searchAction,
                                              TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
-        super(AddFeaturesToSetAction.NAME, transportService, actionFilters, AddFeaturesToSetRequest::new);
+        super(AddFeaturesToSetAction.NAME, transportService, actionFilters,
+            AddFeaturesToSetRequest::new, threadPool.executor(ThreadPool.Names.MANAGEMENT));
         this.clusterService = clusterService;
         this.searchAction = searchAction;
         this.getAction = getAction;

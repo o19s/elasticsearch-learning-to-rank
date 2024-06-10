@@ -103,7 +103,7 @@ public class ExplorerQuery extends Query {
             StatisticsHelper ttf_stats = new StatisticsHelper();
 
             for (Term term : terms) {
-                TermStates ctx = TermStates.build(searcher.getTopReaderContext(), term, scoreMode.needsScores());
+                TermStates ctx = TermStates.build(searcher, term, scoreMode.needsScores());
                 if(ctx != null && ctx.docFreq() > 0){
                     TermStatistics tStats = searcher.termStatistics(term, ctx.docFreq(), ctx.totalTermFreq());
                     df_stats.add(tStats.docFreq());
