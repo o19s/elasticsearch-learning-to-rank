@@ -69,15 +69,13 @@ esplugin {
 // In this section you declare the dependencies for your production and test code
 // Elasticsearch dependency is included due to the build-tools, test-framework as well
 repositories {
-  mavenCentral()
-  mavenLocal()
-  // user access token is necessary to publish to Maven
-  maven {
+  mavenCentral{
     credentials {
       username = findProperty("OSSRH_TOKEN") as String
       password = findProperty("OSSRH_TOKEN_PASSSWORD") as String
     }
   }
+  mavenLocal()
   jcenter {
     url "https://jcenter.bintray.com/"
     metadataSources{
