@@ -71,6 +71,13 @@ esplugin {
 repositories {
   mavenCentral()
   mavenLocal()
+  // user access token is necessary to publish to Maven
+  maven {
+    credentials {
+      username = findProperty("OSSRH_TOKEN") as String
+      password = findProperty("OSSRH_TOKEN_PASSSWORD") as String
+    }
+  }
   jcenter {
     url "https://jcenter.bintray.com/"
     metadataSources{
