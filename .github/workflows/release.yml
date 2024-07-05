@@ -51,6 +51,7 @@ jobs:
         SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
         SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
         GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        GPG_SIGNING_PASS: ${{ secrets.GPG_SIGNING_PASS }}
         OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
         OSSRH_TOKEN_PASSSWORD: ${{ secrets.OSSRH_TOKEN_PASSSWORD }}
 
