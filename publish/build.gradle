@@ -42,8 +42,8 @@ publishing {
       url = System.getenv('SONATYPE_REPO_URL')
 
         credentials {
-          username = System.getenv('SONATYPE_USER')
-          password = System.getenv('SONATYPE_PASS')
+          username = System.getenv('OSSRH_TOKEN')
+          password = System.getenv('OSSRH_TOKEN_PASSSWORD')
         }
     }
   }
