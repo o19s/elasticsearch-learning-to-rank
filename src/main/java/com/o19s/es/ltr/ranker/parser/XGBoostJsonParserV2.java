@@ -4,8 +4,8 @@ import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizers;
-import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.xcontent.XContentParserConfiguration;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.xcontent.*;
 import org.elasticsearch.xcontent.json.JsonXContent;
 
 import java.io.IOException;
@@ -19,250 +19,102 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
 
     @Override
     public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
-        XGBoostLearner modelDefinition;
+        XGBoostJsonParserV2.XGBoostDefinition modelDefinition;
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(XContentParserConfiguration.EMPTY,
                 model)
         ) {
-            modelDefinition = new XGBoostLearner(set, parser.map(), parser);
+            modelDefinition = XGBoostJsonParserV2.XGBoostDefinition.parse(parser, set);
         } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to parse XGBoost object", e);
+            throw new IllegalArgumentException("Cannot parse model", e);
         }
 
-        NaiveAdditiveDecisionTree.Node[] trees = modelDefinition.getTrees(set);
+        NaiveAdditiveDecisionTree.Node[] trees = modelDefinition.getLearner().getTrees(set);
         float[] weights = new float[trees.length];
         Arrays.fill(weights, 1F);
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), modelDefinition.normalizer);
+        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), modelDefinition.getLearner().getObjective().getNormalizer());
     }
 
-    enum SplitType {
-        NUMERICAL(0),
-        CATEGORICAL(1);
+    private static class XGBoostDefinition {
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostDefinition, FeatureSet> PARSER;
 
-        private final int value;
-
-        SplitType(int value) {
-            this.value = value;
+        static {
+            PARSER = new ObjectParser<>("xgboost_definition", true, XGBoostJsonParserV2.XGBoostDefinition::new);
+            PARSER.declareObject(XGBoostJsonParserV2.XGBoostDefinition::setLearner, XGBoostJsonParserV2.XGBoostLearner::parse, new ParseField("learner"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostDefinition::setVersion, new ParseField("version"));
         }
 
-        public static SplitType fromValue(int value) {
-            for (SplitType type : values()) {
-                if (type.value == value) {
-                    return type;
+        public static XGBoostJsonParserV2.XGBoostDefinition parse(XContentParser parser, FeatureSet set) throws IOException {
+            XGBoostJsonParserV2.XGBoostDefinition definition;
+            XContentParser.Token startToken = parser.nextToken();
+
+            if (startToken == XContentParser.Token.START_OBJECT) {
+                try {
+                    definition = PARSER.apply(parser, set);
+                } catch (XContentParseException e) {
+                    throw new ParsingException(parser.getTokenLocation(), "Unable to parse XGBoost object", e);
                 }
-            }
-            throw new IllegalArgumentException("Unknown SplitType value: " + value);
-        }
-    }
-
-    class Node {
-        int nodeid;
-        int left;
-        int right;
-        int parent;
-        int splitIdx;
-        float splitCond;
-        boolean defaultLeft;
-        SplitType splitType;
-        List<Integer> categories;
-        float baseWeight;
-        float lossChg;
-        float sumHess;
-
-        Node(int nodeid, int left, int right, int parent, int splitIdx, float splitCond, boolean defaultLeft,
-             SplitType splitType, List<Integer> categories, float baseWeight, float lossChg, float sumHess) {
-            this.nodeid = nodeid;
-            this.left = left;
-            this.right = right;
-            this.parent = parent;
-            this.splitIdx = splitIdx;
-            this.splitCond = splitCond;
-            this.defaultLeft = defaultLeft;
-            this.splitType = splitType;
-            this.categories = categories;
-            this.baseWeight = baseWeight;
-            this.lossChg = lossChg;
-            this.sumHess = sumHess;
-        }
-    }
-
-    class Tree {
-        int treeId;
-        List<Node> nodes;
-
-        Tree(int treeId, List<Node> nodes) {
-            this.treeId = treeId;
-            this.nodes = nodes;
-        }
-
-        float lossChange(int nodeId) {
-            return nodes.get(nodeId).lossChg;
-        }
-
-        float sumHessian(int nodeId) {
-            return nodes.get(nodeId).sumHess;
-        }
-
-        float baseWeight(int nodeId) {
-            return nodes.get(nodeId).baseWeight;
-        }
-
-        int splitIndex(int nodeId) {
-            return nodes.get(nodeId).splitIdx;
-        }
-
-        float splitCondition(int nodeId) {
-            return nodes.get(nodeId).splitCond;
-        }
-
-        List<Integer> splitCategories(int nodeId) {
-            return nodes.get(nodeId).categories;
-        }
-
-        boolean isCategorical(int nodeId) {
-            return nodes.get(nodeId).splitType == SplitType.CATEGORICAL;
-        }
-
-        boolean isNumerical(int nodeId) {
-            return !isCategorical(nodeId);
-        }
-
-        int parent(int nodeId) {
-            return nodes.get(nodeId).parent;
-        }
-
-        int leftChild(int nodeId) {
-            return nodes.get(nodeId).left;
-        }
-
-        int rightChild(int nodeId) {
-            return nodes.get(nodeId).right;
-        }
-
-        boolean isLeaf(int nodeId) {
-            return nodes.get(nodeId).left == -1 && nodes.get(nodeId).right == -1;
-        }
-
-        boolean isSplit(int nodeId) {
-            return !this.isLeaf(nodeId);
-        }
-
-        boolean isDeleted(int nodeId) {
-            return splitIndex(nodeId) == MISSING_NODE_ID;
-        }
-
-        NaiveAdditiveDecisionTree.Node toLibNode(int nodeid) {
-            if (isSplit(nodeid)) {
-                Node node = nodes.get(nodeid);
-                return new NaiveAdditiveDecisionTree.Split(toLibNode(node.left), toLibNode(node.right),
-                        node.splitIdx, node.splitCond, node.left, MISSING_NODE_ID);
+                if (definition.learner == null) {
+                    throw new ParsingException(parser.getTokenLocation(), "XGBoost model missing required field [learner]");
+                }
             } else {
-                Node node = nodes.get(nodeid);
-                return new NaiveAdditiveDecisionTree.Leaf(node.baseWeight);
+                throw new ParsingException(parser.getTokenLocation(), "Expected [START_ARRAY] or [START_OBJECT] but got ["
+                        + startToken + "]");
             }
+            return definition;
+        }
+
+        private XGBoostLearner learner;
+
+        public XGBoostLearner getLearner() {
+            return learner;
+        }
+
+        public void setLearner(XGBoostLearner learner) {
+            this.learner = learner;
+        }
+
+        private List<Integer> version;
+
+        public List<Integer> getVersion() {
+            return version;
+        }
+
+        public void setVersion(List<Integer> version) {
+            this.version = version;
         }
     }
 
-    class XGBoostLearner {
+    static class XGBoostObjective {
+        private String name;
 
-        int numOutputGroup;
-        int numFeature;
-        float baseScore;
-        List<Integer> treeInfo;
-        List<Tree> trees;
-        Normalizer normalizer;
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostObjective, FeatureSet> PARSER;
 
-        XGBoostLearner(FeatureSet set, Map<String, Object> modelObj, XContentParser parser) {
-            Map<String, Object> learner = (Map<String, Object>) modelObj.get("learner");
-            Map<String, String> learnerModelShape = (Map<String, String>) learner.get("learner_model_param");
-            this.numOutputGroup = Integer.parseInt(learnerModelShape.get("num_class"));
-            this.numFeature = Integer.parseInt(learnerModelShape.get("num_feature"));
-            this.baseScore = Float.parseFloat(learnerModelShape.get("base_score"));
-
-            String normalizerName = (String) ((Map<String, Object>) learner.get("objective")).get("name");
-            this.normalizer = getNormalizer(normalizerName);
-
-            Map<String, Object> gradientBooster = (Map<String, Object>) learner.get("gradient_booster");
-            this.treeInfo = (List<Integer>) gradientBooster.get("tree_info");
-            Map<String, Object> model = (Map<String, Object>) gradientBooster.get("model");
-            Map<String, String> modelShape = (Map<String, String>) model.get("gbtree_model_param");
-
-            List<Map<String, Object>> treesObj = (List<Map<String, Object>>) model.get("trees");
-            this.trees = new ArrayList<>();
-            int numTrees = Integer.parseInt(modelShape.get("num_trees"));
-
-            for (int i = 0; i < numTrees; i++) {
-                Map<String, Object> tree = treesObj.get(i);
-                int treeId = (int) tree.get("id");
-
-                List<Integer> leftChildren = (List<Integer>) tree.get("left_children");
-                List<Integer> rightChildren = (List<Integer>) tree.get("right_children");
-                List<Integer> parents = (List<Integer>) tree.get("parents");
-                List<Float> splitConditions = ((List<Double>) tree.get("split_conditions")).stream().map(Double::floatValue).toList();
-                List<Integer> splitIndices = (List<Integer>) tree.get("split_indices");
-
-                List<Integer> defaultLeft = (List<Integer>) tree.get("default_left");
-                List<Integer> splitTypes = (List<Integer>) tree.get("split_type");
-
-                List<Integer> catSegments = (List<Integer>) tree.get("categories_segments");
-                List<Integer> catSizes = (List<Integer>) tree.get("categories_sizes");
-                List<Integer> catNodes = (List<Integer>) tree.get("categories_nodes");
-                List<Integer> cats = (List<Integer>) tree.get("categories");
-
-                int catCnt = 0;
-                int lastCatNode = !catNodes.isEmpty() ? catNodes.get(catCnt) : -1;
-                List<List<Integer>> nodeCategories = new ArrayList<>();
-
-                for (int nodeId = 0; nodeId < leftChildren.size(); nodeId++) {
-                    if (nodeId == lastCatNode) {
-                        int beg = catSegments.get(catCnt);
-                        int size = catSizes.get(catCnt);
-                        int end = beg + size;
-                        List<Integer> nodeCats = cats.subList(beg, end);
-                        catCnt++;
-                        lastCatNode = catCnt < catNodes.size() ? catNodes.get(catCnt) : -1;
-                        nodeCategories.add(nodeCats);
-                    } else {
-                        nodeCategories.add(new ArrayList<>());
-                    }
-                }
-
-                List<Float> baseWeights = ((List<Double>) tree.get("base_weights")).stream().map(Double::floatValue).toList();
-                List<Float> lossChanges = ((List<Double>) tree.get("loss_changes")).stream().map(Double::floatValue).toList();
-                List<Float> sumHessian = ((List<Double>) tree.get("sum_hessian")).stream().map(Double::floatValue).toList();
-
-                List<Node> nodes = new ArrayList<>();
-                for (int nodeId = 0; nodeId < leftChildren.size(); nodeId++) {
-                    nodes.add(new Node(
-                            nodeId,
-                            leftChildren.get(nodeId),
-                            rightChildren.get(nodeId),
-                            parents.get(nodeId),
-                            splitIndices.get(nodeId),
-                            splitConditions.get(nodeId),
-                            defaultLeft.get(nodeId) == 1,
-                            SplitType.fromValue(splitTypes.get(nodeId)),
-                            nodeCategories.get(nodeId),
-                            baseWeights.get(nodeId),
-                            lossChanges.get(nodeId),
-                            sumHessian.get(nodeId)
-                    ));
-                }
-
-                trees.add(new Tree(treeId, nodes));
-            }
+        static {
+            PARSER = new ObjectParser<>("xgboost_objective", true, XGBoostJsonParserV2.XGBoostObjective::new);
+            PARSER.declareString(XGBoostJsonParserV2.XGBoostObjective::setName, new ParseField("name"));
         }
 
-        NaiveAdditiveDecisionTree.Node[] getTrees(FeatureSet set) {
-            NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[this.trees.size()];
-            ListIterator<XGBoostJsonParserV2.Tree> it = this.trees.listIterator();
-            while (it.hasNext()) {
-                trees[it.nextIndex()] = it.next().toLibNode(0);
-            }
-            return trees;
+        public static XGBoostJsonParserV2.XGBoostObjective parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
         }
 
-        Normalizer getNormalizer(String objectiveName) {
-            switch (objectiveName) {
+        public XGBoostObjective() {
+        }
+
+        public XGBoostObjective(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        Normalizer getNormalizer() {
+            switch (this.name) {
                 case "binary:logitraw", "rank:ndcg", "rank:map", "rank:pairwise", "reg:linear" -> {
                     return Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
                 }
@@ -270,8 +122,246 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
                     return Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME);
                 }
                 default ->
-                        throw new IllegalArgumentException("Objective [" + objectiveName + "] is not a valid XGBoost objective");
+                        throw new IllegalArgumentException("Objective [" + name + "] is not a valid XGBoost objective");
             }
+        }
+    }
+
+    static class XGBoostGradientBooster {
+        private XGBoostModel model;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostGradientBooster, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_gradient_booster", true, XGBoostJsonParserV2.XGBoostGradientBooster::new);
+            PARSER.declareObject(XGBoostJsonParserV2.XGBoostGradientBooster::setModel, XGBoostJsonParserV2.XGBoostModel::parse, new ParseField("model"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostGradientBooster parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public XGBoostGradientBooster() {
+        }
+
+        public XGBoostModel getModel() {
+            return model;
+        }
+
+        public void setModel(XGBoostModel model) {
+            this.model = model;
+        }
+    }
+
+
+    static class XGBoostModel {
+        private List<XGBoostTree> trees;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostModel, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_model", true, XGBoostJsonParserV2.XGBoostModel::new);
+            PARSER.declareObjectArray(XGBoostJsonParserV2.XGBoostModel::setTrees, XGBoostJsonParserV2.XGBoostTree::parse, new ParseField("trees"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostModel parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public XGBoostModel() {
+        }
+
+        public List<XGBoostTree> getTrees() {
+            return trees;
+        }
+
+        public void setTrees(List<XGBoostTree> trees) {
+            this.trees = trees;
+        }
+    }
+
+    static class XGBoostLearner {
+
+        //        private int numOutputGroup;
+//        int numFeature;
+//        float baseScore;
+        private List<Integer> treeInfo;
+        private XGBoostGradientBooster gradientBooster;
+        private XGBoostObjective objective;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostLearner, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_learner", true, XGBoostJsonParserV2.XGBoostLearner::new);
+            PARSER.declareObject(XGBoostJsonParserV2.XGBoostLearner::setObjective, XGBoostJsonParserV2.XGBoostObjective::parse, new ParseField("objective"));
+            PARSER.declareObject(XGBoostJsonParserV2.XGBoostLearner::setGradientBooster, XGBoostJsonParserV2.XGBoostGradientBooster::parse, new ParseField("gradient_booster"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostLearner::setTreeInfo, new ParseField("tree_info"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostLearner parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        XGBoostLearner() {
+        }
+
+        NaiveAdditiveDecisionTree.Node[] getTrees(FeatureSet set) {
+            List<XGBoostTree> parsedTrees = this.getGradientBooster().getModel().getTrees();
+            NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[parsedTrees.size()];
+            ListIterator<XGBoostJsonParserV2.XGBoostTree> it = parsedTrees.listIterator();
+            while (it.hasNext()) {
+                trees[it.nextIndex()] = it.next().asLibTree();
+            }
+            return trees;
+        }
+
+
+        public XGBoostObjective getObjective() {
+            return objective;
+        }
+
+        public void setObjective(XGBoostObjective objective) {
+            this.objective = objective;
+        }
+
+        public List<Integer> getTreeInfo() {
+            return treeInfo;
+        }
+
+        public void setTreeInfo(List<Integer> treeInfo) {
+            this.treeInfo = treeInfo;
+        }
+
+        public XGBoostGradientBooster getGradientBooster() {
+            return gradientBooster;
+        }
+
+        public void setGradientBooster(XGBoostGradientBooster gradientBooster) {
+            this.gradientBooster = gradientBooster;
+        }
+    }
+
+    static class XGBoostTree {
+        private Integer treeId;
+        private List<Integer> leftChildren;
+        private List<Integer> rightChildren;
+        private List<Integer> parents;
+        private List<Float> splitConditions;
+        private List<Integer> splitIndices;
+        private List<Integer> defaultLeft;
+        private List<Integer> splitTypes;
+        private List<Float> baseWeights;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostTree, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_tree", true, XGBoostJsonParserV2.XGBoostTree::new);
+            PARSER.declareInt(XGBoostJsonParserV2.XGBoostTree::setTreeId, new ParseField("id"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setLeftChildren, new ParseField("left_children"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setRightChildren, new ParseField("right_children"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setParents, new ParseField("parents"));
+            PARSER.declareFloatArray(XGBoostJsonParserV2.XGBoostTree::setSplitConditions, new ParseField("split_conditions"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setSplitIndices, new ParseField("split_indices"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setDefaultLeft, new ParseField("default_left"));
+            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setSplitTypes, new ParseField("split_type"));
+//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatSegments, new ParseField("categories_segments"));
+//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatSizes, new ParseField("categories_sizes"));
+//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatNodes, new ParseField("categories_nodes"));
+//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCats, new ParseField("categories"));
+            PARSER.declareFloatArray(XGBoostJsonParserV2.XGBoostTree::setBaseWeights, new ParseField("base_weights"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostTree parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public Integer getTreeId() {
+            return treeId;
+        }
+
+        public void setTreeId(Integer treeId) {
+            this.treeId = treeId;
+        }
+
+        public List<Integer> getLeftChildren() {
+            return leftChildren;
+        }
+
+        public void setLeftChildren(List<Integer> leftChildren) {
+            this.leftChildren = leftChildren;
+        }
+
+        public List<Integer> getRightChildren() {
+            return rightChildren;
+        }
+
+        public void setRightChildren(List<Integer> rightChildren) {
+            this.rightChildren = rightChildren;
+        }
+
+        public List<Integer> getParents() {
+            return parents;
+        }
+
+        public void setParents(List<Integer> parents) {
+            this.parents = parents;
+        }
+
+        public List<Float> getSplitConditions() {
+            return splitConditions;
+        }
+
+        public void setSplitConditions(List<Float> splitConditions) {
+            this.splitConditions = splitConditions;
+        }
+
+        public List<Integer> getSplitIndices() {
+            return splitIndices;
+        }
+
+        public void setSplitIndices(List<Integer> splitIndices) {
+            this.splitIndices = splitIndices;
+        }
+
+        public List<Integer> getDefaultLeft() {
+            return defaultLeft;
+        }
+
+        public void setDefaultLeft(List<Integer> defaultLeft) {
+            this.defaultLeft = defaultLeft;
+        }
+
+        public List<Integer> getSplitTypes() {
+            return splitTypes;
+        }
+
+        public void setSplitTypes(List<Integer> splitTypes) {
+            this.splitTypes = splitTypes;
+        }
+
+        public NaiveAdditiveDecisionTree.Node asLibTree() {
+            return this.asLibTree(0);
+        }
+
+        private boolean isSplit(Integer nodeId) {
+            return leftChildren.get(nodeId) != -1 && rightChildren.get(nodeId) != -1;
+        }
+
+        private NaiveAdditiveDecisionTree.Node asLibTree(Integer nodeId) {
+            if (isSplit(nodeId)) {
+                return new NaiveAdditiveDecisionTree.Split(asLibTree(leftChildren.get(nodeId)), asLibTree(rightChildren.get(nodeId)),
+                        splitIndices.get(nodeId), splitConditions.get(nodeId), splitIndices.get(nodeId), MISSING_NODE_ID);
+            } else {
+                return new NaiveAdditiveDecisionTree.Leaf(baseWeights.get(nodeId));
+            }
+        }
+
+        public List<Float> getBaseWeights() {
+            return baseWeights;
+        }
+
+        public void setBaseWeights(List<Float> baseWeights) {
+            this.baseWeights = baseWeights;
         }
     }
 }
