@@ -84,107 +84,8 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
         }
     }
 
-    static class XGBoostObjective {
-        private String name;
-
-        private static final ObjectParser<XGBoostJsonParserV2.XGBoostObjective, FeatureSet> PARSER;
-
-        static {
-            PARSER = new ObjectParser<>("xgboost_objective", true, XGBoostJsonParserV2.XGBoostObjective::new);
-            PARSER.declareString(XGBoostJsonParserV2.XGBoostObjective::setName, new ParseField("name"));
-        }
-
-        public static XGBoostJsonParserV2.XGBoostObjective parse(XContentParser parser, FeatureSet set) throws IOException {
-            return PARSER.apply(parser, set);
-        }
-
-        public XGBoostObjective() {
-        }
-
-        public XGBoostObjective(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        Normalizer getNormalizer() {
-            switch (this.name) {
-                case "binary:logitraw", "rank:ndcg", "rank:map", "rank:pairwise", "reg:linear" -> {
-                    return Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
-                }
-                case "binary:logistic", "reg:logistic" -> {
-                    return Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME);
-                }
-                default ->
-                        throw new IllegalArgumentException("Objective [" + name + "] is not a valid XGBoost objective");
-            }
-        }
-    }
-
-    static class XGBoostGradientBooster {
-        private XGBoostModel model;
-
-        private static final ObjectParser<XGBoostJsonParserV2.XGBoostGradientBooster, FeatureSet> PARSER;
-
-        static {
-            PARSER = new ObjectParser<>("xgboost_gradient_booster", true, XGBoostJsonParserV2.XGBoostGradientBooster::new);
-            PARSER.declareObject(XGBoostJsonParserV2.XGBoostGradientBooster::setModel, XGBoostJsonParserV2.XGBoostModel::parse, new ParseField("model"));
-        }
-
-        public static XGBoostJsonParserV2.XGBoostGradientBooster parse(XContentParser parser, FeatureSet set) throws IOException {
-            return PARSER.apply(parser, set);
-        }
-
-        public XGBoostGradientBooster() {
-        }
-
-        public XGBoostModel getModel() {
-            return model;
-        }
-
-        public void setModel(XGBoostModel model) {
-            this.model = model;
-        }
-    }
-
-
-    static class XGBoostModel {
-        private List<XGBoostTree> trees;
-
-        private static final ObjectParser<XGBoostJsonParserV2.XGBoostModel, FeatureSet> PARSER;
-
-        static {
-            PARSER = new ObjectParser<>("xgboost_model", true, XGBoostJsonParserV2.XGBoostModel::new);
-            PARSER.declareObjectArray(XGBoostJsonParserV2.XGBoostModel::setTrees, XGBoostJsonParserV2.XGBoostTree::parse, new ParseField("trees"));
-        }
-
-        public static XGBoostJsonParserV2.XGBoostModel parse(XContentParser parser, FeatureSet set) throws IOException {
-            return PARSER.apply(parser, set);
-        }
-
-        public XGBoostModel() {
-        }
-
-        public List<XGBoostTree> getTrees() {
-            return trees;
-        }
-
-        public void setTrees(List<XGBoostTree> trees) {
-            this.trees = trees;
-        }
-    }
-
     static class XGBoostLearner {
 
-        //        private int numOutputGroup;
-//        int numFeature;
-//        float baseScore;
         private List<Integer> treeInfo;
         private XGBoostGradientBooster gradientBooster;
         private XGBoostObjective objective;
@@ -241,6 +142,101 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
         }
     }
 
+    static class XGBoostGradientBooster {
+        private XGBoostModel model;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostGradientBooster, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_gradient_booster", true, XGBoostJsonParserV2.XGBoostGradientBooster::new);
+            PARSER.declareObject(XGBoostJsonParserV2.XGBoostGradientBooster::setModel, XGBoostJsonParserV2.XGBoostModel::parse, new ParseField("model"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostGradientBooster parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public XGBoostGradientBooster() {
+        }
+
+        public XGBoostModel getModel() {
+            return model;
+        }
+
+        public void setModel(XGBoostModel model) {
+            this.model = model;
+        }
+    }
+
+    static class XGBoostModel {
+        private List<XGBoostTree> trees;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostModel, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_model", true, XGBoostJsonParserV2.XGBoostModel::new);
+            PARSER.declareObjectArray(XGBoostJsonParserV2.XGBoostModel::setTrees, XGBoostJsonParserV2.XGBoostTree::parse, new ParseField("trees"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostModel parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public XGBoostModel() {
+        }
+
+        public List<XGBoostTree> getTrees() {
+            return trees;
+        }
+
+        public void setTrees(List<XGBoostTree> trees) {
+            this.trees = trees;
+        }
+    }
+
+    static class XGBoostObjective {
+        private String name;
+
+        private static final ObjectParser<XGBoostJsonParserV2.XGBoostObjective, FeatureSet> PARSER;
+
+        static {
+            PARSER = new ObjectParser<>("xgboost_objective", true, XGBoostJsonParserV2.XGBoostObjective::new);
+            PARSER.declareString(XGBoostJsonParserV2.XGBoostObjective::setName, new ParseField("name"));
+        }
+
+        public static XGBoostJsonParserV2.XGBoostObjective parse(XContentParser parser, FeatureSet set) throws IOException {
+            return PARSER.apply(parser, set);
+        }
+
+        public XGBoostObjective() {
+        }
+
+        public XGBoostObjective(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        Normalizer getNormalizer() {
+            switch (this.name) {
+                case "binary:logitraw", "rank:ndcg", "rank:map", "rank:pairwise", "reg:linear" -> {
+                    return Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
+                }
+                case "binary:logistic", "reg:logistic" -> {
+                    return Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME);
+                }
+                default ->
+                        throw new IllegalArgumentException("Objective [" + name + "] is not a valid XGBoost objective");
+            }
+        }
+    }
+
     static class XGBoostTree {
         private Integer treeId;
         private List<Integer> leftChildren;
@@ -264,10 +260,6 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
             PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setSplitIndices, new ParseField("split_indices"));
             PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setDefaultLeft, new ParseField("default_left"));
             PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setSplitTypes, new ParseField("split_type"));
-//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatSegments, new ParseField("categories_segments"));
-//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatSizes, new ParseField("categories_sizes"));
-//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCatNodes, new ParseField("categories_nodes"));
-//            PARSER.declareIntArray(XGBoostJsonParserV2.XGBoostTree::setCats, new ParseField("categories"));
             PARSER.declareFloatArray(XGBoostJsonParserV2.XGBoostTree::setBaseWeights, new ParseField("base_weights"));
         }
 
