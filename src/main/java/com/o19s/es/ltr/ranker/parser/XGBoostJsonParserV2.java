@@ -13,17 +13,17 @@ import java.util.*;
 
 public class XGBoostJsonParserV2 implements LtrRankerParser {
 
-    public static final String TYPE = "model/xgboost+json";
+    public static final String TYPE = "model/xgboost+json+v2";
 
     private static final Integer MISSING_NODE_ID = Integer.MAX_VALUE;
 
     @Override
     public NaiveAdditiveDecisionTree parse(FeatureSet set, String model) {
-        XGBoostJsonParserV2.XGBoostDefinition modelDefinition;
+        XGBoostLearner modelDefinition;
         try (XContentParser parser = JsonXContent.jsonXContent.createParser(XContentParserConfiguration.EMPTY,
                 model)
         ) {
-            modelDefinition = new XGBoostJsonParserV2.XGBoostDefinition(set, parser.map());
+            modelDefinition = new XGBoostLearner(set, parser.map(), parser);
         } catch (IOException e) {
             throw new IllegalArgumentException("Unable to parse XGBoost object", e);
         }
@@ -162,21 +162,26 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
         }
     }
 
-    class XGBoostDefinition {
+    class XGBoostLearner {
+
         int numOutputGroup;
         int numFeature;
         float baseScore;
         List<Integer> treeInfo;
         List<Tree> trees;
-        Normalizer normalizer = Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
+        Normalizer normalizer;
 
-        XGBoostDefinition(FeatureSet set, Map<String, Object> modelStr) {
-            Map<String, String> learnerModelShape = (Map<String, String>) ((Map<String, Object>) modelStr.get("learner")).get("learner_model_param");
+        XGBoostLearner(FeatureSet set, Map<String, Object> modelObj, XContentParser parser) {
+            Map<String, Object> learner = (Map<String, Object>) modelObj.get("learner");
+            Map<String, String> learnerModelShape = (Map<String, String>) learner.get("learner_model_param");
             this.numOutputGroup = Integer.parseInt(learnerModelShape.get("num_class"));
             this.numFeature = Integer.parseInt(learnerModelShape.get("num_feature"));
             this.baseScore = Float.parseFloat(learnerModelShape.get("base_score"));
 
-            Map<String, Object> gradientBooster = (Map<String, Object>) ((Map<String, Object>) modelStr.get("learner")).get("gradient_booster");
+            String normalizerName = (String) ((Map<String, Object>) learner.get("objective")).get("name");
+            this.normalizer = getNormalizer(normalizerName);
+
+            Map<String, Object> gradientBooster = (Map<String, Object>) learner.get("gradient_booster");
             this.treeInfo = (List<Integer>) gradientBooster.get("tree_info");
             Map<String, Object> model = (Map<String, Object>) gradientBooster.get("model");
             Map<String, String> modelShape = (Map<String, String>) model.get("gbtree_model_param");
@@ -192,11 +197,11 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
                 List<Integer> leftChildren = (List<Integer>) tree.get("left_children");
                 List<Integer> rightChildren = (List<Integer>) tree.get("right_children");
                 List<Integer> parents = (List<Integer>) tree.get("parents");
-                List<Float> splitConditions = ((List<Double>) tree.get("split_conditions")).stream().map(n -> n.floatValue()).toList();
+                List<Float> splitConditions = ((List<Double>) tree.get("split_conditions")).stream().map(Double::floatValue).toList();
                 List<Integer> splitIndices = (List<Integer>) tree.get("split_indices");
 
-                List<Integer> defaultLeft = toIntegers((List<Integer>) tree.get("default_left"));
-                List<Integer> splitTypes = toIntegers((List<Integer>) tree.get("split_type"));
+                List<Integer> defaultLeft = (List<Integer>) tree.get("default_left");
+                List<Integer> splitTypes = (List<Integer>) tree.get("split_type");
 
                 List<Integer> catSegments = (List<Integer>) tree.get("categories_segments");
                 List<Integer> catSizes = (List<Integer>) tree.get("categories_sizes");
@@ -221,9 +226,9 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
                     }
                 }
 
-                List<Float> baseWeights = ((List<Double>) tree.get("base_weights")).stream().map(n -> n.floatValue()).toList();
-                List<Float> lossChanges = ((List<Double>) tree.get("loss_changes")).stream().map(n -> n.floatValue()).toList();
-                List<Float> sumHessian = ((List<Double>) tree.get("sum_hessian")).stream().map(n -> n.floatValue()).toList();
+                List<Float> baseWeights = ((List<Double>) tree.get("base_weights")).stream().map(Double::floatValue).toList();
+                List<Float> lossChanges = ((List<Double>) tree.get("loss_changes")).stream().map(Double::floatValue).toList();
+                List<Float> sumHessian = ((List<Double>) tree.get("sum_hessian")).stream().map(Double::floatValue).toList();
 
                 List<Node> nodes = new ArrayList<>();
                 for (int nodeId = 0; nodeId < leftChildren.size(); nodeId++) {
@@ -247,10 +252,6 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
             }
         }
 
-        private List<Integer> toIntegers(List<Integer> data) {
-            return new ArrayList<>(data);
-        }
-
         NaiveAdditiveDecisionTree.Node[] getTrees(FeatureSet set) {
             NaiveAdditiveDecisionTree.Node[] trees = new NaiveAdditiveDecisionTree.Node[this.trees.size()];
             ListIterator<XGBoostJsonParserV2.Tree> it = this.trees.listIterator();
@@ -258,6 +259,19 @@ public class XGBoostJsonParserV2 implements LtrRankerParser {
                 trees[it.nextIndex()] = it.next().toLibNode(0);
             }
             return trees;
+        }
+
+        Normalizer getNormalizer(String objectiveName) {
+            switch (objectiveName) {
+                case "binary:logitraw", "rank:ndcg", "rank:map", "rank:pairwise", "reg:linear" -> {
+                    return Normalizers.get(Normalizers.NOOP_NORMALIZER_NAME);
+                }
+                case "binary:logistic", "reg:logistic" -> {
+                    return Normalizers.get(Normalizers.SIGMOID_NORMALIZER_NAME);
+                }
+                default ->
+                        throw new IllegalArgumentException("Objective [" + objectiveName + "] is not a valid XGBoost objective");
+            }
         }
     }
 }
