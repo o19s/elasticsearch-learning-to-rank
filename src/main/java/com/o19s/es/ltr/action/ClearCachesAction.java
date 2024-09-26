@@ -57,7 +57,6 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
 
         public ClearCachesNodesRequest(StreamInput in) throws IOException {
-            super(in);
             store = in.readString();
             operation = Operation.values()[in.readVInt()];
             name = in.readOptionalString();
@@ -107,9 +106,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
             this.name = Objects.requireNonNull(name);
         }
 
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
+        public void writeToStream(StreamOutput out) throws IOException {
             out.writeString(store);
             out.writeVInt(operation.ordinal());
             out.writeOptionalString(name);

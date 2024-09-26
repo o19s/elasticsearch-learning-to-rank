@@ -27,6 +27,7 @@ import org.elasticsearch.client.internal.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.xcontent.ToXContent;
 import org.elasticsearch.xcontent.ToXContentObject;
 import org.elasticsearch.xcontent.XContentBuilder;
@@ -51,7 +52,9 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
             return null;
         }
 
-        public ListStoresActionRequest() {}
+        public ListStoresActionRequest() {
+            super(TimeValue.MAX_VALUE);
+        }
 
         public ListStoresActionRequest(StreamInput in) throws IOException {
             super(in);

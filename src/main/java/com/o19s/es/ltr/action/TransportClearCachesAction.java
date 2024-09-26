@@ -108,7 +108,7 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            request.writeTo(out);
+            request.writeToStream(out);
         }
     }
 }

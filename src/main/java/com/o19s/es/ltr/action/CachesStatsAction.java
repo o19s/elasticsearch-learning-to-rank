@@ -47,10 +47,6 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
     }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
-        public CachesStatsNodesRequest(StreamInput in) throws IOException {
-            super(in);
-        }
-
         public CachesStatsNodesRequest() {
             super((String[]) null);
         }

@@ -4,6 +4,7 @@ import com.o19s.es.ltr.action.LTRStatsAction;
 import com.o19s.es.ltr.action.LTRStatsAction.LTRStatsNodesRequest;
 import com.o19s.es.ltr.stats.StatName;
 import org.elasticsearch.client.internal.node.NodeClient;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
@@ -55,7 +56,12 @@ public class RestLTRStats extends BaseRestHandler {
     private LTRStatsNodesRequest getRequest(RestRequest request) {
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(
                 splitCommaSeparatedParam(request, "nodeId").orElse(null));
-        ltrStatsRequest.timeout(request.param("timeout"));
+
+        ltrStatsRequest.timeout(
+            Optional.ofNullable(request.param("timeout"))
+                .map(timeout -> TimeValue.parseTimeValue(timeout, "timeout"))
+                .orElse(TimeValue.MAX_VALUE)
+        );
 
         List<String> requestedStats =
                 splitCommaSeparatedParam(request, "stat")
