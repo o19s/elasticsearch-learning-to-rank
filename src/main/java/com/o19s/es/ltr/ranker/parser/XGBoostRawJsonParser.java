@@ -65,6 +65,20 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
                 if (!unknownFeatures.isEmpty()) {
                     throw new ParsingException(parser.getTokenLocation(), "Unknown features in model: [" + String.join(", ", unknownFeatures) + "]");
                 }
+                if (definition.learner.featureNames.size() != definition.learner.featureTypes.size()) {
+                    throw new ParsingException(parser.getTokenLocation(),
+                            "Feature names list and feature types list must have the same length");
+                }
+                Optional<String> firstUnsupportedType = definition.learner.featureTypes.stream()
+                        .filter(typeStr -> !typeStr.equals("float"))
+                        .findFirst();
+                if (firstUnsupportedType.isPresent()) {
+                    throw new ParsingException(parser.getTokenLocation(),
+                            "The LTR plugin only supports float feature types " +
+                                    "because Elasticsearch scores are always float32. " +
+                                    "Found feature type [" + firstUnsupportedType.get() + "] in model"
+                    );
+                }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_OBJECT] but got [" + startToken + "]");
             }
@@ -355,10 +369,10 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
 
         private NaiveAdditiveDecisionTree.Node asLibTree(Integer nodeId) {
             if (nodeId >= leftChildren.size()) {
-                throw new IllegalArgumentException("Node ID [" + nodeId + "] is invalid");
+                throw new IllegalArgumentException("Child node reference ID [" + nodeId + "] is invalid");
             }
             if (nodeId >= rightChildren.size()) {
-                throw new IllegalArgumentException("Node ID [" + nodeId + "] is invalid");
+                throw new IllegalArgumentException("Child node reference ID [" + nodeId + "] is invalid");
             }
 
             if (isSplit(nodeId)) {
