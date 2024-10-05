@@ -28,7 +28,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\"]," +
-                        "        \"feature_types\":[\"int\"]," +
+                        "        \"feature_types\":[\"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -87,7 +87,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\"]," +
-                        "        \"feature_types\":[\"int\"]," +
+                        "        \"feature_types\":[\"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -145,7 +145,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\", \"feat2\"]," +
-                        "        \"feature_types\":[\"int\", \"int\"]," +
+                        "        \"feature_types\":[\"float\", \"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -199,7 +199,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\"]," +
-                        "        \"feature_types\":[\"int\"]," +
+                        "        \"feature_types\":[\"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -260,7 +260,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\"]," +
-                        "        \"feature_types\":[\"int\"]," +
+                        "        \"feature_types\":[\"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -321,7 +321,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\", \"feat2\"]," +
-                        "        \"feature_types\":[\"int\", \"int\"]," +
+                        "        \"feature_types\":[\"float\", \"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
@@ -374,7 +374,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "    \"learner\":{" +
                         "        \"attributes\":{}," +
                         "        \"feature_names\":[\"feat1\", \"feat2\"]," +
-                        "        \"feature_types\":[\"int\",\"int\"]," +
+                        "        \"feature_types\":[\"float\",\"float\"]," +
                         "        \"gradient_booster\":{" +
                         "        \"model\":{" +
                         "            \"gbtree_model_param\":{" +
