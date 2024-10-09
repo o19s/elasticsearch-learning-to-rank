@@ -53,7 +53,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"1\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -61,7 +66,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "            \"base_score\":\"5E-1\"," +
                         "            \"boost_from_average\":\"1\"," +
                         "            \"num_class\":\"0\"," +
-                        "            \"num_feature\":\"2\"," +
+                        "            \"num_feature\":\"1\"," +
                         "            \"num_target\":\"1\"" +
                         "        }," +
                         "        \"objective\":{" +
@@ -112,7 +117,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"1\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -170,7 +180,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"2\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -178,7 +193,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "            \"base_score\":\"5E-1\"," +
                         "            \"boost_from_average\":\"1\"," +
                         "            \"num_class\":\"0\"," +
-                        "            \"num_feature\":\"1\"," +
+                        "            \"num_feature\":\"2\"," +
                         "            \"num_target\":\"1\"" +
                         "        }," +
                         "        \"objective\":{" +
@@ -224,7 +239,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"1\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -279,7 +299,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"2\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -287,7 +312,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "            \"base_score\":\"5E-1\"," +
                         "            \"boost_from_average\":\"1\"," +
                         "            \"num_class\":\"0\"," +
-                        "            \"num_feature\":\"1\"," +
+                        "            \"num_feature\":\"2\"," +
                         "            \"num_target\":\"1\"" +
                         "        }," +
                         "        \"objective\":{" +
@@ -333,7 +358,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"1\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -394,7 +424,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"1\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -455,7 +490,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 0]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"1\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"2\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +
@@ -463,7 +503,7 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "            \"base_score\":\"5E-1\"," +
                         "            \"boost_from_average\":\"1\"," +
                         "            \"num_class\":\"0\"," +
-                        "            \"num_feature\":\"1\"," +
+                        "            \"num_feature\":\"2\"," +
                         "            \"num_target\":\"1\"" +
                         "        }," +
                         "        \"objective\":{" +
@@ -508,7 +548,12 @@ public class XGBoostRawJsonParserTests extends LuceneTestCase {
                         "                \"split_indices\":[0, 0, 100]," +
                         "                \"split_type\":[0, 0, 0]," +
                         "                \"sum_hessian\":[1E0, 1E0, 1E0]," +
-                        "                \"tree_param\":{\"num_deleted\":\"0\",\"num_feature\":\"2\",\"num_nodes\":\"3\",\"size_leaf_vector\":\"1\"}}" +
+                        "                \"tree_param\":{" +
+                        "                    \"num_deleted\":\"0\"," +
+                        "                    \"num_feature\":\"2\"," +
+                        "                    \"num_nodes\":\"3\"," +
+                        "                    \"size_leaf_vector\":\"1\"}" +
+                        "                }" +
                         "            ]}," +
                         "            \"name\":\"gbtree\"" +
                         "        }," +

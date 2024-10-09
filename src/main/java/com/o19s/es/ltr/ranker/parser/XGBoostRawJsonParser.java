@@ -5,11 +5,20 @@ import com.o19s.es.ltr.ranker.dectree.NaiveAdditiveDecisionTree;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.Normalizers;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.xcontent.*;
+import org.elasticsearch.xcontent.XContentParser;
+import org.elasticsearch.xcontent.XContentParserConfiguration;
+import org.elasticsearch.xcontent.XContentParseException;
+import org.elasticsearch.xcontent.ObjectParser;
+import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.xcontent.json.JsonXContent;
 
 import java.io.IOException;
-import java.util.*;
+//import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.ListIterator;
 
 public class XGBoostRawJsonParser implements LtrRankerParser {
 
@@ -39,7 +48,11 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
 
         static {
             PARSER = new ObjectParser<>("xgboost_definition", true, XGBoostRawJsonParser.XGBoostDefinition::new);
-            PARSER.declareObject(XGBoostRawJsonParser.XGBoostDefinition::setLearner, XGBoostRawJsonParser.XGBoostLearner::parse, new ParseField("learner"));
+            PARSER.declareObject(
+                    XGBoostRawJsonParser.XGBoostDefinition::setLearner,
+                    XGBoostRawJsonParser.XGBoostLearner::parse,
+                    new ParseField("learner")
+            );
             PARSER.declareIntArray(XGBoostRawJsonParser.XGBoostDefinition::setVersion, new ParseField("version"));
         }
 
@@ -63,7 +76,8 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
                     }
                 }
                 if (!unknownFeatures.isEmpty()) {
-                    throw new ParsingException(parser.getTokenLocation(), "Unknown features in model: [" + String.join(", ", unknownFeatures) + "]");
+                    throw new ParsingException(parser.getTokenLocation(), "Unknown features in model: [" +
+                            String.join(", ", unknownFeatures) + "]");
                 }
                 if (definition.learner.featureNames.size() != definition.learner.featureTypes.size()) {
                     throw new ParsingException(parser.getTokenLocation(),
@@ -117,8 +131,16 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
 
         static {
             PARSER = new ObjectParser<>("xgboost_learner", true, XGBoostRawJsonParser.XGBoostLearner::new);
-            PARSER.declareObject(XGBoostRawJsonParser.XGBoostLearner::setObjective, XGBoostRawJsonParser.XGBoostObjective::parse, new ParseField("objective"));
-            PARSER.declareObject(XGBoostRawJsonParser.XGBoostLearner::setGradientBooster, XGBoostRawJsonParser.XGBoostGradientBooster::parse, new ParseField("gradient_booster"));
+            PARSER.declareObject(
+                    XGBoostRawJsonParser.XGBoostLearner::setObjective,
+                    XGBoostRawJsonParser.XGBoostObjective::parse,
+                    new ParseField("objective")
+            );
+            PARSER.declareObject(
+                    XGBoostRawJsonParser.XGBoostLearner::setGradientBooster,
+                    XGBoostRawJsonParser.XGBoostGradientBooster::parse,
+                    new ParseField("gradient_booster")
+            );
             PARSER.declareStringArray(XGBoostRawJsonParser.XGBoostLearner::setFeatureNames, new ParseField("feature_names"));
             PARSER.declareStringArray(XGBoostRawJsonParser.XGBoostLearner::setFeatureTypes, new ParseField("feature_types"));
         }
@@ -141,7 +163,6 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
         NaiveAdditiveDecisionTree.Node[] getTrees(FeatureSet set) {
             return this.getGradientBooster().getModel().getTrees();
         }
-
 
         public XGBoostObjective getObjective() {
             return objective;
@@ -167,14 +188,18 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
 
         static {
             PARSER = new ObjectParser<>("xgboost_gradient_booster", true, XGBoostRawJsonParser.XGBoostGradientBooster::new);
-            PARSER.declareObject(XGBoostRawJsonParser.XGBoostGradientBooster::setModel, XGBoostRawJsonParser.XGBoostModel::parse, new ParseField("model"));
+            PARSER.declareObject(
+                    XGBoostRawJsonParser.XGBoostGradientBooster::setModel,
+                    XGBoostRawJsonParser.XGBoostModel::parse,
+                    new ParseField("model")
+            );
         }
 
-        public static XGBoostRawJsonParser.XGBoostGradientBooster parse(XContentParser parser, FeatureSet set) throws IOException {
+        static XGBoostRawJsonParser.XGBoostGradientBooster parse(XContentParser parser, FeatureSet set) throws IOException {
             return PARSER.apply(parser, set);
         }
 
-        public XGBoostGradientBooster() {
+        XGBoostGradientBooster() {
         }
 
         public XGBoostModel getModel() {
@@ -194,7 +219,11 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
 
         static {
             PARSER = new ObjectParser<>("xgboost_model", true, XGBoostRawJsonParser.XGBoostModel::new);
-            PARSER.declareObjectArray(XGBoostRawJsonParser.XGBoostModel::setTrees, XGBoostRawJsonParser.XGBoostTree::parse, new ParseField("trees"));
+            PARSER.declareObjectArray(
+                    XGBoostRawJsonParser.XGBoostModel::setTrees,
+                    XGBoostRawJsonParser.XGBoostTree::parse,
+                    new ParseField("trees")
+            );
             PARSER.declareIntArray(XGBoostRawJsonParser.XGBoostModel::setTreeInfo, new ParseField("tree_info"));
         }
 
@@ -214,7 +243,7 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
             }
         }
 
-        public XGBoostModel() {
+        XGBoostModel() {
         }
 
         public NaiveAdditiveDecisionTree.Node[] getTrees() {
@@ -245,9 +274,8 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
             return PARSER.apply(parser, set);
         }
 
-        public XGBoostObjective() {
+        XGBoostObjective() {
         }
-
 
         public void setName(String name) {
             switch (name) {
