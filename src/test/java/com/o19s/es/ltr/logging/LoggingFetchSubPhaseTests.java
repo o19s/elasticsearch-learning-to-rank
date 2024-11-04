@@ -53,7 +53,6 @@ import org.elasticsearch.search.aggregations.support.CoreValuesSourceType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
-import org.elasticsearch.search.lookup.Source;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -185,8 +184,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                         doc,
                         id
                     );
-                    Source source = null;
-                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, Map.of(), source));
+                    processor.process(new FetchSubPhase.HitContext(hit, context, doc, Map.of(), null, null));
                     hits.add(hit);
                 }
             }
