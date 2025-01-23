@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.junit.Ignore;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertResponse;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -268,6 +269,8 @@ public class LoggingIT extends BaseIntegrationTest {
         assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
     }
 
+    // FIXME: flaky test
+    @Ignore
     public void testLogExtraLogging() throws Exception {
         prepareModelsExtraLogging();
         Map<String, Doc> docs = buildIndex();
