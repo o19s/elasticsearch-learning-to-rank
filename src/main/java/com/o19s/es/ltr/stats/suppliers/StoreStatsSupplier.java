@@ -12,6 +12,7 @@ import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.metadata.IndexMetadata;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -67,7 +68,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
     @Override
     public Map<String, Map<String, Object>> get() {
         String[] names = indexNameExpressionResolver.concreteIndexNames(clusterService.state(),
-                new ClusterStateRequest().indices(
+                new ClusterStateRequest(TimeValue.timeValueMinutes(1)).indices(
                         IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
         final MultiSearchRequestBuilder requestBuilder = client.prepareMultiSearch();
         List<String> indices = new ArrayList<>();

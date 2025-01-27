@@ -32,7 +32,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -57,7 +56,7 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
 
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+        return asList(LtrQueryParserPlugin.class);
     }
 
     @Override
