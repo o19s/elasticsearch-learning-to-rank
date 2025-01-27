@@ -24,7 +24,6 @@ import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -35,7 +34,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQueryBuilder> {
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return asList(LtrQueryParserPlugin.class, TestGeoShapeFieldMapperPlugin.class);
+        return asList(LtrQueryParserPlugin.class);
     }
 
     @Override

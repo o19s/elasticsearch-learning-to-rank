@@ -20,6 +20,7 @@ import com.o19s.es.ltr.action.ListStoresAction.ListStoresActionRequest;
 import com.o19s.es.ltr.action.ListStoresAction.ListStoresActionResponse;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -35,7 +36,7 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.core.Tuple;
 import org.elasticsearch.tasks.Task;
-import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.injection.guice.Inject;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
@@ -73,7 +74,10 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
     protected void masterOperation(Task task, ListStoresActionRequest request, ClusterState state,
                                    ActionListener<ListStoresActionResponse> listener) throws Exception {
         String[] names = indexNameExpressionResolver.concreteIndexNames(state,
-                new ClusterStateRequest().indices(IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
+                new ClusterStateRequest(
+                TimeValue.timeValueMinutes(1)).indices(
+                IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*")
+                );
         final MultiSearchRequestBuilder req = client.prepareMultiSearch();
         final List<Tuple<String, Integer>> versions = new ArrayList<>();
         Stream.of(names)

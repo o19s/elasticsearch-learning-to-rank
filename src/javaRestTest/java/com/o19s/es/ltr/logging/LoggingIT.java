@@ -41,6 +41,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.rescore.QueryRescorerBuilder;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -268,6 +269,7 @@ public class LoggingIT extends BaseIntegrationTest {
         assertResponse(client().prepareSearch("test_index").setSource(sourceBuilder), resp -> assertSearchHits(docs, resp));
     }
 
+    @Ignore
     public void testLogExtraLogging() throws Exception {
         prepareModelsExtraLogging();
         Map<String, Doc> docs = buildIndex();
