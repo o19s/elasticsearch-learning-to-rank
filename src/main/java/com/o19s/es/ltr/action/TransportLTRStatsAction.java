@@ -10,7 +10,7 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.injection.guice.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TransportLTRStatsAction extends
-        TransportNodesAction<LTRStatsNodesRequest, LTRStatsNodesResponse, LTRStatsNodeRequest, LTRStatsNodeResponse> {
+        TransportNodesAction<LTRStatsNodesRequest, LTRStatsNodesResponse, LTRStatsNodeRequest, LTRStatsNodeResponse, LTRStatsAction> {
 
     private final LTRStats ltrStats;
 

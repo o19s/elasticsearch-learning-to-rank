@@ -194,6 +194,11 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                 public boolean needs_score() {
                                     return false;
                                 }
+
+                                @Override
+                                public boolean needs_termStats() {
+                                    return false;
+                                }
                             };
 
                     return context.factoryClazz.cast(factory);
@@ -284,6 +289,11 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     public boolean needs_score() {
                                         return false;
                                     }
+
+                                    @Override
+                                    public boolean needs_termStats() {
+                                        return false;
+                                    }
                                 };
 
                         return context.factoryClazz.cast(factory);
@@ -319,6 +329,11 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
                                     @Override
                                     public boolean needs_score() {
+                                        return false;
+                                    }
+
+                                    @Override
+                                    public boolean needs_termStats() {
                                         return false;
                                     }
                                 };

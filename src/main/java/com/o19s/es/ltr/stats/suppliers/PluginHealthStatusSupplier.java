@@ -6,7 +6,7 @@ import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-
+import org.elasticsearch.core.TimeValue;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -38,7 +38,7 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
 
     private String getAggregateStoresStatus() {
         String[] names = indexNameExpressionResolver.concreteIndexNames(clusterService.state(),
-                new ClusterStateRequest().indices(
+                new ClusterStateRequest(TimeValue.timeValueMinutes(1)).indices(
                         IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
         return Arrays.stream(names)
                 .filter(IndexFeatureStore::isIndexStore)
