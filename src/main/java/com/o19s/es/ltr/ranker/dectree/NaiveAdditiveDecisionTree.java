@@ -136,6 +136,30 @@ public class NaiveAdditiveDecisionTree extends SparseLtrRanker implements Accoun
             return n.eval(scores);
         }
 
+        public Node getLeft() {
+            return this.left;
+        }
+
+        public Node getRight() {
+            return this.right;
+        }
+
+        public int getFeature() {
+            return this.feature;
+        }
+
+        public float getThreshold() {
+            return this.threshold;
+        }
+
+        public int getLeftNodeId() {
+            return this.leftNodeId;
+        }
+
+        public int getMissingNodeId() {
+            return this.missingNodeId;
+        }
+
         /**
          * Return the memory usage of this object in bytes. Negative values are illegal.
          */

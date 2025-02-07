@@ -15,8 +15,10 @@ import org.elasticsearch.xcontent.json.JsonXContent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Optional;
 
 public class XGBoostRawJsonParser implements LtrRankerParser {
@@ -37,9 +39,42 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
         }
 
         NaiveAdditiveDecisionTree.Node[] trees = modelDefinition.getLearner().getTrees(set);
+        List<String> modelFeatures = modelDefinition.learner.featureNames;
+
+        // remap features according to the order in the feature set
+        Map<Integer, Integer> modelFeaturesReordering = new HashMap<>();
+        for (int i = 0; i < modelFeatures.size(); i++) {
+            modelFeaturesReordering.put(i, set.featureOrdinal(modelFeatures.get(i)));
+        }
+
+        // Reorder features in each tree
+        NaiveAdditiveDecisionTree.Node[] adjustedTrees = new NaiveAdditiveDecisionTree.Node[trees.length];
+        for (int i = 0; i < trees.length; i++) {
+            adjustedTrees[i] = reorderTreeFeatures(trees[i], modelFeaturesReordering);
+        }
+
         float[] weights = new float[trees.length];
         Arrays.fill(weights, 1F);
-        return new NaiveAdditiveDecisionTree(trees, weights, set.size(), modelDefinition.getLearner().getObjective().getNormalizer());
+        return new NaiveAdditiveDecisionTree(
+                adjustedTrees, weights, set.size(), modelDefinition.getLearner().getObjective().getNormalizer()
+        );
+    }
+
+    private NaiveAdditiveDecisionTree.Node reorderTreeFeatures(NaiveAdditiveDecisionTree.Node node,
+                                                               Map<Integer, Integer> modelFeaturesReordering) {
+        if (node instanceof NaiveAdditiveDecisionTree.Split splitNode) {
+            return new NaiveAdditiveDecisionTree.Split(
+                    reorderTreeFeatures(splitNode.getLeft(), modelFeaturesReordering),
+                    reorderTreeFeatures(splitNode.getRight(), modelFeaturesReordering),
+                    modelFeaturesReordering.get(splitNode.getFeature()),
+                    splitNode.getThreshold(),
+                    splitNode.getLeftNodeId(),
+                    splitNode.getMissingNodeId()
+            );
+        }
+
+        // if the node is Leaf we don't do anything
+        return node;
     }
 
     private static class XGBoostDefinition {
@@ -95,6 +130,7 @@ public class XGBoostRawJsonParser implements LtrRankerParser {
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Expected [START_OBJECT] but got [" + startToken + "]");
             }
+
             return definition;
         }
 
