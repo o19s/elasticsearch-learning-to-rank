@@ -142,7 +142,8 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                                 QueryBuilders.matchQuery("field1", "{{query}}").toString()));
                 addElement(new StoredFeature("feature6", Arrays.asList("query", "extra_multiplier_ltr"),
                                 ScriptFeature.TEMPLATE_LANGUAGE,
-                                "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\","
+                                "{\"lang\": \"native\", \"source\": \"feature_extractor\","
+                                                + "\"params\": { \"dependent_feature\": \"feature1\","
                                                 +
                                                 " \"extra_script_params\" : {\"extra_multiplier_ltr\": \"extra_multiplier\"}}}"));
                 AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
@@ -194,7 +195,9 @@ public class StoredLtrQueryIT extends BaseIntegrationTest {
                                 "(feature1 - feature2) > 0 ? feature1 * multiplier:  feature2 * multiplier"));
                 addElement(new StoredFeature("feature6", Collections.singletonList("query"),
                                 ScriptFeature.TEMPLATE_LANGUAGE,
-                                "{\"lang\": \"native\", \"source\": \"feature_extractor\", \"params\": { \"dependent_feature\": \"feature1\"}}"));
+                                "{\"lang\": \"native\", \"source\": \"feature_extractor\","
+                                                +
+                                                "\"params\": { \"dependent_feature\": \"feature1\"}}"));
 
                 AddFeaturesToSetRequestBuilder builder = new AddFeaturesToSetRequestBuilder(client());
                 builder.request().setFeatureSet("my_set");
