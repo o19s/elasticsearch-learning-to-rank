@@ -38,7 +38,7 @@ public class NodeSettingsIT extends BaseIntegrationTest {
     private final MemStore memStore = new MemStore();
     private final int memSize = 1024;
     private final int expireAfterRead = 100;
-    private final int expireAfterWrite = expireAfterRead*4;
+    private final int expireAfterWrite = expireAfterRead * 4;
 
     @Override
     protected Settings nodeSettings() {
@@ -55,7 +55,7 @@ public class NodeSettingsIT extends BaseIntegrationTest {
         CachedFeatureStore cached = new CachedFeatureStore(memStore, caches);
         long totalAdded = 0;
         int i = 0;
-        long maxMemSize = new ByteSizeValue(memSize, ByteSizeUnit.KB).getBytes();
+        long maxMemSize = ByteSizeValue.of(memSize, ByteSizeUnit.KB).getBytes();
         do {
             CompiledLtrModel compiled = new DummyModel("test" + i++, 250);
             long lastAddedSize = compiled.ramBytesUsed();
@@ -67,14 +67,14 @@ public class NodeSettingsIT extends BaseIntegrationTest {
         } while (totalAdded < maxMemSize);
         assertThat(totalAdded, greaterThan(maxMemSize));
         assertThat(caches.modelCache().weight(), greaterThan(0L));
-        Thread.sleep(expireAfterWrite*2);
+        Thread.sleep(expireAfterWrite * 2);
         caches.modelCache().refresh();
         assertEquals(0, caches.modelCache().weight());
         cached.loadModel("test0");
         // Second load for accessTime
         cached.loadModel("test0");
         assertThat(caches.modelCache().weight(), greaterThan(0L));
-        Thread.sleep(expireAfterRead*2);
+        Thread.sleep(expireAfterRead * 2);
         caches.modelCache().refresh();
         assertEquals(0, caches.modelCache().weight());
     }
