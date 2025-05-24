@@ -50,7 +50,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
         }
     }
 
-    public static class ClearCachesNodesRequest extends BaseNodesRequest<ClearCachesNodesRequest> {
+    public static class ClearCachesNodesRequest extends BaseNodesRequest {
         private String store;
         private Operation operation;
         private String name;

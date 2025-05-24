@@ -26,10 +26,12 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.util.IOSupplier;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.DocIdSetIterator;
 
@@ -84,12 +86,13 @@ public class PostingsExplorerQuery extends Query {
     }
 
     /**
-     * Will eventually allow implementing more explorer techniques (e.g. some stats on positions)
+     * Will eventually allow implementing more explorer techniques (e.g. some stats
+     * on positions)
      */
     enum Type implements CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> {
         // Extract TF from the postings
-        TF((weight, terms) -> new TFScorer(weight, terms.postings(null, PostingsEnum.FREQS))),
-        TP((weight, terms) -> new TPScorer(weight, terms.postings(null, PostingsEnum.POSITIONS)));
+        TF((weight, terms) -> new TFScorer(terms.postings(null, PostingsEnum.FREQS))),
+        TP((weight, terms) -> new TPScorer(terms.postings(null, PostingsEnum.POSITIONS)));
 
         private final CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> func;
 
@@ -131,22 +134,26 @@ public class PostingsExplorerQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
-            assert this.termStates != null && this.termStates
-                    .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
-            TermState state = this.termStates.get(context);
-            if (state == null) {
-                return null;
-            } else {
-                TermsEnum terms = context.reader().terms(this.term.field()).iterator();
-                terms.seekExact(this.term.bytes(), state);
-                return this.type.apply(this, terms);
-            }
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return true;
         }
 
         @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return true;
+        public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            assert this.termStates != null && this.termStates
+                    .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
+            IOSupplier<TermState> stateSupplier = this.termStates.get(context);
+            if (stateSupplier == null) {
+                return new Weight.DefaultScorerSupplier(null);
+            } else {
+                TermState state = stateSupplier.get();
+                if (state == null) {
+                    return new Weight.DefaultScorerSupplier(null);
+                }
+                TermsEnum terms = context.reader().terms(this.term.field()).iterator();
+                terms.seekExact(this.term.bytes(), state);
+                return new Weight.DefaultScorerSupplier(this.type.apply(this, terms));
+            }
         }
     }
 
@@ -154,8 +161,7 @@ public class PostingsExplorerQuery extends Query {
         final PostingsEnum postingsEnum;
         protected String typeConditional;
 
-        PostingsExplorerScorer(Weight weight, PostingsEnum postingsEnum) {
-            super(weight);
+        PostingsExplorerScorer(PostingsEnum postingsEnum) {
             this.postingsEnum = postingsEnum;
         }
 
@@ -175,8 +181,8 @@ public class PostingsExplorerQuery extends Query {
     }
 
     static class TFScorer extends PostingsExplorerScorer {
-        TFScorer(Weight weight, PostingsEnum postingsEnum) {
-            super(weight, postingsEnum);
+        TFScorer(PostingsEnum postingsEnum) {
+            super(postingsEnum);
         }
 
         @Override
@@ -196,9 +202,10 @@ public class PostingsExplorerQuery extends Query {
     }
 
     static class TPScorer extends PostingsExplorerScorer {
-        TPScorer(Weight weight, PostingsEnum postingsEnum) {
-            super(weight, postingsEnum);
+        TPScorer(PostingsEnum postingsEnum) {
+            super(postingsEnum);
         }
+
         @Override
         public float score() throws IOException {
             if (this.postingsEnum.freq() <= 0) {
@@ -206,23 +213,23 @@ public class PostingsExplorerQuery extends Query {
             }
 
             ArrayList<Float> positions = new ArrayList<Float>();
-            for (int i=0;i<this.postingsEnum.freq();i++){
+            for (int i = 0; i < this.postingsEnum.freq(); i++) {
                 positions.add((float) this.postingsEnum.nextPosition() + 1);
             }
 
             float retval;
-            switch(this.typeConditional) {
-                case("avg_raw_tp"):
+            switch (this.typeConditional) {
+                case ("avg_raw_tp"):
                     float sum = 0.0f;
                     for (float position : positions) {
                         sum += position;
                     }
                     retval = sum / positions.size();
                     break;
-                case("max_raw_tp"):
+                case ("max_raw_tp"):
                     retval = Collections.max(positions);
                     break;
-                case("min_raw_tp"):
+                case ("min_raw_tp"):
                     retval = Collections.min(positions);
                     break;
                 default:

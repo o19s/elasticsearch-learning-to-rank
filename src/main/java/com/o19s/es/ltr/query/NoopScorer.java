@@ -17,7 +17,6 @@ package com.o19s.es.ltr.query;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
 
 import java.io.IOException;
 
@@ -29,17 +28,14 @@ public class NoopScorer extends Scorer {
     /**
      * Constructs a Scorer
      *
-     * @param weight The scorers weight
      * @param maxDocs maximum number of documents to score
      */
-    public NoopScorer(Weight weight, int maxDocs) {
-        super(weight);
+    public NoopScorer(int maxDocs) {
         _noopIter = DocIdSetIterator.all(maxDocs);
 
     }
 
-    public NoopScorer(Weight weight, DocIdSetIterator iterator) {
-        super(weight);
+    public NoopScorer(DocIdSetIterator iterator) {
         _noopIter = iterator;
     }
 

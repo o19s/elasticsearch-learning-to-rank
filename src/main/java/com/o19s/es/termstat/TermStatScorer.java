@@ -33,16 +33,15 @@ public class TermStatScorer extends Scorer {
     private final ScoreMode scoreMode;
     private final Map<Term, TermStates> termContexts;
 
-    public TermStatScorer(TermStatQuery.TermStatWeight weight,
-                          IndexSearcher searcher,
-                          LeafReaderContext context,
-                          DoubleValuesScript compiledExpression,
-                          Set<Term> terms,
-                          ScoreMode scoreMode,
-                          AggrType aggr,
-                          AggrType posAggr,
-                          Map<Term, TermStates> termContexts) {
-        super(weight);
+    public TermStatScorer(
+            IndexSearcher searcher,
+            LeafReaderContext context,
+            DoubleValuesScript compiledExpression,
+            Set<Term> terms,
+            ScoreMode scoreMode,
+            AggrType aggr,
+            AggrType posAggr,
+            Map<Term, TermStates> termContexts) {
         this.context = context;
         this.compiledExpression = compiledExpression;
         this.searcher = searcher;
@@ -54,6 +53,7 @@ public class TermStatScorer extends Scorer {
 
         this.iter = DocIdSetIterator.all(context.reader().maxDoc());
     }
+
     @Override
     public DocIdSetIterator iterator() {
         return iter;
@@ -75,7 +75,7 @@ public class TermStatScorer extends Scorer {
         // Prepare computed statistics
         StatisticsHelper computed = new StatisticsHelper();
         HashMap<String, Float> termStatDict = new HashMap<>();
-        Bindings bindings = new Bindings(){
+        Bindings bindings = new Bindings() {
             @Override
             public DoubleValuesSource getDoubleValuesSource(String name) {
                 return DoubleValuesSource.constant(termStatDict.get(name));
@@ -87,7 +87,7 @@ public class TermStatScorer extends Scorer {
             return 0.0f;
         }
 
-        for(int i = 0; i < tsq.size(); i++) {
+        for (int i = 0; i < tsq.size(); i++) {
             // Update the term stat dictionary for the current term
             termStatDict.put("df", tsq.get("df").get(i));
             termStatDict.put("idf", tsq.get("idf").get(i));
@@ -99,8 +99,7 @@ public class TermStatScorer extends Scorer {
 
             // Run the expression and store the result in computed
             DoubleValuesSource dvSrc = compiledExpression.getDoubleValuesSource(
-                (name)-> DoubleValuesSource.constant(termStatDict.get(name))
-            );
+                    (name) -> DoubleValuesSource.constant(termStatDict.get(name)));
             DoubleValues values = dvSrc.getValues(context, null);
 
             values.advanceExact(docID());

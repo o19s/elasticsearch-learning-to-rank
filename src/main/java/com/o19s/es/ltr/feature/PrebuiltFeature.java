@@ -17,7 +17,6 @@
 package com.o19s.es.ltr.feature;
 
 import com.o19s.es.ltr.LtrQueryContext;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
@@ -43,7 +42,8 @@ public class PrebuiltFeature extends Query implements Feature {
         this.query = Objects.requireNonNull(query);
     }
 
-    @Override @Nullable
+    @Override
+    @Nullable
     public String name() {
         return name;
     }
@@ -83,7 +83,7 @@ public class PrebuiltFeature extends Query implements Feature {
     }
 
     @Override
-    public Query rewrite(IndexReader reader) throws IOException {
+    public Query rewrite(IndexSearcher reader) throws IOException {
         return query.rewrite(reader);
     }
 

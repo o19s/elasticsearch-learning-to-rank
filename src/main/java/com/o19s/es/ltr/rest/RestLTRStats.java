@@ -40,8 +40,7 @@ public class RestLTRStats extends BaseRestHandler {
                 new Route(RestRequest.Method.GET, LTR_STATS_BASE_URI),
                 new Route(RestRequest.Method.GET, LTR_STATS_BASE_URI + "/{stat}"),
                 new Route(RestRequest.Method.GET, LTR_STATS_BASE_URI + "/nodes/{nodeId}"),
-                new Route(RestRequest.Method.GET, LTR_STATS_BASE_URI + "/{stat}/nodes/{nodeId}")
-        ));
+                new Route(RestRequest.Method.GET, LTR_STATS_BASE_URI + "/{stat}/nodes/{nodeId}")));
     }
 
     @Override
@@ -57,16 +56,14 @@ public class RestLTRStats extends BaseRestHandler {
         LTRStatsNodesRequest ltrStatsRequest = new LTRStatsNodesRequest(
                 splitCommaSeparatedParam(request, "nodeId").orElse(null));
 
-        ltrStatsRequest.timeout(
-            Optional.ofNullable(request.param("timeout"))
-                .map(timeout -> TimeValue.parseTimeValue(timeout, "timeout"))
-                .orElse(TimeValue.MAX_VALUE)
-        );
+        ltrStatsRequest.setTimeout(
+                Optional.ofNullable(request.param("timeout"))
+                        .map(timeout -> TimeValue.parseTimeValue(timeout, "timeout"))
+                        .orElse(TimeValue.MAX_VALUE));
 
-        List<String> requestedStats =
-                splitCommaSeparatedParam(request, "stat")
-                        .map(Arrays::asList)
-                        .orElseGet(Collections::emptyList);
+        List<String> requestedStats = splitCommaSeparatedParam(request, "stat")
+                .map(Arrays::asList)
+                .orElseGet(Collections::emptyList);
 
         Set<String> validStats = StatName.getTopLevelStatNames();
         if (isAllStatsRequested(requestedStats)) {
@@ -86,10 +83,9 @@ public class RestLTRStats extends BaseRestHandler {
                             request.path(), LTRStatsNodesRequest.ALL_STATS_KEY));
         }
 
-        Set<String> invalidStats =
-                requestedStats.stream()
-                        .filter(s -> !validStats.contains(s))
-                        .collect(Collectors.toSet());
+        Set<String> invalidStats = requestedStats.stream()
+                .filter(s -> !validStats.contains(s))
+                .collect(Collectors.toSet());
 
         if (!invalidStats.isEmpty()) {
             throw new IllegalArgumentException(

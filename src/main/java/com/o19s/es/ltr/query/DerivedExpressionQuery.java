@@ -23,10 +23,11 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.ConstantScoreWeight;
@@ -34,7 +35,6 @@ import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.DoubleValuesSource;
 import org.apache.lucene.search.DoubleValues;
 import org.elasticsearch.script.DoubleValuesScript;
-
 
 import java.io.IOException;
 import java.util.Map;
@@ -107,9 +107,9 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
                     }
 
                     @Override
-                    public Scorer scorer(LeafReaderContext context) throws IOException {
-                        return new ConstantScoreScorer(this, score(),
-                            scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
+                    public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+                        return new Weight.DefaultScorerSupplier(new ConstantScoreScorer(score(),
+                                scoreMode, DocIdSetIterator.all(context.reader().maxDoc())));
                     }
                 };
             }
@@ -120,16 +120,18 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         @Override
         public boolean equals(Object obj) {
             assert false;
-            // Should not be called as it is likely an indication that it'll be cached but should not...
+            // Should not be called as it is likely an indication that it'll be cached but
+            // should not...
             return sameClassAs(obj) &&
-                    Objects.equals(this.query, ((FVDerivedExpressionQuery)obj).query) &&
-                    Objects.equals(this.fvSupplier, ((FVDerivedExpressionQuery)obj).fvSupplier);
+                    Objects.equals(this.query, ((FVDerivedExpressionQuery) obj).query) &&
+                    Objects.equals(this.fvSupplier, ((FVDerivedExpressionQuery) obj).fvSupplier);
         }
 
         @Override
         public int hashCode() {
             assert false;
-            // Should not be called as it is likely an indication that it'll be cached but should not...
+            // Should not be called as it is likely an indication that it'll be cached but
+            // should not...
             return Objects.hash(classHash(), query, fvSupplier);
         }
 
@@ -158,10 +160,26 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
+        public Explanation explain(LeafReaderContext context, int doc) throws IOException {
+            DoubleValuesSource src = expression.getDoubleValuesSource((name) -> {
+                return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
+            });
+            DoubleValues values = src.getValues(context, null);
+            values.advanceExact(doc);
+            return Explanation.match((float) values.doubleValue(),
+                    "Evaluation of derived expression: " + expression.sourceText());
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return false;
+        }
+
+        @Override
+        public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
             DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
             DoubleValuesSource src = expression.getDoubleValuesSource((name) -> {
-                Double queryParamValue  = queryParamValues.get(name);
+                Double queryParamValue = queryParamValues.get(name);
                 if (queryParamValue != null) {
                     return DoubleValuesSource.constant(queryParamValue);
                 }
@@ -169,22 +187,7 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
             });
             DoubleValues values = src.getValues(context, null);
 
-            return new DValScorer(this, iterator, values);
-        }
-
-        @Override
-        public Explanation explain(LeafReaderContext context, int doc) throws IOException {
-            DoubleValuesSource src = expression.getDoubleValuesSource((name) -> {
-                return new FVDoubleValuesSource(vectorSupplier, features.featureOrdinal(name));
-            });
-            DoubleValues values = src.getValues(context, null);
-            values.advanceExact(doc);
-            return Explanation.match((float) values.doubleValue(), "Evaluation of derived expression: " + expression.sourceText());
-        }
-
-        @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return false;
+            return new Weight.DefaultScorerSupplier(new DValScorer(iterator, values));
         }
     }
 
@@ -192,8 +195,7 @@ public class DerivedExpressionQuery extends Query implements LtrRewritableQuery 
         private final DocIdSetIterator iterator;
         private final DoubleValues values;
 
-        DValScorer(Weight weight, DocIdSetIterator iterator, DoubleValues values) {
-            super(weight);
+        DValScorer(DocIdSetIterator iterator, DoubleValues values) {
             this.iterator = iterator;
             this.values = values;
         }

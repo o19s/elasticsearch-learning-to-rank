@@ -57,27 +57,29 @@ import static java.util.stream.Collectors.toMap;
 import static org.elasticsearch.action.ActionListener.wrap;
 import static org.elasticsearch.core.Tuple.tuple;
 
-public class TransportListStoresAction extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
+public class TransportListStoresAction
+        extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
     private final Client client;
+    private final IndexNameExpressionResolver indexNameExpressionResolver;
 
     @Inject
     public TransportListStoresAction(TransportService transportService,
-                                     ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
+            ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
+            IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
-            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new,
+                actionFilters, ListStoresActionRequest::new, ListStoresActionResponse::new,
                 EsExecutors.DIRECT_EXECUTOR_SERVICE);
         this.client = client;
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     @Override
     protected void masterOperation(Task task, ListStoresActionRequest request, ClusterState state,
-                                   ActionListener<ListStoresActionResponse> listener) throws Exception {
+            ActionListener<ListStoresActionResponse> listener) throws Exception {
         String[] names = indexNameExpressionResolver.concreteIndexNames(state,
                 new ClusterStateRequest(
-                TimeValue.timeValueMinutes(1)).indices(
-                IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*")
-                );
+                        TimeValue.timeValueMinutes(1)).indices(
+                                IndexFeatureStore.DEFAULT_STORE, IndexFeatureStore.STORE_PREFIX + "*"));
         final MultiSearchRequestBuilder req = client.prepareMultiSearch();
         final List<Tuple<String, Integer>> versions = new ArrayList<>();
         Stream.of(names)
@@ -87,7 +89,7 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
                 .filter((im) -> STORE_VERSION_PROP.exists(im.getSettings()))
                 .forEach((m) -> {
                     req.add(countSearchRequest(m));
-                    versions.add(tuple(m.getIndex().getName(),STORE_VERSION_PROP.get(m.getSettings())));
+                    versions.add(tuple(m.getIndex().getName(), STORE_VERSION_PROP.get(m.getSettings())));
                 });
         if (versions.isEmpty()) {
             listener.onResponse(new ListStoresActionResponse(Collections.emptyList()));
@@ -95,7 +97,6 @@ public class TransportListStoresAction extends TransportMasterNodeReadAction<Lis
             req.execute(wrap((r) -> listener.onResponse(toResponse(r, versions)), listener::onFailure));
         }
     }
-
 
     private SearchRequestBuilder countSearchRequest(IndexMetadata meta) {
         return client.prepareSearch(meta.getIndex().getName())

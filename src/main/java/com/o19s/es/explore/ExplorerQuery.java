@@ -16,7 +16,6 @@
 
 package com.o19s.es.explore;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
@@ -29,6 +28,7 @@ import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanClause;
@@ -57,9 +57,13 @@ public class ExplorerQuery extends Query {
                 || type.endsWith(("_ttf"));
     }
 
-    public Query getQuery() { return this.query; }
+    public Query getQuery() {
+        return this.query;
+    }
 
-    public String getType() { return this.type; }
+    public String getType() {
+        return this.type;
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -73,7 +77,7 @@ public class ExplorerQuery extends Query {
     }
 
     @Override
-    public Query rewrite(IndexReader reader) throws IOException {
+    public Query rewrite(IndexSearcher reader) throws IOException {
         Query rewritten = query.rewrite(reader);
 
         if (rewritten != query) {
@@ -104,7 +108,7 @@ public class ExplorerQuery extends Query {
 
             for (Term term : terms) {
                 TermStates ctx = TermStates.build(searcher, term, scoreMode.needsScores());
-                if(ctx != null && ctx.docFreq() > 0){
+                if (ctx != null && ctx.docFreq() > 0) {
                     TermStatistics tStats = searcher.termStatistics(term, ctx.docFreq(), ctx.totalTermFreq());
                     df_stats.add(tStats.docFreq());
                     idf_stats.add(sim.idf(tStats.docFreq(), searcher.collectionStatistics(term.field()).docCount()));
@@ -117,9 +121,9 @@ public class ExplorerQuery extends Query {
             }
 
             /*
-                If no terms are parsed in the query we opt for returning 0
-                instead of throwing an exception that could break various
-                pipelines.
+             * If no terms are parsed in the query we opt for returning 0
+             * instead of throwing an exception that could break various
+             * pipelines.
              */
             float constantScore;
 
@@ -194,36 +198,42 @@ public class ExplorerQuery extends Query {
                 }
 
                 @Override
-                public Scorer scorer(LeafReaderContext context) throws IOException {
-                    return new ConstantScoreScorer(this, constantScore, scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
-                }
-
-                @Override
                 public boolean isCacheable(LeafReaderContext ctx) {
                     return true;
                 }
 
+                @Override
+                public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+                    return new Weight.DefaultScorerSupplier(new ConstantScoreScorer(constantScore, scoreMode,
+                            DocIdSetIterator.all(context.reader().maxDoc())));
+                }
+
             };
-        } else if (type.endsWith("_raw_tf") || type.endsWith("_raw_tp")) {
-            // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
+        } else if (type.endsWith("_raw_tf") || type.endsWith("_raw_tp"))
+
+        {
+            // Rewrite this into a boolean query where we can inject our
+            // PostingsExplorerQuery
             BooleanQuery.Builder qb = new BooleanQuery.Builder();
             for (Term t : terms) {
                 qb.add(makeBooleanClause(t, type));
             }
-            // FIXME: completely refactor this class and stop accepting a random query but a list of terms directly
-            // rewriting at this point is wrong, additionally we certainly build the TermContext twice for every terms
+            // FIXME: completely refactor this class and stop accepting a random query but a
+            // list of terms directly
+            // rewriting at this point is wrong, additionally we certainly build the
+            // TermContext twice for every terms
             // problem is that we rely on extractTerms which happen too late in the process
-            Query q = qb.build().rewrite(searcher.getIndexReader());
+            Query q = qb.build().rewrite(searcher);
             return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, scoreMode, boost), type);
         }
         throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");
     }
 
     private BooleanClause makeBooleanClause(Term term, String type) throws IllegalArgumentException {
-        if(type.endsWith("_raw_tf")) {
+        if (type.endsWith("_raw_tf")) {
             return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TF),
                     BooleanClause.Occur.SHOULD);
-        }else if(type.endsWith("_raw_tp")) {
+        } else if (type.endsWith("_raw_tp")) {
             return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TP),
                     BooleanClause.Occur.SHOULD);
         }
@@ -265,12 +275,12 @@ public class ExplorerQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
+        public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
             Scorer subscorer = weight.scorer(context);
             if (subscorer == null) {
                 return null;
             }
-            return new ExplorerScorer(weight, type, subscorer);
+            return new Weight.DefaultScorerSupplier(new ExplorerScorer(type, subscorer));
         }
     }
 
