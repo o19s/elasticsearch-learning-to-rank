@@ -16,7 +16,6 @@
 
 package com.o19s.es.explore;
 
-import com.o19s.es.ltr.utils.CheckedBiFunction;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.ReaderUtil;
@@ -32,6 +31,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.IOSupplier;
+import org.elasticsearch.core.CheckedFunction;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.DocIdSetIterator;
 
@@ -89,20 +89,20 @@ public class PostingsExplorerQuery extends Query {
      * Will eventually allow implementing more explorer techniques (e.g. some stats
      * on positions)
      */
-    enum Type implements CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> {
+    enum Type implements CheckedFunction<TermsEnum, Scorer, IOException> {
         // Extract TF from the postings
-        TF((weight, terms) -> new TFScorer(terms.postings(null, PostingsEnum.FREQS))),
-        TP((weight, terms) -> new TPScorer(terms.postings(null, PostingsEnum.POSITIONS)));
+        TF((terms) -> new TFScorer(terms.postings(null, PostingsEnum.FREQS))),
+        TP((terms) -> new TPScorer(terms.postings(null, PostingsEnum.POSITIONS)));
 
-        private final CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> func;
+        private final CheckedFunction<TermsEnum, Scorer, IOException> func;
 
-        Type(CheckedBiFunction<Weight, TermsEnum, Scorer, IOException> func) {
+        Type(CheckedFunction<TermsEnum, Scorer, IOException> func) {
             this.func = func;
         }
 
         @Override
-        public Scorer apply(Weight weight, TermsEnum termsEnum) throws IOException {
-            return func.apply(weight, termsEnum);
+        public Scorer apply(TermsEnum termsEnum) throws IOException {
+            return func.apply(termsEnum);
         }
     }
 
@@ -144,7 +144,7 @@ public class PostingsExplorerQuery extends Query {
                     .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
             IOSupplier<TermState> stateSupplier = this.termStates.get(context);
             if (stateSupplier == null) {
-                return new Weight.DefaultScorerSupplier(null);
+                return null;
             } else {
                 TermState state = stateSupplier.get();
                 if (state == null) {
@@ -152,7 +152,7 @@ public class PostingsExplorerQuery extends Query {
                 }
                 TermsEnum terms = context.reader().terms(this.term.field()).iterator();
                 terms.seekExact(this.term.bytes(), state);
-                return new Weight.DefaultScorerSupplier(this.type.apply(this, terms));
+                return new Weight.DefaultScorerSupplier(this.type.apply(terms));
             }
         }
     }
