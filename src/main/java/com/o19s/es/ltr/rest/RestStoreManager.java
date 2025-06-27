@@ -8,8 +8,8 @@ import org.elasticsearch.client.internal.node.NodeClient;
 import org.elasticsearch.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.rest.RestUtils;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -36,21 +36,25 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
                 new Route(RestRequest.Method.DELETE, "/_ltr/{store}"),
                 new Route(RestRequest.Method.DELETE, "/_ltr"),
                 new Route(RestRequest.Method.GET, "/_ltr"),
-                new Route(RestRequest.Method.GET, "/_ltr/{store}")
-        ));
+                new Route(RestRequest.Method.GET, "/_ltr/{store}")));
     }
 
     /**
-     * Prepare the request for execution. Implementations should consume all request params before
-     * returning the runnable for actual execution. Unconsumed params will immediately terminate
-     * execution of the request. However, some params are only used in processing the response;
-     * implementations can override {@link BaseRestHandler#responseParams()} to indicate such
+     * Prepare the request for execution. Implementations should consume all request
+     * params before
+     * returning the runnable for actual execution. Unconsumed params will
+     * immediately terminate
+     * execution of the request. However, some params are only used in processing
+     * the response;
+     * implementations can override {@link BaseRestHandler#responseParams()} to
+     * indicate such
      * params.
      *
      * @param request the request to execute
      * @param client  client for executing actions on the local node
      * @return the action to execute
-     * @throws IOException if an I/O exception occurred parsing the request and preparing for execution
+     * @throws IOException if an I/O exception occurred parsing the request and
+     *                     preparing for execution
      */
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
@@ -80,26 +84,24 @@ public class RestStoreManager extends FeatureStoreBaseRestHandler {
 
     RestChannelConsumer listStores(NodeClient client) {
         return (channel) -> new ListStoresAction.ListStoresActionBuilder(client).execute(
-                new RestToXContentListener<>(channel)
-        );
+                new RestToXContentListener<>(channel));
     }
 
     RestChannelConsumer getStore(NodeClient client, String indexName) {
-        return (channel) -> client.admin().indices().prepareGetIndex().setIndices(indexName)
+        return (channel) -> client.admin().indices().prepareGetIndex(RestUtils.REST_MASTER_TIMEOUT_DEFAULT)
+                .setIndices(indexName)
                 .execute(new RestBuilderListener<GetIndexResponse>(channel) {
                     @Override
                     public RestResponse buildResponse(
                             GetIndexResponse indexResponse,
-                            XContentBuilder builder
-                    ) throws Exception {
+                            XContentBuilder builder) throws Exception {
                         builder.startObject()
                                 .field("exists", indexResponse.indices().length > 0)
                                 .endObject()
                                 .close();
                         return new RestResponse(
                                 indexResponse.indices().length > 0 ? RestStatus.OK : RestStatus.NOT_FOUND,
-                                builder
-                        );
+                                builder);
                     }
                 });
     }

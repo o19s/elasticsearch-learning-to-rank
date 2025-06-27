@@ -31,6 +31,7 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -71,14 +72,13 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
     public static final float FACTOR = 1.2F;
     private static Directory directory;
     private static IndexSearcher searcher;
-    private static Map<String,Document> docs;
-
+    private static Map<String, Document> docs;
 
     @BeforeClass
     public static void init() throws Exception {
         directory = newDirectory(random());
 
-        try(IndexWriter writer = new IndexWriter(directory, newIndexWriterConfig(new StandardAnalyzer()))) {
+        try (IndexWriter writer = new IndexWriter(directory, newIndexWriterConfig(new StandardAnalyzer()))) {
             int nDoc = TestUtil.nextInt(random(), 20, 100);
             docs = new HashMap<>();
             for (int i = 0; i < nDoc; i++) {
@@ -107,8 +107,10 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
     public void testLogging() throws IOException {
         RankerQuery query1 = buildQuery("foo");
         RankerQuery query2 = buildQuery("bar");
-        LoggingFetchSubPhase.HitLogConsumer logger1 = new LoggingFetchSubPhase.HitLogConsumer("logger1", query1.featureSet(), true);
-        LoggingFetchSubPhase.HitLogConsumer logger2 = new LoggingFetchSubPhase.HitLogConsumer("logger2", query2.featureSet(), false);
+        LoggingFetchSubPhase.HitLogConsumer logger1 = new LoggingFetchSubPhase.HitLogConsumer("logger1",
+                query1.featureSet(), true);
+        LoggingFetchSubPhase.HitLogConsumer logger2 = new LoggingFetchSubPhase.HitLogConsumer("logger2",
+                query2.featureSet(), false);
         query1 = query1.toLoggerQuery(logger1);
         query2 = query2.toLoggerQuery(logger2);
         BooleanQuery query = new BooleanQuery.Builder()
@@ -120,42 +122,43 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
         LoggingFetchSubPhaseProcessor processor = new LoggingFetchSubPhaseProcessor(() -> new Tuple<>(weight, loggers));
 
         SearchHit[] hits = preprocessRandomHits(processor);
-        for (SearchHit hit : hits) try {
-            assertTrue(docs.containsKey(hit.getId()));
-            Document d = docs.get(hit.getId());
-            assertTrue(hit.getFields().containsKey("_ltrlog"));
-            Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
-            assertTrue(logs.containsKey("logger1"));
-            assertTrue(logs.containsKey("logger2"));
+        for (SearchHit hit : hits)
+            try {
+                assertTrue(docs.containsKey(hit.getId()));
+                Document d = docs.get(hit.getId());
+                assertTrue(hit.getFields().containsKey("_ltrlog"));
+                Map<String, List<Map<String, Object>>> logs = hit.getFields().get("_ltrlog").getValue();
+                assertTrue(logs.containsKey("logger1"));
+                assertTrue(logs.containsKey("logger2"));
 
-            List<Map<String, Object>> log1 = logs.get("logger1");
-            List<Map<String, Object>> log2 = logs.get("logger2");
-            if (d.get("text").equals("foo")) {
-                assertEquals(log1.get(0).get("name"), "text_feat");
-                assertTrue(log1.get(0).containsKey("value"));
-                assertTrue((Float) log1.get(0).get("value") > 0F);
-                assertFalse(log2.get(0).containsKey("value"));
-            } else {
-                assertEquals(log1.get(0).get("name"), "text_feat");
-                assertTrue(log1.get(0).containsKey("value"));
-                assertEquals((Float) 0.0F, log1.get(0).get("value"));
-                assertTrue(log2.get(0).containsKey("value"));
-                assertTrue((Float)log2.get(0).get("value") > 0F);
+                List<Map<String, Object>> log1 = logs.get("logger1");
+                List<Map<String, Object>> log2 = logs.get("logger2");
+                if (d.get("text").equals("foo")) {
+                    assertEquals(log1.get(0).get("name"), "text_feat");
+                    assertTrue(log1.get(0).containsKey("value"));
+                    assertTrue((Float) log1.get(0).get("value") > 0F);
+                    assertFalse(log2.get(0).containsKey("value"));
+                } else {
+                    assertEquals(log1.get(0).get("name"), "text_feat");
+                    assertTrue(log1.get(0).containsKey("value"));
+                    assertEquals((Float) 0.0F, log1.get(0).get("value"));
+                    assertTrue(log2.get(0).containsKey("value"));
+                    assertTrue((Float) log2.get(0).get("value") > 0F);
+                }
+                int bits = (int) (long) d.getField("score").numericValue();
+                float rawScore = Float.intBitsToFloat(bits);
+                double expectedScore = rawScore * FACTOR;
+                expectedScore = Math.log1p(expectedScore + 1);
+                assertEquals((float) expectedScore, (Float) log1.get(1).get("value"), Math.ulp((float) expectedScore));
+                assertEquals((float) expectedScore, (Float) log1.get(1).get("value"), Math.ulp((float) expectedScore));
+            } finally {
+                hit.decRef();
             }
-            int bits = (int)(long) d.getField("score").numericValue();
-            float rawScore = Float.intBitsToFloat(bits);
-            double expectedScore = rawScore*FACTOR;
-            expectedScore = Math.log1p(expectedScore+1);
-            assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
-            assertEquals((float) expectedScore, (Float)log1.get(1).get("value"), Math.ulp((float)expectedScore));
-        } finally {
-            hit.decRef();
-        }
     }
 
     public SearchHit[] preprocessRandomHits(FetchSubPhaseProcessor processor) throws IOException {
         int minHits = TestUtil.nextInt(random(), 5, 10);
-        int maxHits = TestUtil.nextInt(random(), minHits, minHits+10);
+        int maxHits = TestUtil.nextInt(random(), minHits, minHits + 10);
         List<SearchHit> hits = new ArrayList<>(maxHits);
         searcher.search(new MatchAllDocsQuery(), new SimpleCollector() {
             /**
@@ -178,12 +181,12 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
             @Override
             public void collect(int doc) throws IOException {
                 if (hits.size() < minHits || (random().nextBoolean() && hits.size() < maxHits)) {
-                    Document d = context.reader().document(doc);
+                    StoredFields storedFields = context.reader().storedFields();
+                    Document d = storedFields.document(doc);
                     String id = d.get("id");
                     SearchHit hit = new SearchHit(
-                        doc,
-                        id
-                    );
+                            doc,
+                            id);
                     processor.process(new FetchSubPhase.HitContext(hit, context, doc, Map.of(), null, null));
                     hits.add(hit);
                 }
@@ -216,11 +219,13 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
     public Query buildFunctionScore() {
         FieldValueFactorFunction fieldValueFactorFunction = new FieldValueFactorFunction("score", FACTOR, LN2P, 0D,
                 new SortedDoublesIndexFieldData(
-                    "score",
-                     FLOAT,
-                     CoreValuesSourceType.NUMERIC,
-                     (dv, n) -> { throw new UnsupportedOperationException(); },
-                     false));
+                        "score",
+                        FLOAT,
+                        CoreValuesSourceType.NUMERIC,
+                        (dv, n) -> {
+                            throw new UnsupportedOperationException();
+                        },
+                        false));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }

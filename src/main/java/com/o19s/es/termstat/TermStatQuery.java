@@ -2,7 +2,6 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
@@ -14,6 +13,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.elasticsearch.script.DoubleValuesScript;
 
 import java.io.IOException;
@@ -35,13 +35,21 @@ public class TermStatQuery extends Query {
         this.terms = terms;
     }
 
-
     public DoubleValuesScript getExpr() {
         return this.expr;
     }
-    public AggrType getAggr() { return this.aggr; }
-    public AggrType getPosAggr() { return this.posAggr; }
-    public Set<Term> getTerms() { return this.terms; }
+
+    public AggrType getAggr() {
+        return this.aggr;
+    }
+
+    public AggrType getPosAggr() {
+        return this.posAggr;
+    }
+
+    public Set<Term> getTerms() {
+        return this.terms;
+    }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
@@ -58,12 +66,9 @@ public class TermStatQuery extends Query {
     }
 
     @Override
-    public Query rewrite(IndexReader reader) throws IOException {
-        return this;
+    public int hashCode() {
+        return Objects.hash(expr.sourceText(), aggr, posAggr, terms);
     }
-
-    @Override
-    public int hashCode() { return Objects.hash(expr.sourceText(), aggr, posAggr, terms); }
 
     @Override
     public String toString(String field) {
@@ -89,11 +94,11 @@ public class TermStatQuery extends Query {
         private final Map<Term, TermStates> termContexts;
 
         TermStatWeight(IndexSearcher searcher,
-                       TermStatQuery tsq,
-                       Set<Term> terms,
-                       ScoreMode scoreMode,
-                       AggrType aggr,
-                       AggrType posAggr) throws IOException {
+                TermStatQuery tsq,
+                Set<Term> terms,
+                ScoreMode scoreMode,
+                AggrType aggr,
+                AggrType posAggr) throws IOException {
             super(tsq);
             this.searcher = searcher;
             this.expression = tsq.expr;
@@ -134,21 +139,21 @@ public class TermStatQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
-            return new TermStatScorer(this, searcher, context, expression, terms, scoreMode, aggr, posAggr, termContexts);
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return true;
         }
 
         @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return true;
+        public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            return new Weight.DefaultScorerSupplier(
+                    new TermStatScorer(searcher, context, expression, terms, scoreMode, aggr, posAggr, termContexts));
         }
     }
 
     @Override
     public void visit(QueryVisitor visitor) {
         Term[] acceptedTerms = terms.stream().filter(
-                t -> visitor.acceptField(t.field())
-        ).toArray(Term[]::new);
+                t -> visitor.acceptField(t.field())).toArray(Term[]::new);
 
         if (acceptedTerms.length > 0) {
             QueryVisitor v = visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this);

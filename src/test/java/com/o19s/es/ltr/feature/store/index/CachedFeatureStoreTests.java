@@ -54,7 +54,7 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         assertEquals(feat.ramBytesUsed(), caches.getPerStoreStats(memStore.getStoreName()).totalRam());
         assertEquals(1, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
         assertThat(expectThrows(IOException.class, () -> store.load("unk")).getCause(),
-            instanceOf(IllegalArgumentException.class));
+                instanceOf(IllegalArgumentException.class));
     }
 
     public void testCachedFeatureSet() throws IOException {
@@ -93,7 +93,8 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
     }
 
     public void testWontBlowUp() throws IOException {
-        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueHours(1), ByteSizeValue.ofBytes(100000));
+        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueHours(1),
+                ByteSizeValue.ofBytes(100000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         long curWeight = store.modelWeight();
         long maxWeight = caches.getMaxWeight();
@@ -112,9 +113,11 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         }
     }
 
-    @BadApple(bugUrl = "https://github.com/o19s/elasticsearch-learning-to-rank/issues/75")
+    // @BadApple(bugUrl =
+    // "https://github.com/o19s/elasticsearch-learning-to-rank/issues/75")
     public void testExpirationOnWrite() throws IOException, InterruptedException {
-        Caches caches = new Caches(TimeValue.timeValueMillis(100), TimeValue.timeValueHours(1), ByteSizeValue.ofBytes(1000000));
+        Caches caches = new Caches(TimeValue.timeValueMillis(100), TimeValue.timeValueHours(1),
+                ByteSizeValue.ofBytes(1000000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);
@@ -130,9 +133,11 @@ public class CachedFeatureStoreTests extends LuceneTestCase {
         assertEquals(0, caches.getPerStoreStats(memStore.getStoreName()).totalCount());
     }
 
-    @BadApple(bugUrl = "https://github.com/o19s/elasticsearch-learning-to-rank/issues/75")
+    // @BadApple(bugUrl =
+    // "https://github.com/o19s/elasticsearch-learning-to-rank/issues/75")
     public void testExpirationOnGet() throws IOException, InterruptedException {
-        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueMillis(100), ByteSizeValue.ofBytes(1000000));
+        Caches caches = new Caches(TimeValue.timeValueHours(1), TimeValue.timeValueMillis(100),
+                ByteSizeValue.ofBytes(1000000));
         CachedFeatureStore store = new CachedFeatureStore(memStore, caches);
         CompiledLtrModel model = LtrTestUtils.buildRandomModel();
         memStore.add(model);

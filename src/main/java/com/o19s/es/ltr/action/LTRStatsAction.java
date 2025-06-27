@@ -95,7 +95,7 @@ public class LTRStatsAction extends ActionType<LTRStatsAction.LTRStatsNodesRespo
         }
     }
 
-    public static class LTRStatsNodesRequest extends BaseNodesRequest<LTRStatsNodesRequest> {
+    public static class LTRStatsNodesRequest extends BaseNodesRequest {
 
         public static final String ALL_STATS_KEY = "_all";
 

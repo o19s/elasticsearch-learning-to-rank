@@ -56,7 +56,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.action.ActionListener.wrap;
 
-public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
+public class TransportAddFeatureToSetAction
+        extends HandledTransportAction<AddFeaturesToSetRequest, AddFeaturesToSetResponse> {
     private final ClusterService clusterService;
     private final TransportSearchAction searchAction;
     private final TransportGetAction getAction;
@@ -64,12 +65,12 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
 
     @Inject
     public TransportAddFeatureToSetAction(Settings settings, ThreadPool threadPool,
-                                             TransportService transportService, ActionFilters actionFilters,
-                                             IndexNameExpressionResolver indexNameExpressionResolver,
-                                             ClusterService clusterService, TransportSearchAction searchAction,
-                                             TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
+            TransportService transportService, ActionFilters actionFilters,
+            IndexNameExpressionResolver indexNameExpressionResolver,
+            ClusterService clusterService, TransportSearchAction searchAction,
+            TransportGetAction getAction, TransportFeatureStoreAction featureStoreAction) {
         super(AddFeaturesToSetAction.NAME, transportService, actionFilters,
-            AddFeaturesToSetRequest::new, threadPool.executor(ThreadPool.Names.MANAGEMENT));
+                AddFeaturesToSetRequest::new, threadPool.executor(ThreadPool.Names.MANAGEMENT));
         this.clusterService = clusterService;
         this.searchAction = searchAction;
         this.getAction = getAction;
@@ -77,9 +78,11 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
     }
 
     @Override
-    protected void doExecute(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener) {
+    protected void doExecute(Task task, AddFeaturesToSetRequest request,
+            ActionListener<AddFeaturesToSetResponse> listener) {
         if (!clusterService.state().routingTable().hasIndex(request.getStore())) {
-            throw new IllegalArgumentException("Store [" + request.getStore() + "] does not exist, please create it first.");
+            throw new IllegalArgumentException(
+                    "Store [" + request.getStore() + "] does not exist, please create it first.");
         }
         new AsyncAction(task, request, listener, clusterService, searchAction, getAction, featureStoreAction).start();
     }
@@ -88,9 +91,11 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
      * Async action that does the following:
      * - send an async GetRequest to fetch the existing StoreFeatureSet if it exists
      * - send an async Searchrequest to fetch the features requested
-     * - synchronize on CountDown, the last action to return will trigger the next step
+     * - synchronize on CountDown, the last action to return will trigger the next
+     * step
      * - merge the StoredFeature and the new list of features
-     * - send an async FeatureStoreAction to save the modified (or new) StoredFeatureSet
+     * - send an async FeatureStoreAction to save the modified (or new)
+     * StoredFeatureSet
      */
     private static class AsyncAction {
         private final Task task;
@@ -114,8 +119,8 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
         private final FeatureValidation validation;
 
         AsyncAction(Task task, AddFeaturesToSetRequest request, ActionListener<AddFeaturesToSetResponse> listener,
-                           ClusterService clusterService, TransportSearchAction searchAction, TransportGetAction getAction,
-                           TransportFeatureStoreAction featureStoreAction) {
+                ClusterService clusterService, TransportSearchAction searchAction, TransportGetAction getAction,
+                TransportFeatureStoreAction featureStoreAction) {
             this.task = task;
             this.listener = listener;
             this.featureSetName = request.getFeatureSet();
@@ -147,7 +152,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                 featuresRef.set(features);
             }
             GetRequest getRequest = new GetRequest(store)
-//                    .type(IndexFeatureStore.ES_TYPE)
+                    // .type(IndexFeatureStore.ES_TYPE)
                     .id(StorableElement.generateId(StoredFeatureSet.TYPE, featureSetName))
                     .routing(routing);
 
@@ -174,12 +179,13 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             BoolQueryBuilder bq = QueryBuilders.boolQuery();
             bq.must(nameQuery);
             bq.must(QueryBuilders.matchQuery("type", StoredFeature.TYPE));
-//            srequest.types(IndexFeatureStore.ES_TYPE);
+            // srequest.types(IndexFeatureStore.ES_TYPE);
             srequest.source().query(bq);
             srequest.source().fetchSource(true);
             srequest.source().size(StoredFeatureSet.MAX_FEATURES);
 
-            SearchTask st = srequest.createTask(task.getId(), task.getType(), task.getAction(), task.getParentTaskId(), Map.of());
+            SearchTask st = srequest.createTask(task.getId(), task.getType(), task.getAction(), task.getParentTaskId(),
+                    Map.of());
             searchAction.execute(st, srequest, wrap(this::onSearchResponse, this::onSearchFailure));
         }
 
@@ -198,7 +204,8 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
                 StoredFeatureSet featureSet;
                 if (getResponse.isExists()) {
                     version.set(getResponse.getVersion());
-                    featureSet = IndexFeatureStore.parse(StoredFeatureSet.class, StoredFeatureSet.TYPE, getResponse.getSourceAsBytesRef());
+                    featureSet = IndexFeatureStore.parse(StoredFeatureSet.class, StoredFeatureSet.TYPE,
+                            getResponse.getSourceAsBytesRef());
                 } else {
                     version.set(-1L);
                     featureSet = new StoredFeatureSet(featureSetName, Collections.emptyList());
@@ -213,11 +220,13 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
 
         private void onSearchResponse(SearchResponse sr) {
             try {
-                if (sr.getHits().getTotalHits().value > StoredFeatureSet.MAX_FEATURES) {
-                    throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returns too many features");
+                if (sr.getHits().getTotalHits().value() > StoredFeatureSet.MAX_FEATURES) {
+                    throw new IllegalArgumentException(
+                            "The feature query [" + featureNamesQuery + "] returns too many features");
                 }
-                if (sr.getHits().getTotalHits().value == 0) {
-                    throw new IllegalArgumentException("The feature query [" + featureNamesQuery + "] returned no features");
+                if (sr.getHits().getTotalHits().value() == 0) {
+                    throw new IllegalArgumentException(
+                            "The feature query [" + featureNamesQuery + "] returned no features");
                 }
                 final List<StoredFeature> features = new ArrayList<>(sr.getHits().getHits().length);
                 for (SearchHit hit : sr.getHits().getHits()) {
@@ -278,7 +287,7 @@ public class TransportAddFeatureToSetAction extends HandledTransportAction<AddFe
             long version = this.version.get();
             final FeatureStoreRequest frequest;
             if (version > 0) {
-                 frequest = new FeatureStoreRequest(store, set, version);
+                frequest = new FeatureStoreRequest(store, set, version);
             } else {
                 frequest = new FeatureStoreRequest(store, set, FeatureStoreRequest.Action.CREATE);
             }

@@ -13,8 +13,9 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.DoubleValuesScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.test.PrivilegedOperations;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Map;
@@ -28,14 +29,13 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
     public static class ExpressionScriptEngine implements ScriptEngine {
         private static final Map<ScriptContext<?>, Function<Expression, Object>> contexts = Map.of(
-            DoubleValuesScript.CONTEXT,
-            (Expression expr) -> new MockExpressionDoubleValuesScript(expr) {
-                @Override
-                public boolean isResultDeterministic() {
-                    return true;
-                }
-            }
-        );
+                DoubleValuesScript.CONTEXT,
+                (Expression expr) -> new MockExpressionDoubleValuesScript(expr) {
+                    @Override
+                    public boolean isResultDeterministic() {
+                        return true;
+                    }
+                });
 
         @Override
         public String getType() {
@@ -43,19 +43,19 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
         }
 
         @Override
-        public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context, Map<String, String> params) {
-            return PrivilegedOperations.supplierWithCreateClassLoader(
-                    () -> compileInternal(scriptSource, context)
-            );
+        public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context,
+                Map<String, String> params) {
+            // newer Java version do not have SecurityManager, Elasticsearch has removed
+            // security wrappers
+            return compileInternal(scriptSource, context);
         }
 
         public <T> T compileInternal(String scriptSource, ScriptContext<T> context) {
             try {
-                var expr = JavascriptCompiler.compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS, getClass().getClassLoader());
+                var expr = JavascriptCompiler.compile(scriptSource, JavascriptCompiler.DEFAULT_FUNCTIONS);
                 if (contexts.containsKey(context) == false) {
                     throw new IllegalArgumentException(
-                        "mock expression engine does not know how to handle script context [" + context.name + "]"
-                    );
+                            "mock expression engine does not know how to handle script context [" + context.name + "]");
                 }
                 return context.factoryClazz.cast(contexts.get(context).apply(expr));
             } catch (ParseException e) {
@@ -81,12 +81,20 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
             return new DoubleValuesScript() {
                 @Override
                 public double execute() {
-                    return expression.evaluate(new DoubleValues[0]);
+                    try {
+                        return expression.evaluate(new DoubleValues[0]);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
                 }
 
                 @Override
                 public double evaluate(DoubleValues[] functionValues) {
-                    return expression.evaluate(functionValues);
+                    try {
+                        return expression.evaluate(functionValues);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
                 }
 
                 @Override

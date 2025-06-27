@@ -15,20 +15,22 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
+import org.apache.lucene.util.IOSupplier;
+import org.elasticsearch.core.Tuple;
 
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
-    private final List<String> ACCEPTED_KEYS = Arrays.asList(new String[]{"df", "idf", "tf", "ttf", "tp"});
+public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>> {
+    private final List<String> ACCEPTED_KEYS = Arrays.asList(new String[] { "df", "idf", "tf", "ttf", "tp" });
     private AggrType posAggrType = AggrType.AVG;
 
     private final ClassicSimilarity sim;
@@ -47,9 +49,9 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
         this.tp_stats = new StatisticsHelper();
     }
 
-    public void bump (IndexSearcher searcher, LeafReaderContext context,
-                      int docID, Set<Term> terms,
-                      ScoreMode scoreMode, Map<Term, TermStates> termContexts) throws IOException {
+    public void bump(IndexSearcher searcher, LeafReaderContext context,
+            int docID, Set<Term> terms,
+            ScoreMode scoreMode, Map<Term, TermStates> termContexts) throws IOException {
         df_stats.getData().clear();
         idf_stats.getData().clear();
         tf_stats.getData().clear();
@@ -58,6 +60,9 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
         matchedTermCount = 0;
 
         PostingsEnum postingsEnum = null;
+        Set<Tuple<Term, IOSupplier<TermState>>> stateSuppliers = new HashSet<Tuple<Term, IOSupplier<TermState>>>();
+        // Lucene recommends for performance reasons to first get
+        // all IOSupplier instances so let's do it this way
         for (Term term : terms) {
             if (docID == DocIdSetIterator.NO_MORE_DOCS) {
                 break;
@@ -68,7 +73,16 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
             assert termStates != null && termStates
                     .wasBuiltFor(ReaderUtil.getTopLevelContext(context));
 
-            TermState state = termStates.get(context);
+            IOSupplier<TermState> stateSupplier = termStates.get(context);
+
+            if (stateSupplier != null) {
+                stateSuppliers.add(new Tuple<Term, IOSupplier<TermState>>(term, stateSupplier));
+            }
+        }
+        for (Tuple<Term, IOSupplier<TermState>> stateSupplier : stateSuppliers) {
+            TermState state = stateSupplier.v2().get();
+            Term term = stateSupplier.v1();
+            TermStates termStates = termContexts.get(term);
 
             if (state == null || termStates.docFreq() == 0) {
                 insertZeroes(); // Zero out stats for terms we don't know about in the index
@@ -88,12 +102,12 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
             postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.ALL);
 
             // Verify document is in postings
-            if (postingsEnum.advance(docID) == docID){
+            if (postingsEnum.advance(docID) == docID) {
                 matchedTermCount++;
 
                 tf_stats.add(postingsEnum.freq());
 
-                if(postingsEnum.freq() > 0) {
+                if (postingsEnum.freq() > 0) {
                     StatisticsHelper positions = new StatisticsHelper();
                     for (int i = 0; i < postingsEnum.freq(); i++) {
                         positions.add((float) postingsEnum.nextPosition() + 1);
@@ -103,7 +117,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
                 } else {
                     tp_stats.add(0.0f);
                 }
-            // If document isn't in postings default to 0 for tf/tp
+                // If document isn't in postings default to 0 for tf/tp
             } else {
                 tf_stats.add(0.0f);
                 tp_stats.add(0.0f);
@@ -119,7 +133,7 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
      *
      * @param statType Stat type to retrieve from the supplier
      * @return {@code true} if this map contains a mapping for the specified
-     * stat type
+     *         stat type
      * @throws ClassCastException if the key is of an inappropriate type for
      *                            this map
      */
@@ -134,13 +148,13 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
      *
      * @param statType Stat type to retrieve from the supplier
      * @return the score to which the specified stat type is mapped, or
-     * {@code null} if this map contains no mapping for the key
+     *         {@code null} if this map contains no mapping for the key
      */
     @Override
     public ArrayList<Float> get(Object statType) {
         String key = (String) statType;
 
-        switch(key) {
+        switch (key) {
             case "df":
                 return df_stats.getData();
 
@@ -165,7 +179,8 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
      * Strictly speaking the only methods of this {@code Map} needed are
      * containsKey and get. The remaining methods help fix issues like
      * - deserialization of FEATURE_VECTOR parameter as a Map object
-     * - keeps editors like intellij happy when debugging e.g. providing introspection into Map object.
+     * - keeps editors like intellij happy when debugging e.g. providing
+     * introspection into Map object.
      */
 
     @Override
@@ -230,4 +245,3 @@ public class TermStatSupplier extends AbstractMap<String, ArrayList<Float>>  {
         tp_stats.add(0.0f);
     }
 }
-

@@ -46,7 +46,7 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
         super(NAME);
     }
 
-    public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
+    public static class CachesStatsNodesRequest extends BaseNodesRequest {
         public CachesStatsNodesRequest() {
             super((String[]) null);
         }

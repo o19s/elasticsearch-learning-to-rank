@@ -20,6 +20,7 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -80,9 +81,8 @@ public class ScriptFeature implements Feature {
     public static ScriptFeature compile(StoredFeature feature) {
         try {
             XContentParser xContentParser = XContentType.JSON.xContent().createParser(
-                XContentParserConfiguration.EMPTY,
-                feature.template()
-            );
+                    XContentParserConfiguration.EMPTY,
+                    feature.template());
 
             return new ScriptFeature(feature.name(), Script.parse(xContentParser, "native"), feature.queryParams());
         } catch (IOException e) {
@@ -116,7 +116,10 @@ public class ScriptFeature implements Feature {
         Map<String, Object> extraQueryTimeParams = new HashMap<>();
         for (String x : queryParams) {
             if (params.containsKey(x)) {
-                /* If extra_script_param then add the appropriate param name for the script else add name:value as is */
+                /*
+                 * If extra_script_param then add the appropriate param name for the script else
+                 * add name:value as is
+                 */
                 if (extraScriptParams.containsKey(x)) {
                     extraQueryTimeParams.put(extraScriptParams.get(x), params.get(x));
                 } else {
@@ -147,7 +150,7 @@ public class ScriptFeature implements Feature {
             if (analyzerNameObj != null) {
                 if (analyzerNameObj instanceof String) {
                     // Support direct assignment by prefixing analyzer with a bang
-                    if (((String)analyzerNameObj).startsWith("!")) {
+                    if (((String) analyzerNameObj).startsWith("!")) {
                         analyzerName = ((String) analyzerNameObj).substring(1);
                     } else {
                         analyzerName = (String) params.get(analyzerNameObj);
@@ -176,7 +179,7 @@ public class ScriptFeature implements Feature {
             }
 
             Analyzer analyzer = null;
-            for(String field : fields) {
+            for (String field : fields) {
                 if (analyzerName == null) {
                     final MappedFieldType fieldType = context.getSearchExecutionContext().getFieldType(field);
                     analyzer = fieldType.getTextSearchInfo().searchAnalyzer();
@@ -215,14 +218,14 @@ public class ScriptFeature implements Feature {
         nparams.put(FEATURE_VECTOR, supplier);
         nparams.put(EXTRA_LOGGING, extraLoggingSupplier);
         Script script = new Script(this.script.getType(), this.script.getLang(),
-            this.script.getIdOrCode(), this.script.getOptions(), nparams);
-        ScoreScript.Factory factoryFactory  = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
-        ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getSearchExecutionContext().lookup());
+                this.script.getIdOrCode(), this.script.getOptions(), nparams);
+        ScoreScript.Factory factoryFactory = context.getSearchExecutionContext().compile(script, ScoreScript.CONTEXT);
+        ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams,
+                context.getSearchExecutionContext().lookup());
         ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
                 context.getSearchExecutionContext().lookup(),
                 context.getSearchExecutionContext().index().getName(),
-                context.getSearchExecutionContext().getShardId()
-                );
+                context.getSearchExecutionContext().getShardId());
         return new LtrScript(function, supplier, extraLoggingSupplier, termstatSupplier, terms);
     }
 
@@ -234,10 +237,10 @@ public class ScriptFeature implements Feature {
         private final Set<Term> terms;
 
         LtrScript(ScriptScoreFunction function,
-                  FeatureSupplier supplier,
-                  ExtraLoggingSupplier extraLoggingSupplier,
-                  TermStatSupplier termStatSupplier,
-                  Set<Term> terms) {
+                FeatureSupplier supplier,
+                ExtraLoggingSupplier extraLoggingSupplier,
+                TermStatSupplier termStatSupplier,
+                Set<Term> terms) {
             this.function = function;
             this.supplier = supplier;
             this.extraLoggingSupplier = extraLoggingSupplier;
@@ -247,7 +250,8 @@ public class ScriptFeature implements Feature {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
+            if (this == o)
+                return true;
             LtrScript ol = (LtrScript) o;
             return sameClassAs(o)
                     && Objects.equals(function, ol.function);
@@ -284,8 +288,8 @@ public class ScriptFeature implements Feature {
             return this;
         }
 
-       @Override
-       public void visit(QueryVisitor visitor) {
+        @Override
+        public void visit(QueryVisitor visitor) {
             Set<String> fields = terms.stream().map(Term::field).collect(Collectors.toUnmodifiableSet());
             for (String field : fields) {
                 if (visitor.acceptField(field) == false) {
@@ -293,7 +297,7 @@ public class ScriptFeature implements Feature {
                 }
             }
             visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this).consumeTerms(this, terms.toArray(new Term[0]));
-       }
+        }
     }
 
     static class LtrScriptWeight extends Weight {
@@ -305,10 +309,10 @@ public class ScriptFeature implements Feature {
         private final HashMap<Term, TermStates> termContexts;
 
         LtrScriptWeight(Query query, ScriptScoreFunction function,
-                        TermStatSupplier termStatSupplier,
-                        Set<Term> terms,
-                        IndexSearcher searcher,
-                        ScoreMode scoreMode) throws IOException {
+                TermStatSupplier termStatSupplier,
+                Set<Term> terms,
+                IndexSearcher searcher,
+                ScoreMode scoreMode) throws IOException {
             super(query);
             this.function = function;
             this.termStatSupplier = termStatSupplier;
@@ -334,11 +338,20 @@ public class ScriptFeature implements Feature {
             return function.getLeafScoreFunction(context).explainScore(doc, Explanation.noMatch("none"));
         }
 
+        public void extractTerms(Set<Term> terms) {
+        }
+
         @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
+        public boolean isCacheable(LeafReaderContext ctx) {
+            // Never ever cache this query, its parent query is mutable
+            return false;
+        }
+
+        @Override
+        public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
             LeafScoreFunction leafScoreFunction = function.getLeafScoreFunction(context);
             DocIdSetIterator iterator = DocIdSetIterator.all(context.reader().maxDoc());
-            return new Scorer(this) {
+            Scorer scorer = new Scorer() {
                 @Override
                 public int docID() {
                     return iterator.docID();
@@ -366,19 +379,11 @@ public class ScriptFeature implements Feature {
                  */
                 @Override
                 public float getMaxScore(int upTo) throws IOException {
-                    //TODO??
+                    // TODO??
                     return Float.POSITIVE_INFINITY;
                 }
             };
-        }
-
-        public void extractTerms(Set<Term> terms) {
-        }
-
-        @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            // Never ever cache this query, its parent query is mutable
-            return false;
+            return new Weight.DefaultScorerSupplier(scorer);
         }
     }
 }

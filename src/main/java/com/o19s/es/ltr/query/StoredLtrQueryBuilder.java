@@ -69,7 +69,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     }
 
     /**
-     * Injected context used to load a {@link FeatureStore} when running {@link #doToQuery(SearchExecutionContext)}
+     * Injected context used to load a {@link FeatureStore} when running
+     * {@link #doToQuery(SearchExecutionContext)}
      */
     private final transient FeatureStoreLoader storeLoader;
     private String modelName;
@@ -83,7 +84,6 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         this.storeLoader = storeLoader;
     }
 
-
     public StoredLtrQueryBuilder(FeatureStoreLoader storeLoader, StreamInput input) throws IOException {
         super(input);
         this.storeLoader = Objects.requireNonNull(storeLoader);
@@ -91,15 +91,13 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         featureScoreCacheFlag = input.readOptionalBoolean();
         featureSetName = input.readOptionalString();
         params = input.readGenericMap();
-        if (input.getTransportVersion().onOrAfter(TransportVersions.V_7_0_0)) {
-            String[] activeFeat = input.readOptionalStringArray();
-            activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);
-        }
+        String[] activeFeat = input.readOptionalStringArray();
+        activeFeatures = activeFeat == null ? null : Arrays.asList(activeFeat);
         storeName = input.readOptionalString();
     }
 
     public static StoredLtrQueryBuilder fromXContent(FeatureStoreLoader storeLoader,
-                                                     XContentParser parser) throws IOException {
+            XContentParser parser) throws IOException {
         storeLoader = Objects.requireNonNull(storeLoader);
         final StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(storeLoader);
         try {
@@ -108,7 +106,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
         if (builder.modelName() == null && builder.featureSetName() == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Either [" + MODEL_NAME + "] or [" + FEATURESET_NAME + "] must be set.");
+            throw new ParsingException(parser.getTokenLocation(),
+                    "Either [" + MODEL_NAME + "] or [" + FEATURESET_NAME + "] must be set.");
         }
         if (builder.params() == null) {
             throw new ParsingException(parser.getTokenLocation(), "Field [" + PARAMS + "] is mandatory.");
@@ -122,9 +121,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         out.writeOptionalBoolean(featureScoreCacheFlag);
         out.writeOptionalString(featureSetName);
         out.writeGenericMap(params);
-        if (out.getTransportVersion().onOrAfter(TransportVersions.V_7_0_0)) {
-            out.writeOptionalStringArray(activeFeatures != null ? activeFeatures.toArray(new String[0]) : null);
-        }
+        out.writeOptionalStringArray(activeFeatures != null ? activeFeatures.toArray(new String[0]) : null);
         out.writeOptionalString(storeName);
     }
 
@@ -156,7 +153,8 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     private static void validateActiveFeatures(FeatureSet features, LtrQueryContext context) {
         for (String featureName : context.getActiveFeatures()) {
             if (!features.hasFeature(featureName)) {
-                throw new IllegalArgumentException("Feature: [" + featureName + "] " + "provided in active_features does not exist");
+                throw new IllegalArgumentException(
+                        "Feature: [" + featureName + "] " + "provided in active_features does not exist");
             }
         }
     }
@@ -252,7 +250,6 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
         this.activeFeatures = Objects.requireNonNull(activeFeatures);
         return this;
     }
-
 
     @Override
     public TransportVersion getMinimalSupportedVersion() {
