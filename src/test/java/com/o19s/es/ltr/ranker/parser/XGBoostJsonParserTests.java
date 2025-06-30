@@ -27,6 +27,7 @@ import com.o19s.es.ltr.ranker.linear.LinearRankerTests;
 import org.apache.lucene.tests.util.LuceneTestCase;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.Streams;
+import org.elasticsearch.xcontent.XContentParseException;
 import org.hamcrest.CoreMatchers;
 
 import java.io.ByteArrayOutputStream;
@@ -40,6 +41,7 @@ import java.util.List;
 import static com.o19s.es.ltr.LtrTestUtils.randomFeature;
 import static com.o19s.es.ltr.LtrTestUtils.randomFeatureSet;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.Matchers.instanceOf;
 
 public class XGBoostJsonParserTests extends LuceneTestCase {
     private final XGBoostJsonParser parser = new XGBoostJsonParser();
@@ -249,6 +251,28 @@ public class XGBoostJsonParserTests extends LuceneTestCase {
         FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
         assertThat(expectThrows(ParsingException.class, () -> parser.parse(set, model)).getMessage(),
                 CoreMatchers.containsString("Unknown feature [feat2]"));
+    }
+
+    public void testInvalidLeaf() throws IOException {
+        // The leaf nodes are missing nodeid field.
+        String model = "[{" +
+                "\"nodeid\": 0," +
+                "\"split\":\"feat1\"," +
+                "\"depth\":0," +
+                "\"split_condition\":0.123," +
+                "\"yes\":1," +
+                "\"no\": 2," +
+                "\"missing\":1,"+
+                "\"children\": [" +
+                "   {\"depth\": 1, \"leaf\": 0.5}," +
+                "   {\"depth\": 1, \"leaf\": 0.2}" +
+                "]}]";
+        FeatureSet set = new StoredFeatureSet("set", singletonList(randomFeature("feat1")));
+        // In this test case, the ParsingException is wrapped in an XContentParseException, because the
+        // ParsingException that occurs while parsing the invalid leaf node happens within the ObjectParser.
+        Throwable e = expectThrows(XContentParseException.class, () -> parser.parse(set, model)).getCause();
+        assertThat(e, instanceOf(ParsingException.class));
+        assertThat(e.getMessage(), CoreMatchers.containsString("This leaf does not have all the required fields"));
     }
 
     public void testComplexModel() throws Exception {
