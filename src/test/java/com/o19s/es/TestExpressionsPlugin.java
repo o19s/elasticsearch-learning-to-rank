@@ -13,7 +13,6 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.DoubleValuesScript;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
-import org.elasticsearch.test.PrivilegedOperations;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -44,9 +43,7 @@ public class TestExpressionsPlugin extends Plugin implements ScriptPlugin {
 
         @Override
         public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context, Map<String, String> params) {
-            return PrivilegedOperations.supplierWithCreateClassLoader(
-                    () -> compileInternal(scriptSource, context)
-            );
+            return compileInternal(scriptSource, context);
         }
 
         public <T> T compileInternal(String scriptSource, ScriptContext<T> context) {

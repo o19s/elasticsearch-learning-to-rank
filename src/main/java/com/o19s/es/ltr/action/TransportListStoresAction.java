@@ -59,15 +59,17 @@ import static org.elasticsearch.core.Tuple.tuple;
 
 public class TransportListStoresAction extends TransportMasterNodeReadAction<ListStoresActionRequest, ListStoresActionResponse> {
     private final Client client;
+    private final IndexNameExpressionResolver indexNameExpressionResolver;
 
     @Inject
     public TransportListStoresAction(TransportService transportService,
                                      ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
                                      IndexNameExpressionResolver indexNameExpressionResolver, Client client) {
         super(ListStoresAction.NAME, transportService, clusterService, threadPool,
-            actionFilters, ListStoresActionRequest::new, indexNameExpressionResolver, ListStoresActionResponse::new,
+            actionFilters, ListStoresActionRequest::new, ListStoresActionResponse::new,
                 EsExecutors.DIRECT_EXECUTOR_SERVICE);
         this.client = client;
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     @Override
