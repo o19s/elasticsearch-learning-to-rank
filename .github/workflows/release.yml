@@ -47,7 +47,7 @@ jobs:
           asset_content_type: application/zip
       - name: Publish to Maven Central
         env:
-          SONATYPE_REPO_URL: ${{ secrets.SONATYPE_REPO_URL }}
+          SONATYPE_REPO_URL: ${{ secrets.MAVEN_CENTRAL_REPO_URL }}
           SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
           SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
