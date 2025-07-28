@@ -39,7 +39,7 @@ publishing {
   repositories {
     maven {
       name = "MavenCentral"
-      url = System.getenv('SONATYPE_REPO_URL')
+      url = System.getenv('MAVEN_CENTRAL_REPO_URL')
 
         credentials {
           username = System.getenv('OSSRH_TOKEN')
