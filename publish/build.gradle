@@ -41,10 +41,10 @@ publishing {
       name = "MavenCentral"
       url = System.getenv('MAVEN_CENTRAL_REPO_URL')
 
-        credentials {
-          username = System.getenv('OSSRH_TOKEN')
-          password = System.getenv('OSSRH_TOKEN_PASSSWORD')
-        }
+      credentials {
+        username = System.getenv('CENTRAL_PORTAL_TOKEN_USERNAME')
+        password = System.getenv('CENTRAL_PORTAL_TOKEN_PASSWORD')
+      }
     }
   }
 }
