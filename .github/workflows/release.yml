@@ -47,12 +47,17 @@ jobs:
           asset_content_type: application/zip
       - name: Publish to Maven Central
         env:
-          SONATYPE_REPO_URL: ${{ secrets.SONATYPE_REPO_URL }}
-          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
-          SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
+          MAVEN_CENTRAL_REPO_URL: ${{ secrets.MAVEN_CENTRAL_REPO_URL }}
+          CENTRAL_PORTAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_PORTAL_TOKEN_USERNAME }}
+          CENTRAL_PORTAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_PORTAL_TOKEN_PASSWORD }}
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_PASS: ${{ secrets.GPG_SIGNING_PASS }}
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-          OSSRH_TOKEN_PASSSWORD: ${{ secrets.OSSRH_TOKEN_PASSSWORD }}
 
         run: ./gradlew publish
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/com.o19s'
+          method: 'POST'
+          bearerToken: ${{ secrets.MAVEN_CENTRAL_BEARER_TOKEN }}
+          preventFailureOnNoResponse: 'true'
