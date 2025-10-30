@@ -64,7 +64,7 @@ public class NodeSettingsIT extends BaseIntegrationTest {
             cached.loadModel(compiled.name());
             caches.modelCache().refresh();
             assertThat(caches.modelCache().weight(), allOf(lessThan(maxMemSize), greaterThanOrEqualTo(lastAddedSize)));
-        } while (totalAdded < maxMemSize);
+        } while (totalAdded <= maxMemSize);
         assertThat(totalAdded, greaterThan(maxMemSize));
         assertThat(caches.modelCache().weight(), greaterThan(0L));
         Thread.sleep(expireAfterWrite * 2);
