@@ -87,3 +87,14 @@ java {
 // Set to false to not use elasticsearch checkstyle rules
 checkstyleMain.enabled = true
 checkstyleTest.enabled = true
+
+// Elasticsearch test-framework (9.x) can enable the entitlement agent via system properties.
+// When enabled, it needs either `es.entitlement.agentJar` or an ES-style `es.path.home` that
+// contains `lib/entitlement-agent/*.jar`. In this plugin repo, tests run without a distro
+// layout. If entitlements are enabled without the required wiring, ES test framework
+// bootstrap fails before any tests run. Default to disabling unless explicitly enabled.
+tasks.withType(Test).configureEach {
+  if (System.getProperty("es.entitlement.enableForTests") == null) {
+    systemProperty "es.entitlement.enableForTests", "false"
+  }
+}

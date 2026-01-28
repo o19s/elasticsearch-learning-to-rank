@@ -84,7 +84,7 @@ public class TransportListStoresAction
         final List<Tuple<String, Integer>> versions = new ArrayList<>();
         Stream.of(names)
                 .filter(IndexFeatureStore::isIndexStore)
-                .map((s) -> clusterService.state().metadata().getIndices().get(s))
+                .map((s) -> clusterService.state().metadata().getProject().index(s))
                 .filter(Objects::nonNull)
                 .filter((im) -> STORE_VERSION_PROP.exists(im.getSettings()))
                 .forEach((m) -> {
@@ -133,7 +133,7 @@ public class TransportListStoresAction
         if (!IndexFeatureStore.isIndexStore(s)) {
             return null;
         }
-        IndexMetadata index = clusterService.state().metadata().getIndices().get(s);
+        IndexMetadata index = clusterService.state().metadata().getProject().index(s);
 
         if (index != null && STORE_VERSION_PROP.exists(index.getSettings())) {
             return new Tuple<>(index.getIndex().getName(), STORE_VERSION_PROP.get(index.getSettings()));

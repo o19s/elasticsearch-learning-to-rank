@@ -175,7 +175,6 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
         private DocWriteResponse response;
 
         public CreateModelFromSetResponse(StreamInput in) throws IOException {
-            super(in);
             int version = in.readVInt();
             assert version == VERSION;
             response = new IndexResponse(in);

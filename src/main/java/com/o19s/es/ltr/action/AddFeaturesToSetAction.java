@@ -171,7 +171,6 @@ public class AddFeaturesToSetAction extends ActionType<AddFeaturesToSetResponse>
         private DocWriteResponse response;
 
         public AddFeaturesToSetResponse(StreamInput in) throws IOException {
-            super(in);
             response = new IndexResponse(in);
         }
 

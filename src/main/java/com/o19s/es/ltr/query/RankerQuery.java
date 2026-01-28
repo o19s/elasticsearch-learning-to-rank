@@ -367,7 +367,7 @@ public class RankerQuery extends Query {
         @Override
         public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
             List<Scorer> scorers = new ArrayList<>(weights.size());
-            DisiPriorityQueue disiPriorityQueue = new DisiPriorityQueue(weights.size());
+            DisiPriorityQueue disiPriorityQueue = DisiPriorityQueue.ofMaxSize(weights.size());
             for (Weight weight : weights) {
                 Scorer scorer = weight.scorer(context);
                 if (scorer == null) {

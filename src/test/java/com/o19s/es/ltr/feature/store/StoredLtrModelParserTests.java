@@ -320,7 +320,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         String base64Encoded = "C21vZGVsL2R1bW15EmNvbXBsZXRlbHkgaWdub3JlZAE=";
         byte[] bytes = Base64.getDecoder().decode(base64Encoded);
         StreamInput input = ByteBufferStreamInput.wrap(bytes, 0, bytes.length);
-        input.setTransportVersion(TransportVersions.V_7_6_0);
+        input.setTransportVersion(TransportVersions.V_7_0_0);
 
         StoredLtrModel.LtrModelDefinition modelUnserialized = new StoredLtrModel.LtrModelDefinition(input);
         assertEquals(modelUnserialized.getDefinition(), "completely ignored");

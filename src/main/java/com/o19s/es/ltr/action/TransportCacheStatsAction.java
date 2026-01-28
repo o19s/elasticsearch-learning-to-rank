@@ -30,7 +30,7 @@ import org.elasticsearch.injection.guice.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.transport.AbstractTransportRequest;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.tasks.Task;
 
@@ -75,7 +75,7 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
         return new CachesStatsNodeResponse(clusterService.localNode()).initFromCaches(caches);
     }
 
-    public static class CachesStatsNodeRequest extends TransportRequest {
+    public static class CachesStatsNodeRequest extends AbstractTransportRequest {
         public CachesStatsNodeRequest() {}
 
         public CachesStatsNodeRequest(StreamInput in) throws IOException {

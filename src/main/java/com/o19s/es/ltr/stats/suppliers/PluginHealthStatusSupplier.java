@@ -58,7 +58,7 @@ public class PluginHealthStatusSupplier implements Supplier<String> {
 
     public String getLtrStoreHealthStatus(String storeName) {
         ClusterIndexHealth indexHealth = new ClusterIndexHealth(
-                clusterService.state().metadata().index(storeName),
+                clusterService.state().metadata().getProject().index(storeName),
                 clusterService.state().getRoutingTable().index(storeName)
         );
 

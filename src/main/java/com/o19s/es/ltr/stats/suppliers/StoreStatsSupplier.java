@@ -74,7 +74,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
         List<String> indices = new ArrayList<>();
         Stream.of(names)
                 .filter(IndexFeatureStore::isIndexStore)
-                .map(s -> clusterService.state().metadata().index(s))
+                .map(s -> clusterService.state().metadata().getProject().index(s))
                 .filter(Objects::nonNull)
                 .map(IndexMetadata::getIndex)
                 .map(Index::getName)
@@ -139,7 +139,7 @@ public class StoreStatsSupplier implements Supplier<Map<String, Map<String, Obje
     public String getLtrStoreHealthStatus(String storeName) {
         ClusterIndexHealth indexHealth =
                 new ClusterIndexHealth(
-                        clusterService.state().metadata().index(storeName),
+                        clusterService.state().metadata().getProject().index(storeName),
                         clusterService.state().getRoutingTable().index(storeName));
 
         return indexHealth.getStatus().name().toLowerCase(Locale.ROOT);
