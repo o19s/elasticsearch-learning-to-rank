@@ -32,7 +32,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.transport.AbstractTransportRequest;
 import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
@@ -65,7 +65,7 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
 
     @Override
     protected ClearCachesNodeResponse newNodeResponse(StreamInput in, DiscoveryNode node) throws IOException {
-        return null; // TODO
+        return new ClearCachesNodeResponse(in);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class TransportClearCachesAction extends TransportNodesAction<ClearCaches
         return new ClearCachesNodeResponse(clusterService.localNode());
     }
 
-    public static class ClearCachesNodeRequest extends TransportRequest {
+    public static class ClearCachesNodeRequest extends AbstractTransportRequest {
         private ClearCachesNodesRequest request;
 
         public ClearCachesNodeRequest() {}

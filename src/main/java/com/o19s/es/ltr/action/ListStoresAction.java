@@ -67,7 +67,6 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
         ListStoresActionResponse() {}
 
         ListStoresActionResponse(StreamInput in) throws IOException {
-            super(in);
             stores = in.readMap(StreamInput::readString, IndexStoreInfo::new);
         }
 

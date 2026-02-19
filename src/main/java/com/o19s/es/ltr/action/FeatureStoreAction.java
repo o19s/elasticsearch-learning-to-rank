@@ -168,7 +168,6 @@ public class FeatureStoreAction extends ActionType<FeatureStoreResponse> {
         private DocWriteResponse response;
 
         public FeatureStoreResponse(StreamInput in) throws IOException {
-            super(in);
             response = new IndexResponse(in);
         }
 
