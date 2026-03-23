@@ -24,7 +24,7 @@ import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.tests.util.LuceneTestCase;
-import org.elasticsearch.TransportVersions;
+import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Randomness;
 import org.elasticsearch.common.Strings;
@@ -320,7 +320,7 @@ public class StoredLtrModelParserTests extends LuceneTestCase {
         String base64Encoded = "C21vZGVsL2R1bW15EmNvbXBsZXRlbHkgaWdub3JlZAE=";
         byte[] bytes = Base64.getDecoder().decode(base64Encoded);
         StreamInput input = ByteBufferStreamInput.wrap(bytes, 0, bytes.length);
-        input.setTransportVersion(TransportVersions.V_7_0_0);
+        input.setTransportVersion(TransportVersion.fromId(7_00_00_99));
 
         StoredLtrModel.LtrModelDefinition modelUnserialized = new StoredLtrModel.LtrModelDefinition(input);
         assertEquals(modelUnserialized.getDefinition(), "completely ignored");
