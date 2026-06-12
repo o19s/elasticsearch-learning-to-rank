@@ -50,6 +50,7 @@ import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.index.fielddata.plain.SortedDoublesIndexFieldData;
+import org.elasticsearch.index.mapper.IndexType;
 import org.elasticsearch.search.aggregations.support.CoreValuesSourceType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.FetchSubPhase;
@@ -225,7 +226,7 @@ public class LoggingFetchSubPhaseTests extends LuceneTestCase {
                         (dv, n) -> {
                             throw new UnsupportedOperationException();
                         },
-                        false));
+                        IndexType.NONE));
         return new FunctionScoreQuery(new MatchAllDocsQuery(),
                 fieldValueFactorFunction, CombineFunction.MULTIPLY, 0F, Float.MAX_VALUE);
     }
