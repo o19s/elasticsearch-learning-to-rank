@@ -158,7 +158,9 @@ public class LtrQueryTests extends LuceneTestCase {
         indexWriterUnderTest.flush();
 
         indexReaderUnderTest = indexWriterUnderTest.getReader();
-        searcherUnderTest = newSearcher(indexReaderUnderTest);
+        // RankerQuery is not thread-safe with intra-segment concurrency (see RankerQuery.createWeight comment).
+        // Lucene 10.4.0 newSearcher(r) now randomly enables INTRA_SEGMENT concurrency; disable it explicitly.
+        searcherUnderTest = newSearcher(indexReaderUnderTest, true, true, false);
         searcherUnderTest.setSimilarity(similarity);
     }
 

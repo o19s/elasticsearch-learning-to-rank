@@ -23,6 +23,8 @@ import org.elasticsearch.index.query.SearchExecutionContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -134,7 +136,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
         var compiledExpression = Scripting.compile(expr);
         AggrType aggrType = AggrType.valueOf(aggr.toUpperCase(Locale.getDefault()));
         AggrType posAggrType = AggrType.valueOf(pos_aggr.toUpperCase(Locale.getDefault()));
@@ -166,7 +168,11 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
             }
         }
 
-        return new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
+        Query result = new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
+        if (visitor != null) {
+            result.visit(visitor);
+        }
+        return result;
     }
 
     private Analyzer getAnalyzerForField(SearchExecutionContext context, String fieldName) {

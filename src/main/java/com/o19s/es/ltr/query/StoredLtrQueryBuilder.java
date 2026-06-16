@@ -37,6 +37,8 @@ import org.elasticsearch.index.query.SearchExecutionContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -159,15 +161,16 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
     }
 
     @Override
-    protected RankerQuery doToQuery(SearchExecutionContext context) throws IOException {
+    protected RankerQuery doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
         String indexName = storeName != null ? IndexFeatureStore.indexName(storeName) : IndexFeatureStore.DEFAULT_STORE;
         FeatureStore store = storeLoader.load(indexName, context::getClient);
         LtrQueryContext ltrQueryContext = new LtrQueryContext(context,
                 activeFeatures == null ? Collections.emptySet() : new HashSet<>(activeFeatures));
+        RankerQuery result;
         if (modelName != null) {
             CompiledLtrModel model = store.loadModel(modelName);
             validateActiveFeatures(model.featureSet(), ltrQueryContext);
-            return RankerQuery.build(model, ltrQueryContext, params, featureScoreCacheFlag);
+            result = RankerQuery.build(model, ltrQueryContext, params, featureScoreCacheFlag);
         } else {
             assert featureSetName != null;
             FeatureSet set = store.loadSet(featureSetName);
@@ -176,8 +179,12 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             LinearRanker ranker = new LinearRanker(weights);
             CompiledLtrModel model = new CompiledLtrModel("linear", set, ranker);
             validateActiveFeatures(model.featureSet(), ltrQueryContext);
-            return RankerQuery.build(model, ltrQueryContext, params, featureScoreCacheFlag);
+            result = RankerQuery.build(model, ltrQueryContext, params, featureScoreCacheFlag);
         }
+        if (visitor != null) {
+            result.visit(visitor);
+        }
+        return result;
     }
 
     @Override

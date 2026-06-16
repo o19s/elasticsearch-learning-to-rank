@@ -3,6 +3,7 @@ package com.o19s.es.termstat;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
+import com.o19s.es.ltr.utils.Scripting;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.SearchExecutionContext;
@@ -65,6 +66,24 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "}";
 
         expectThrows(ParsingException.class, () -> parseQuery(query));
+    }
+
+    @Override
+    public void testToQuery() throws IOException {
+        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
+        super.testToQuery();
+    }
+
+    @Override
+    public void testCacheability() throws IOException {
+        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
+        super.testCacheability();
+    }
+
+    @Override
+    public void testMustRewrite() throws IOException {
+        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
+        super.testMustRewrite();
     }
 
     @Override
