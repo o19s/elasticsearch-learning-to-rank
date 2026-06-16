@@ -175,7 +175,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
             builder.activeFeatures(Arrays.asList("match1", "match2"));
         }
 
-        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext());
+        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext(), null);
         List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
         assertEquals(clazz, queries.get(2).getClass());
     }

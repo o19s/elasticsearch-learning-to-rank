@@ -32,6 +32,10 @@ public class Scripting {
         Scripting.scriptService = scriptService;
     }
 
+    public static boolean isInitialized() {
+        return scriptService != null;
+    }
+
     public static DoubleValuesScript compile(String scriptSource) throws IOException {
         if (Scripting.scriptService == null) {
             throw new IOException("Script service not initialized.");
