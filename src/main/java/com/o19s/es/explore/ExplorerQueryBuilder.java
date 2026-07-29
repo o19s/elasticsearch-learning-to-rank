@@ -16,6 +16,7 @@
 package com.o19s.es.explore;
 
 import org.apache.lucene.search.Query;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -99,8 +100,8 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
-        return new ExplorerQuery(query.toQuery(context), type);
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
+        return new ExplorerQuery(query.toQuery(context, visitor), type);
     }
 
     @Override

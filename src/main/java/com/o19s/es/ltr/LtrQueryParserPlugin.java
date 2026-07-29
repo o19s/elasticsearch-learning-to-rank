@@ -77,13 +77,9 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.core.CheckedFunction;
 import org.elasticsearch.features.NodeFeature;
 import org.elasticsearch.xcontent.ParseField;
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry.Entry;
-import org.elasticsearch.common.settings.ClusterSettings;
-import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.xcontent.NamedXContentRegistry;
 import org.elasticsearch.xcontent.XContentParser;
 import org.elasticsearch.index.Index;
@@ -94,7 +90,6 @@ import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
@@ -164,13 +159,7 @@ public class LtrQueryParserPlugin extends Plugin implements SearchPlugin, Script
     }
 
     @Override
-    public List<RestHandler> getRestHandlers(Settings settings,
-                                             NamedWriteableRegistry namedWriteableRegistry,
-                                             RestController restController,
-                                             ClusterSettings clusterSettings,
-                                             IndexScopedSettings indexScopedSettings,
-                                             SettingsFilter settingsFilter,
-                                             IndexNameExpressionResolver indexNameExpressionResolver,
+    public List<RestHandler> getRestHandlers(ActionPlugin.RestHandlersServices restHandlersServices,
                                              Supplier<DiscoveryNodes> nodesInCluster,
                                              Predicate<NodeFeature> clusterSupportsFeature) {
         List<RestHandler> list = new ArrayList<>();

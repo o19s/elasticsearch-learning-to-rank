@@ -24,6 +24,7 @@ import com.o19s.es.ltr.ranker.LtrRanker;
 import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import com.o19s.es.ltr.utils.AbstractQueryBuilderUtils;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -123,10 +124,10 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<>(_features.size());
         for (QueryBuilder builder : _features) {
-            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
+            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context, visitor)));
         }
         features = Collections.unmodifiableList(features);
 
