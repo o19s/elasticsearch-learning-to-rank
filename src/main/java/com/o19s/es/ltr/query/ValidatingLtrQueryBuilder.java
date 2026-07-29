@@ -30,6 +30,7 @@ import com.o19s.es.ltr.ranker.linear.LinearRanker;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -159,9 +160,10 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext searchExecutionContext) throws IOException {
+    protected Query doToQuery(SearchExecutionContext searchExecutionContext, MaxClauseCountQueryVisitor visitor) throws IOException {
         //TODO: should we be passing activeFeatures here?
         LtrQueryContext context = new LtrQueryContext(searchExecutionContext);
+        Query result;
         if (StoredFeature.TYPE.equals(element.type())) {
             Feature feature = ((StoredFeature) element).optimize();
             if (feature instanceof PrecompiledExpressionFeature) {
@@ -169,18 +171,22 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
                 return new MatchAllDocsQuery();
             }
             //TODO: support activeFeatures in Validating queries
-            return feature.doToQuery(context, null, validation.getParams());
+            result = feature.doToQuery(context, null, validation.getParams());
         } else if (StoredFeatureSet.TYPE.equals(element.type())) {
             FeatureSet set = ((StoredFeatureSet) element).optimize();
             LinearRanker ranker = new LinearRanker(new float[set.size()]);
             CompiledLtrModel model = new CompiledLtrModel("validation", set, ranker);
-            return RankerQuery.build(model, context, validation.getParams(), false);
+            result = RankerQuery.build(model, context, validation.getParams(), false);
         } else if (StoredLtrModel.TYPE.equals(element.type())) {
             CompiledLtrModel model = ((StoredLtrModel) element).compile(factory);
-            return RankerQuery.build(model, context, validation.getParams(), false);
+            result = RankerQuery.build(model, context, validation.getParams(), false);
         } else {
             throw new QueryShardException(searchExecutionContext, "Unknown element type [" + element.type() + "]");
         }
+        if (visitor != null) {
+            result.visit(visitor);
+        }
+        return result;
     }
 
     @Override

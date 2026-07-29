@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 import org.elasticsearch.xcontent.ParseField;
 import org.elasticsearch.TransportVersion;
 import org.elasticsearch.common.ParsingException;
@@ -134,7 +135,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
         var compiledExpression = Scripting.compile(expr);
         AggrType aggrType = AggrType.valueOf(aggr.toUpperCase(Locale.getDefault()));
         AggrType posAggrType = AggrType.valueOf(pos_aggr.toUpperCase(Locale.getDefault()));
@@ -166,7 +167,11 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
             }
         }
 
-        return new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
+
+        Query result = new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
+        if (visitor != null)
+            result.visit(visitor);
+        return result;
     }
 
     private Analyzer getAnalyzerForField(SearchExecutionContext context, String fieldName) {
