@@ -2,7 +2,7 @@ package com.o19s.es.termstat;
 
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 
-import com.o19s.es.ltr.utils.Scripting;
+import com.o19s.es.TestExpressionsPlugin;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
@@ -18,6 +18,7 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.tests.util.LuceneTestCase;
 import org.elasticsearch.common.lucene.Lucene;
+import org.elasticsearch.script.DoubleValuesScript;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,6 +61,13 @@ public class TermStatQueryTests extends LuceneTestCase {
         searcher = new IndexSearcher(reader);
     }
 
+    // Compile directly with the test engine: building a ScriptService needs ES logging, which LuceneTestCase does not set up
+    private static DoubleValuesScript compile(String expr) {
+        return new TestExpressionsPlugin.ExpressionScriptEngine()
+                .compileInternal(expr, DoubleValuesScript.CONTEXT)
+                .newInstance();
+    }
+
     @After
     public void cleanup() throws Exception {
         try {
@@ -77,7 +85,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         Set<Term> terms = new HashSet<>();
         terms.add(new Term("text", "cow"));
 
-        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -92,7 +100,7 @@ public class TermStatQueryTests extends LuceneTestCase {
 
         Set<Term> terms = new HashSet<>();
 
-        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -108,7 +116,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         Set<Term> terms = new HashSet<>();
         terms.add(new Term("text", "cow"));
 
-        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -126,7 +134,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         terms.add(new Term("text", "cow"));
         terms.add(new Term("text", "horse"));
 
-        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);
@@ -144,7 +152,7 @@ public class TermStatQueryTests extends LuceneTestCase {
         terms.add(new Term("text", "cow"));
         terms.add(new Term("text", "horse"));
 
-        TermStatQuery tsq = new TermStatQuery(Scripting.compile(expr), aggr, pos_aggr, terms);
+        TermStatQuery tsq = new TermStatQuery(compile(expr), aggr, pos_aggr, terms);
 
         // Verify explain
         TopDocs docs = searcher.search(tsq, 4);

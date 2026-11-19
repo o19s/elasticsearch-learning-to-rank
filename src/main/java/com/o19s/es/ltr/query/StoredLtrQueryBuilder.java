@@ -71,7 +71,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
 
     /**
      * Injected context used to load a {@link FeatureStore} when running
-     * {@link #doToQuery(SearchExecutionContext)}
+     * {@link #doToQuery(SearchExecutionContext, MaxClauseCountQueryVisitor)}
      */
     private final transient FeatureStoreLoader storeLoader;
     private String modelName;
@@ -181,9 +181,7 @@ public class StoredLtrQueryBuilder extends AbstractQueryBuilder<StoredLtrQueryBu
             validateActiveFeatures(model.featureSet(), ltrQueryContext);
             result = RankerQuery.build(model, ltrQueryContext, params, featureScoreCacheFlag);
         }
-        if (visitor != null) {
-            result.visit(visitor);
-        }
+        result.visit(visitor);
         return result;
     }
 

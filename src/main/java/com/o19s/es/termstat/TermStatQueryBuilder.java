@@ -169,9 +169,7 @@ public class TermStatQueryBuilder extends AbstractQueryBuilder<TermStatQueryBuil
         }
 
         Query result = new TermStatQuery(compiledExpression, aggrType, posAggrType, termSet);
-        if (visitor != null) {
-            result.visit(visitor);
-        }
+        result.visit(visitor);
         return result;
     }
 

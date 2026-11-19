@@ -3,12 +3,14 @@ package com.o19s.es.termstat;
 import com.o19s.es.explore.StatisticsHelper.AggrType;
 
 import com.o19s.es.ltr.LtrQueryParserPlugin;
-import com.o19s.es.ltr.utils.Scripting;
+import com.o19s.es.TestScripting;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
+
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -17,6 +19,11 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQueryBuilder> {
+    @BeforeClass
+    public static void initScripting() {
+        TestScripting.init();
+    }
+
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return asList(LtrQueryParserPlugin.class);
@@ -66,24 +73,6 @@ public class TermStatQueryBuilderTests extends AbstractQueryTestCase<TermStatQue
                 "}";
 
         expectThrows(ParsingException.class, () -> parseQuery(query));
-    }
-
-    @Override
-    public void testToQuery() throws IOException {
-        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
-        super.testToQuery();
-    }
-
-    @Override
-    public void testCacheability() throws IOException {
-        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
-        super.testCacheability();
-    }
-
-    @Override
-    public void testMustRewrite() throws IOException {
-        assumeTrue("Scripting service not initialized; skipped in unit test context", Scripting.isInitialized());
-        super.testMustRewrite();
     }
 
     @Override

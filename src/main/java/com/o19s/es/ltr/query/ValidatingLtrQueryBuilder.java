@@ -168,10 +168,11 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
             Feature feature = ((StoredFeature) element).optimize();
             if (feature instanceof PrecompiledExpressionFeature) {
                 // Derived features cannot be tested alone
-                return new MatchAllDocsQuery();
+                result = new MatchAllDocsQuery();
+            } else {
+                //TODO: support activeFeatures in Validating queries
+                result = feature.doToQuery(context, null, validation.getParams());
             }
-            //TODO: support activeFeatures in Validating queries
-            result = feature.doToQuery(context, null, validation.getParams());
         } else if (StoredFeatureSet.TYPE.equals(element.type())) {
             FeatureSet set = ((StoredFeatureSet) element).optimize();
             LinearRanker ranker = new LinearRanker(new float[set.size()]);
@@ -183,9 +184,7 @@ public class ValidatingLtrQueryBuilder extends AbstractQueryBuilder<ValidatingLt
         } else {
             throw new QueryShardException(searchExecutionContext, "Unknown element type [" + element.type() + "]");
         }
-        if (visitor != null) {
-            result.visit(visitor);
-        }
+        result.visit(visitor);
         return result;
     }
 
