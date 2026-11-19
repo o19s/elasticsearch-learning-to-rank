@@ -40,6 +40,8 @@ import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.script.Script;
 
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,10 +125,10 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
         List<PrebuiltFeature> features = new ArrayList<>(_features.size());
         for (QueryBuilder builder : _features) {
-            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context)));
+            features.add(new PrebuiltFeature(builder.queryName(), builder.toQuery(context, visitor)));
         }
         features = Collections.unmodifiableList(features);
 

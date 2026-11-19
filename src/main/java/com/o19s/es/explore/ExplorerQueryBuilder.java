@@ -30,6 +30,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryRewriteContext;
 import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.index.query.Rewriteable;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -99,8 +100,8 @@ public class ExplorerQueryBuilder extends AbstractQueryBuilder<ExplorerQueryBuil
     }
 
     @Override
-    protected Query doToQuery(SearchExecutionContext context) throws IOException {
-        return new ExplorerQuery(query.toQuery(context), type);
+    protected Query doToQuery(SearchExecutionContext context, MaxClauseCountQueryVisitor visitor) throws IOException {
+        return new ExplorerQuery(query.toQuery(context, visitor), type);
     }
 
     @Override

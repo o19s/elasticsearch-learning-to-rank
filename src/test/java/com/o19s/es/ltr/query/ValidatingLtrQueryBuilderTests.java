@@ -17,6 +17,7 @@
 package com.o19s.es.ltr.query;
 
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
+import com.o19s.es.TestScripting;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
@@ -26,12 +27,14 @@ import com.o19s.es.ltr.feature.store.StoredFeatureSet;
 import com.o19s.es.ltr.feature.store.StoredLtrModel;
 import com.o19s.es.ltr.ranker.parser.LinearRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.SearchExecutionContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -53,6 +56,11 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
     private final LtrRankerParserFactory factory = new LtrRankerParserFactory.Builder()
             .register(LinearRankerParser.TYPE, LinearRankerParser::new)
             .build();
+
+    @BeforeClass
+    public static void initScripting() {
+        TestScripting.init();
+    }
 
     // TODO: Remove the TestGeoShapeFieldMapperPlugin once upstream has completed the migration.
     protected Collection<Class<? extends Plugin>> getPlugins() {
@@ -106,6 +114,15 @@ public class ValidatingLtrQueryBuilderTests extends AbstractQueryTestCase<Valida
         params.put("query_string", "hello world");
         FeatureValidation val = new FeatureValidation("test_index", params);
         return new ValidatingLtrQueryBuilder(element, val, factory);
+    }
+
+    public void testDerivedExpressionFeature() throws IOException {
+        StoredFeature feature = new StoredFeature("derived", Collections.emptyList(), "derived_expression", "1 + 1");
+        FeatureValidation val = new FeatureValidation("test_index", Collections.emptyMap());
+        ValidatingLtrQueryBuilder builder = new ValidatingLtrQueryBuilder(feature, val, factory);
+        // toQuery() asserts (with -ea) that the visitor's clause count matches a fresh visit of the result
+        Query query = builder.toQuery(createSearchExecutionContext());
+        assertThat(query, instanceOf(MatchAllDocsQuery.class));
     }
 
     @Override

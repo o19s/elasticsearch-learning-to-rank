@@ -29,6 +29,7 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.normalizer.StandardFeatureNormalizer;
 import com.o19s.es.ltr.utils.FeatureStoreLoader;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
@@ -45,6 +46,7 @@ import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.search.internal.MaxClauseCountQueryVisitor;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.Before;
 
@@ -175,9 +177,26 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
             builder.activeFeatures(Arrays.asList("match1", "match2"));
         }
 
-        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext());
+        MaxClauseCountQueryVisitor visitor = new MaxClauseCountQueryVisitor(IndexSearcher.getMaxClauseCount());
+        RankerQuery rankerQuery = builder.doToQuery(createSearchExecutionContext(), visitor);
         List<Query> queries = rankerQuery.stream().collect(Collectors.toList());
         assertEquals(clazz, queries.get(2).getClass());
+        assertVisitorCountMatches(rankerQuery, visitor);
+    }
+
+    public void testDoToQueryEnforcesMaxClauseCount() {
+        StoredLtrQueryBuilder builder = new StoredLtrQueryBuilder(LtrTestUtils.wrapMemStore(StoredLtrQueryBuilderTests.store));
+        builder.modelName("model1");
+        builder.params(Collections.singletonMap("query_string", "a wonderful query"));
+        expectThrows(IndexSearcher.TooManyNestedClauses.class,
+                () -> builder.doToQuery(createSearchExecutionContext(), new MaxClauseCountQueryVisitor(1)));
+    }
+
+    private static void assertVisitorCountMatches(Query query, MaxClauseCountQueryVisitor visitor) {
+        MaxClauseCountQueryVisitor fresh = new MaxClauseCountQueryVisitor(IndexSearcher.getMaxClauseCount());
+        query.visit(fresh);
+        assertTrue(visitor.getNumClauses() > 0);
+        assertEquals(fresh.getNumClauses(), visitor.getNumClauses());
     }
 
     @Override
